@@ -1,3 +1,6 @@
+#ifndef PANACHE_C_INTERFACE_H
+#define PANACHE_C_INTERFACE_H
+
 extern "C" {
 
     struct C_ShellInfo
@@ -21,3 +24,4 @@ extern "C" {
 
 }
 
+#endif
