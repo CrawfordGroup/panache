@@ -12,10 +12,16 @@ extern "C" {
         double * coef; // of length nprim
     };
 
+    struct C_AtomCenter
+    {
+        double Z;
+        const char * symbol;
+        double mass;
+        double center[3];
+    };
 
     double * C_QAO(int ncenters, int nao, int nmo,
-                 double * Z, char const ** symbols,
-                 double * masses, double ** centers,
+                 C_AtomCenter * atoms,
                  int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                  int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
                  int * nrow_out, int * ncol_out);

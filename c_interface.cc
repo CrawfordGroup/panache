@@ -6,8 +6,7 @@
 extern "C" {
 
     double * C_QAO(int ncenters, int nao, int nmo,
-                 double * Z, char const ** symbols,
-                 double * masses, double ** centers,
+                 C_AtomCenter * atoms,
                  int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                  int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
                  int * nrow_out, int * ncol_out)
@@ -18,12 +17,12 @@ extern "C" {
         for(auto i = 0; i < ncenters; i++)
         {
             molecule->add_atom(
-                Z[i],
-                centers[i][0],
-                centers[i][1],
-                centers[i][2],
-                symbols[i],
-                masses[i],
+                atoms[i].Z,
+                atoms[i].center[0],
+                atoms[i].center[1],
+                atoms[i].center[2],
+                atoms[i].symbol,
+                atoms[i].mass,
                 0);
         }
 
@@ -51,7 +50,7 @@ extern "C" {
             panache::Vector3 cen;
 
             for(int j = 0; j < 3; j++)
-                cen[j] = centers[i][j];
+                cen[j] = atoms[i].center[j];
 
             for(int j = 0; j < primary_nshellspercenter[i]; j++)
             {
