@@ -65,6 +65,14 @@ if(USE_LIBINT2)
 endif(USE_LIBINT2)
 
 
+# This is needed for the testing executable (for now)
+find_package(LAPACK)
+if(NOT LAPACK_FOUND)
+  MESSAGE(FATAL_ERROR "LAPACK MODULE NOT FOUND")
+else(NOT LAPACK_FOUND)
+  MESSAGE(STATUS "LAPACK Libraries: ${LAPACK_LIBRARIES}")
+endif(NOT LAPACK_FOUND)
+
 
 # Create the library
 add_library(panache 
@@ -115,9 +123,13 @@ add_library(panache
             sq_rsp.cc
             sq_to_tri.cc
             zero.cc
-            #tests/h2o-631gss-primary.cc
+            Testing.cc
             ${LIBINT_FILES}
             )
+
+add_executable(runtest runtest.cc)
+target_link_libraries(runtest panache ${LAPACK_LIBRARIES})
+
 
 # FOR NOW
 FILE(GLOB HFILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
