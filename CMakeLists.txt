@@ -103,6 +103,7 @@ add_library(panache
             blas_intfc23.cc
             block_matrix.cc
             c_interface.cc
+            c_convert.cc
             dot.cc
             init_array.cc
             int_array.cc
@@ -114,6 +115,7 @@ add_library(panache
             sq_rsp.cc
             sq_to_tri.cc
             zero.cc
+            #tests/h2o-631gss-primary.cc
             ${LIBINT_FILES}
             )
 
