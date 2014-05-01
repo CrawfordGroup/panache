@@ -75,7 +75,9 @@ private:
         void set_result(data_type r)
         {
             result = r;
-            diff = abs(result - reference);
+            diff = (result - reference);
+            if(diff < 0)
+                diff *= static_cast<data_type>(-1);
         }
     };
 
@@ -84,10 +86,11 @@ private:
     {
         TestResult<int> total_nshell;    // total # of shells
         TestResult<int> total_nprim;     // total # of primitives
-        TestResult<int> total_ncenters;      // # of centers
 
         vector<TestResult<int>> center_nshell; // # of shells per center
         vector<TestResult<int>> shell_nprim;  // # of primitives per shell
+        vector<TestResult<int>> shell_am;  // angular momentum per shell 
+        vector<TestResult<int>> shell_ispure;  // cartesian vs. spherical
         vector<TestResult<double>> exp; // exponents of the primitives
         vector<TestResult<double>> coef; // coefficients of the primitives
     };
@@ -109,6 +112,7 @@ private:
     MoleculeTest molecule_test_;
 
     int ncenters_, primary_nshells_, aux_nshells_;
+    int primary_nprim_, aux_nprim_;
 
     // basis set information
     int * primary_nshellspercenter_; // of length ncenter
@@ -147,7 +151,7 @@ private:
                                 const T & thresh,
                                 const std::string & result)
     {
-        PrintColumn(out, name, 25);
+        PrintColumn(out, name, 35);
         PrintColumn(out, ref);
         PrintColumn(out, run);
         PrintColumn(out, diff);
@@ -165,7 +169,7 @@ private:
                                 const char * thresh,
                                 const char * result)
     {
-        PrintColumn(out, name, 25);
+        PrintColumn(out, name, 35);
         PrintColumn(out, ref);
         PrintColumn(out, run);
         PrintColumn(out, diff);
@@ -180,7 +184,7 @@ private:
     }
 
     template<typename T>
-    static bool Test(std::ostream & out,
+    static int Test(std::ostream & out,
                             const std::string & name,
                             TestResult<T> & test)
     {
@@ -192,14 +196,28 @@ private:
                  test.threshold,
                  pass);
 
-        return test.test();
-
+        if(test.test())
+            return 0;
+        else
+            return 1;
     }
 
 
     // disable copying and assignment
     TestInfo & operator=(const TestInfo & rhs);
     TestInfo(const TestInfo & t);
+
+
+    // Helper functions for testing basis
+    void TestBasisConversion(int nshells,
+                             int * nshellspercenter,
+                             C_ShellInfo * shells,
+                             BasisTest & test);
+
+    int PrintBasisResults(std::ostream & out, const string & type,
+                          int nshells, int nprim,
+                          BasisTest & test,
+                          bool verbose);
 
 public:
     TestInfo(const std::string & testname, const std::string & dir);
@@ -233,7 +251,7 @@ public:
 
     void TestBasisConversion(void);
     void TestMoleculeConversion(void);
-    bool PrintResults(std::ostream & out, bool verbose = false); 
+    int PrintResults(std::ostream & out, bool verbose = false); 
 
     ~TestInfo();
 };
