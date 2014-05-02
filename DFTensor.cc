@@ -99,7 +99,7 @@ void DFTensor::build_metric()
 
 SharedMatrix DFTensor::Qso()
 {
-    //! \todo nso vs nbf vs nao
+    //! \todo I think this should be nbf, but I'm not positive
     int nso = primary_->nbf();
 
     SharedMatrix B(new Matrix("Bso", naux_, nso * nso));
