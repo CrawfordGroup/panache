@@ -20,7 +20,7 @@ extern "C" {
         double center[3];
     };
 
-    double * C_QAO(int ncenters, int nao, int nmo,
+    double * C_QAO(int ncenters,
                  C_AtomCenter * atoms,
                  int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                  int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,

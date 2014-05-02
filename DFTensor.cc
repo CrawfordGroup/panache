@@ -45,15 +45,16 @@
 namespace panache {
 
 DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
-                   std::shared_ptr<BasisSet> auxiliary,
-                   int nso, int nmo) 
-    : primary_(primary), auxiliary_(auxiliary), nso_(nso), nmo_(nmo)
+                   std::shared_ptr<BasisSet> auxiliary)
+    : primary_(primary), auxiliary_(auxiliary)
 {
     common_init();
 }
+
 DFTensor::~DFTensor()
 {
 }
+
 void DFTensor::common_init()
 {
     //! \todo remote print?
@@ -69,6 +70,7 @@ void DFTensor::common_init()
 
     build_metric();
 }
+
 void DFTensor::print_header()
 {
    output::printf("  ==> DF Tensor (by Rob Parrish) <==\n\n");
@@ -83,6 +85,7 @@ void DFTensor::print_header()
     //auxiliary_->print_by_level(outfile,print_);
     //fflush(outfile);
 }
+
 void DFTensor::build_metric()
 {
     std::shared_ptr<FittingMetric> met(new FittingMetric(auxiliary_, true));
@@ -93,10 +96,14 @@ void DFTensor::build_metric()
         //metric_->print();
     }
 }
+
 SharedMatrix DFTensor::Qso()
 {
-    SharedMatrix B(new Matrix("Bso", naux_, nso_ * nso_));
-    SharedMatrix A(new Matrix("Aso", naux_, nso_ * nso_));
+    //! \todo nso vs nbf vs nao
+    int nso = primary_->nbf();
+
+    SharedMatrix B(new Matrix("Bso", naux_, nso * nso));
+    SharedMatrix A(new Matrix("Aso", naux_, nso * nso));
     double** Ap = A->pointer();
     double** Bp = B->pointer();
     double** Jp = metric_->pointer();
@@ -133,7 +140,7 @@ SharedMatrix DFTensor::Qso()
                 for (int p = 0, index = 0; p < np; p++) {
                     for (int m = 0; m < nm; m++) {
                         for (int n = 0; n < nn; n++, index++) {
-                            Bp[p + pstart][(m + mstart) * nso_ + (n + nstart)] = buffer[index];
+                            Bp[p + pstart][(m + mstart) * nso + (n + nstart)] = buffer[index];
                         }
                     }
                 }
@@ -141,8 +148,8 @@ SharedMatrix DFTensor::Qso()
         }
     }
 
-    C_DGEMM('N','N',naux_, nso_ * nso_, naux_, 1.0, Jp[0], naux_, Bp[0], nso_ * nso_, 0.0,
-        Ap[0], nso_ * nso_);
+    C_DGEMM('N','N',naux_, nso * nso, naux_, 1.0, Jp[0], naux_, Bp[0], nso * nso, 0.0,
+        Ap[0], nso * nso);
 
     if (debug_) {
         //metric_->print();

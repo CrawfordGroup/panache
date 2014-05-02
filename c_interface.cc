@@ -8,7 +8,7 @@ extern "C" {
 
 
 
-    double * C_QAO(int ncenters, int nao, int nmo,
+    double * C_QAO(int ncenters,
                  C_AtomCenter * atoms,
                  int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                  int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
@@ -19,17 +19,13 @@ extern "C" {
 
 
         // Construct the basis set info
-        std::shared_ptr<panache::BasisSet> primaryBasis = panache::BasisSetFromArrays(molecule,
-                                                                                      ncenters,
-                                                                                      primary_nshellspercenter,
-                                                                                      primary_shells);
+        auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
+                                                        primary_nshellspercenter, primary_shells);
 
-        std::shared_ptr<panache::BasisSet> auxBasis = panache::BasisSetFromArrays(molecule,
-                                                                                  ncenters,
-                                                                                  aux_nshellspercenter,
-                                                                                  aux_shells);
+        auto auxBasis = panache::BasisSetFromArrays(molecule, ncenters,
+                                                    aux_nshellspercenter, aux_shells);
 
-        panache::DFTensor dft(primaryBasis, auxBasis, nao, nmo);
+        panache::DFTensor dft(primaryBasis, auxBasis);
         auto mat = dft.Qso();
 
         // convert the resulting matrix

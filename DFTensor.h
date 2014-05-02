@@ -49,11 +49,6 @@ protected:
     /// Symmetric inverse fitting metric
     SharedMatrix metric_;
 
-    /// Number of AO primary functions
-    int nso_;
-    /// Number of MO primary functions
-    int nmo_;
-
     /// Number of grid points
     int naux_;
 
@@ -64,8 +59,8 @@ protected:
 public:
 
     DFTensor(std::shared_ptr<BasisSet> primary,
-                   std::shared_ptr<BasisSet> auxiliary,
-                   int nso, int nmo); 
+                   std::shared_ptr<BasisSet> auxiliary);
+
     ~DFTensor();
 
     SharedMatrix Qso();
