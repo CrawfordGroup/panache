@@ -18,7 +18,7 @@ ENDMACRO(PATH_TO_BOOL PATHVAR BOOLVAR)
 
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
-add_definitions("--std=c++11 -DFC_SYMBOL=2 -g -O0")
+add_definitions("--std=c++11 -DFC_SYMBOL=2 -DPANACHE_DEVELOPER_GENERATE -g -O0")
 
 
 # PANACHE uses the 'restrict' keyword for optimization

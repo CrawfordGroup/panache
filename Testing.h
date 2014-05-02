@@ -59,6 +59,14 @@ public:
 
 
 
+
+
+typedef std::runtime_error TestingSanityException; //!< Used for internal checks of the TestingInfo class
+
+
+
+
+
 /*! \brief A object containing a test for a single molecule/basis
  *         set.
  *
@@ -152,6 +160,9 @@ private:
         }
     };
 
+    typedef TestResult<double> DTestResult;  //!< Test result for a double type
+    typedef TestResult<int> ITestResult;     //!< Test result for a (signed) integer type
+
 
     /*! \brief Holds information for a test of a single basis set conversion
      * 
@@ -160,15 +171,15 @@ private:
      */
     struct BasisTest
     {
-        TestResult<int> nshell;    //!<  The total number of shells
-        TestResult<int> nprim;     //!<  The total number of primitives
+        ITestResult nshell;    //!<  The total number of shells
+        ITestResult nprim;     //!<  The total number of primitives
 
-        vector<TestResult<int>> center_nshell;  //!< The number of shells on each center
-        vector<TestResult<int>> shell_nprim;    //!< The number of primitives in each shell
-        vector<TestResult<int>> shell_am;       //!< Angular momentum of each shell 
-        vector<TestResult<int>> shell_ispure;   //!< Is pure or not
-        vector<TestResult<double>> exp;         //!< The exponents of the primitives
-        vector<TestResult<double>> coef;        //!< Contraction coefficients of the primitives
+        vector<ITestResult> center_nshell;  //!< The number of shells on each center
+        vector<ITestResult> shell_nprim;    //!< The number of primitives in each shell
+        vector<ITestResult> shell_am;       //!< Angular momentum of each shell 
+        vector<ITestResult> shell_ispure;   //!< Is pure or not
+        vector<DTestResult> exp;         //!< The exponents of the primitives
+        vector<DTestResult> coef;        //!< Contraction coefficients of the primitives
     };
 
 
@@ -179,9 +190,9 @@ private:
      */ 
     struct MoleculeTest
     {
-        TestResult<int> ncenters;       //!< Number of centers in the molecule
-        vector<TestResult<double>> Z;   //!< Z-number of each center
-        vector<TestResult<double>> mass; //!< Mass of each center
+        ITestResult ncenters;       //!< Number of centers in the molecule
+        vector<DTestResult> Z;   //!< Z-number of each center
+        vector<DTestResult> mass; //!< Mass of each center
 
         /*! \brief XYZ coordinates
          *
@@ -194,7 +205,7 @@ private:
          * xyz[2][4] // z coordinate of center 4
          * \endcode
          */ 
-        array<vector<TestResult<double>>, 3> xyz; 
+        array<vector<DTestResult>, 3> xyz; 
     };
 
 
@@ -375,12 +386,10 @@ private:
      * \param [in] nshells The number of shells in the basis set
      * \param [in] nshellspercenter The number of shells on each center
      * \param [in] shells The information for each shell
-     * \param [in] test A BasisTest object to test
+     * \param [in] test A BasisTest object to place the results of this run
      */
-    void TestBasisConversion(int nshells,
-                             int * nshellspercenter,
-                             C_ShellInfo * shells,
-                             BasisTest & test);
+    void TestBasisConversion(int nshells, int * nshellspercenter, C_ShellInfo * shells, BasisTest & test);
+
 
 
     /*! \brief Prints the results of a conversion of a single basis set
@@ -407,13 +416,53 @@ private:
 
 
 public:
+    /*! \brief Constructor
+     *
+     *  \param [in] testname A descriptive name for the test (usually "molecule basis")
+     *  \param [in] dir A directory containing the test files
+     */
     TestInfo(const std::string & testname, const std::string & dir);
 
+    /*! \brief Test conversion of C arrays into BasisSet objects
+     *
+     *  This tests both the primary and auxiliary basis sets.
+     */
     void TestBasisConversion(void);
+
+
+    /*! \brief Test conversion of C arrays into Molecule objects
+     */
     void TestMoleculeConversion(void);
+
+
+    /*! \brief Print the results of all the tests.
+     *
+     *  Be sure to run them first!
+     *
+     *  \param [in] out Stream to print the results to
+     *  \param [in] verbose Be verbose about everything
+     *  \return The number of failed tests
+     */
     int PrintResults(std::ostream & out, bool verbose = false); 
 
+
+
+    #ifdef PANACHE_DEVELOPER_GENERATE
+    /*! \brief Generate some test files
+     *
+     * Generates files related to matrix elements and ERI values
+     */ 
+    void Generate(void);
+    #endif
+
+
+
     ~TestInfo();
+
+
+
+
+
 
     ///////////////////////////////////////////////////////////////////
     // used only by me to bootstrap testing using information from psi
@@ -447,9 +496,6 @@ public:
     ///////////////////////////////////////////////////////////////////
 
 };
-
-
-
 
 }
 } //close namespace panache::testing

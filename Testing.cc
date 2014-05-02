@@ -3,6 +3,7 @@
 
 #include "Testing.h"
 #include "c_convert.h"
+#include "DFTensor.h"
 
 using std::string;
 using std::ifstream;
@@ -15,6 +16,9 @@ namespace testing
 {
 
 
+// Note - exceptions are turned on for the ifstream object
+// so that any parsing errors just throw an exeption. Catch those,
+// and throw a TestingParserException
 int TestInfo::ReadBasisFile(const string & filename,
                             int * &nshellspercenter,
                             C_ShellInfo * &shells,
@@ -23,63 +27,60 @@ int TestInfo::ReadBasisFile(const string & filename,
     ifstream f(filename.c_str());
 
     if(!f.is_open())
-        throw TestingParserException("Cannot open file!", filename);
+        throw TestingParserException("Cannot open basis file!", filename);
 
-    f.exceptions(std::ifstream::failbit | 
+    f.exceptions(std::ifstream::failbit |
                  std::ifstream::badbit  |
                  std::ifstream::eofbit);
 
-
-    int ncenters, nshells;
-    f >> nshells >> ncenters;
-
-    test.nshell.set(nshells);
-
-    //std::cout << "Read: nshells = " << nshells << " ncenters = " << ncenters << "\n";
-
-    nshellspercenter = new int[ncenters];
-    for(int i = 0; i < ncenters; i++)
+    try
     {
-        f >> nshellspercenter[i];
-        test.center_nshell.push_back(TestResult<int>(nshellspercenter[i]));
-        //std::cout << "   nshellspercenter[" << i << "] = " << nshellspercenter[i] << "\n";
-    }
+        int ncenters, nshells;
+        f >> nshells >> ncenters;
 
+        test.nshell.set(nshells);
 
-    shells = new C_ShellInfo[nshells];
-    int dum; // holds the shell index. Not needed
-    int totalnprim = 0;
-
-    for(int i = 0; i < nshells; i++)
-    {
-        f >> dum >> shells[i].nprim >> shells[i].am >> shells[i].ispure;
-        test.shell_nprim.push_back(TestResult<int>(shells[i].nprim));
-        test.shell_am.push_back(TestResult<int>(shells[i].am));
-        test.shell_ispure.push_back(TestResult<int>(shells[i].ispure));
-
-        /*
-        std::cout << "Shell " << i << " nprim = " << shells[i].nprim
-                                   << " am = " << shells[i].am
-                                   << " ispure = " << shells[i].ispure << "\n";
-        */
-
-        shells[i].coef = new double[shells[i].nprim];
-        shells[i].exp = new double[shells[i].nprim];
-
-        for(int j = 0; j < shells[i].nprim; j++)
+        nshellspercenter = new int[ncenters];
+        for(int i = 0; i < ncenters; i++)
         {
-            f >> shells[i].coef[j] >> shells[i].exp[j];
-            test.exp.push_back(TestResult<double>(shells[i].exp[j], TEST_EXPONENT_THRESHOLD));
-            test.coef.push_back(TestResult<double>(shells[i].coef[j], TEST_COEFFICIENT_THRESHOLD));
-            totalnprim++;
-            //std::cout << "     exp: " << shells[i].exp[j] << " coef " << shells[i].coef[j] << "\n";
+            f >> nshellspercenter[i];
+            test.center_nshell.push_back(ITestResult(nshellspercenter[i]));
         }
 
+
+        shells = new C_ShellInfo[nshells];
+
+        int dum; // holds the shell index. Not needed
+        int totalnprim = 0;
+
+        for(int i = 0; i < nshells; i++)
+        {
+            f >> dum >> shells[i].nprim >> shells[i].am >> shells[i].ispure;
+            test.shell_nprim.push_back(ITestResult(shells[i].nprim));
+            test.shell_am.push_back(ITestResult(shells[i].am));
+            test.shell_ispure.push_back(ITestResult(shells[i].ispure));
+
+            shells[i].coef = new double[shells[i].nprim];
+            shells[i].exp = new double[shells[i].nprim];
+
+            for(int j = 0; j < shells[i].nprim; j++)
+            {
+                f >> shells[i].coef[j] >> shells[i].exp[j];
+                test.exp.push_back(DTestResult(shells[i].exp[j], TEST_EXPONENT_THRESHOLD));
+                test.coef.push_back(DTestResult(shells[i].coef[j], TEST_COEFFICIENT_THRESHOLD));
+                totalnprim++;
+            }
+
+        }
+
+        test.nprim.set(totalnprim);
+
+        return ncenters;
     }
-
-    test.nprim.set(totalnprim);
-
-    return ncenters;
+    catch(...)
+    {
+        throw TestingParserException("Error parsing basis file", filename);
+    }
 }
 
 int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, MoleculeTest & test)
@@ -89,38 +90,45 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
     if(!f.is_open())
         throw TestingParserException("Cannot open file!", filename);
 
-    f.exceptions(std::ifstream::failbit | 
+    f.exceptions(std::ifstream::failbit |
                  std::ifstream::badbit  |
                  std::ifstream::eofbit);
-
-    int ncenters;
-    f >> ncenters;
-
-    test.ncenters.set(ncenters);
-
-    atoms = new C_AtomCenter[ncenters];
-
-    for(int i = 0; i < ncenters; i++)
+    try
     {
-        f.ignore(); // ignore the newline
-        char * s = new char[8];
-        f.get(s, 4, ' ');
-        atoms[i].symbol = s;
 
-        f >> atoms[i].Z
-          >> atoms[i].center[0]
-          >> atoms[i].center[1]
-          >> atoms[i].center[2]
-          >> atoms[i].mass;
+        int ncenters;
+        f >> ncenters;
 
-        test.xyz[0].push_back(TestResult<double>(atoms[i].center[0], TEST_MOLECULE_XYZ_THRESHOLD));
-        test.xyz[1].push_back(TestResult<double>(atoms[i].center[1], TEST_MOLECULE_XYZ_THRESHOLD));
-        test.xyz[2].push_back(TestResult<double>(atoms[i].center[2], TEST_MOLECULE_XYZ_THRESHOLD));
-        test.Z.push_back(TestResult<double>(atoms[i].Z, TEST_MOLECULE_Z_THRESHOLD));
-        test.mass.push_back(TestResult<double>(atoms[i].mass, TEST_MOLECULE_MASS_THRESHOLD));
+        test.ncenters.set(ncenters);
+
+        atoms = new C_AtomCenter[ncenters];
+
+        for(int i = 0; i < ncenters; i++)
+        {
+            f.ignore(); // ignore the newline
+            char * s = new char[8];
+            f.get(s, 4, ' ');
+            atoms[i].symbol = s;
+
+            f >> atoms[i].Z
+              >> atoms[i].center[0]
+              >> atoms[i].center[1]
+              >> atoms[i].center[2]
+              >> atoms[i].mass;
+
+            test.xyz[0].push_back(DTestResult(atoms[i].center[0], TEST_MOLECULE_XYZ_THRESHOLD));
+            test.xyz[1].push_back(DTestResult(atoms[i].center[1], TEST_MOLECULE_XYZ_THRESHOLD));
+            test.xyz[2].push_back(DTestResult(atoms[i].center[2], TEST_MOLECULE_XYZ_THRESHOLD));
+            test.Z.push_back(DTestResult(atoms[i].Z, TEST_MOLECULE_Z_THRESHOLD));
+            test.mass.push_back(DTestResult(atoms[i].mass, TEST_MOLECULE_MASS_THRESHOLD));
+        }
+
+        return ncenters;
     }
-
-    return ncenters;
+    catch(...)
+    {
+        throw TestingParserException("Error parsing molecule file", filename);
+    }
 }
 
 
@@ -135,10 +143,21 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     aux_basis_filename.append("basis.aux");
     molecule_filename.append("geometry");
 
+    // Read in the molecule
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
-    ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
-    ReadBasisFile(aux_basis_filename, aux_nshellspercenter_, aux_shells_, aux_test_);
 
+    // Read in the basis set information 
+    int pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
+    int acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
+
+    
+    // Make sure all files agree on the number of centers
+    if(pcenters != acenters || pcenters != ncenters_)
+        throw TestingSanityException("Error - not all files agree on the number of centers!");
+
+
+    // We don't really read in the number of shells, but they can be
+    // deduced from the number of centers and number of shells per center
     primary_nshells_ = aux_nshells_ = 0;
     primary_nprim_ = aux_nprim_ = 0;
 
@@ -148,6 +167,7 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
         aux_nshells_ += aux_nshellspercenter_[i];
     }
 
+    // Same as above, but we can get the number of primitives
     for(int i = 0; i < primary_nshells_; i++)
         primary_nprim_ += primary_shells_[i].nprim;
 
@@ -184,16 +204,10 @@ TestInfo::~TestInfo()
 }
 
 
-void TestInfo::TestBasisConversion(int nshells,
-                                   int * nshellspercenter,
-                                   C_ShellInfo * shells,
-                                   BasisTest & test)
+void TestInfo::TestBasisConversion(int nshells, int * nshellspercenter, C_ShellInfo * shells, BasisTest & test)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    auto basis = BasisSetFromArrays(mol,
-                                    ncenters_,
-                                    nshellspercenter,
-                                    shells);
+    auto basis = BasisSetFromArrays(mol, ncenters_, nshellspercenter, shells);
 
     test.nprim.set_thisrun(basis->nprimitive());
     test.nshell.set_thisrun(basis->nshell());
@@ -217,24 +231,19 @@ void TestInfo::TestBasisConversion(int nshells,
     }
 }
 
+
 void TestInfo::TestBasisConversion(void)
 {
-    TestBasisConversion(primary_nshells_,
-                        primary_nshellspercenter_,
-                        primary_shells_,
-                        primary_test_);    
-    TestBasisConversion(aux_nshells_,
-                        aux_nshellspercenter_,
-                        aux_shells_,
-                        aux_test_);    
-
+    TestBasisConversion(primary_nshells_, primary_nshellspercenter_, primary_shells_, primary_test_);
+    TestBasisConversion(aux_nshells_,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
 }
+
 
 void TestInfo::TestMoleculeConversion(void)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
     molecule_test_.ncenters.set_thisrun(mol->natom());
-    
+
     for(int i = 0; i < mol->natom(); i++)
     {
         // at() will throw exception on out-of-bounds
@@ -248,9 +257,9 @@ void TestInfo::TestMoleculeConversion(void)
 
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
-                                 int nshells, int nprim,
-                                 const BasisTest & test,
-                                 bool verbose)
+                                int nshells, int nprim,
+                                const BasisTest & test,
+                                bool verbose)
 {
     int failures = 0;
 
@@ -294,14 +303,14 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
         stringstream ss;
         ss << "Exponent (Primitive " << i << ")";
         failures +=  Test(out, ss.str(), test.exp.at(i));
-    } 
+    }
 
     for(int i = 0; i < nprim; i++)
     {
         stringstream ss;
         ss << "Coefficient (Primitive " << i << ")";
         failures +=  Test(out, ss.str(), test.coef.at(i));
-    } 
+    }
 
 
     out << "\n";
@@ -313,8 +322,8 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
 
     out << "\n";
     out << "***********************************************************************\n";
-   
-    return failures; 
+
+    return failures;
 }
 
 
@@ -359,10 +368,15 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
     out << "\n";
     out << "***********************************************************************\n";
-    failures += mol_failures; 
+    failures += mol_failures;
 
+
+
+    ////////////////////////////////////////////////////////////////
+    // Call the separate function for the two different basis sets
+    ////////////////////////////////////////////////////////////////
     out << "\n\n\n";
-    
+
     failures += PrintBasisResults(out, "Primary", primary_nshells_, primary_nprim_,
                                   primary_test_, verbose);
     out << "\n\n\n";
@@ -371,6 +385,9 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
                                   aux_test_, verbose);
 
 
+    ////////////////////////////////////////////////////////////////
+    // Overall results
+    ////////////////////////////////////////////////////////////////
     out << "\n\n";
     out << "=============================================================\n";
     out << "= OVERALL RESULT: " << (failures ? "FAIL" : "PASS");
@@ -380,13 +397,25 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
     out << "\n";
     out << "=============================================================\n";
-    out << "\n"; 
+    out << "\n";
 
     return failures;
 }
 
 
+#ifdef PANACHE_DEVELOPER_GENERATE
+void TestInfo::Generate(void)
+{
+    auto mol = MoleculeFromArrays(ncenters_, atoms_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+
+    DFTensor dft(primary, aux);    
+
+}
+#endif
+
+
 }
 } //close namespace panache::testing
-
 
