@@ -33,7 +33,7 @@ int TestInfo::ReadBasisFile(const string & filename,
     int ncenters, nshells;
     f >> nshells >> ncenters;
 
-    test.total_nshell.set(nshells);
+    test.nshell.set(nshells);
 
     //std::cout << "Read: nshells = " << nshells << " ncenters = " << ncenters << "\n";
 
@@ -77,7 +77,7 @@ int TestInfo::ReadBasisFile(const string & filename,
 
     }
 
-    test.total_nprim.set(totalnprim);
+    test.nprim.set(totalnprim);
 
     return ncenters;
 }
@@ -96,7 +96,7 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
     int ncenters;
     f >> ncenters;
 
-    test.total_ncenters.set(ncenters);
+    test.ncenters.set(ncenters);
 
     atoms = new C_AtomCenter[ncenters];
 
@@ -195,23 +195,23 @@ void TestInfo::TestBasisConversion(int nshells,
                                     nshellspercenter,
                                     shells);
 
-    test.total_nprim.set_result(basis->nprimitive());
-    test.total_nshell.set_result(basis->nshell());
+    test.nprim.set_thisrun(basis->nprimitive());
+    test.nshell.set_thisrun(basis->nshell());
 
     for(int i = 0; i < ncenters_; i++)
-        test.center_nshell.at(i).set_result(basis->nshell_on_center(i));
+        test.center_nshell.at(i).set_thisrun(basis->nshell_on_center(i));
 
     int counter = 0;
     for(int i = 0; i < nshells; i++)
     {
-        test.shell_nprim.at(i).set_result(basis->shell(i).nprimitive());
-        test.shell_am.at(i).set_result(basis->shell(i).am());
-        test.shell_ispure.at(i).set_result(basis->shell(i).is_pure());
+        test.shell_nprim.at(i).set_thisrun(basis->shell(i).nprimitive());
+        test.shell_am.at(i).set_thisrun(basis->shell(i).am());
+        test.shell_ispure.at(i).set_thisrun(basis->shell(i).is_pure());
 
         for(int j = 0; j < basis->shell(i).nprimitive(); j++)
         {
-            test.exp.at(counter).set_result(basis->shell(i).exp(j));
-            test.coef.at(counter).set_result(basis->shell(i).original_coef(j));
+            test.exp.at(counter).set_thisrun(basis->shell(i).exp(j));
+            test.coef.at(counter).set_thisrun(basis->shell(i).original_coef(j));
             counter++;
         }
     }
@@ -233,23 +233,23 @@ void TestInfo::TestBasisConversion(void)
 void TestInfo::TestMoleculeConversion(void)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    molecule_test_.total_ncenters.set_result(mol->natom());
+    molecule_test_.ncenters.set_thisrun(mol->natom());
     
     for(int i = 0; i < mol->natom(); i++)
     {
         // at() will throw exception on out-of-bounds
-        molecule_test_.xyz[0].at(i).set_result(mol->fx(i));
-        molecule_test_.xyz[1].at(i).set_result(mol->fy(i));
-        molecule_test_.xyz[2].at(i).set_result(mol->fz(i));
-        molecule_test_.Z.at(i).set_result(mol->Z(i));
-        molecule_test_.mass.at(i).set_result(mol->mass(i));
+        molecule_test_.xyz[0].at(i).set_thisrun(mol->fx(i));
+        molecule_test_.xyz[1].at(i).set_thisrun(mol->fy(i));
+        molecule_test_.xyz[2].at(i).set_thisrun(mol->fz(i));
+        molecule_test_.Z.at(i).set_thisrun(mol->Z(i));
+        molecule_test_.mass.at(i).set_thisrun(mol->mass(i));
     }
 }
 
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
                                  int nshells, int nprim,
-                                 BasisTest & test,
+                                 const BasisTest & test,
                                  bool verbose)
 {
     int failures = 0;
@@ -258,8 +258,8 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    failures +=  Test(out, "# of primitives", test.total_nprim);
-    failures +=  Test(out, "# of shells", test.total_nshell);
+    failures +=  Test(out, "# of primitives", test.nprim);
+    failures +=  Test(out, "# of shells", test.nshell);
 
     for(int i = 0; i < ncenters_; i++)
     {
@@ -330,7 +330,7 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    mol_failures += Test(out, "# of centers", molecule_test_.total_ncenters);
+    mol_failures += Test(out, "# of centers", molecule_test_.ncenters);
 
     for(int i = 0; i < ncenters_; i++)
     {
