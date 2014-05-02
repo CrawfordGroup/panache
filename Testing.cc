@@ -5,6 +5,15 @@
 #include "c_convert.h"
 #include "DFTensor.h"
 
+#ifdef PANACHE_DEVELOPER_GENERATE
+#include <utility>
+#include <algorithm>
+#include <array>
+#include <iomanip>
+using std::pair;
+using std::array;
+#endif
+
 using std::string;
 using std::ifstream;
 using std::stringstream;
@@ -132,25 +141,67 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
 }
 
 
+void TestInfo::ReadMatrixInfo(const string & filename,
+                              MatrixTest & test,
+                              double threshold)
+{
+    ifstream f(filename.c_str());
+
+    if(!f.is_open())
+        throw TestingParserException("Cannot open file!", filename);
+
+    f.exceptions(std::ifstream::failbit |
+                 std::ifstream::badbit  |
+                 std::ifstream::eofbit);
+    try
+    {
+        int nrow, ncol;
+        double sum, checksum;
+
+        f >> nrow >> ncol >> sum >> checksum;
+
+        test.nrow.set(nrow);
+        test.ncol.set(ncol);
+        test.sum.set(sum);
+        test.checksum.set(checksum);
+
+        double val;
+        for(int i = 0; i < 50; i++)
+        {
+            f >> test.elements[i].index >> val;
+            test.elements[i].test.set(val, threshold);
+        }
+    }
+    catch(...)
+    {
+        throw TestingParserException("Error parsing matrix file", filename);
+    }
+}
+
+
 TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     : testname_(testname)
 {
     string primary_basis_filename(dir);
     string aux_basis_filename(dir);
     string molecule_filename(dir);
+    string qso_filename(dir);
 
     primary_basis_filename.append("basis.primary");
     aux_basis_filename.append("basis.aux");
     molecule_filename.append("geometry");
+    qso_filename.append("qso");
 
     // Read in the molecule
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
 
-    // Read in the basis set information 
+    // Read in the basis set information
     int pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
     int acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
 
     
+
+
     // Make sure all files agree on the number of centers
     if(pcenters != acenters || pcenters != ncenters_)
         throw TestingSanityException("Error - not all files agree on the number of centers!");
@@ -174,6 +225,9 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     for(int i = 0; i < aux_nshells_; i++)
         aux_nprim_ += aux_shells_[i].nprim;
 
+
+    // Read in Qso tests
+    ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD);
 }
 
 
@@ -255,6 +309,47 @@ void TestInfo::TestMoleculeConversion(void)
     }
 }
 
+void TestInfo::TestMatrix(SharedMatrix mat, 
+                          MatrixTest & test)
+{
+    //! \todo matrices with > 1 irrep?
+    double * p = &(mat->pointer(0)[0][0]);
+    size_t size = mat->colspi()[0] * mat->rowspi()[0];
+
+    test.nrow.set_thisrun(mat->rowspi()[0]);
+    test.ncol.set_thisrun(mat->colspi()[0]);
+
+    double sum = 0;
+    double checksum = 0;
+
+    for(size_t i = 0; i < size; i++)
+    {
+        sum += p[i];
+        checksum += p[i]*static_cast<double>(i);
+    }
+
+    test.sum.set_thisrun(sum);
+    test.checksum.set_thisrun(checksum);
+
+    // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
+    if(test.nrow.check() && test.ncol.check())
+    {
+        for(int i = 0; i < 50; i++)
+            test.elements[i].test.set_thisrun(p[test.elements[i].index]);
+    }
+} 
+
+
+void TestInfo::TestQsoMatrix(void)
+{
+    auto mol = MoleculeFromArrays(ncenters_, atoms_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+
+    DFTensor dft(primary, aux);
+    auto mat = dft.Qso();
+    TestMatrix(mat, qso_test_);
+}
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
                                 int nshells, int nprim,
@@ -327,6 +422,41 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
 }
 
 
+int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
+                                 const MatrixTest & test, bool verbose)
+{
+    int failures = 0;
+
+    out << "Matrix test: " << type << "\n\n";
+
+    PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
+    PrintSeparator(out);
+    failures +=  Test(out, "# of rows", test.nrow);
+    failures +=  Test(out, "# of columns", test.ncol);
+    failures +=  Test(out, "sum", test.sum);
+    failures +=  Test(out, "checksum", test.checksum);
+
+    for(int i = 0; i < 50; i++)
+    {
+        stringstream ss;
+        ss << "Element " << test.elements[i].index;
+        failures +=  Test(out, ss.str(), test.elements[i].test);
+    }
+
+    out << "\n";
+    out << "***********************************************************************\n";
+    out << "Matrix \"" << type << "\" result: " << (failures ? "FAIL" : "PASS");
+
+    if(failures)
+        out << " (" << failures << " failures)";
+
+    out << "\n";
+    out << "***********************************************************************\n";
+
+    return failures;
+}
+
+
 int TestInfo::PrintResults(std::ostream & out, bool verbose)
 {
     int failures = 0;
@@ -386,9 +516,15 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
 
     ////////////////////////////////////////////////////////////////
+    // Matrix testing
+    ////////////////////////////////////////////////////////////////
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QSO", qso_test_);
+
+    ////////////////////////////////////////////////////////////////
     // Overall results
     ////////////////////////////////////////////////////////////////
-    out << "\n\n";
+    out << "\n\n\n";
     out << "=============================================================\n";
     out << "= OVERALL RESULT: " << (failures ? "FAIL" : "PASS");
 
@@ -410,7 +546,44 @@ void TestInfo::Generate(void)
     auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
     auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
 
-    DFTensor dft(primary, aux);    
+
+    DFTensor dft(primary, aux);
+    auto mat = dft.Qso();
+
+    double * p = &(mat->pointer(0)[0][0]);
+    size_t size = mat->colspi()[0] * mat->rowspi()[0];
+
+    double sum = 0;
+    double checksum = 0;
+    array<pair<size_t, double>, 50> largest;
+
+
+    for(size_t i = 0; i < size; i++)
+    {
+        sum += p[i];
+        checksum += p[i]*static_cast<double>(i);
+
+        if(p[i] > largest[0].second)
+        {
+            largest[0].first = i;
+            largest[0].second = p[i];
+            std::sort(largest.begin(), largest.end(), [](pair<size_t, double> p1, pair<size_t, double> p2)
+            {
+                return p1.second < p2.second;
+            });
+        }
+    }
+
+    std::cout << "---------begin QSO data---------\n";
+    std::cout << mat->rowspi(0) << "\n" << mat->colspi(0) << "\n";
+
+    // to return the precision back to normal
+    auto prec = std::cout.precision();
+    std::cout << std::setprecision(20) << sum << "\n";
+    std::cout << checksum << "\n";
+    for(auto & it : largest)
+        std::cout << it.first << it.second << "\n";
+    std::cout.precision(prec);
 
 }
 #endif
@@ -418,4 +591,5 @@ void TestInfo::Generate(void)
 
 }
 } //close namespace panache::testing
+
 

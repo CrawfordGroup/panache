@@ -6,6 +6,7 @@
 #define TEST_MOLECULE_XYZ_THRESHOLD 1e-11
 #define TEST_MOLECULE_Z_THRESHOLD 1e-11
 #define TEST_MOLECULE_MASS_THRESHOLD 1e-11
+#define TEST_QSO_ELEMENT_THRESHOLD 1e-8
 
 #include <stdexcept>
 #include <string>
@@ -15,6 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <memory>
 #include "c_interface.h"
 
 using std::vector;
@@ -23,6 +25,10 @@ using std::array;
 
 namespace panache
 {
+
+class Matrix;
+typedef std::shared_ptr<Matrix> SharedMatrix;
+
 namespace testing
 {
 
@@ -209,11 +215,35 @@ private:
     };
 
 
+
+    /*! \brief Holds information for testing a single matrix element
+     */
+    struct MatrixElementTest
+    {
+        size_t index;   //!< Index of the element
+        DTestResult test; //!< Value at that index
+    };
+
+
+    /*! \brief Holds information for testing a matrix
+     */ 
+    struct MatrixTest
+    {
+        ITestResult nrow; //!< Number of rows
+        ITestResult ncol; //!< Number of columns
+        DTestResult sum; //!< Sum of the Qso matrix
+        DTestResult checksum; //!< Checksum of the Qso matrix
+        array<MatrixElementTest, 50> elements; //!< 50 elements of the Qso matrix
+    };
+    
+
     string testname_;  //!< Name of the test (usually "molecule basis")
 
     BasisTest primary_test_;    //!< Tests the primary basis set
     BasisTest aux_test_;        //!< Tests the auxiliary basis set
     MoleculeTest molecule_test_; //!< Tests the molecule
+
+    MatrixTest qso_test_; //!< Tests the Qso matrix
 
 
     // These are used internally to know what to test, etc
@@ -284,6 +314,18 @@ private:
                             C_AtomCenter * &atoms,
                             MoleculeTest & test);
 
+
+
+    /*! \brief Reads matrix information a file
+     *
+     *  Reads the sum, checksum, and list of elements to test (with corresponding values).
+     *
+     *  \param [in] filename The full path to the file
+     *  \param [out] test A MatrixTest object to put the test information in
+     *  \prarm [in] threshold The desired threshold for checking matrix elements
+     */
+     static void ReadMatrixInfo(const string & filename,
+                                MatrixTest & test, double threshold);
 
 
     /*! \brief Prints a row in the results table (a single test)
@@ -407,7 +449,34 @@ private:
     int PrintBasisResults(std::ostream & out, const string & type,
                           int nshells, int nprim,
                           const BasisTest & test,
-                          bool verbose);
+                          bool verbose = false);
+
+
+
+    /*! \brief Prints the results of a matrix test
+     *
+     * Split out into its own function since we may test multiple matrices.
+     *
+     * \param [in] out The stream to print to
+     * \param [in] type The type of basis ("qso", etc)
+     * \param [in] test A MatrixTest object to test
+     * \param [in] verbose Verbose results
+     */
+    int PrintMatrixResults(std::ostream & out, const string & type,
+                           const MatrixTest & test, bool verbose = false);
+
+
+    /*! \brief Tests a matrix
+     *
+     * The test is carried out on the matrix as if it were an array, since the matrix is stored
+     * in contiguous memory.
+     *
+     * \param [in] mat The matrix to test
+     * \param [in] test The MatrixTest object to put the results in
+     */
+    static void TestMatrix(SharedMatrix mat, 
+                           MatrixTest & test);
+
 
 
     // disable copying and assignment
@@ -433,6 +502,11 @@ public:
     /*! \brief Test conversion of C arrays into Molecule objects
      */
     void TestMoleculeConversion(void);
+
+
+    /*! \brief Tests the Qso Matrix
+     */
+    void TestQsoMatrix(void);
 
 
     /*! \brief Print the results of all the tests.
