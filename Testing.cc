@@ -1,4 +1,3 @@
-#include <stdexcept>
 #include <fstream>
 #include <sstream>
 
@@ -15,14 +14,21 @@ namespace panache
 namespace testing
 {
 
+
 int TestInfo::ReadBasisFile(const string & filename,
                             int * &nshellspercenter,
                             C_ShellInfo * &shells,
                             TestInfo::BasisTest & test)
 {
     ifstream f(filename.c_str());
+
     if(!f.is_open())
-        throw std::runtime_error("Cannot open testing file!");
+        throw TestingParserException("Cannot open file!", filename);
+
+    f.exceptions(std::ifstream::failbit | 
+                 std::ifstream::badbit  |
+                 std::ifstream::eofbit);
+
 
     int ncenters, nshells;
     f >> nshells >> ncenters;
@@ -79,8 +85,13 @@ int TestInfo::ReadBasisFile(const string & filename,
 int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, MoleculeTest & test)
 {
     ifstream f(filename.c_str());
+
     if(!f.is_open())
-        throw std::runtime_error("Cannot open testing file!");
+        throw TestingParserException("Cannot open file!", filename);
+
+    f.exceptions(std::ifstream::failbit | 
+                 std::ifstream::badbit  |
+                 std::ifstream::eofbit);
 
     int ncenters;
     f >> ncenters;

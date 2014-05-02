@@ -16,7 +16,11 @@ int main(void)
 
     catch(const exception & ex)
     {
-        cout << "\nCaught exception! what() = " << ex.what() << "\n\n";
+        cout << "\n*****************"
+             << "\nCAUGHT EXCEPTION!" 
+             << "\n" << ex.what() 
+             << "\n*****************"
+             << "\n\n";
     }
     
     return 0;

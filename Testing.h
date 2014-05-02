@@ -7,13 +7,14 @@
 #define TEST_MOLECULE_Z_THRESHOLD 1e-11
 #define TEST_MOLECULE_MASS_THRESHOLD 1e-11
 
-
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <cmath>
 #include <array>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include "c_interface.h"
 
 using std::vector;
@@ -25,6 +26,50 @@ namespace panache
 namespace testing
 {
 
+
+/*! \brief An exception class thrown if there 
+ *         is an error parsing a test file
+ */
+class TestingParserException : public std::exception
+{
+private:
+    string str_; //!< Some descriptive string, also containing the filename
+
+public:
+
+    /*! \brief Constructor
+     * 
+     * \param [in] desc Some descriptive string
+     * \param [in] filename The file in which the error occurred
+     */
+    TestingParserException(const std::string & desc, const std::string & filename)
+    {
+        std::stringstream ss;
+        ss << desc << "\nFilename: \'" << filename << "\'"; 
+        str_ = ss.str();
+    }
+
+    /*! \brief Prints the exception information
+     */  
+    virtual const char * what() const noexcept
+    {
+        return str_.c_str(); 
+    }
+};
+
+
+
+/*! \brief A object containing a test for a single molecule/basis
+ *         set.
+ *
+ *   This class tests:
+ *         - Generation of a Molecule object
+ *         - Generation of a BasisSet object
+ *             - Primary basis set
+ *             - Auxiliary basis set
+ *         - Generation of 3-index integrals
+ *         - Generation of the Q matrix
+ */
 class TestInfo
 {
 private:
