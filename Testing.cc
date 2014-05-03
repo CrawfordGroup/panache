@@ -162,8 +162,8 @@ void TestInfo::ReadMatrixInfo(const string & filename,
 
         test.nrow.set(nrow);
         test.ncol.set(ncol);
-        test.sum.set(sum);
-        test.checksum.set(checksum);
+        test.sum.set(sum, threshold);
+        test.checksum.set(checksum, threshold);
 
         double val;
         for(int i = 0; i < 50; i++)
