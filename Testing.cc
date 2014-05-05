@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <iomanip>
+#include <limits>
 using std::pair;
 using std::array;
 #endif
@@ -44,10 +45,13 @@ int TestInfo::ReadBasisFile(const string & filename,
 
     try
     {
-        int ncenters, nshells;
-        f >> nshells >> ncenters;
+        int ncenters, nshells, nbf, nao, nprim;
+        f >> nshells >> nbf >> nao >> nprim >> ncenters;
 
         test.nshell.set(nshells);
+        test.nao.set(nao);
+        test.nbf.set(nbf);
+        test.nprim.set(nprim);
 
         nshellspercenter = new int[ncenters];
         for(int i = 0; i < ncenters; i++)
@@ -82,8 +86,6 @@ int TestInfo::ReadBasisFile(const string & filename,
 
         }
 
-        test.nprim.set(totalnprim);
-
         return ncenters;
     }
     catch(...)
@@ -104,15 +106,26 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
                  std::ifstream::eofbit);
     try
     {
+        int natoms, nallatoms;
+        std::string schoen, fullpg;
 
-        int ncenters;
-        f >> ncenters;
+        f >> natoms >> nallatoms;
+        char * sym = new char[8];
 
-        test.ncenters.set(ncenters);
+        f.ignore(); // ignore space
+        f.get(sym, 4, ' ');
+        test.schoen.set(sym);
 
-        atoms = new C_AtomCenter[ncenters];
+        f.ignore(); // ignore space
+        f.get(sym, 4, ' ');
+        test.fullpg.set(sym);
 
-        for(int i = 0; i < ncenters; i++)
+        test.natom.set(natoms);
+        test.nallatom.set(nallatoms);
+
+        atoms = new C_AtomCenter[nallatoms];
+
+        for(int i = 0; i < nallatoms; i++)
         {
             f.ignore(); // ignore the newline
             char * s = new char[8];
@@ -132,7 +145,7 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
             test.mass.push_back(DTestResult(atoms[i].mass, TEST_MOLECULE_MASS_THRESHOLD));
         }
 
-        return ncenters;
+        return nallatoms;
     }
     catch(...)
     {
@@ -166,7 +179,7 @@ void TestInfo::ReadMatrixInfo(const string & filename,
         test.checksum.set(checksum, threshold);
 
         double val;
-        for(int i = 0; i < 50; i++)
+        for(int i = 0; i < 100; i++)
         {
             f >> test.elements[i].index >> val;
             test.elements[i].test.set(val, threshold);
@@ -194,10 +207,13 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
 
     // Read in the molecule
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
+    std::cout << "ncenters_ 2: " << ncenters_ << "\n";
 
     // Read in the basis set information
     int pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
+    std::cout << "ncenters_ 3: " << ncenters_ << "\n";
     int acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
+    std::cout << "ncenters_ 4: " << ncenters_ << "\n";
 
     
 
@@ -206,8 +222,11 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     if(pcenters != acenters || pcenters != ncenters_)
         throw TestingSanityException("Error - not all files agree on the number of centers!");
 
+    std::cout << "ncenters_ 5: " << ncenters_ << "\n";
 
-    // We don't really read in the number of shells, but they can be
+
+    //! \todo Could be returned from the ReadBasis function (or a pointer passed)
+    // We don't really get back the number of shells, but they can be
     // deduced from the number of centers and number of shells per center
     primary_nshells_ = aux_nshells_ = 0;
     primary_nprim_ = aux_nprim_ = 0;
@@ -217,17 +236,22 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
         primary_nshells_ += primary_nshellspercenter_[i];
         aux_nshells_ += aux_nshellspercenter_[i];
     }
+    std::cout << "ncenters_ 7: " << ncenters_ << "\n";
 
     // Same as above, but we can get the number of primitives
     for(int i = 0; i < primary_nshells_; i++)
         primary_nprim_ += primary_shells_[i].nprim;
 
+    std::cout << "ncenters_ 8: " << ncenters_ << "\n";
+
     for(int i = 0; i < aux_nshells_; i++)
         aux_nprim_ += aux_shells_[i].nprim;
 
+    std::cout << "ncenters_ 9: " << ncenters_ << "\n";
 
     // Read in Qso tests
     ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD);
+    std::cout << "ncenters_ 10: " << ncenters_ << "\n";
 }
 
 
@@ -264,6 +288,8 @@ void TestInfo::TestBasisConversion(int nshells, int * nshellspercenter, C_ShellI
     auto basis = BasisSetFromArrays(mol, ncenters_, nshellspercenter, shells);
 
     test.nprim.set_thisrun(basis->nprimitive());
+    test.nbf.set_thisrun(basis->nbf());
+    test.nao.set_thisrun(basis->nao());
     test.nshell.set_thisrun(basis->nshell());
 
     for(int i = 0; i < ncenters_; i++)
@@ -296,7 +322,10 @@ void TestInfo::TestBasisConversion(void)
 void TestInfo::TestMoleculeConversion(void)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    molecule_test_.ncenters.set_thisrun(mol->natom());
+    molecule_test_.natom.set_thisrun(mol->natom());
+    molecule_test_.nallatom.set_thisrun(mol->nallatom());
+    molecule_test_.schoen.set_thisrun(mol->schoenflies_symbol());
+    molecule_test_.fullpg.set_thisrun(mol->full_point_group());
 
     for(int i = 0; i < mol->natom(); i++)
     {
@@ -364,6 +393,8 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
     PrintSeparator(out);
     failures +=  Test(out, "# of primitives", test.nprim);
     failures +=  Test(out, "# of shells", test.nshell);
+    failures +=  Test(out, "# of ao", test.nao);
+    failures +=  Test(out, "# of bf", test.nbf);
 
     for(int i = 0; i < ncenters_; i++)
     {
@@ -469,7 +500,10 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    mol_failures += Test(out, "# of centers", molecule_test_.ncenters);
+    mol_failures += Test(out, "# of atoms", molecule_test_.natom);
+    mol_failures += Test(out, "# of atoms (+ dummies)", molecule_test_.nallatom);
+    mol_failures += Test(out, "Schoenflies Symbol", molecule_test_.schoen);
+    mol_failures += Test(out, "Full point group", molecule_test_.fullpg);
 
     for(int i = 0; i < ncenters_; i++)
     {

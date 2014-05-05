@@ -33,7 +33,7 @@ namespace testing
 {
 
 
-/*! \brief An exception class thrown if there 
+/*! \brief An exception class thrown if there
  *         is an error parsing a test file
  */
 class TestingParserException : public std::exception
@@ -44,22 +44,22 @@ private:
 
 public:
     /*! \brief Constructor
-     * 
+     *
      * \param [in] desc Some descriptive string
      * \param [in] filename The file in which the error occurred
      */
     TestingParserException(const std::string & desc, const std::string & filename)
     {
         std::stringstream ss;
-        ss << desc << "\nFilename: \'" << filename << "\'"; 
+        ss << desc << "\nFilename: \'" << filename << "\'";
         str_ = ss.str();
     }
 
     /*! \brief Prints the exception information
-     */  
+     */
     virtual const char * what() const noexcept
     {
-        return str_.c_str(); 
+        return str_.c_str();
     }
 };
 
@@ -68,6 +68,153 @@ public:
 
 
 typedef std::runtime_error TestingSanityException; //!< Used for internal checks of the TestingInfo class
+
+
+
+
+
+/*! \brief Holds the info for a single test
+ *
+ *  Each object will hold the information for testing a single number, the
+ *  type of which depends on data_type
+ *
+ *  \tparam data_type The type of data point. Usually int or double.
+ */
+template<typename data_type>
+struct TestResult
+{
+    data_type reference;     //!< The reference value to be compared against
+    data_type thisrun;       //!< The data actually obtained
+    data_type diff;          //!< The difference
+    data_type threshold;     //!< The threshold above which the test fails
+
+
+    /*! \brief Constructor
+     *
+     * Takes an optional threshold, which by default is zero.
+     *
+     * \param [in] ref The reference (expected) value
+     * \param [in] thr The threshold above which the test would fail.
+     */
+    TestResult(data_type ref, data_type thr = static_cast<data_type>(0))
+    {
+        diff = thisrun = static_cast<data_type>(0);
+        set(ref, thr);
+    }
+
+
+    /*! \brief Default constructor
+     */
+    TestResult()
+    {
+        reference = thisrun = diff = threshold = static_cast<data_type>(0);
+    }
+
+
+    /*! \brief Sets the reference and threshold information
+     *
+     *  Unless specified, the threshold is zero.
+     */
+    void set(data_type ref,
+             data_type thr = static_cast<data_type>(0))
+    {
+        reference = ref;
+        threshold = thr;
+        diff = thisrun = static_cast<data_type>(0);
+    }
+
+
+    /*! \brief Check the test to see if it passes
+     *
+     * \return True if the test passes (difference is less
+     *         than the threshold), false otherwise
+     */
+    bool check(void) const
+    {
+        if(diff > threshold)
+            return false;
+        else
+            return true;
+    }
+
+
+    /*! \brief Set the results obtained for a run
+     *
+     *  Will also calculate the (absolute) difference.
+     */
+    void set_thisrun(data_type r)
+    {
+        thisrun = r;
+        diff = (thisrun - reference);
+        if(diff < 0)
+            diff *= static_cast<data_type>(-1);
+    }
+};
+
+
+/*! \brief Specialization of TestResult for string comparison
+ */
+template<>
+struct TestResult<std::string>
+{
+    std::string reference;     //!< The reference string to be compared against
+    std::string thisrun;       //!< The string actually obtained
+    bool diff;                 //!< True if different, false if same
+
+
+    /*! \brief Constructor
+     *
+     * \param [in] ref The reference (expected) string
+     */
+    TestResult(std::string ref)
+    {
+        diff = false;
+        set(ref);
+    }
+
+
+    /*! \brief Default constructor
+     */
+    TestResult()
+    {
+        reference = thisrun = "";
+        diff = false;
+    }
+
+
+    /*! \brief Sets the reference string
+     */
+    void set(std::string ref)
+    {
+        reference = ref;
+        diff = false;
+    }
+
+
+    /*! \brief Check the test to see if it passes
+     *
+     * \return True if the test passes (strings are the same), false otherwise
+     */
+    bool check(void) const
+    {
+        return (!diff);
+    }
+
+
+    /*! \brief Set the results obtained for a run
+     *
+     *  Will also check for string differences
+     */
+    void set_thisrun(std::string r)
+    {
+        diff = (thisrun != reference);
+    }
+};
+
+
+typedef TestResult<double> DTestResult;  //!< Test result for a double type
+typedef TestResult<int> ITestResult;     //!< Test result for a (signed) integer type
+typedef TestResult<std::string> STestResult;     //!< Test result for a string
 
 
 
@@ -88,101 +235,23 @@ class TestInfo
 {
 private:
 
-    /*! \brief Holds the info for a single test
-     *
-     *  Each object will hold the information for testing a single number, the
-     *  type of which depends on data_type
-     *
-     *  \tparam data_type The type of data point. Usually int or double. 
-     */
-    template<typename data_type>
-    struct TestResult
-    {
-        data_type reference;     //!< The reference value to be compared against
-        data_type thisrun;       //!< The data actually obtained
-        data_type diff;          //!< The difference
-        data_type threshold;     //!< The threshold above which the test fails
-
-
-        /*! \brief Constructor
-         *
-         * Takes an optional threshold, which by default is zero.
-         *
-         * \param [in] ref The reference (expected) value
-         * \param [in] thr The threshold above which the test would fail.
-         */
-        TestResult(data_type ref, data_type thr = static_cast<data_type>(0))
-        {
-            diff = thisrun = static_cast<data_type>(0);
-            set(ref, thr);
-        }
-
-
-        /*! \brief Default constructor
-         */ 
-        TestResult()
-        {
-            reference = thisrun = diff = threshold = static_cast<data_type>(0);
-        }
-
-
-        /*! \brief Sets the reference and threshold information
-         *
-         *  Unless specified, the threshold is zero.
-         */
-        void set(data_type ref,
-                 data_type thr = static_cast<data_type>(0))
-        {
-            reference = ref;
-            threshold = thr;
-            diff = thisrun = static_cast<data_type>(0);
-        }
-
-
-        /*! \brief Check the test to see if it passes
-         *
-         * \return True if the test passes (difference is less 
-         *         than the threshold), false otherwise 
-         */ 
-        bool check(void) const
-        {
-            if(diff > threshold)
-                return false;
-            else
-                return true;
-        }
-
-
-        /*! \brief Set the results obtained for a run
-         *
-         *  Will also calculate the (absolute) difference.
-         */
-        void set_thisrun(data_type r)
-        {
-            thisrun = r;
-            diff = (thisrun - reference);
-            if(diff < 0)
-                diff *= static_cast<data_type>(-1);
-        }
-    };
-
-    typedef TestResult<double> DTestResult;  //!< Test result for a double type
-    typedef TestResult<int> ITestResult;     //!< Test result for a (signed) integer type
 
 
     /*! \brief Holds information for a test of a single basis set conversion
-     * 
+     *
      * The purpose is to test the code that generates a BasisSet object
      * from C arrays or from other information.
      */
     struct BasisTest
     {
         ITestResult nshell;    //!<  The total number of shells
-        ITestResult nprim;     //!<  The total number of primitives
+        ITestResult nbf;       //!<  The total number of basis functions (possibly spherical)
+        ITestResult nao;       //!<  Number of cartesian AOs
+        ITestResult nprim;     //!<  Number of primitives
 
         vector<ITestResult> center_nshell;  //!< The number of shells on each center
         vector<ITestResult> shell_nprim;    //!< The number of primitives in each shell
-        vector<ITestResult> shell_am;       //!< Angular momentum of each shell 
+        vector<ITestResult> shell_am;       //!< Angular momentum of each shell
         vector<ITestResult> shell_ispure;   //!< Is pure or not
         vector<DTestResult> exp;         //!< The exponents of the primitives
         vector<DTestResult> coef;        //!< Contraction coefficients of the primitives
@@ -193,10 +262,13 @@ private:
      *
      * The purpose is to test the code that genrates a Molecule object
      * from C arrays or from other information.
-     */ 
+     */
     struct MoleculeTest
     {
-        ITestResult ncenters;       //!< Number of centers in the molecule
+        ITestResult natom;        //!< Number of centers in the molecule
+        ITestResult nallatom;    //!< Number of centers in the molecule (including dummies)
+        STestResult schoen;      //!< Schoenflies symbol
+        STestResult fullpg;      //!< Full point group symbol
         vector<DTestResult> Z;   //!< Z-number of each center
         vector<DTestResult> mass; //!< Mass of each center
 
@@ -210,8 +282,8 @@ private:
          * xyz[1][0] // y coordinate of center 0
          * xyz[2][4] // z coordinate of center 4
          * \endcode
-         */ 
-        array<vector<DTestResult>, 3> xyz; 
+         */
+        array<vector<DTestResult>, 3> xyz;
     };
 
 
@@ -226,16 +298,16 @@ private:
 
 
     /*! \brief Holds information for testing a matrix
-     */ 
+     */
     struct MatrixTest
     {
         ITestResult nrow; //!< Number of rows
         ITestResult ncol; //!< Number of columns
         DTestResult sum; //!< Sum of the Qso matrix
         DTestResult checksum; //!< Checksum of the Qso matrix
-        array<MatrixElementTest, 50> elements; //!< 50 elements of the Qso matrix
+        array<MatrixElementTest, 100> elements; //!< 100 elements of the Qso matrix
     };
-    
+
 
     string testname_;  //!< Name of the test (usually "molecule basis")
 
@@ -324,8 +396,8 @@ private:
      *  \param [out] test A MatrixTest object to put the test information in
      *  \prarm [in] threshold The desired threshold for checking matrix elements
      */
-     static void ReadMatrixInfo(const string & filename,
-                                MatrixTest & test, double threshold);
+    static void ReadMatrixInfo(const string & filename,
+                               MatrixTest & test, double threshold);
 
 
     /*! \brief Prints a row in the results table (a single test)
@@ -340,12 +412,12 @@ private:
      */
     template<typename T>
     static void PrintRow(std::ostream & out,
-                                const std::string name,
-                                const T & ref,
-                                const T & run,
-                                const T & diff,
-                                const T & thresh,
-                                const std::string & result)
+                         const std::string name,
+                         const T & ref,
+                         const T & run,
+                         const T & diff,
+                         const T & thresh,
+                         const std::string & result)
     {
         out << std::setw(35) << std::left << name;
         out << std::setw(15) << std::left << ref;
@@ -369,12 +441,12 @@ private:
      * \param [in] result String of the result (usually "pass" or "FAIL")
      */
     static void PrintRow(std::ostream & out,
-                                const char * name,
-                                const char * ref,
-                                const char * run,
-                                const char * diff,
-                                const char * thresh,
-                                const char * result)
+                         const char * name,
+                         const char * ref,
+                         const char * run,
+                         const char * diff,
+                         const char * thresh,
+                         const char * result)
     {
         out << std::setw(35) << std::left << name;
         out << std::setw(15) << std::left << ref;
@@ -417,9 +489,28 @@ private:
     }
 
 
+    /*! \brief Override for Test for testing strings
+     *
+     * \param [in] out Stream to print to
+     * \param [in] name A descriptive name of the test
+     * \param [in] test The test to check and print
+     * \return 0 if the test passes, otherwise 1
+     */
+    static int Test(std::ostream & out,
+                    const std::string & name,
+                    const STestResult & test)
+    {
+        const char * pass = test.check() ? "pass" : "FAIL";
+        const std::string diff = test.diff ? "T" : "F";
+        PrintRow(out, name, test.reference, test.thisrun, diff, std::string("-"), pass);
+
+        if(test.check())
+            return 0;
+        else
+            return 1;
+    }
 
 
-    
     /*! \brief Tests the conversion of a single basis set
      *
      * Split out into its own function since we test two basis sets. Information
@@ -474,7 +565,7 @@ private:
      * \param [in] mat The matrix to test
      * \param [in] test The MatrixTest object to put the results in
      */
-    static void TestMatrix(SharedMatrix mat, 
+    static void TestMatrix(SharedMatrix mat,
                            MatrixTest & test);
 
 
@@ -517,17 +608,17 @@ public:
      *  \param [in] verbose Be verbose about everything
      *  \return The number of failed tests
      */
-    int PrintResults(std::ostream & out, bool verbose = false); 
+    int PrintResults(std::ostream & out, bool verbose = false);
 
 
 
-    #ifdef PANACHE_DEVELOPER_GENERATE
+#ifdef PANACHE_DEVELOPER_GENERATE
     /*! \brief Generate some test files
      *
      * Generates files related to matrix elements and ERI values
-     */ 
+     */
     void Generate(void);
-    #endif
+#endif
 
 
 
@@ -575,4 +666,5 @@ public:
 } //close namespace panache::testing
 
 #endif
+
 
