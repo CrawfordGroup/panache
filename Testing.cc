@@ -110,15 +110,12 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
         std::string schoen, fullpg;
 
         f >> natoms >> nallatoms;
-        char * sym = new char[8];
+        f.ignore(); // remove newline
 
-        f.ignore(); // ignore space
-        f.get(sym, 4, ' ');
-        test.schoen.set(sym);
-
-        f.ignore(); // ignore space
-        f.get(sym, 4, ' ');
-        test.fullpg.set(sym);
+        getline(f, schoen);
+        getline(f, fullpg);
+        test.schoen.set(schoen);
+        test.fullpg.set(fullpg);
 
         test.natom.set(natoms);
         test.nallatom.set(nallatoms);
@@ -127,7 +124,8 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
 
         for(int i = 0; i < nallatoms; i++)
         {
-            f.ignore(); // ignore the newline
+            // newline is extracted from call to getline() above
+            //f.ignore(); // ignore the newline
             char * s = new char[8];
             f.get(s, 4, ' ');
             atoms[i].symbol = s;
@@ -156,7 +154,9 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
 
 void TestInfo::ReadMatrixInfo(const string & filename,
                               MatrixTest & test,
-                              double threshold)
+                              double element_threshold,
+                              double sum_threshold,
+                              double checksum_threshold)
 {
     ifstream f(filename.c_str());
 
@@ -175,14 +175,14 @@ void TestInfo::ReadMatrixInfo(const string & filename,
 
         test.nrow.set(nrow);
         test.ncol.set(ncol);
-        test.sum.set(sum, threshold);
-        test.checksum.set(checksum, threshold);
+        test.sum.set(sum, sum_threshold);
+        test.checksum.set(checksum, checksum_threshold);
 
         double val;
         for(int i = 0; i < 100; i++)
         {
             f >> test.elements[i].index >> val;
-            test.elements[i].test.set(val, threshold);
+            test.elements[i].test.set(val, element_threshold);
         }
     }
     catch(...)
@@ -207,22 +207,15 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
 
     // Read in the molecule
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
-    std::cout << "ncenters_ 2: " << ncenters_ << "\n";
 
     // Read in the basis set information
     int pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
-    std::cout << "ncenters_ 3: " << ncenters_ << "\n";
     int acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
-    std::cout << "ncenters_ 4: " << ncenters_ << "\n";
 
     
-
-
     // Make sure all files agree on the number of centers
     if(pcenters != acenters || pcenters != ncenters_)
         throw TestingSanityException("Error - not all files agree on the number of centers!");
-
-    std::cout << "ncenters_ 5: " << ncenters_ << "\n";
 
 
     //! \todo Could be returned from the ReadBasis function (or a pointer passed)
@@ -236,22 +229,18 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
         primary_nshells_ += primary_nshellspercenter_[i];
         aux_nshells_ += aux_nshellspercenter_[i];
     }
-    std::cout << "ncenters_ 7: " << ncenters_ << "\n";
 
     // Same as above, but we can get the number of primitives
     for(int i = 0; i < primary_nshells_; i++)
         primary_nprim_ += primary_shells_[i].nprim;
 
-    std::cout << "ncenters_ 8: " << ncenters_ << "\n";
-
     for(int i = 0; i < aux_nshells_; i++)
         aux_nprim_ += aux_shells_[i].nprim;
 
-    std::cout << "ncenters_ 9: " << ncenters_ << "\n";
-
     // Read in Qso tests
-    ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD);
-    std::cout << "ncenters_ 10: " << ncenters_ << "\n";
+    ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD,
+                                            TEST_QSO_SUM_THRESHOLD,
+                                            TEST_QSO_CHECKSUM_THRESHOLD);
 }
 
 
@@ -324,6 +313,7 @@ void TestInfo::TestMoleculeConversion(void)
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
     molecule_test_.natom.set_thisrun(mol->natom());
     molecule_test_.nallatom.set_thisrun(mol->nallatom());
+
     molecule_test_.schoen.set_thisrun(mol->schoenflies_symbol());
     molecule_test_.fullpg.set_thisrun(mol->full_point_group());
 
@@ -571,56 +561,6 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
     return failures;
 }
-
-
-#ifdef PANACHE_DEVELOPER_GENERATE
-void TestInfo::Generate(void)
-{
-    auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
-    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
-
-
-    DFTensor dft(primary, aux);
-    auto mat = dft.Qso();
-
-    double * p = &(mat->pointer(0)[0][0]);
-    size_t size = mat->colspi()[0] * mat->rowspi()[0];
-
-    double sum = 0;
-    double checksum = 0;
-    array<pair<size_t, double>, 50> largest;
-
-
-    for(size_t i = 0; i < size; i++)
-    {
-        sum += p[i];
-        checksum += p[i]*static_cast<double>(i);
-
-        if(p[i] > largest[0].second)
-        {
-            largest[0].first = i;
-            largest[0].second = p[i];
-            std::sort(largest.begin(), largest.end(), [](pair<size_t, double> p1, pair<size_t, double> p2)
-            {
-                return p1.second < p2.second;
-            });
-        }
-    }
-
-    std::cout << "---------begin QSO data---------\n";
-    std::cout << mat->rowspi(0) << "\n" << mat->colspi(0) << "\n";
-
-    // to return the precision back to normal
-    auto prec = std::cout.precision();
-    std::cout << std::setprecision(20) << sum << "\n";
-    std::cout << checksum << "\n";
-    for(auto & it : largest)
-        std::cout << it.first << it.second << "\n";
-    std::cout.precision(prec);
-
-}
-#endif
 
 
 }

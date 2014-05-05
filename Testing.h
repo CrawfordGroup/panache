@@ -6,7 +6,9 @@
 #define TEST_MOLECULE_XYZ_THRESHOLD 1e-11
 #define TEST_MOLECULE_Z_THRESHOLD 1e-11
 #define TEST_MOLECULE_MASS_THRESHOLD 1e-11
-#define TEST_QSO_ELEMENT_THRESHOLD 1e-8
+#define TEST_QSO_ELEMENT_THRESHOLD 1e-10
+#define TEST_QSO_SUM_THRESHOLD 1e-8
+#define TEST_QSO_CHECKSUM_THRESHOLD 1e-3
 
 #include <stdexcept>
 #include <string>
@@ -207,6 +209,7 @@ struct TestResult<std::string>
      */
     void set_thisrun(std::string r)
     {
+        thisrun = r;
         diff = (thisrun != reference);
     }
 };
@@ -394,10 +397,15 @@ private:
      *
      *  \param [in] filename The full path to the file
      *  \param [out] test A MatrixTest object to put the test information in
-     *  \prarm [in] threshold The desired threshold for checking matrix elements
+     *  \prarm [in] element_threshold The desired threshold for checking matrix elements
+     *  \prarm [in] sum_threshold The desired threshold for checking the matrix sum
+     *  \prarm [in] checksum_threshold The desired threshold for checking the matrix checksum
      */
-    static void ReadMatrixInfo(const string & filename,
-                               MatrixTest & test, double threshold);
+    void ReadMatrixInfo(const string & filename,
+                        MatrixTest & test,
+                        double element_threshold,
+                        double sum_threshold,
+                        double checksum_threshold);
 
 
     /*! \brief Prints a row in the results table (a single test)
@@ -583,11 +591,17 @@ public:
      */
     TestInfo(const std::string & testname, const std::string & dir);
 
+
     /*! \brief Test conversion of C arrays into BasisSet objects
      *
      *  This tests both the primary and auxiliary basis sets.
      */
     void TestBasisConversion(void);
+
+
+    /*! \brief Destructor
+     */
+    ~TestInfo();
 
 
     /*! \brief Test conversion of C arrays into Molecule objects
@@ -609,23 +623,6 @@ public:
      *  \return The number of failed tests
      */
     int PrintResults(std::ostream & out, bool verbose = false);
-
-
-
-#ifdef PANACHE_DEVELOPER_GENERATE
-    /*! \brief Generate some test files
-     *
-     * Generates files related to matrix elements and ERI values
-     */
-    void Generate(void);
-#endif
-
-
-
-    ~TestInfo();
-
-
-
 
 
 
