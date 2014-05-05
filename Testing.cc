@@ -353,7 +353,7 @@ void TestInfo::TestMatrix(SharedMatrix mat,
     // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
     if(test.nrow.check() && test.ncol.check())
     {
-        for(int i = 0; i < 50; i++)
+        for(int i = 0; i < 100; i++)
             test.elements[i].test.set_thisrun(p[test.elements[i].index]);
     }
 } 
@@ -457,7 +457,7 @@ int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
     failures +=  Test(out, "sum", test.sum);
     failures +=  Test(out, "checksum", test.checksum);
 
-    for(int i = 0; i < 50; i++)
+    for(int i = 0; i < 100; i++)
     {
         stringstream ss;
         ss << "Element " << test.elements[i].index;

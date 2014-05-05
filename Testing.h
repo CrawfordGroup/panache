@@ -8,7 +8,7 @@
 #define TEST_MOLECULE_MASS_THRESHOLD 1e-11
 #define TEST_QSO_ELEMENT_THRESHOLD 1e-10
 #define TEST_QSO_SUM_THRESHOLD 1e-8
-#define TEST_QSO_CHECKSUM_THRESHOLD 1e-3
+#define TEST_QSO_CHECKSUM_THRESHOLD 1.0
 
 #include <stdexcept>
 #include <string>
