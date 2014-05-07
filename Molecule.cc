@@ -25,7 +25,6 @@
 
 #include "Molecule.h"
 #include "Vector.h"
-#include "PetiteList.h" // for compute_atom_map
 #include "Output.h"
 #include "Masses.h"
 #include "PhysConst.h"
