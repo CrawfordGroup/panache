@@ -357,7 +357,6 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
     /*
      * Allocate arrays
      */
-    delete_arrays();
     n_prim_per_shell_ = new int[n_shells_];
     // The unique primitives
     uexponents_ = new double[n_uprimitive_];
