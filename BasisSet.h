@@ -108,11 +108,13 @@ class BasisSet
     /// The flattened list of Cartesian coordinates for each atom
     double *xyz_;
 
-
+    void delete_arrays(void);
 
 
 public:
     BasisSet();
+
+    ~BasisSet();
 
     BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap);
 

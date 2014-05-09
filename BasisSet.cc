@@ -104,6 +104,30 @@ BasisSet::BasisSet()
                                uexponents_, ShellInfo::GaussianType(0), 0, xyz_, 0);
 }
 
+BasisSet::~BasisSet()
+{
+    delete_arrays();
+}
+
+void BasisSet::delete_arrays(void)
+{
+    delete [] n_prim_per_shell_;
+    delete [] uexponents_;
+    delete [] ucoefficients_;
+    delete [] uerd_coefficients_;
+    delete [] uoriginal_coefficients_;
+    delete [] shell_first_ao_;
+    delete [] shell_first_basis_function_;
+    delete [] shells_;
+    delete [] ao_to_shell_;
+    delete [] function_to_shell_;
+    delete [] function_center_;
+    delete [] shell_center_;
+    delete [] center_to_nshell_;
+    delete [] center_to_shell_;
+    delete [] xyz_;
+}
+
 
 void BasisSet::initialize_singletons()
 {
@@ -333,6 +357,7 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
     /*
      * Allocate arrays
      */
+    delete_arrays();
     n_prim_per_shell_ = new int[n_shells_];
     // The unique primitives
     uexponents_ = new double[n_uprimitive_];
