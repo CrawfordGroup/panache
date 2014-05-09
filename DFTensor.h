@@ -63,7 +63,7 @@ public:
 
     ~DFTensor();
 
-    SharedMatrix Qso();
+    void Qso(double * A, size_t length);
 };
 
 }

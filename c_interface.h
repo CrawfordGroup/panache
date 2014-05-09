@@ -20,11 +20,11 @@ extern "C" {
         double center[3];
     };
 
-    double * C_QAO(int ncenters,
-                 C_AtomCenter * atoms,
-                 int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                 int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                 int * nrow_out, int * ncol_out);
+    void C_QAO(int ncenters,
+               C_AtomCenter * atoms,
+               int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+               double * matout, int matsize);
 
     void free_matrix(double * mat);
 

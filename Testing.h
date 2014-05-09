@@ -304,8 +304,7 @@ private:
      */
     struct MatrixTest
     {
-        ITestResult nrow; //!< Number of rows
-        ITestResult ncol; //!< Number of columns
+        ITestResult length; //!< Total size of the matrix
         DTestResult sum; //!< Sum of the Qso matrix
         DTestResult checksum; //!< Checksum of the Qso matrix
         array<MatrixElementTest, 100> elements; //!< 100 elements of the Qso matrix
@@ -571,9 +570,11 @@ private:
      * in contiguous memory.
      *
      * \param [in] mat The matrix to test
+     * \param [in] size The number of elements of mat
      * \param [in] test The MatrixTest object to put the results in
      */
-    static void TestMatrix(SharedMatrix mat,
+    static void TestMatrix(double * mat,
+                           int size,
                            MatrixTest & test);
 
 

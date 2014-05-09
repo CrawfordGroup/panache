@@ -8,11 +8,11 @@ extern "C" {
 
 
 
-    double * C_QAO(int ncenters,
-                 C_AtomCenter * atoms,
-                 int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                 int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                 int * nrow_out, int * ncol_out)
+    void C_QAO(int ncenters,
+               C_AtomCenter * atoms,
+               int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+               double * matout, int matsize)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -26,25 +26,9 @@ extern "C" {
                                                     aux_nshellspercenter, aux_shells);
 
         panache::DFTensor dft(primaryBasis, auxBasis);
-        auto mat = dft.Qso();
 
-        // convert the resulting matrix
-        *nrow_out = mat->rowspi()[0];
-        *ncol_out = mat->colspi()[0]; 
-        //return mat->give_up();
-
-        double * ret = (double *)malloc(mat->rowspi()[0]*mat->colspi()[0] * sizeof(double));
-        memcpy(ret, &(mat->pointer(0)[0][0]), mat->rowspi()[0]*mat->colspi()[0]*sizeof(double));
-        return ret;
-
-    }
-
-
-
-
-    void free_matrix(double * mat)
-    {
-        free(mat);
+        // matsize is checked in here
+        dft.Qso(matout, matsize);
     }
 
 }

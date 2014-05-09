@@ -7,18 +7,13 @@
 extern "C" {
 
 
-//    double * fortran_qao_(int * ncenters,
-//                          C_AtomCenter * atoms,
-//                          int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-//                          int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-//                          int * nrow_out, int * ncol_out)
-
     void fortran_qao_(int * ncenters,
                       double * xyz, double * Z, double * masses,
                       int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
                       int * primary_nprimpershell, double * primary_exp, double * primary_coef,
                       int * aux_nshellspercenter, int * aux_am, int * aux_is_pure,
-                      int * aux_nprimpershell, double * aux_exp, double * aux_coef)
+                      int * aux_nprimpershell, double * aux_exp, double * aux_coef,
+                      double * matout, int * matsize)
     {
         std::cout << "In fortran_qao: " << *ncenters << "\n";
 
@@ -77,15 +72,13 @@ extern "C" {
             }
         }
 
-        int nrow, ncol;
-        double * mat = C_QAO(*ncenters, atoms,
-                             primary_nshellspercenter, primary_shells,
-                             aux_nshellspercenter, aux_shells, &nrow, &ncol);
+        C_QAO(*ncenters, atoms,
+              primary_nshellspercenter, primary_shells,
+              aux_nshellspercenter, aux_shells, matout, *matsize);
 
-        std::cout << "nrow, ncol = " << nrow << " , " << ncol << "\n";
-        std::cout << "element 3359: " << mat[3359] << "\n";                             
-        std::cout << "element 36640: " << mat[36640] << "\n";                             
-        std::cout << "element 4074: " << mat[4074] << "\n";                             
+        std::cout << "element 3359: " << matout[3359] << "\n";
+        std::cout << "element 36640: " << matout[36640] << "\n";
+        std::cout << "element 4074: " << matout[4074] << "\n";
 
 
 

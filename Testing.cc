@@ -173,8 +173,7 @@ void TestInfo::ReadMatrixInfo(const string & filename,
 
         f >> nrow >> ncol >> sum >> checksum;
 
-        test.nrow.set(nrow);
-        test.ncol.set(ncol);
+        test.length.set(nrow*ncol);
         test.sum.set(sum, sum_threshold);
         test.checksum.set(checksum, checksum_threshold);
 
@@ -328,34 +327,32 @@ void TestInfo::TestMoleculeConversion(void)
     }
 }
 
-void TestInfo::TestMatrix(SharedMatrix mat, 
+void TestInfo::TestMatrix(double * mat, 
+                          int size,
                           MatrixTest & test)
 {
-    //! \todo matrices with > 1 irrep?
-    double * p = &(mat->pointer(0)[0][0]);
-    size_t size = mat->colspi()[0] * mat->rowspi()[0];
-
-    test.nrow.set_thisrun(mat->rowspi()[0]);
-    test.ncol.set_thisrun(mat->colspi()[0]);
-
     double sum = 0;
     double checksum = 0;
 
+    test.length.set_thisrun(size);
+
+
+
+    // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
     for(size_t i = 0; i < size; i++)
     {
-        sum += p[i];
-        checksum += p[i]*static_cast<double>(i);
+        sum += mat[i];
+        checksum += mat[i]*static_cast<double>(i);
+    }
+
+    if(test.length.check())
+    {
+        for(int i = 0; i < 100; i++)
+            test.elements[i].test.set_thisrun(mat[test.elements[i].index]);
     }
 
     test.sum.set_thisrun(sum);
     test.checksum.set_thisrun(checksum);
-
-    // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
-    if(test.nrow.check() && test.ncol.check())
-    {
-        for(int i = 0; i < 100; i++)
-            test.elements[i].test.set_thisrun(p[test.elements[i].index]);
-    }
 } 
 
 
@@ -366,8 +363,13 @@ void TestInfo::TestQsoMatrix(void)
     auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
 
     DFTensor dft(primary, aux);
-    auto mat = dft.Qso();
-    TestMatrix(mat, qso_test_);
+
+    size_t matsize = aux->nbf() * primary->nbf() * primary->nbf();
+
+    double * mat = new double[matsize];
+    dft.Qso(mat, matsize);
+    TestMatrix(mat, matsize, qso_test_);
+    delete [] mat;
 }
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
@@ -452,8 +454,7 @@ int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    failures +=  Test(out, "# of rows", test.nrow);
-    failures +=  Test(out, "# of columns", test.ncol);
+    failures +=  Test(out, "# of elements", test.length);
     failures +=  Test(out, "sum", test.sum);
     failures +=  Test(out, "checksum", test.checksum);
 

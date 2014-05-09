@@ -97,14 +97,15 @@ void DFTensor::build_metric()
     }
 }
 
-SharedMatrix DFTensor::Qso()
+void DFTensor::Qso(double * A, size_t length)
 {
     //! \todo I think this should be nbf, but I'm not positive
     int nso = primary_->nbf();
 
+    if(length != naux_ * nso * nso)
+        throw RuntimeError("Incorrect length array given to Qso");
+
     SharedMatrix B(new Matrix("Bso", naux_, nso * nso));
-    SharedMatrix A(new Matrix("Aso", naux_, nso * nso));
-    double** Ap = A->pointer();
     double** Bp = B->pointer();
     double** Jp = metric_->pointer();
 
@@ -149,14 +150,12 @@ SharedMatrix DFTensor::Qso()
     }
 
     C_DGEMM('N','N',naux_, nso * nso, naux_, 1.0, Jp[0], naux_, Bp[0], nso * nso, 0.0,
-        Ap[0], nso * nso);
+        A, nso * nso);
 
     if (debug_) {
         //metric_->print();
         //B->print();
         //A->print();
     }
-
-    return A;
 }
 }
