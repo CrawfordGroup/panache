@@ -15,8 +15,6 @@ extern "C" {
                       int * aux_nprimpershell, double * aux_exp, double * aux_coef,
                       double * matout, int * matsize)
     {
-        std::cout << "In fortran_qao: " << *ncenters << "\n";
-
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
         for(int i = 0; i < *ncenters; i++)
@@ -36,8 +34,6 @@ extern "C" {
             p_nshell += primary_nshellspercenter[i];
             a_nshell += aux_nshellspercenter[i];
         }
-
-        std::cout << "NShells: " << p_nshell << " " << a_nshell << "\n";
 
         C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
         C_ShellInfo * aux_shells = new C_ShellInfo[a_nshell];
@@ -76,11 +72,6 @@ extern "C" {
               primary_nshellspercenter, primary_shells,
               aux_nshellspercenter, aux_shells, matout, *matsize);
 
-        std::cout << "element 3359: " << matout[3359] << "\n";
-        std::cout << "element 36640: " << matout[36640] << "\n";
-        std::cout << "element 4074: " << matout[4074] << "\n";
-
-
 
         // Free memory
         for(int i = 0; i < p_nshell; i++)
@@ -97,6 +88,7 @@ extern "C" {
 
         delete [] primary_shells;
         delete [] aux_shells;
+        delete [] atoms;
 
     }
 
