@@ -56,7 +56,6 @@ private:
     int nc_;
     /// Atomic center number in the Molecule
     Vector3 center_;
-    int start_;
 
     /// How many cartesian functions? (1=s, 3=p, 6=d, ...)
     int ncartesian_;
@@ -100,7 +99,6 @@ public:
      *  @param c An array of contraction coefficients.
      *  @param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
      *  @param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
-     *  @param start The starting index of the first function this shell provides. Used to provide starting positions in matrices.
      *  @param pt Is the shell already normalized?
      */
     ShellInfo(int am,
@@ -109,7 +107,6 @@ public:
                   GaussianType pure,
                   int nc,
                   const Vector3& center,
-                  int start,
                   PrimitiveType pt = Normalized);
 
     /** Handles calling primitive_normalization and contraction_normalization for you. */
@@ -161,11 +158,6 @@ public:
 
     /// Normalize the angular momentum component
     static double normalize(int l, int m, int n);
-
-    /// Basis function index where this shell starts.
-    //int function_index() const      { return start_; }
-    void set_function_index(int i)  { start_ = i; }
-
 
     void print(FILE * out) const;
 };

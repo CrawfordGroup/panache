@@ -31,10 +31,10 @@ namespace panache {
 
 ShellInfo::ShellInfo(int am, const std::vector<double> &c,
                              const std::vector<double> &e, GaussianType pure,
-                             int nc, const Vector3 &center, int start,
+                             int nc, const Vector3 &center,
                              PrimitiveType pt)
     : l_(am), puream_(pure), exp_(e), coef_(c), original_coef_(c),
-      nc_(nc), center_(center), start_(start)
+      nc_(nc), center_(center)
 {
     ncartesian_ = INT_NCART(l_);
     nfunction_  = INT_NFUNC(puream_, l_);
@@ -50,14 +50,14 @@ ShellInfo ShellInfo::copy()
 {
     return ShellInfo(l_, original_coef_, exp_,
                          GaussianType(puream_),
-                         nc_, center_, start_, Unnormalized);
+                         nc_, center_, Unnormalized);
 }
 
 ShellInfo ShellInfo::copy(int nc, const Vector3& c)
 {
     return ShellInfo(l_, original_coef_, exp_,
                          GaussianType(puream_),
-                         nc, c, start_, Unnormalized);
+                         nc, c, Unnormalized);
 }
 
 double ShellInfo::primitive_normalization(int p)

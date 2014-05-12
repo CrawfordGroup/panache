@@ -30,7 +30,7 @@ std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::M
             }
             shellvec.push_back(panache::ShellInfo(shells[counter].am, c, e,
                                                   shells[counter].ispure ? panache::ShellInfo::GaussianType::Pure : panache::ShellInfo::GaussianType::Cartesian,
-                                                  i, cen, 0, panache::ShellInfo::PrimitiveType::Unnormalized));
+                                                  i, cen, panache::ShellInfo::PrimitiveType::Unnormalized));
             counter++;
         }
 
