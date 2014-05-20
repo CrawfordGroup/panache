@@ -105,7 +105,7 @@ add_library(panache
             PointGroup.cc
             ShellInfo.cc
             ShellRotation.cc
-            SlowTwoElectronInt.cc
+            SlowERIBase.cc
             SolidHarmonic.cc
             SphericalTransform.cc
             SymRep.cc
