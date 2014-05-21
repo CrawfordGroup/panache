@@ -57,9 +57,10 @@ if(USE_LIBINT AND USE_LIBINT2)
 endif(USE_LIBINT AND USE_LIBINT2)
 
 
-# ... and you have to use at least one
+# Warn if not using somthing faster
 if(NOT(USE_LIBINT OR USE_LIBINT2))
-  message(FATAL_ERROR "You must specify either the path to Libint or Libint2 header files!")
+  message(STATUS "Using very slow ERI code. You probably want to use something else...")
+  set(USE_SLOWERI True)
 endif(NOT(USE_LIBINT OR USE_LIBINT2))
 
 
@@ -77,6 +78,11 @@ if(USE_LIBINT2)
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT2")
 endif(USE_LIBINT2)
 
+if(USE_SLOWERI)
+  message(STATUS "Using Libint2 headers from ${LIBINT2_INCLUDE_PATH}")
+  set(LIBINT_FILES "${LIBINT_FILES}" SlowTwoElectronInt.cc SlowERI.cc SlowERIBase.cc)
+  list(APPEND PANACHE_CXX_FLAGS "-DUSE_SLOWERI")
+endif(USE_SLOWERI)
 
 ######################
 # Create the library
@@ -105,7 +111,6 @@ add_library(panache
             PointGroup.cc
             ShellInfo.cc
             ShellRotation.cc
-            SlowERIBase.cc
             SolidHarmonic.cc
             SphericalTransform.cc
             SymRep.cc

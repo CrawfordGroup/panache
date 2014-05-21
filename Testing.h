@@ -615,6 +615,11 @@ public:
     void TestQsoMatrix(void);
 
 
+    /*! \brief Tests ERI generation from the QSO matrix
+     */
+    void TestERI(void);
+
+
     /*! \brief Print the results of all the tests.
      *
      *  Be sure to run them first!
@@ -625,38 +630,6 @@ public:
      */
     int PrintResults(std::ostream & out, bool verbose = false);
 
-
-
-    ///////////////////////////////////////////////////////////////////
-    // used only by me to bootstrap testing using information from psi
-    ///////////////////////////////////////////////////////////////////
-    C_ShellInfo * primary_shells(void)
-    {
-        return primary_shells_;
-    }
-    C_ShellInfo * aux_shells(void)
-    {
-        return aux_shells_;
-    }
-
-    int * primary_nshellspercenter(void)
-    {
-        return primary_nshellspercenter_;
-    }
-    int * aux_nshellspercenter(void)
-    {
-        return aux_nshellspercenter_;
-    }
-
-    C_AtomCenter * atoms(void)
-    {
-        return atoms_;
-    }
-    int ncenters(void)
-    {
-        return ncenters_;
-    }
-    ///////////////////////////////////////////////////////////////////
 
 };
 

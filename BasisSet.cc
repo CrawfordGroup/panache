@@ -36,6 +36,11 @@
 #define MAX_AM LIBINT2_MAX_AM_ERI
 #endif
 
+#ifdef USE_SLOWERI
+// slow eri can handle any angular momentum
+#define MAX_AM 20
+#endif
+
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
 #include "Molecule.h"

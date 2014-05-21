@@ -39,6 +39,10 @@
 #include "ERI2.h"
 #endif
 
+#ifdef USE_SLOWERI
+#include "SlowERI.h"
+#endif
+
 #include "ERDERI.h"
 #include "Output.h"
 
@@ -120,6 +124,10 @@ void DFTensor::Qso(double * A, size_t length)
 
     #ifdef USE_LIBINT2
       ERI2 eri(auxiliary_,zero,primary_,primary_);
+    #endif
+
+    #ifdef USE_SLOWERI
+      SlowERI eri(auxiliary_,zero,primary_,primary_);
     #endif
 
     //ERDERI eri(auxiliary_,zero,primary_,primary_);

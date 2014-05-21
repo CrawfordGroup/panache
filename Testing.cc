@@ -1,18 +1,24 @@
 #include <fstream>
 #include <sstream>
+#include <cassert>
+#include <iomanip>
 
 #include "Testing.h"
 #include "c_convert.h"
 #include "DFTensor.h"
+#include "BasisFunctionMacros.h"
+#include "SlowERIBase.h"
 
-#ifdef PANACHE_DEVELOPER_GENERATE
-#include <utility>
-#include <algorithm>
-#include <array>
-#include <iomanip>
-#include <limits>
-using std::pair;
-using std::array;
+#ifdef USE_LIBINT
+#include "ERI.h"
+#endif
+
+#ifdef USE_LIBINT2
+#include "ERI2.h"
+#endif
+
+#ifdef USE_SLOWERI
+#include "SlowERI.h"
 #endif
 
 using std::string;
@@ -211,7 +217,7 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     int pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
     int acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
 
-    
+
     // Make sure all files agree on the number of centers
     if(pcenters != acenters || pcenters != ncenters_)
         throw TestingSanityException("Error - not all files agree on the number of centers!");
@@ -238,8 +244,8 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
 
     // Read in Qso tests
     ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD,
-                                            TEST_QSO_SUM_THRESHOLD,
-                                            TEST_QSO_CHECKSUM_THRESHOLD);
+                   TEST_QSO_SUM_THRESHOLD,
+                   TEST_QSO_CHECKSUM_THRESHOLD);
 }
 
 
@@ -327,7 +333,7 @@ void TestInfo::TestMoleculeConversion(void)
     }
 }
 
-void TestInfo::TestMatrix(double * mat, 
+void TestInfo::TestMatrix(double * mat,
                           int size,
                           MatrixTest & test)
 {
@@ -353,7 +359,7 @@ void TestInfo::TestMatrix(double * mat,
 
     test.sum.set_thisrun(sum);
     test.checksum.set_thisrun(checksum);
-} 
+}
 
 
 void TestInfo::TestQsoMatrix(void)
@@ -370,6 +376,98 @@ void TestInfo::TestQsoMatrix(void)
     dft.Qso(mat, matsize);
     TestMatrix(mat, matsize, qso_test_);
     delete [] mat;
+}
+
+
+void TestInfo::TestERI(void)
+{
+    std::cout << "Testing ERI generation from Qso\n";
+
+    auto mol = MoleculeFromArrays(ncenters_, atoms_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+
+    DFTensor dft(primary, aux);
+
+    int nbf = primary->nbf();
+    int nbf2 = nbf*nbf;
+    int naux = aux->nbf();
+
+    size_t matsize = naux * nbf2;
+    double * qso = new double[matsize];
+    dft.Qso(qso, matsize);
+
+    std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
+
+#ifdef USE_LIBINT
+    ERI referi(primary, primary, primary, primary);
+#endif
+
+#ifdef USE_LIBINT2
+    ERI2 referi(primary, primary, primary, primary);
+#endif
+
+#ifdef USE_SLOWERI
+    SlowERI referi(primary, primary, primary, primary);
+#endif
+
+    std::cout << std::setprecision(15);
+
+
+    for(int p = 0; p < primary->nshell(); p++)
+    {
+        int nfp = primary->shell(p).nfunction();
+        int pstart = primary->shell(p).function_index();
+
+        for(int q = 0; q < primary->nshell(); q++)
+        {
+            int nfq = primary->shell(q).nfunction();
+            int qstart = primary->shell(q).function_index();
+
+            for(int r = 0; r < primary->nshell(); r++)
+            {
+                int nfr = primary->shell(r).nfunction();
+                int rstart = primary->shell(r).function_index();
+
+                for(int s = 0; s < primary->nshell(); s++)
+                {
+                    int nfs = primary->shell(s).nfunction();
+                    int sstart = primary->shell(s).function_index();
+
+                    int nint = nfp * nfq * nfr * nfs;
+
+
+                    //Libint
+                    int nreferi = referi.compute_shell(p,q,r,s);
+
+                    //Density fitting
+                    int bufindex = 0;
+                    double dfval = 0;
+
+                    //std::cout << "nf: " << nfp << " " << nfq << " " << nfr << " " << nfs << "\n";
+                    for(int a = 0; a < nfp; a++)
+                    for(int b = 0; b < nfq; b++)
+                    for(int c = 0; c < nfr; c++)
+                    for(int d = 0; d < nfs; d++)
+                    {
+                        dfval = 0;
+                        for(int Q = 0; Q < naux; Q++)
+                        {
+                            dfval += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
+                                   * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
+                        }
+                        
+                        std::cout << "  Reference: " << referi.buffer()[bufindex] << "\n";
+                        std::cout << "Density Fit: " << dfval << "\n";
+                        bufindex++;
+                    }
+
+                }
+            }
+        }
+    }
+
+    delete [] qso;
 }
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
@@ -566,5 +664,4 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 
 }
 } //close namespace panache::testing
-
 

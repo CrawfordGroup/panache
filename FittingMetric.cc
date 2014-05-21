@@ -35,6 +35,10 @@
 #include "ERI2.h"
 #endif
 
+#ifdef USE_SLOWERI
+#include "SlowERI.h"
+#endif
+
 #include "FittingMetric.h"
 #include "BasisSet.h"
 #include "qt.h"
@@ -113,12 +117,19 @@ void FittingMetric::form_fitting_metric()
             #ifdef USE_LIBINT2
               Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ErfERI2(omega_, aux_, zero, aux_, zero));
             #endif
+            #ifdef USE_SLOWERI
+              throw RuntimeError("Not yet implemented");
+            #endif
+            
         } else {
             #ifdef USE_LIBINT
               Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ERI(aux_, zero, aux_, zero));
             #endif
             #ifdef USE_LIBINT2
               Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ERI2(aux_, zero, aux_, zero));
+            #endif
+            #ifdef USE_SLOWERI
+              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new SlowERI(aux_, zero, aux_, zero));
             #endif
         }
         Jbuffer[Q] = Jint[Q]->buffer();
