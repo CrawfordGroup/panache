@@ -83,7 +83,7 @@ extern "C" {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->ERI(qso, qsosize, shell1, shell2, shell3, shell4, outbuffer, buffersize);
+        dftensors_[df_handle]->CalculateERI(qso, qsosize, shell1, shell2, shell3, shell4, outbuffer, buffersize);
     }
 }
 

@@ -183,7 +183,7 @@ void DFTensor::Qso(double * A, size_t length)
     }
 }
 
-int DFTensor::ERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
+int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
 {
     //! \todo do something with qsosize
 
@@ -234,4 +234,5 @@ int DFTensor::ERI(double * qso, int qsosize, int shell1, int shell2, int shell3,
 }
 
 }
+
 

@@ -428,7 +428,7 @@ void TestInfo::TestERI(void)
                     int nreferi = referi.compute_shell(p,q,r,s);
 
                     //Density fitting
-                    int ndferi = dft.ERI(qso, matsize, p, q, r, s, dfbuf, 10000); 
+                    int ndferi = dft.CalculateERI(qso, matsize, p, q, r, s, dfbuf, 10000); 
 /*
                     for(int i = 0; i < ndferi; i++)
                     {                        

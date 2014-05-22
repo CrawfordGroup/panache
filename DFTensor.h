@@ -62,7 +62,7 @@ public:
 
     void Qso(double * A, size_t length);
     int TensorDimensions(int & d1, int & d2, int & d3);
-    int ERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
+    int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
 };
 
 }
