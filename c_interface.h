@@ -25,6 +25,8 @@ extern "C" {
                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
                double * matout, int matsize);
+
+    int TensorDimensions(int * d1, int * d2, int * d3);
 }
 
 #endif

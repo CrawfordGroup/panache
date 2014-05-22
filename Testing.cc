@@ -370,7 +370,8 @@ void TestInfo::TestQsoMatrix(void)
 
     DFTensor dft(primary, aux);
 
-    size_t matsize = aux->nbf() * primary->nbf() * primary->nbf();
+    int d1, d2, d3;
+    size_t matsize = dft.TensorDimensions(d1, d2, d3);
 
     double * mat = new double[matsize];
     dft.Qso(mat, matsize);
@@ -413,60 +414,34 @@ void TestInfo::TestERI(void)
 
     std::cout << std::setprecision(15);
 
+    double *dfbuf = new double[10000]; // up to (ff|ff)
 
     for(int p = 0; p < primary->nshell(); p++)
     {
-        int nfp = primary->shell(p).nfunction();
-        int pstart = primary->shell(p).function_index();
-
         for(int q = 0; q < primary->nshell(); q++)
         {
-            int nfq = primary->shell(q).nfunction();
-            int qstart = primary->shell(q).function_index();
-
             for(int r = 0; r < primary->nshell(); r++)
             {
-                int nfr = primary->shell(r).nfunction();
-                int rstart = primary->shell(r).function_index();
-
                 for(int s = 0; s < primary->nshell(); s++)
                 {
-                    int nfs = primary->shell(s).nfunction();
-                    int sstart = primary->shell(s).function_index();
-
-                    int nint = nfp * nfq * nfr * nfs;
-
-
                     //Libint
                     int nreferi = referi.compute_shell(p,q,r,s);
 
                     //Density fitting
-                    int bufindex = 0;
-                    double dfval = 0;
-
-                    //std::cout << "nf: " << nfp << " " << nfq << " " << nfr << " " << nfs << "\n";
-                    for(int a = 0; a < nfp; a++)
-                    for(int b = 0; b < nfq; b++)
-                    for(int c = 0; c < nfr; c++)
-                    for(int d = 0; d < nfs; d++)
-                    {
-                        dfval = 0;
-                        for(int Q = 0; Q < naux; Q++)
-                        {
-                            dfval += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
-                                   * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
-                        }
-                        
-                        std::cout << "  Reference: " << referi.buffer()[bufindex] << "\n";
-                        std::cout << "Density Fit: " << dfval << "\n";
-                        bufindex++;
+                    int ndferi = dft.ERI(qso, matsize, p, q, r, s, dfbuf, 10000); 
+/*
+                    for(int i = 0; i < ndferi; i++)
+                    {                        
+                        std::cout << "  Reference: " << referi.buffer()[i] << "\n";
+                        std::cout << "Density Fit: " << dfbuf[i] << "\n\n";
                     }
-
+*/
                 }
             }
         }
     }
 
+    delete [] dfbuf;
     delete [] qso;
 }
 
