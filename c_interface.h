@@ -20,11 +20,17 @@ extern "C" {
         double center[3];
     };
 
-    void C_QAO(int ncenters,
+
+
+    int C_init(int ncenters,
                C_AtomCenter * atoms,
                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-               double * matout, int matsize);
+               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
+
+    void C_QAO(int df_handle, double * matout, int matsize);
+
+    void C_cleanup(int df_handle);
+    void C_cleanup_all(void);
 
     int TensorDimensions(int * d1, int * d2, int * d3);
 }

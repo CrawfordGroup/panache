@@ -7,13 +7,12 @@
 extern "C" {
 
 
-    void fortran_qao_(int * ncenters,
-                      double * xyz, double * Z, double * masses,
-                      int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
-                      int * primary_nprimpershell, double * primary_exp, double * primary_coef,
-                      int * aux_nshellspercenter, int * aux_am, int * aux_is_pure,
-                      int * aux_nprimpershell, double * aux_exp, double * aux_coef,
-                      double * matout, int * matsize)
+    void fortran_init_(int * ncenters,
+                       double * xyz, double * Z, double * masses,
+                       int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
+                       int * primary_nprimpershell, double * primary_exp, double * primary_coef,
+                       int * aux_nshellspercenter, int * aux_am, int * aux_is_pure,
+                       int * aux_nprimpershell, double * aux_exp, double * aux_coef, int * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -68,10 +67,9 @@ extern "C" {
             }
         }
 
-        C_QAO(*ncenters, atoms,
-              primary_nshellspercenter, primary_shells,
-              aux_nshellspercenter, aux_shells, matout, *matsize);
-
+        *dfhandle = C_init(*ncenters, atoms,
+                           primary_nshellspercenter, primary_shells,
+                           aux_nshellspercenter, aux_shells);
 
         // Free memory
         for(int i = 0; i < p_nshell; i++)
@@ -92,6 +90,21 @@ extern "C" {
 
     }
 
+
+    void fortran_qao_(int * df_handle, double * matout, int * matsize)
+    {
+        C_QAO(*df_handle, matout, *matsize);
+    }
+
+    void fortran_cleanup_(int * df_handle)
+    {
+        C_cleanup(*df_handle);
+    }
+
+    void fortran_cleanup_all_(void)
+    {
+        C_cleanup_all();
+    }
 
 }
 
