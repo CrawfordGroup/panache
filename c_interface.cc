@@ -69,5 +69,21 @@ extern "C" {
         dftensors_[df_handle]->Qso(matout, matsize);
     }
 
+    int C_TensorDimensions(int df_handle, int * d1, int * d2, int * d3)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        //DFTensor class takes d1-d3 by reference
+        dftensors_[df_handle]->TensorDimensions(*d1, *d2, *d3);
+    }
+
+    int C_ERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->ERI(qso, qsosize, shell1, shell2, shell3, shell4, outbuffer, buffersize);
+    }
 }
 

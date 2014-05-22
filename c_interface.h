@@ -32,7 +32,10 @@ extern "C" {
     void C_cleanup(int df_handle);
     void C_cleanup_all(void);
 
-    int TensorDimensions(int * d1, int * d2, int * d3);
+    int C_TensorDimensions(int df_handle, int * d1, int * d2, int * d3);
+
+    int C_ERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
+
 }
 
 #endif

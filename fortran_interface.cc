@@ -90,6 +90,11 @@ extern "C" {
 
     }
 
+    void fortran_tensordimensions_(int * df_handle, int * d1, int * d2, int * d3, int * matsize)
+    {
+        *matsize = C_TensorDimensions(*df_handle, d1, d2, d3);
+    }
+
 
     void fortran_qao_(int * df_handle, double * matout, int * matsize)
     {
@@ -106,5 +111,12 @@ extern "C" {
         C_cleanup_all();
     }
 
+    void fortran_eri_(int * df_handle, double * qso, int * qsosize,
+               int * shell1, int * shell2, int * shell3, int * shell4,
+               double * outbuffer, int * buffersize, int * ncalc)
+    {
+        *ncalc = C_ERI(*df_handle, qso, *qsosize, *shell1, *shell2, *shell3, *shell4,
+                       outbuffer, *buffersize);
+    }
 }
 
