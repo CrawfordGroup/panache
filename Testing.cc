@@ -412,7 +412,7 @@ void TestInfo::TestERI(void)
     SlowERI referi(primary, primary, primary, primary);
 #endif
 
-    std::cout << std::setprecision(15);
+    std::cout << std::setprecision(8);
 
     double *dfbuf = new double[10000]; // up to (ff|ff)
 
@@ -429,13 +429,14 @@ void TestInfo::TestERI(void)
 
                     //Density fitting
                     int ndferi = dft.CalculateERI(qso, matsize, p, q, r, s, dfbuf, 10000); 
-/*
+
+                    std::cout << "Quartet " << p << " " << q << " " << r << " " << s << "\n";
                     for(int i = 0; i < ndferi; i++)
                     {                        
                         std::cout << "  Reference: " << referi.buffer()[i] << "\n";
                         std::cout << "Density Fit: " << dfbuf[i] << "\n\n";
                     }
-*/
+
                 }
             }
         }
