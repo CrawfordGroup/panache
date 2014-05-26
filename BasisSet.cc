@@ -46,6 +46,7 @@
 #include "Molecule.h"
 #include "libciomr.h"
 #include "Output.h"
+#include "BasisSetParser.h"
 
 using namespace std;
 
@@ -483,6 +484,31 @@ void BasisSet::compute_phi(double *phi_ao, double x, double y, double z)
 
         ao += INT_NCART(am);
     } // nshell
+}
+
+std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
+        const std::shared_ptr<Molecule>& mol,
+        const std::string& basisname)
+{
+    // Update geometry in molecule, if there is a problem an exception is thrown.
+    mol->update_geometry();
+
+    std::vector<std::vector<ShellInfo>> basis_atom_shell;
+
+    for(int i = 0; i < mol->natom(); i++)
+    {
+        bool not_found = true;
+
+        string path = "/home/ben/programming/psi4/libpanache/basis/test.basis";
+        std::vector<std::string> filecontents;
+
+        filecontents = parser->load_file(path);
+        basis_atom_shell.push_back(parser->parse(mol->symbol(i), filecontents));
+    }
+
+    std::shared_ptr<BasisSet> basisset(new BasisSet(mol, basis_atom_shell));
+
+    return basisset;
 }
 
 // Free functions

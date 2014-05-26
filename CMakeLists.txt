@@ -91,6 +91,7 @@ add_library(panache
             AOIntegralsIterator.cc
             AOShellCombinationsIterator.cc
             BasisSet.cc
+            BasisSetParser.cc
             CartesianIter.cc
             CharacterTable.cc
             CoordEntry.cc
