@@ -24,28 +24,53 @@
 #include <cstdio>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 #include <cctype>
-#include <regex>
 
 #include "ShellInfo.h"
 #include "GaussianShell.h"
 #include "BasisSet.h"
 #include "BasisSetParser.h"
 
-#define NUMBER "((?:[-+]?\\d*\\.\\d+(?:[DdEe][-+]?\\d+)?)|(?:[-+]?\\d+\\.\\d*(?:[DdEe][-+]?\\d+)?))"
-
-static std::regex basis_separator("^\\s*\\[\\s*(.*?)\\s*\\]\\s*$");
-
 // the third parameter of from_string() should be
 // one of std::hex, std::dec or std::oct
 template <class T>
 static bool from_string(T& t,
-                 const std::string& s,
-                 std::ios_base& (*f)(std::ios_base&))
+                        const std::string& s,
+                        std::ios_base& (*f)(std::ios_base&))
 {
     std::istringstream iss(s);
     return !(iss >> f >> t).fail();
 }
+
+static std::string to_lower_copy(std::string str)
+{
+    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    return str;
+}
+
+// shamelessly stolen from stack overflow
+// trim from start
+static inline std::string ltrim(std::string s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string rtrim(std::string s)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string trim(std::string s)
+{
+    return ltrim(rtrim(s));
+}
+
+
 
 namespace panache
 {
@@ -66,15 +91,12 @@ BasisSetParser::~BasisSetParser()
 {
 }
 
-std::vector<std::string> BasisSetParser::load_file(const std::string& filename,
-        const std::string& basisname)
+std::vector<std::string> BasisSetParser::load_file(const std::string& filename)
 {
     filename_ = filename;
 
     // Loads an entire file.
     std::vector<std::string> lines;
-
-    std::smatch what;
 
     // temp variable
     std::string text;
@@ -85,35 +107,10 @@ std::vector<std::string> BasisSetParser::load_file(const std::string& filename,
     if (!infile)
         throw RuntimeError("BasisSetParser::parse: Unable to open basis set file: " + filename);
 
-    bool given_basisname = basisname.empty() ? false : true;
     bool found_basisname = false;
 
-    while (infile.good())
-    {
-        getline(infile, text);
-
-        // If no basisname was given always save the line.
-        if (given_basisname == false)
-            lines.push_back(text);
-
-        if (found_basisname)
-        {
-
-            // If we find another [*] we're done.
-            if (std::regex_match(text, what, basis_separator))
-                break;
-
-            lines.push_back(text);
-            continue;
-        }
-
-        // If the user gave a basisname AND text matches the basisname we want to trigger to retain
-        if (given_basisname && std::regex_match(text, what, basis_separator))
-        {
-            if (what[1].str() == basisname)
-                found_basisname = true;
-        }
-    }
+    while (getline(infile, text).good())
+        lines.push_back(text);
 
     return lines;
 }
@@ -123,8 +120,12 @@ std::vector<std::string> BasisSetParser::string_to_vector(const std::string &dat
     std::vector<std::string> ret;
     std::stringstream stream(data);
     std::string line;
-    while (std::getline(stream, line)) 
+
+    while(stream.good())
+    {
+        stream >> line;
         ret.push_back(line);
+    }
 
     return ret;
 }
@@ -134,26 +135,11 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 {
     using namespace std;
 
-    // Regular expressions that we'll be checking for.
-    regex cartesian("^\\s*cartesian\\s*", std::regex_constants::icase);
-    regex spherical("^\\s*spherical\\s*", std::regex_constants::icase);
-    regex comment("^\\s*\\!.*");                                       // line starts with !
-    regex separator("^\\s*\\*\\*\\*\\*");                                  // line starts with ****
-    regex atom_array("^\\s*([A-Za-z]+)\\s+0.*");                       // array of atomic symbols terminated by 0
-    regex shell("^\\s*(\\w+)\\s*(\\d+)\\s*(-?\\d+\\.\\d+)");           // Match beginning of contraction
-
-    // NUMBER is in psi4-dec.h
-    regex primitives1("^\\s*" NUMBER "\\s+" NUMBER ".*");    // Match s, p, d, f, g, ... functions
-    regex primitives2("^\\s*" NUMBER "\\s+" NUMBER "\\s+" NUMBER ".*"); // match sp functions
-
     // s, p and s, p, d can be grouped together in Pople-style basis sets
     const string sp("SP"), spd("SPD");
 
     //                     a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
     char shell_to_am[] = {-1,-1,-1, 2,-1, 3, 4, 5, 6,-1, 7, 8, 9,10,11, 1,12,13, 0,14,15,16,17,18,19,20};
-
-    // Hold the result of a regex_match
-    std::smatch what;
 
     // Basis type.
     ShellInfo::GaussianType gaussian_type = ShellInfo::GaussianType::Pure;
@@ -171,10 +157,12 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 
     int lineno = 0;
     bool found = false;
+    bool newentry = true;
 
     while (lineno < lines.size())
     {
-        string line = lines[lineno++];
+        string line = trim(lines[lineno++]);
+        std::vector<std::string> splitline = string_to_vector(line);
 
         // Ignore blank lines
         if (line.empty())
@@ -183,12 +171,12 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
         // Look for ShellInfo::GaussianType::Cartesian or Spherical
         if (!force_puream_or_cartesian_)
         {
-            if (regex_match(line, what, cartesian))
+            if (to_lower_copy(line) == "cartesian")
             {
                 gaussian_type = ShellInfo::GaussianType::Cartesian;
                 continue;
             }
-            else if (regex_match(line, what, spherical))
+            else if (to_lower_copy(line) == "spherical")
             {
                 gaussian_type = ShellInfo::GaussianType::Pure;
                 continue;
@@ -196,40 +184,47 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
         } // end case where puream setting wasn't forced by caller
 
         // Do some matches
-        if (regex_match(line, what, comment))
+        if (line[0] == '!')
             continue;
 
-        if (regex_match(line, what, separator))
-            continue;
-
-        // Match: H    0
-        // or:    H    O...     0
-        if (regex_match(line, what, atom_array))
+        if (line == "****")
         {
+            newentry = true;
+            continue;
+        }
+
+        if (newentry)
+        {
+            newentry = false;
+
             // Check the captures and see if this basis set is for the atom we need.
             found = false;
-            if (symbol == what[1].str())
+
+            if (symbol == splitline[0])
             {
                 found = true;
 
                 // Read in the next line
-                line = lines[lineno++];
+                line = trim(lines[lineno++]);
+                splitline = string_to_vector(line);
 
                 // Need to do the following until we match a "****" which is the end of the basis set
-                while (!regex_match(line, what, separator))
+                while (line != "****")
                 {
                     // Match shell information
-                    if (regex_match(line, what, shell))
+                    if (std::isalpha(splitline[0][0]))
                     {
-                        string shell_type(what[1].first, what[1].second);
-                        std::transform(shell_type.begin(), shell_type.end(), shell_type.begin(), ::toupper);
+                        std::string shell_type = splitline[0];
                         int nprimitive;
                         double scale;
+
+                        std::transform(shell_type.begin(), shell_type.end(), shell_type.begin(), ::toupper);
+
                         double exponent, contraction;
 
-                        if (!from_string<int>(nprimitive, what[2], std::dec))
+                        if (!from_string<int>(nprimitive, splitline[1], std::dec))
                             throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert number of primitives:\n" + line);
-                        if (!from_string<double>(scale, what[3], std::dec))
+                        if (!from_string<double>(scale, splitline[2], std::dec))
                             throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert scale factor:\n" + line);
 
                         if (shell_type.size() == 1)
@@ -241,7 +236,8 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 
                             for (int p=0; p<nprimitive; ++p)
                             {
-                                line = lines[lineno++];
+                                line = trim(lines[lineno++]);
+                                splitline = string_to_vector(line);
 
                                 int idx;
                                 while((idx=line.find_first_of('D')) >= 0 )
@@ -253,13 +249,9 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
                                     line.replace( idx, 1, "e" );
                                 }
 
-                                // Must match primitives1; will work on the others later
-                                if (!regex_match(line, what, primitives1))
-                                    throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to match an exponent with one contraction:\n" + line);
-
-                                if (!from_string<double>(exponent, what[1], std::dec))
+                                if (!from_string<double>(exponent, splitline[0], std::dec))
                                     throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert exponent:\n" + line);
-                                if (!from_string<double>(contraction, what[2], std::dec))
+                                if (!from_string<double>(contraction, splitline[1], std::dec))
                                     throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert contraction:\n" + line);
 
                                 // Scale the contraction
@@ -286,7 +278,8 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 
                             for (int p=0; p<nprimitive; ++p)
                             {
-                                line = lines[lineno++];
+                                line = trim(lines[lineno++]);
+                                splitline = string_to_vector(line);
 
                                 int idx;
                                 while((idx=line.find_first_of('D')) >= 0 )
@@ -298,13 +291,9 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
                                     line.replace( idx, 1, "e" );
                                 }
 
-                                // Must match primitivies2;
-                                if (!regex_match(line, what, primitives2))
-                                    throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to match an exponent with two contractions:\n" + line);
-
-                                if (!from_string<double>(exponent, what[1], std::dec))
+                                if (!from_string<double>(exponent, splitline[0], std::dec))
                                     throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert exponent:\n" + line);
-                                if (!from_string<double>(contraction, what[2], std::dec))
+                                if (!from_string<double>(contraction, splitline[1], std::dec))
                                     throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert first contraction:\n" + line);
 
                                 // Scale the contraction
@@ -315,7 +304,7 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
                                 contractions1[p] = contraction;
 
                                 // Do the other contraction
-                                if (!from_string<double>(contraction, what[3], std::dec))
+                                if (!from_string<double>(contraction, splitline[2], std::dec))
                                     throw RuntimeError("Gaussian94BasisSetParser::parse: Unable to convert second contraction:\n" + line);
 
                                 // Scale the contraction
@@ -338,7 +327,8 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
                     {
                         throw RuntimeError("Gaussian94BasisSetParser::parse: Expected shell information, but got:\n" + line);
                     }
-                    line = lines[lineno++];
+                    line = trim(lines[lineno++]);
+                    splitline = string_to_vector(line);
                 }
                 break;
             }
@@ -352,4 +342,5 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 }
 
 } // end namespace panache
+
 

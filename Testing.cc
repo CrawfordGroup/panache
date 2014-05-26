@@ -8,6 +8,7 @@
 #include "DFTensor.h"
 #include "BasisFunctionMacros.h"
 #include "SlowERIBase.h"
+#include "BasisSetParser.h"
 
 #ifdef USE_LIBINT
 #include "ERI.h"
@@ -130,8 +131,6 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
 
         for(int i = 0; i < nallatoms; i++)
         {
-            // newline is extracted from call to getline() above
-            //f.ignore(); // ignore the newline
             char * s = new char[8];
             f.get(s, 4, ' ');
             atoms[i].symbol = s;
@@ -141,6 +140,8 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
               >> atoms[i].center[1]
               >> atoms[i].center[2]
               >> atoms[i].mass;
+
+            f.ignore(); // ignore the newline
 
             test.xyz[0].push_back(DTestResult(atoms[i].center[0], TEST_MOLECULE_XYZ_THRESHOLD));
             test.xyz[1].push_back(DTestResult(atoms[i].center[1], TEST_MOLECULE_XYZ_THRESHOLD));
@@ -286,6 +287,10 @@ void TestInfo::TestBasisConversion(int nshells, int * nshellspercenter, C_ShellI
     test.nao.set_thisrun(basis->nao());
     test.nshell.set_thisrun(basis->nshell());
 
+    // don't keep testing if stuff is wrong
+    if(!(test.nprim.check() && test.nbf.check() && test.nao.check() && test.nshell.check()))
+       return; 
+
     for(int i = 0; i < ncenters_; i++)
         test.center_nshell.at(i).set_thisrun(basis->nshell_on_center(i));
 
@@ -351,14 +356,15 @@ void TestInfo::TestMatrix(double * mat,
         checksum += mat[i]*static_cast<double>(i);
     }
 
+    test.sum.set_thisrun(sum);
+    test.checksum.set_thisrun(checksum);
+
     if(test.length.check())
     {
         for(int i = 0; i < 100; i++)
             test.elements[i].test.set_thisrun(mat[test.elements[i].index]);
     }
 
-    test.sum.set_thisrun(sum);
-    test.checksum.set_thisrun(checksum);
 }
 
 
@@ -367,6 +373,11 @@ void TestInfo::TestQsoMatrix(void)
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
     auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
     auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+
+    // to test reading of basis sets from file
+    //std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
+    //auto primary = BasisSet::construct(parser, mol, "6-31gss.gbs");
+    //auto aux = BasisSet::construct(parser, mol, "cc-pvdz-ri.gbs");
 
     DFTensor dft(primary, aux);
 
@@ -462,6 +473,13 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
     failures +=  Test(out, "# of ao", test.nao);
     failures +=  Test(out, "# of bf", test.nbf);
 
+
+    if(failures > 0)
+    {
+        out << "\n...skipping remainder of tests since dimensions didn't check out\n\n";
+        return failures;
+    }
+
     for(int i = 0; i < ncenters_; i++)
     {
         stringstream ss;
@@ -529,8 +547,17 @@ int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
     failures +=  Test(out, "# of elements", test.length);
+
+    bool testelements = (failures > 0) ? false : true;
+        
     failures +=  Test(out, "sum", test.sum);
     failures +=  Test(out, "checksum", test.checksum);
+
+    if(!testelements)
+    {
+        out << "\n...skipping element testing since dimensions didn't check out\n\n";
+        return failures;
+    }
 
     for(int i = 0; i < 100; i++)
     {

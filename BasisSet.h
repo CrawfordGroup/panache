@@ -224,9 +224,10 @@ public:
     // Returns the values of the basis functions at a point
     void compute_phi(double *phi_ao, double x, double y, double z);
 
+    static
     std::shared_ptr<BasisSet> construct(const std::shared_ptr<BasisSetParser>& parser,
                                         const std::shared_ptr<Molecule>& mol,
-                                        const std::string& basisname);
+                                        const std::string& filename);
 
 
     void print(FILE *out = stdout) const;

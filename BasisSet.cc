@@ -488,18 +488,15 @@ void BasisSet::compute_phi(double *phi_ao, double x, double y, double z)
 
 std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
         const std::shared_ptr<Molecule>& mol,
-        const std::string& basisname)
+        const std::string& filename)
 {
-    // Update geometry in molecule, if there is a problem an exception is thrown.
-    mol->update_geometry();
-
     std::vector<std::vector<ShellInfo>> basis_atom_shell;
 
     for(int i = 0; i < mol->natom(); i++)
     {
         bool not_found = true;
 
-        string path = "/home/ben/programming/psi4/libpanache/basis/test.basis";
+        string path = "/home/ben/programming/psi4/libpanache/basis/" + filename;
         std::vector<std::string> filecontents;
 
         filecontents = parser->load_file(path);

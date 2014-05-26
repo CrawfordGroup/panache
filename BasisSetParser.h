@@ -56,7 +56,7 @@ public:
      *  @param basisname If specified only return only lines that pertain to that basis name. (for multi-basisset files)
      *                   Otherwise return the entire file is basisname="".
      */
-    std::vector<std::string> load_file(const std::string& filename, const std::string& basisname="");
+    std::vector<std::string> load_file(const std::string& filename);
 
     //! Take a multiline string and convert it to a vector of strings.
     std::vector<std::string> string_to_vector(const std::string& data);
