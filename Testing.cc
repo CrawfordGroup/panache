@@ -6,6 +6,7 @@
 #include "Testing.h"
 #include "c_convert.h"
 #include "DFTensor.h"
+#include "Orderings.h"
 #include "BasisFunctionMacros.h"
 #include "SlowERIBase.h"
 #include "BasisSetParser.h"
@@ -409,6 +410,47 @@ void TestInfo::TestERI(void)
     double * qso = new double[matsize];
     dft.Qso(qso, matsize);
 
+///////
+// Test reordering
+///////
+    //reorder::Orderings reversep;
+    //reversep.SetOrder(1, {{ 3, 2, 1}});
+
+    /*
+    std::cout << "Q Before reordering\n";
+    for(int i = 0; i < naux; i++)
+    {
+        std::cout << "q = " << i << "\n";
+        for(int j = 0; j < nbf; j++)
+        {
+            for(int k = 0; k < nbf; k++)
+                std::cout << qso[i*nbf2+j*nbf+k] << "  ";
+            std::cout << "\n";
+        }
+
+        std::cout << "\n";
+    }
+    */
+
+
+    //dft.ReorderQ(qso, matsize, reversep);
+
+    /*
+    std::cout << "Q After reordering\n";
+    for(int i = 0; i < naux; i++)
+    {
+        std::cout << "q = " << i << "\n";
+        for(int j = 0; j < nbf; j++)
+        {
+            for(int k = 0; k < nbf; k++)
+                std::cout << qso[i*nbf2+j*nbf+k] << "  ";
+            std::cout << "\n";
+        }
+
+        std::cout << "\n";
+    }
+    */
+
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
 #ifdef USE_LIBINT
@@ -443,10 +485,10 @@ void TestInfo::TestERI(void)
 
                     std::cout << "Quartet " << p << " " << q << " " << r << " " << s << "\n";
                     for(int i = 0; i < ndferi; i++)
-                    {                        
                         std::cout << "  Reference: " << referi.buffer()[i] << "\n";
-                        std::cout << "Density Fit: " << dfbuf[i] << "\n\n";
-                    }
+                    for(int i = 0; i < ndferi; i++)
+                        std::cout << "Density Fit: " << dfbuf[i] << "\n";
+                    std::cout << "\n";
 
                 }
             }

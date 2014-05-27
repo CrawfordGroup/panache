@@ -31,6 +31,10 @@
 #include "BasisSet.h"
 #include "qt.h"
 
+// for reordering
+#include "Orderings.h"
+#include "MemorySwapper.h"
+
 #ifdef USE_LIBINT
 #include "ERI.h"
 #endif
@@ -218,21 +222,147 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
 
     //!\todo replace with BLAS call
     for(int a = 0; a < nfp; a++)
-    for(int b = 0; b < nfq; b++)
-    for(int c = 0; c < nfr; c++)
-    for(int d = 0; d < nfs; d++)
-    {
-        for(int Q = 0; Q < naux; Q++)
-        {
-            outbuffer[bufindex] += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
-                                 * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
-        }
-        bufindex++;
-    }
+        for(int b = 0; b < nfq; b++)
+            for(int c = 0; c < nfr; c++)
+                for(int d = 0; d < nfs; d++)
+                {
+                    for(int Q = 0; Q < naux; Q++)
+                    {
+                        outbuffer[bufindex] += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
+                                               * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
+                    }
+                    bufindex++;
+                }
 
     return nint;
 }
 
+
+
+// note - passing by value for the vector
+static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
+             reorder::MemorySwapper & sf)
+{
+    size_t size = order.size();
+
+    // original order is 1 2 3 4 5 6....
+    std::vector<unsigned short> currentorder(size);
+
+    for(int i = 0; i < size; i++)
+        currentorder[i] = i+1;
+
+    for(int i = 0; i < size; i++)
+    {
+        // find the index in the current order
+        size_t cindex = 0;
+        bool found = false;
+
+        for(int j = 0; j < size; j++)
+        {
+            if(currentorder[j] == order[i])
+            {
+                found = true;
+                cindex = j;
+                break;
+            }
+        }
+        if(!found)
+            throw RuntimeError("Error in reordering - index not found?");
+
+
+        // we shouldn't swap anything that was previously put in place... 
+        if(cindex < i)
+            throw RuntimeError("Error in reordering - going to swap something I shouldn't");
+
+        //swap
+        if(cindex != i)
+        {
+            sf.swap(pointers[i], pointers[cindex]);
+            std::swap(currentorder[i], currentorder[cindex]);
+        }
+    }
+
+    // double check
+    for(int i = 0; i < size; i++)
+    {
+        if(currentorder[i] != order[i])
+            throw RuntimeError("Reordering failed!");
+    }
 }
+
+
+
+
+void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & order)
+{
+    using namespace reorder;
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+
+    int nso = primary_->nbf();
+    int nq = auxiliary_->nbf();
+
+    if((nq * nso * nso) != qsosize)
+        throw RuntimeError("Incompatible Qso matrix in ReorderQ");
+
+
+    MemorySwapper sf1(1);   // swaps values
+    MemorySwapper sf2(nso); // swaps rows
+
+    std::vector<PointerMap> vpm;
+
+    //go through what would need to be changed in the primary basis
+    for(int i = 0; i < primary_->nshell(); i++)
+    {
+        const GaussianShell & s = primary_->shell(i);
+        if(order.NeedsReordering(s.am()))
+            vpm.push_back(PointerMap(s.function_index(), order.GetOrder(s.am())));
+    }
+
+
+    std::vector<double *> pointers(primary_->max_function_per_shell());
+
+
+    // for each q
+    for(size_t i = 0; i < nq; i++)
+    {
+        // for each row
+        for(size_t j = 0; j < nso; j++)
+        {
+            // Swap columns within this row
+            for(auto & it : vpm)
+            {
+                size_t ntoswap = it.order.size();
+                size_t start = i*nso*nso+j*nso+it.start;
+
+                for(size_t n = 0; n < ntoswap; n++)
+                    pointers[n] = qso + start + n;
+
+                Reorder(it.order, pointers, sf1);
+
+            }
+        }
+
+        // Swap rows
+        for(auto & it : vpm)
+        {
+            size_t ntoswap = it.order.size();
+            size_t start = i*nso*nso;
+
+            for(size_t n = 0; n < ntoswap; n++)
+                pointers[n] = qso + start + (it.start+n)*nso;
+
+            Reorder(it.order, pointers, sf2);
+
+        }
+
+    }
+}
+
+
+
+}
+
+
 
 
