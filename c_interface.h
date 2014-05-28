@@ -14,9 +14,7 @@ extern "C" {
 
     struct C_AtomCenter
     {
-        double Z;
         const char * symbol;
-        double mass;
         double center[3];
     };
 

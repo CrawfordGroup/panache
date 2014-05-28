@@ -8,7 +8,7 @@ extern "C" {
 
 
     void fortran_init_(int * ncenters,
-                       double * xyz, double * Z, double * masses,
+                       double * xyz,
                        int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
                        int * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int * aux_nshellspercenter, int * aux_am, int * aux_is_pure,
@@ -18,9 +18,7 @@ extern "C" {
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
         for(int i = 0; i < *ncenters; i++)
         {
-            atoms[i].Z = Z[i];
             atoms[i].symbol = "XX";
-            atoms[i].mass = masses[i];
             atoms[i].center[0] = xyz[i];
             atoms[i].center[1] = xyz[i+(*ncenters)];
             atoms[i].center[2] = xyz[i+2*(*ncenters)];

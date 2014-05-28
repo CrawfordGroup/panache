@@ -115,7 +115,7 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
     try
     {
         int natoms, nallatoms;
-        std::string schoen, fullpg;
+        std::string schoen, fullpg; // fullpg is no longer used
 
         f >> natoms >> nallatoms;
         f.ignore(); // remove newline
@@ -123,12 +123,13 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
         getline(f, schoen);
         getline(f, fullpg);
         test.schoen.set(schoen);
-        test.fullpg.set(fullpg);
 
         test.natom.set(natoms);
         test.nallatom.set(nallatoms);
 
         atoms = new C_AtomCenter[nallatoms];
+
+        double dummy; // for mass and Z-number
 
         for(int i = 0; i < nallatoms; i++)
         {
@@ -136,19 +137,17 @@ int TestInfo::ReadMolecule(const string & filename, C_AtomCenter * &atoms, Molec
             f.get(s, 4, ' ');
             atoms[i].symbol = s;
 
-            f >> atoms[i].Z
+            f >> dummy  // Z is not used
               >> atoms[i].center[0]
               >> atoms[i].center[1]
               >> atoms[i].center[2]
-              >> atoms[i].mass;
+              >> dummy;   // mass is not used
 
             f.ignore(); // ignore the newline
 
             test.xyz[0].push_back(DTestResult(atoms[i].center[0], TEST_MOLECULE_XYZ_THRESHOLD));
             test.xyz[1].push_back(DTestResult(atoms[i].center[1], TEST_MOLECULE_XYZ_THRESHOLD));
             test.xyz[2].push_back(DTestResult(atoms[i].center[2], TEST_MOLECULE_XYZ_THRESHOLD));
-            test.Z.push_back(DTestResult(atoms[i].Z, TEST_MOLECULE_Z_THRESHOLD));
-            test.mass.push_back(DTestResult(atoms[i].mass, TEST_MOLECULE_MASS_THRESHOLD));
         }
 
         return nallatoms;
@@ -326,7 +325,6 @@ void TestInfo::TestMoleculeConversion(void)
     molecule_test_.nallatom.set_thisrun(mol->nallatom());
 
     molecule_test_.schoen.set_thisrun(mol->schoenflies_symbol());
-    molecule_test_.fullpg.set_thisrun(mol->full_point_group());
 
     for(int i = 0; i < mol->natom(); i++)
     {
@@ -334,8 +332,6 @@ void TestInfo::TestMoleculeConversion(void)
         molecule_test_.xyz[0].at(i).set_thisrun(mol->fx(i));
         molecule_test_.xyz[1].at(i).set_thisrun(mol->fy(i));
         molecule_test_.xyz[2].at(i).set_thisrun(mol->fz(i));
-        molecule_test_.Z.at(i).set_thisrun(mol->Z(i));
-        molecule_test_.mass.at(i).set_thisrun(mol->mass(i));
     }
 }
 
@@ -637,7 +633,6 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
     mol_failures += Test(out, "# of atoms", molecule_test_.natom);
     mol_failures += Test(out, "# of atoms (+ dummies)", molecule_test_.nallatom);
     mol_failures += Test(out, "Schoenflies Symbol", molecule_test_.schoen);
-    mol_failures += Test(out, "Full point group", molecule_test_.fullpg);
 
     for(int i = 0; i < ncenters_; i++)
     {
@@ -647,14 +642,6 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
             ss << "Center " << i << " (" << ((c == 0) ? 'x' : ((c == 1) ? 'y' : 'z')) << ")";
             mol_failures += Test(out, ss.str(), molecule_test_.xyz[c].at(i));
         }
-
-        stringstream ssmass;
-        ssmass << "Center " << i << " (mass)";
-        stringstream ssZ;
-        ssZ << "Center " << i << " (Z number)";
-
-        mol_failures += Test(out, ssmass.str(), molecule_test_.mass.at(i));
-        mol_failures += Test(out, ssZ.str(), molecule_test_.Z.at(i));
     }
 
     out << "\n";

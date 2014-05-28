@@ -49,17 +49,17 @@ std::shared_ptr<panache::Molecule> MoleculeFromArrays(int ncenters, C_AtomCenter
     for(auto i = 0; i < ncenters; i++)
     {
         molecule->add_atom(
-            atoms[i].Z,
+            0.0, // Z number is not used 
             atoms[i].center[0],
             atoms[i].center[1],
             atoms[i].center[2],
             atoms[i].symbol,
-            atoms[i].mass,
+            0.0, // mass is not used
             0);
     }
 
     molecule->reset_point_group("c1");
-    molecule->set_full_point_group();
+    //molecule->set_full_point_group();
     return molecule;
 }
 

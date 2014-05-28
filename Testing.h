@@ -271,9 +271,6 @@ private:
         ITestResult natom;        //!< Number of centers in the molecule
         ITestResult nallatom;    //!< Number of centers in the molecule (including dummies)
         STestResult schoen;      //!< Schoenflies symbol
-        STestResult fullpg;      //!< Full point group symbol
-        vector<DTestResult> Z;   //!< Z-number of each center
-        vector<DTestResult> mass; //!< Mass of each center
 
         /*! \brief XYZ coordinates
          *
