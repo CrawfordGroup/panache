@@ -488,7 +488,7 @@ void BasisSet::compute_phi(double *phi_ao, double x, double y, double z)
 
 std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
         const std::shared_ptr<Molecule>& mol,
-        const std::string& filename)
+        const std::string& path)
 {
     std::vector<std::vector<ShellInfo>> basis_atom_shell;
 
@@ -496,7 +496,6 @@ std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetPars
     {
         bool not_found = true;
 
-        string path = "/home/ben/programming/psi4/libpanache/basis/" + filename;
         std::vector<std::string> filecontents;
 
         filecontents = parser->load_file(path);
