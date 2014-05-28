@@ -107,8 +107,8 @@ void DFTensor::build_metric()
 
 int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 {
-    d1 = auxiliary_->nbf();
-    d2 = d3 = primary_->nbf();
+    d1 = d2 = primary_->nbf();
+    d3 = auxiliary_->nbf();
     return d1 * d2 * d3;
 }
 
@@ -176,8 +176,12 @@ void DFTensor::Qso(double * A, size_t length)
         }
     }
 
-    C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, Bp[0], nso * nso, 0.0,
-            A, nso * nso);
+//    C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, Bp[0], nso * nso, 0.0,
+//            A, nso * nso);
+
+    // Do the transpose of above - this makes ERI generation "faster"
+    C_DGEMM('T','T',nso*nso, naux, naux, 1.0, Bp[0], nso*nso, Jp[0], naux, 0.0,
+            A, naux);
 
     if (debug_)
     {
@@ -206,7 +210,7 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
     int nint = nfp * nfq * nfr * nfs;
 
     int nbf = primary_->nbf();
-    int nbf2 = nbf*nbf;
+    int naux = auxiliary_->nbf();
 
 
     if(nint > buffersize)
@@ -214,9 +218,6 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
 
     for(int i = 0; i < nint; i++)
         outbuffer[i] = 0.0;
-
-
-    int naux = auxiliary_->nbf();
 
     int bufindex = 0;
 
@@ -228,8 +229,10 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
                 {
                     for(int Q = 0; Q < naux; Q++)
                     {
-                        outbuffer[bufindex] += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
-                                               * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
+//                        outbuffer[bufindex] += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
+//                                               * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
+                        outbuffer[bufindex] += qso[(pstart+a)*nbf*naux+(qstart+b)*naux+Q]
+                                             * qso[(rstart+c)*nbf*naux+(sstart+d)*naux+Q];
                     }
                     bufindex++;
                 }
