@@ -8,7 +8,7 @@ extern "C" {
 
 
     void fortran_init_(int * ncenters,
-                       double * xyz,
+                       double * xyz, char * symbols,
                        int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
                        int * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int * aux_nshellspercenter, int * aux_am, int * aux_is_pure,
@@ -16,9 +16,30 @@ extern "C" {
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
+
+        char ** csymbols = new char*[*ncenters];
         for(int i = 0; i < *ncenters; i++)
         {
-            atoms[i].symbol = "XX";
+            csymbols[i] = new char[5];
+            csymbols[i][0] = csymbols[i][1] = csymbols[i][2] 
+                           = csymbols[i][3] = csymbols[i][4] = '\0';
+        }
+
+        // symbols should be basically a long, space-delimited string
+        // length is ncenters * 4, but is NOT null delimited.
+        // fortran inserts spaces instead.
+
+        for(int i = 0; i < *ncenters; i++)
+        {
+            for(int j = 0; j < 4; j++)
+            {
+                char c = symbols[i * 4 + j];
+                if(c != ' ')
+                    csymbols[i][j] = c;
+            }
+
+            atoms[i].symbol = csymbols[i]; 
+
             atoms[i].center[0] = xyz[i];
             atoms[i].center[1] = xyz[i+(*ncenters)];
             atoms[i].center[2] = xyz[i+2*(*ncenters)];
@@ -84,7 +105,13 @@ extern "C" {
 
         delete [] primary_shells;
         delete [] aux_shells;
+
         delete [] atoms;
+
+        for(int i = 0; i < *ncenters; i++)
+            delete [] csymbols[i];
+        delete [] csymbols;
+
 
     }
 
