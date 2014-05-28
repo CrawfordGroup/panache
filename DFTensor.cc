@@ -216,24 +216,17 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
     if(nint > buffersize)
         throw RuntimeError("Error - ERI buffer not large enough!");
 
-    for(int i = 0; i < nint; i++)
-        outbuffer[i] = 0.0;
-
     int bufindex = 0;
 
-    //!\todo replace with BLAS call
+    //!\todo replace with DGEMM?
     for(int a = 0; a < nfp; a++)
         for(int b = 0; b < nfq; b++)
             for(int c = 0; c < nfr; c++)
                 for(int d = 0; d < nfs; d++)
                 {
-                    for(int Q = 0; Q < naux; Q++)
-                    {
-//                        outbuffer[bufindex] += qso[Q*nbf2+(pstart+a)*nbf+(qstart+b)]
-//                                               * qso[Q*nbf2+(rstart+c)*nbf+(sstart+d)];
-                        outbuffer[bufindex] += qso[(pstart+a)*nbf*naux+(qstart+b)*naux+Q]
-                                             * qso[(rstart+c)*nbf*naux+(sstart+d)*naux+Q];
-                    }
+                    outbuffer[bufindex] = C_DDOT(naux, 
+                                                 qso + (pstart+a)*nbf*naux+(qstart+b)*naux, 1,
+                                                 qso + (rstart+c)*nbf*naux+(sstart+d)*naux, 1);
                     bufindex++;
                 }
 
