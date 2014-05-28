@@ -406,46 +406,7 @@ void TestInfo::TestERI(void)
     double * qso = new double[matsize];
     dft.Qso(qso, matsize);
 
-///////
-// Test reordering
-///////
-    //reorder::Orderings reversep;
-    //reversep.SetOrder(1, {{ 3, 2, 1}});
-
-    /*
-    std::cout << "Q Before reordering\n";
-    for(int i = 0; i < naux; i++)
-    {
-        std::cout << "q = " << i << "\n";
-        for(int j = 0; j < nbf; j++)
-        {
-            for(int k = 0; k < nbf; k++)
-                std::cout << qso[i*nbf2+j*nbf+k] << "  ";
-            std::cout << "\n";
-        }
-
-        std::cout << "\n";
-    }
-    */
-
-
-    //dft.ReorderQ(qso, matsize, reversep);
-
-    /*
-    std::cout << "Q After reordering\n";
-    for(int i = 0; i < naux; i++)
-    {
-        std::cout << "q = " << i << "\n";
-        for(int j = 0; j < nbf; j++)
-        {
-            for(int k = 0; k < nbf; k++)
-                std::cout << qso[i*nbf2+j*nbf+k] << "  ";
-            std::cout << "\n";
-        }
-
-        std::cout << "\n";
-    }
-    */
+    reorder::GAMESS_Ordering go;
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
