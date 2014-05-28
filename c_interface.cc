@@ -4,6 +4,7 @@
 #include "c_convert.h"
 #include "DFTensor.h"
 #include "Exception.h"
+#include "BasisSetParser.h"
 
 using panache::RuntimeError;
 
@@ -40,6 +41,33 @@ extern "C" {
         return tensor_index_++;
     }
 
+
+    int C_init2(int ncenters,
+                C_AtomCenter * atoms,
+                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                const char * auxfilename)
+    {
+        // Molecule
+        std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
+
+
+        // Construct the basis set info
+        auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
+                                                        primary_nshellspercenter, primary_shells);
+
+        // Gaussian input file parser for the auxiliary basis
+        std::shared_ptr<panache::Gaussian94BasisSetParser> parser(new panache::Gaussian94BasisSetParser);
+        auto auxBasis = panache::BasisSet::construct(parser, molecule, auxfilename);
+
+        panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis);
+        dftensors_[tensor_index_] = dft;
+
+        return tensor_index_++;
+    }
+
+
+
+
     void C_cleanup(int df_handle)
     {
         if(dftensors_.count(df_handle) > 0)
@@ -51,6 +79,8 @@ extern "C" {
             throw RuntimeError("Error - cannot erase DFTensor object with that handle!");
             
     }
+
+
 
     void C_cleanup_all(void)
     {

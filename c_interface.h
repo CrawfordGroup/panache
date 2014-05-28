@@ -25,6 +25,11 @@ extern "C" {
                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
 
+    int C_init2(int ncenters,
+                C_AtomCenter * atoms,
+                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                const char * auxfilename);
+
     void C_QAO(int df_handle, double * matout, int matsize);
 
     void C_cleanup(int df_handle);
