@@ -11,17 +11,7 @@
 #include "SlowERIBase.h"
 #include "BasisSetParser.h"
 
-#ifdef USE_LIBINT
-#include "LibintERI.h"
-#endif
-
-#ifdef USE_LIBINT2
-#include "Libint2ERI.h"
-#endif
-
-#ifdef USE_SLOWERI
-#include "SlowERI.h"
-#endif
+#include "ERI.h"
 
 using std::string;
 using std::ifstream;
@@ -410,17 +400,7 @@ void TestInfo::TestERI(void)
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
-#ifdef USE_LIBINT
-    ERI referi(primary, primary, primary, primary);
-#endif
-
-#ifdef USE_LIBINT2
-    ERI2 referi(primary, primary, primary, primary);
-#endif
-
-#ifdef USE_SLOWERI
-    SlowERI referi(primary, primary, primary, primary);
-#endif
+    std::shared_ptr<TwoBodyAOInt> referi = GetERI(primary, primary, primary, primary);
 
     std::cout << std::setprecision(8);
 
@@ -435,14 +415,14 @@ void TestInfo::TestERI(void)
                 for(int s = 0; s < primary->nshell(); s++)
                 {
                     //Libint
-                    int nreferi = referi.compute_shell(p,q,r,s);
+                    int nreferi = referi->compute_shell(p,q,r,s);
 
                     //Density fitting
                     int ndferi = dft.CalculateERI(qso, matsize, p, q, r, s, dfbuf, 10000); 
 
                     std::cout << "Quartet " << p << " " << q << " " << r << " " << s << "\n";
                     for(int i = 0; i < ndferi; i++)
-                        std::cout << "  Reference: " << referi.buffer()[i] << "\n";
+                        std::cout << "  Reference: " << referi->buffer()[i] << "\n";
                     for(int i = 0; i < ndferi; i++)
                         std::cout << "Density Fit: " << dfbuf[i] << "\n";
                     std::cout << "\n";

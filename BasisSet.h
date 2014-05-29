@@ -120,9 +120,6 @@ public:
 
     BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap);
 
-    /** Initialize singleton values that are shared by all basis set objects. */
-    static void initialize_singletons();
-
     /** Number of primitives.
      *  @return The total number of primitives in all contractions.
      */
@@ -220,9 +217,6 @@ public:
     int get_ao_sorted_shell(const int &i) { return sorted_ao_shell_list_[i]; }
     //! Returns the vector of sorted shell list.
     std::vector<int> get_ao_sorted_list() { return sorted_ao_shell_list_; }
-
-    // Returns the values of the basis functions at a point
-    void compute_phi(double *phi_ao, double x, double y, double z);
 
     static
     std::shared_ptr<BasisSet> construct(const std::shared_ptr<BasisSetParser>& parser,

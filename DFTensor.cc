@@ -35,17 +35,7 @@
 #include "Orderings.h"
 #include "MemorySwapper.h"
 
-#ifdef USE_LIBINT
-#include "LibintERI.h"
-#endif
-
-#ifdef USE_LIBINT2
-#include "Libint2ERI.h"
-#endif
-
-#ifdef USE_SLOWERI
-#include "SlowERI.h"
-#endif
+#include "ERI.h"
 
 #include "ERDERI.h"
 #include "Output.h"
@@ -131,21 +121,9 @@ void DFTensor::Qso(double * A, size_t length)
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
-#ifdef USE_LIBINT
-    ERI eri(auxiliary_,zero,primary_,primary_);
-#endif
+    std::shared_ptr<TwoBodyAOInt> eri = GetERI(auxiliary_,zero,primary_,primary_);
 
-#ifdef USE_LIBINT2
-    ERI2 eri(auxiliary_,zero,primary_,primary_);
-#endif
-
-#ifdef USE_SLOWERI
-    SlowERI eri(auxiliary_,zero,primary_,primary_);
-#endif
-
-    //ERDERI eri(auxiliary_,zero,primary_,primary_);
-
-    const double* buffer = eri.buffer();
+    const double* buffer = eri->buffer();
 
     for (int P = 0; P < auxiliary_->nshell(); P++)
     {
@@ -160,7 +138,7 @@ void DFTensor::Qso(double * A, size_t length)
                 int nn = primary_->shell(N).nfunction();
                 int nstart = primary_->shell(N).function_index();
 
-                eri.compute_shell(P,0,M,N);
+                eri->compute_shell(P,0,M,N);
 
                 for (int p = 0, index = 0; p < np; p++)
                 {

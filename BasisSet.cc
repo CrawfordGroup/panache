@@ -26,21 +26,6 @@
 */
 #include <cstdlib>
 
-#ifdef USE_LIBINT
-#include <libint/libint.h>
-#define MAX_AM LIBINT_MAX_AM
-#endif
-
-#ifdef USE_LIBINT2
-#include <libint2.h>
-#define MAX_AM LIBINT2_MAX_AM_ERI
-#endif
-
-#ifdef USE_SLOWERI
-// slow eri can handle any angular momentum
-#define MAX_AM 20
-#endif
-
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
 #include "Molecule.h"
@@ -55,13 +40,9 @@ namespace panache
 
 bool BasisSet::initialized_shared_ = false;
 
-std::vector<Vector3> BasisSet::exp_ao[MAX_AM];
-
 // Constructs a zero AO basis set
 BasisSet::BasisSet()
 {
-    if (initialized_shared_ == false)
-        initialize_singletons();
     initialized_shared_ = true;
 
     // Add a dummy atom at the origin, to hold this basis function
@@ -134,26 +115,6 @@ void BasisSet::delete_arrays(void)
     delete [] xyz_;
 }
 
-
-void BasisSet::initialize_singletons()
-{
-    // Populate the exp_ao arrays
-    for (int l=0; l<MAX_AM; ++l)
-    {
-        for (int i=0; i<=l; ++i)
-        {
-            int x = l-i;
-            for (int j=0; j<=i; ++j)
-            {
-                int y = i-j;
-                int z = j;
-
-                Vector3 xyz_ao(x, y, z);
-                BasisSet::exp_ao[l].push_back(xyz_ao);
-            }
-        }
-    }
-}
 
 shared_ptr<Molecule> BasisSet::molecule() const
 {
@@ -295,9 +256,6 @@ shared_ptr<BasisSet> BasisSet::zero_ao_basis_set()
 BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap)
     : molecule_(mol)
 {
-    // Singletons
-    if (initialized_shared_ == false)
-        initialize_singletons();
     initialized_shared_ = true;
 
     int natom = molecule_->natom();
@@ -449,42 +407,6 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
 
 }
 
-
-void BasisSet::compute_phi(double *phi_ao, double x, double y, double z)
-{
-    zero_arr(phi_ao, nao());
-
-    int ao = 0;
-    for(int ns=0; ns < nshell(); ns++)
-    {
-        const GaussianShell& shell = shells_[ns];
-        int am = shell.am();
-        int nprim = shell.nprimitive();
-        const double *a = shell.exps();
-        const double *c = shell.coefs();
-
-        const double *xyz = shell.center();
-        double dx = x - xyz[0];
-        double dy = y - xyz[1];
-        double dz = z - xyz[2];
-        double rr = dx*dx + dy*dy + dz*dz;
-
-        double cexpr = 0;
-        for(int np=0; np < nprim; np++)
-            cexpr += c[np] * exp(-a[np] * rr);
-
-        for(int l=0; l < INT_NCART(am); l++)
-        {
-            Vector3& components = exp_ao[am][l];
-            phi_ao[ao+l] += pow(dx, (double) components[0]) *
-                            pow(dy, (double) components[1]) *
-                            pow(dz, (double) components[2]) *
-                            cexpr;
-        }
-
-        ao += INT_NCART(am);
-    } // nshell
-}
 
 std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
         const std::shared_ptr<Molecule>& mol,

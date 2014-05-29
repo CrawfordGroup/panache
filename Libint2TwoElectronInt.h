@@ -1,5 +1,5 @@
-#ifndef PANACHE_TWOELECTRONINT2_H
-#define PANACHE_TWOELECTRONINT2_H
+#ifndef PANACHE_LIBINT2TWOELECTRONINT_H
+#define PANACHE_LIBINT2TWOELECTRONINT_H
 
 #include <libint2.h>
 #include "TwoBodyAOInt.h"
@@ -14,7 +14,7 @@ class AOShellCombinationsIterator;
  *  \class ERI
  *  \brief Capable of computing two-electron repulsion integrals.
  */
-class TwoElectronInt2 : public TwoBodyAOInt
+class Libint2TwoElectronInt : public TwoBodyAOInt
 {
 protected:
     //! Maximum cartesian class size.
@@ -36,12 +36,12 @@ protected:
 
 public:
     //! Constructor
-    TwoElectronInt2(const std::shared_ptr<BasisSet> bs1,
+    Libint2TwoElectronInt(const std::shared_ptr<BasisSet> bs1,
                    const std::shared_ptr<BasisSet> bs2,
                    const std::shared_ptr<BasisSet> bs3,
                    const std::shared_ptr<BasisSet> bs4);
 
-    virtual ~TwoElectronInt2();
+    virtual ~Libint2TwoElectronInt();
 
     /// Compute ERIs between 4 shells. Result is stored in buffer.
     size_t compute_shell(const AOShellCombinationsIterator&);
@@ -53,4 +53,4 @@ public:
 
 }
 
-#endif //PANACHE_TWOELECTRONINT2_H
+#endif //PANACHE_LIBINT2TWOELECTRONINT_H

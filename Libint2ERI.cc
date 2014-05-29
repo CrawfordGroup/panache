@@ -31,11 +31,11 @@ namespace panache
 // Normal two-electron repulsion integrals
 /////////
 
-ERI2::ERI2(const std::shared_ptr<BasisSet> bs1,
+Libint2ERI::Libint2ERI(const std::shared_ptr<BasisSet> bs1,
          const std::shared_ptr<BasisSet> bs2,
          const std::shared_ptr<BasisSet> bs3,
          const std::shared_ptr<BasisSet> bs4)
-    : TwoElectronInt2(bs1, bs2, bs3, bs4)
+    : Libint2TwoElectronInt(bs1, bs2, bs3, bs4)
 {
     fjt_ = new Taylor_Fjt(basis1()->max_am() +
                           basis2()->max_am() +
@@ -44,21 +44,21 @@ ERI2::ERI2(const std::shared_ptr<BasisSet> bs1,
                           1, 1e-15);
 }
 
-ERI2::~ERI2()
+Libint2ERI::~Libint2ERI()
 {
     delete fjt_;
 }
 
 /////////
-// ErfERI2
+// ErfLibint2ERI
 /////////
 
-ErfERI2::ErfERI2(double omega,
+Libint2ErfERI::Libint2ErfERI(double omega,
                const std::shared_ptr<BasisSet> bs1,
                const std::shared_ptr<BasisSet> bs2,
                const std::shared_ptr<BasisSet> bs3,
                const std::shared_ptr<BasisSet> bs4)
-    : TwoElectronInt2(bs1, bs2, bs3, bs4)
+    : Libint2TwoElectronInt(bs1, bs2, bs3, bs4)
 {
     fjt_ = new ErfFundamental(omega,
                               basis1()->max_am() +
@@ -68,12 +68,12 @@ ErfERI2::ErfERI2(double omega,
                               1);
 }
 
-ErfERI2::~ErfERI2()
+Libint2ErfERI::~Libint2ErfERI()
 {
     delete fjt_;
 }
 
-void ErfERI2::setOmega(double omega)
+void Libint2ErfERI::setOmega(double omega)
 {
     (static_cast<ErfFundamental*>(fjt_))->setOmega(omega);
 }

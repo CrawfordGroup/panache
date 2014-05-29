@@ -27,17 +27,7 @@
 #include "Matrix.h"
 #include "Vector.h"
 
-#ifdef USE_LIBINT
-#include "LibintERI.h"
-#endif
-
-#ifdef USE_LIBINT2
-#include "Libint2ERI.h"
-#endif
-
-#ifdef USE_SLOWERI
-#include "SlowERI.h"
-#endif
+#include "ERI.h"
 
 #include "FittingMetric.h"
 #include "BasisSet.h"
@@ -111,26 +101,9 @@ void FittingMetric::form_fitting_metric()
     std::shared_ptr<TwoBodyAOInt> *Jint = new std::shared_ptr<TwoBodyAOInt>[nthread];
     for (int Q = 0; Q<nthread; Q++) {
         if (omega_ > 0.0) {
-            #ifdef USE_LIBINT
-              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ErfERI(omega_, aux_, zero, aux_, zero));
-            #endif
-            #ifdef USE_LIBINT2
-              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ErfERI2(omega_, aux_, zero, aux_, zero));
-            #endif
-            #ifdef USE_SLOWERI
-              throw RuntimeError("Not yet implemented");
-            #endif
-            
+              Jint[Q] = GetErfERI(omega_, aux_, zero, aux_, zero);
         } else {
-            #ifdef USE_LIBINT
-              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ERI(aux_, zero, aux_, zero));
-            #endif
-            #ifdef USE_LIBINT2
-              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new ERI2(aux_, zero, aux_, zero));
-            #endif
-            #ifdef USE_SLOWERI
-              Jint[Q] = std::shared_ptr<TwoBodyAOInt>(new SlowERI(aux_, zero, aux_, zero));
-            #endif
+              Jint[Q] = GetERI(aux_, zero, aux_, zero);
         }
         Jbuffer[Q] = Jint[Q]->buffer();
     }

@@ -23,7 +23,7 @@ static inline int ioff(int i)
 
 
 
-TwoElectronInt2::TwoElectronInt2(const std::shared_ptr<BasisSet> bs1,
+Libint2TwoElectronInt::Libint2TwoElectronInt(const std::shared_ptr<BasisSet> bs1,
                                  const std::shared_ptr<BasisSet> bs2,
                                  const std::shared_ptr<BasisSet> bs3,
                                  const std::shared_ptr<BasisSet> bs4)
@@ -69,7 +69,7 @@ TwoElectronInt2::TwoElectronInt2(const std::shared_ptr<BasisSet> bs1,
     memset(source_, 0, sizeof(double)*size);
 }
 
-TwoElectronInt2::~TwoElectronInt2()
+Libint2TwoElectronInt::~Libint2TwoElectronInt()
 {
     delete[] tformbuf_;
     delete[] target_;
@@ -78,12 +78,12 @@ TwoElectronInt2::~TwoElectronInt2()
     delete [] erival_;
 }
 
-size_t TwoElectronInt2::compute_shell(const AOShellCombinationsIterator& shellIter)
+size_t Libint2TwoElectronInt::compute_shell(const AOShellCombinationsIterator& shellIter)
 {
     return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
 }
 
-size_t TwoElectronInt2::compute_shell(int sh1, int sh2, int sh3, int sh4)
+size_t Libint2TwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
 {
 #ifdef MINTS_TIMER
     timer_on("ERI::compute_shell");
@@ -250,13 +250,13 @@ size_t TwoElectronInt2::compute_shell(int sh1, int sh2, int sh3, int sh4)
     return ncomputed;
 }
 
-size_t TwoElectronInt2::compute_quartet(int sh1, int sh2, int sh3, int sh4)
+size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
 {
 #ifdef MINTS_TIMER
     timer_on("setup");
 #endif
 
-    //fprintf(stdout, "TwoElectronInt2: Computing quartet %i %i %i %i\n", sh1, sh2, sh3, sh4);
+    //fprintf(stdout, "Libint2TwoElectronInt: Computing quartet %i %i %i %i\n", sh1, sh2, sh3, sh4);
 
     const GaussianShell& s1 = bs1_->shell(sh1);
     const GaussianShell& s2 = bs2_->shell(sh2);
