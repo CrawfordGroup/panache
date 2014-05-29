@@ -36,11 +36,11 @@
 #include "MemorySwapper.h"
 
 #ifdef USE_LIBINT
-#include "ERI.h"
+#include "LibintERI.h"
 #endif
 
 #ifdef USE_LIBINT2
-#include "ERI2.h"
+#include "Libint2ERI.h"
 #endif
 
 #ifdef USE_SLOWERI

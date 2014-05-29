@@ -68,13 +68,13 @@ endif(NOT(USE_LIBINT OR USE_LIBINT2))
 # Also add .cc files to be compiled based on the libint version
 if(USE_LIBINT)
   message(STATUS "Using Libint headers from ${LIBINT_INCLUDE_PATH}")
-  set(LIBINT_FILES "${LIBINT_FILES}" TwoElectronInt.cc ERI.cc)
+  set(LIBINT_FILES "${LIBINT_FILES}" LibintTwoElectronInt.cc LibintERI.cc)
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT")
 endif(USE_LIBINT)
 
 if(USE_LIBINT2)
   message(STATUS "Using Libint2 headers from ${LIBINT2_INCLUDE_PATH}")
-  set(LIBINT_FILES "${LIBINT_FILES}" TwoElectronInt2.cc ERI2.cc)
+  set(LIBINT_FILES "${LIBINT_FILES}" Libint2TwoElectronInt.cc Libint2ERI.cc)
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT2")
 endif(USE_LIBINT2)
 

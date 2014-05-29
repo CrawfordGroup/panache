@@ -20,7 +20,7 @@
  *@END LICENSE
  */
 
-#include "ERI.h"
+#include "LibintERI.h"
 #include "Fjt.h"
 #include "BasisSet.h"
 

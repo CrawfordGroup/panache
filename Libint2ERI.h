@@ -20,10 +20,10 @@
  *@END LICENSE
  */
 
-#ifndef PANACHE_ERI_H
-#define PANACHE_ERI_H
+#ifndef PANACHE_ERI2_H
+#define PANACHE_ERI2_H
 
-#include "TwoElectronInt.h"
+#include "Libint2TwoElectronInt.h"
 
 namespace panache
 {
@@ -37,31 +37,31 @@ class Fjt;
 class AOShellCombinationsIterator;
 class CorrelationFactor;
 
-class ERI : public TwoElectronInt
+class ERI2 : public TwoElectronInt2
 {
 public:
-    ERI(const std::shared_ptr<BasisSet> bs1,
+    ERI2(const std::shared_ptr<BasisSet> bs1,
         const std::shared_ptr<BasisSet> bs2,
         const std::shared_ptr<BasisSet> bs3,
         const std::shared_ptr<BasisSet> bs4);
 
-    virtual ~ERI();
+    virtual ~ERI2();
 };
 
-class ErfERI : public TwoElectronInt
+class ErfERI2 : public TwoElectronInt2
 {
 public:
-    ErfERI(double omega,
+    ErfERI2(double omega,
            const std::shared_ptr<BasisSet> bs1,
            const std::shared_ptr<BasisSet> bs2,
            const std::shared_ptr<BasisSet> bs3,
            const std::shared_ptr<BasisSet> bs4);
 
-    virtual ~ErfERI();
+    virtual ~ErfERI2();
 
     void setOmega(double omega);
 };
 
 }
 
-#endif //PANACHE_ERI_H
+#endif //PANACHE_ERI2_H

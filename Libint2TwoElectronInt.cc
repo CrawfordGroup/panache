@@ -1,5 +1,5 @@
 #include <cstring> // memset, etc
-#include "TwoElectronInt2.h"
+#include "Libint2TwoElectronInt.h"
 #include "BasisSet.h"
 #include "BasisFunctionMacros.h"
 #include "AOShellCombinationsIterator.h"
