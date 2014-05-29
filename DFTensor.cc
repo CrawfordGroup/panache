@@ -196,16 +196,16 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
     //! \todo do something with qsosize
 
     int nfp = primary_->shell(shell1).nfunction();
-    int pstart = primary_->shell(shell1).function_index();
+    int astart = primary_->shell(shell1).function_index();
 
     int nfq = primary_->shell(shell2).nfunction();
-    int qstart = primary_->shell(shell2).function_index();
+    int bstart = primary_->shell(shell2).function_index();
 
     int nfr = primary_->shell(shell3).nfunction();
-    int rstart = primary_->shell(shell3).function_index();
+    int cstart = primary_->shell(shell3).function_index();
 
     int nfs = primary_->shell(shell4).nfunction();
-    int sstart = primary_->shell(shell4).function_index();
+    int dstart = primary_->shell(shell4).function_index();
 
     int nint = nfp * nfq * nfr * nfs;
 
@@ -224,9 +224,9 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
             for(int c = 0; c < nfr; c++)
                 for(int d = 0; d < nfs; d++)
                 {
-                    outbuffer[bufindex] = C_DDOT(naux, 
-                                                 qso + (pstart+a)*nbf*naux+(qstart+b)*naux, 1,
-                                                 qso + (rstart+c)*nbf*naux+(sstart+d)*naux, 1);
+                    outbuffer[bufindex] = C_DDOT(naux,
+                                                 qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
+                                                 qso + (cstart+c)*nbf*naux+(dstart+d)*naux, 1);
                     bufindex++;
                 }
 
@@ -234,10 +234,74 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
 }
 
 
+int DFTensor::CalculateERIMulti(double * qso, int qsosize,
+                                int shell1, int nshell1,
+                                int shell2, int nshell2,
+                                int shell3, int nshell3,
+                                int shell4, int nshell4,
+                                double * outbuffer, int buffersize)
+{
+    //! \todo do something with qsosize
+    int nint = 0;
+
+    int nbf = primary_->nbf();
+    int naux = auxiliary_->nbf();
+
+    int bufindex = 0;
+
+    for(int i = i; i < nshell1; i++)
+    {
+        int nfp = primary_->shell(shell1+1).nfunction();
+        int astart = primary_->shell(shell1+1).function_index();
+
+        for(int a = 0; a < nfp; a++)
+        {
+            for(int j = 0; j < nshell2; j++)
+            {
+                int nfq = primary_->shell(shell2+j).nfunction();
+                int bstart = primary_->shell(shell2+j).function_index();
+
+                for(int b = 0; b < nfq; b++)
+                {
+                    for(int k = 0; k < nshell3; k++)
+                    {
+                        int nfr = primary_->shell(shell3+k).nfunction();
+                        int cstart = primary_->shell(shell3+k).function_index();
+
+                        for(int c = 0; c < nfr; c++)
+                        {
+                            for(int l = 0; k < nshell4; k++)
+                            {
+                                int nfs = primary_->shell(shell4+l).nfunction();
+                                int dstart = primary_->shell(shell4+l).function_index();
+
+                                nint += nfp * nfq * nfr * nfs;
+                                if(nint > buffersize)
+                                    throw RuntimeError("Error - ERI buffer not large enough!");
+
+                                for(int d = 0; d < nfs; d++)
+                                {
+                                    outbuffer[bufindex] = C_DDOT(naux,
+                                                                 qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
+                                                                 qso + (cstart+c)*nbf*naux+(dstart+d)*naux, 1);
+                                    bufindex++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return nint;
+}
+
+
+
 
 // note - passing by value for the vector
 static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
-             reorder::MemorySwapper & sf)
+                    reorder::MemorySwapper & sf)
 {
     size_t size = order.size();
 
@@ -266,7 +330,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
             throw RuntimeError("Error in reordering - index not found?");
 
 
-        // we shouldn't swap anything that was previously put in place... 
+        // we shouldn't swap anything that was previously put in place...
         if(cindex < i)
             throw RuntimeError("Error in reordering - going to swap something I shouldn't");
 
@@ -358,6 +422,8 @@ void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & or
 
 
 }
+
+
 
 
 

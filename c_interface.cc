@@ -8,7 +8,8 @@
 
 using panache::RuntimeError;
 
-namespace {
+namespace
+{
 
 int tensor_index_ = 0;
 std::map<int, panache::DFTensor *> dftensors_;
@@ -30,10 +31,10 @@ extern "C" {
 
         // Construct the basis set info
         auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                                                        primary_nshellspercenter, primary_shells);
+                            primary_nshellspercenter, primary_shells);
 
         auto auxBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                                                    aux_nshellspercenter, aux_shells);
+                        aux_nshellspercenter, aux_shells);
 
         panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis);
         dftensors_[tensor_index_] = dft;
@@ -53,7 +54,7 @@ extern "C" {
 
         // Construct the basis set info
         auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                                                        primary_nshellspercenter, primary_shells);
+                            primary_nshellspercenter, primary_shells);
 
         // Gaussian input file parser for the auxiliary basis
         std::shared_ptr<panache::Gaussian94BasisSetParser> parser(new panache::Gaussian94BasisSetParser);
@@ -77,7 +78,7 @@ extern "C" {
         }
         else
             throw RuntimeError("Error - cannot erase DFTensor object with that handle!");
-            
+
     }
 
 
@@ -108,12 +109,30 @@ extern "C" {
         dftensors_[df_handle]->TensorDimensions(*d1, *d2, *d3);
     }
 
-    int C_ERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
+
+    int C_CalculateERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         dftensors_[df_handle]->CalculateERI(qso, qsosize, shell1, shell2, shell3, shell4, outbuffer, buffersize);
     }
+
+
+    int C_CalculateERIMulti(int df_handle,
+                            double * qso, int qsosize,
+                            int shell1, int nshell1,
+                            int shell2, int nshell2,
+                            int shell3, int nshell3,
+                            int shell4, int nshell4,
+                            double * outbuffer, int buffersize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->CalculateERIMulti(qso, qsosize, shell1, nshell1, shell2, nshell2,
+                                                 shell3, nshell3, shell4, nshell4, outbuffer, buffersize);
+    }
+
 }
 

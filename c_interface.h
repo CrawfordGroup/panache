@@ -37,8 +37,15 @@ extern "C" {
 
     int C_TensorDimensions(int df_handle, int * d1, int * d2, int * d3);
 
-    int C_ERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
+    int C_CalculateERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
 
+    int C_CalculateERIMulti(int df_handle,
+                            double * qso, int qsosize,
+                            int shell1, int nshell1,
+                            int shell2, int nshell2,
+                            int shell3, int nshell3,
+                            int shell4, int nshell4,
+                            double * outbuffer, int buffersize);
 }
 
 #endif

@@ -231,8 +231,22 @@ extern "C" {
                int * shell1, int * shell2, int * shell3, int * shell4,
                double * outbuffer, int * buffersize, int * ncalc)
     {
-        *ncalc = C_ERI(*df_handle, qso, *qsosize, *shell1, *shell2, *shell3, *shell4,
+        *ncalc = C_CalculateERI(*df_handle, qso, *qsosize, *shell1, *shell2, *shell3, *shell4,
                        outbuffer, *buffersize);
+    }
+
+    void fortran_eri_multi(int * df_handle,
+                           double * qso, int * qsosize,
+                           int * shell1, int * nshell1,
+                           int * shell2, int * nshell2,
+                           int * shell3, int * nshell3,
+                           int * shell4, int * nshell4,
+                           double * outbuffer, int * buffersize, int * ncalc)
+    {
+        *ncalc = C_CalculateERIMulti(*df_handle, qso, *qsosize,
+                                     *shell1, *nshell1, *shell2, *nshell2,
+                                     *shell3, *nshell3, *shell4, *nshell4,
+                                     outbuffer, *buffersize);
     }
 }
 
