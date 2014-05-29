@@ -10,11 +10,18 @@ namespace reorder {
 class MemorySwapper
 {
 public:
-    MemorySwapper(size_t size) 
+    virtual void swap(double *a, double *b) = 0;
+};
+
+
+class TotalMemorySwapper : public MemorySwapper
+{
+public:
+    TotalMemorySwapper(size_t size) 
            : _size(size), _buff(new double[_size])
     {}
 
-    ~MemorySwapper()
+    ~TotalMemorySwapper()
     {
         delete [] _buff;
     }
@@ -34,7 +41,8 @@ private:
 };
 
 
-class LimitedMemorySwapper
+
+class LimitedMemorySwapper : public MemorySwapper
 {
 public:
     LimitedMemorySwapper(size_t size, size_t buffsize) 

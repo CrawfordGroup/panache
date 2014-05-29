@@ -343,9 +343,12 @@ void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & or
     if((nq * nso * nso) != qsosize)
         throw RuntimeError("Incompatible Qso matrix in ReorderQ");
 
+    // Dimensions on Q:
+    // nso * nso * nq
 
-    MemorySwapper sf1(1);   // swaps values
-    MemorySwapper sf2(nso); // swaps rows
+
+    TotalMemorySwapper sf1(nq);  // swaps rows
+    LimitedMemorySwapper sf2(nso*nq, 1e7); // swaps 'tables' (limited to ~80MB extra memory)
 
     std::vector<PointerMap> vpm;
 
@@ -361,45 +364,43 @@ void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & or
     std::vector<double *> pointers(primary_->max_function_per_shell());
 
 
-    // for each q
-    for(size_t i = 0; i < nq; i++)
+    // for each i
+    for(size_t i = 0; i < nso; i++)
     {
-        // for each row
-        for(size_t j = 0; j < nso; j++)
-        {
-            // Swap columns within this row
-            for(auto & it : vpm)
-            {
-                size_t ntoswap = it.order.size();
-                size_t start = i*nso*nso+j*nso+it.start;
-
-                for(size_t n = 0; n < ntoswap; n++)
-                    pointers[n] = qso + start + n;
-
-                Reorder(it.order, pointers, sf1);
-
-            }
-        }
-
         // Swap rows
         for(auto & it : vpm)
         {
             size_t ntoswap = it.order.size();
-            size_t start = i*nso*nso;
+            size_t start = i*nso*nq;
 
             for(size_t n = 0; n < ntoswap; n++)
-                pointers[n] = qso + start + (it.start+n)*nso;
+                pointers[n] = qso + start + (it.start+n)*nq;
 
-            Reorder(it.order, pointers, sf2);
+            Reorder(it.order, pointers, sf1);
 
         }
 
     }
+
+
+    // swap 'tables'
+    for(auto & it : vpm)
+    {
+        size_t ntoswap = it.order.size();
+
+        for(size_t n = 0; n < ntoswap; n++)
+            pointers[n] = qso + (it.start+n)*nso*nq;
+
+        Reorder(it.order, pointers, sf2);
+
+    }
+
 }
 
 
 
 }
+
 
 
 
