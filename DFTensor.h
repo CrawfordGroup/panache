@@ -77,6 +77,7 @@ public:
                           double * outbuffer, int buffersize);
 
     void ReorderQ(double * qso, int qsosize, const reorder::Orderings & order);
+    void ReorderQ_GAMESS(double * qso, int qsosize);
 };
 
 }

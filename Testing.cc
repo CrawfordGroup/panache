@@ -396,7 +396,6 @@ void TestInfo::TestERI(void)
     double * qso = new double[matsize];
     dft.Qso(qso, matsize);
 
-    reorder::GAMESS_Ordering go;
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 

@@ -398,6 +398,11 @@ void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & or
 
 }
 
+void DFTensor::ReorderQ_GAMESS(double * qso, int qsosize)
+{
+    reorder::GAMESS_Ordering go;
+    ReorderQ(qso, qsosize, go);
+}
 
 
 }

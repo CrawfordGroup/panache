@@ -46,6 +46,9 @@ extern "C" {
                             int shell3, int nshell3,
                             int shell4, int nshell4,
                             double * outbuffer, int buffersize);
+
+    void C_ReorderQ_GAMESS(int df_handle, double * qso, int qsosize);
 }
 
+    
 #endif

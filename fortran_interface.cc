@@ -248,5 +248,11 @@ extern "C" {
                                      *shell3, *nshell3, *shell4, *nshell4,
                                      outbuffer, *buffersize);
     }
+
+    void fortran_reorderq_gamess_(int * df_handle,
+                                 double * qso, int * qsosize)
+    {
+        C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
+    }
 }
 

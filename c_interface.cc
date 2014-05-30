@@ -3,6 +3,7 @@
 #include "c_interface.h"
 #include "c_convert.h"
 #include "DFTensor.h"
+
 #include "Exception.h"
 #include "BasisSetParser.h"
 
@@ -134,5 +135,12 @@ extern "C" {
                                                         shell3, nshell3, shell4, nshell4, outbuffer, buffersize);
     }
 
+    void C_ReorderQ_GAMESS(int df_handle, double * qso, int qsosize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->ReorderQ_GAMESS(qso, qsosize);
+    }
 }
 
