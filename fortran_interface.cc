@@ -2,6 +2,13 @@
 #include <cstring> // strncpy
 
 #include "c_interface.h"
+#include "Output.h"
+
+const std::string Z_to_sym [] = {
+//0-10
+"XXX ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"
+};
+
 
 
 
@@ -116,6 +123,7 @@ extern "C" {
 
     }
 
+
     void fortran_init2_(int * ncenters,
                         double * xyz, char * symbols,
                         int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
@@ -206,6 +214,73 @@ extern "C" {
 
     }
 
+    void fortran_init3_(int * ncenters,
+                        double * xyz, double * Z,
+                        int * primary_nshellspercenter, int * primary_am, int * primary_is_pure,
+                        int * primary_nprimpershell, double * primary_exp, double * primary_coef,
+                        const char * auxfilename, int * auxfilenamelen, int * dfhandle)
+    {
+        std::cout << "HEREHERE\n";
+        // Make molecule struct
+        C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
+
+        for(int i = 0; i < *ncenters; i++)
+        {
+            atoms[i].symbol = Z_to_sym[static_cast<int>(Z[i])].c_str(); 
+
+            atoms[i].center[0] = xyz[i];
+            atoms[i].center[1] = xyz[i+(*ncenters)];
+            atoms[i].center[2] = xyz[i+2*(*ncenters)];
+        }
+
+        int p_nshell = 0;
+        for(int i = 0; i < *ncenters; i++)
+        {
+            p_nshell += primary_nshellspercenter[i];
+        }
+
+        C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
+
+        int prim_count = 0;
+        for(int i = 0; i < p_nshell; i++)
+        {
+            primary_shells[i].nprim   = primary_nprimpershell[i];
+            primary_shells[i].am      = primary_am[i];
+            primary_shells[i].ispure  = primary_is_pure[i];
+            primary_shells[i].exp     = new double[primary_shells[i].nprim];
+            primary_shells[i].coef    = new double[primary_shells[i].nprim];
+            for(int j = 0; j < primary_shells[i].nprim; j++)
+            {
+                primary_shells[i].exp[j] = primary_exp[prim_count];
+                primary_shells[i].coef[j] = primary_coef[prim_count++];
+            }
+        }
+
+
+        // create a real, null-terminated c string
+        char * cfname = new char[*auxfilenamelen+1];
+        strncpy(cfname, auxfilename, *auxfilenamelen);
+        cfname[*auxfilenamelen] = '\0';
+
+        *dfhandle = C_init2(*ncenters, atoms,
+                            primary_nshellspercenter, primary_shells,
+                            cfname);
+
+
+        // Free memory
+        delete [] cfname;
+        for(int i = 0; i < p_nshell; i++)
+        {
+            delete [] primary_shells[i].exp;
+            delete [] primary_shells[i].coef;
+        }
+
+        delete [] primary_shells;
+
+        delete [] atoms;
+        
+    }
+
     void fortran_tensordimensions_(int * df_handle, int * d1, int * d2, int * d3, int * matsize)
     {
         *matsize = C_TensorDimensions(*df_handle, d1, d2, d3);
@@ -254,5 +329,11 @@ extern "C" {
     {
         C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
     }
+
+    void fortran_stdout_(void)
+    {
+        panache::output::SetOutput(&std::cout);
+    }
+
 }
 

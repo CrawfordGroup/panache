@@ -1,8 +1,6 @@
 #ifndef PANACHE_OUTPUT_H
 #define PANACHE_OUTPUT_H
 
-#define PANACHE_OUTPUT_C
-
 #include <cstdio>
 #include <cstdarg>
 
