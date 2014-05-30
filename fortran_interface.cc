@@ -235,7 +235,7 @@ extern "C" {
                        outbuffer, *buffersize);
     }
 
-    void fortran_eri_multi(int * df_handle,
+    void fortran_eri_multi_(int * df_handle,
                            double * qso, int * qsosize,
                            int * shell1, int * nshell1,
                            int * shell2, int * nshell2,

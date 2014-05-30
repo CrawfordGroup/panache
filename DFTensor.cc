@@ -173,19 +173,19 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
 {
     //! \todo do something with qsosize
 
-    int nfp = primary_->shell(shell1).nfunction();
+    int nfa = primary_->shell(shell1).nfunction();
     int astart = primary_->shell(shell1).function_index();
 
-    int nfq = primary_->shell(shell2).nfunction();
+    int nfb = primary_->shell(shell2).nfunction();
     int bstart = primary_->shell(shell2).function_index();
 
-    int nfr = primary_->shell(shell3).nfunction();
+    int nfc = primary_->shell(shell3).nfunction();
     int cstart = primary_->shell(shell3).function_index();
 
-    int nfs = primary_->shell(shell4).nfunction();
+    int nfd = primary_->shell(shell4).nfunction();
     int dstart = primary_->shell(shell4).function_index();
 
-    int nint = nfp * nfq * nfr * nfs;
+    int nint = nfa * nfb * nfc * nfd;
 
     int nbf = primary_->nbf();
     int naux = auxiliary_->nbf();
@@ -197,10 +197,10 @@ int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, in
     int bufindex = 0;
 
     //!\todo replace with DGEMM?
-    for(int a = 0; a < nfp; a++)
-        for(int b = 0; b < nfq; b++)
-            for(int c = 0; c < nfr; c++)
-                for(int d = 0; d < nfs; d++)
+    for(int a = 0; a < nfa; a++)
+        for(int b = 0; b < nfb; b++)
+            for(int c = 0; c < nfc; c++)
+                for(int d = 0; d < nfd; d++)
                 {
                     outbuffer[bufindex] = C_DDOT(naux,
                                                  qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
@@ -227,37 +227,38 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
 
     int bufindex = 0;
 
-    for(int i = i; i < nshell1; i++)
+    for(int i = 0; i < nshell1; i++)
     {
-        int nfp = primary_->shell(shell1+1).nfunction();
-        int astart = primary_->shell(shell1+1).function_index();
+        int nfa = primary_->shell(shell1+i).nfunction();
+        int astart = primary_->shell(shell1+i).function_index();
 
-        for(int a = 0; a < nfp; a++)
+        for(int a = 0; a < nfa; a++)
         {
             for(int j = 0; j < nshell2; j++)
             {
-                int nfq = primary_->shell(shell2+j).nfunction();
+                int nfb = primary_->shell(shell2+j).nfunction();
                 int bstart = primary_->shell(shell2+j).function_index();
 
-                for(int b = 0; b < nfq; b++)
+                for(int b = 0; b < nfb; b++)
                 {
                     for(int k = 0; k < nshell3; k++)
                     {
-                        int nfr = primary_->shell(shell3+k).nfunction();
+                        int nfc = primary_->shell(shell3+k).nfunction();
                         int cstart = primary_->shell(shell3+k).function_index();
 
-                        for(int c = 0; c < nfr; c++)
+                        for(int c = 0; c < nfc; c++)
                         {
-                            for(int l = 0; k < nshell4; k++)
+                            for(int l = 0; l < nshell4; l++)
                             {
-                                int nfs = primary_->shell(shell4+l).nfunction();
+                                int nfd = primary_->shell(shell4+l).nfunction();
                                 int dstart = primary_->shell(shell4+l).function_index();
 
-                                nint += nfp * nfq * nfr * nfs;
+                                nint += nfd;
+
                                 if(nint > buffersize)
                                     throw RuntimeError("Error - ERI buffer not large enough!");
 
-                                for(int d = 0; d < nfs; d++)
+                                for(int d = 0; d < nfd; d++)
                                 {
                                     outbuffer[bufindex] = C_DDOT(naux,
                                                                  qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
