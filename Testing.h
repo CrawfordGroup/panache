@@ -319,16 +319,16 @@ private:
 
     // These are used internally to know what to test, etc
     // Usually read in from the test files or otherwise deduced
-    int ncenters_;   //!< Number of centers in the moleulce
+    INTTYPE ncenters_;   //!< Number of centers in the moleulce
 
-    int primary_nshells_;  //!< Number of shells in the primary basis
-    int aux_nshells_; //!< Number of shells in the auxiliary basis set
+    INTTYPE primary_nshells_;  //!< Number of shells in the primary basis
+    INTTYPE aux_nshells_; //!< Number of shells in the auxiliary basis set
 
-    int primary_nprim_; //!< Number of primitives in the primary basis set
-    int aux_nprim_;     //!< Number of primitives in the auxiliary basis set
+    INTTYPE primary_nprim_; //!< Number of primitives in the primary basis set
+    INTTYPE aux_nprim_;     //!< Number of primitives in the auxiliary basis set
 
-    int * primary_nshellspercenter_;  //!< Number of shells on each center for the primary basis set
-    int * aux_nshellspercenter_;      //!< Number of shells on each center for the auxiliary basis set
+    INTTYPE * primary_nshellspercenter_;  //!< Number of shells on each center for the primary basis set
+    INTTYPE * aux_nshellspercenter_;      //!< Number of shells on each center for the auxiliary basis set
 
     C_ShellInfo * primary_shells_;    //!< Shell information for the primary basis set
     C_ShellInfo * aux_shells_;        //!< Shell information for the auxiliary basis set
@@ -358,7 +358,7 @@ private:
      *  \return The number of centers.
      */
     static int ReadBasisFile(const string & filename,
-                             int * &nshellspercenter,
+                             INTTYPE * &nshellspercenter,
                              C_ShellInfo * &shells,
                              BasisTest & test);
 
@@ -525,7 +525,7 @@ private:
      * \param [in] shells The information for each shell
      * \param [in] test A BasisTest object to place the results of this run
      */
-    void TestBasisConversion(int nshells, int * nshellspercenter, C_ShellInfo * shells, BasisTest & test);
+    void TestBasisConversion(INTTYPE nshells, INTTYPE * nshellspercenter, C_ShellInfo * shells, BasisTest & test);
 
 
 

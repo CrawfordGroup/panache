@@ -21,10 +21,10 @@ std::map<int, panache::DFTensor *> dftensors_;
 extern "C" {
 
 
-    int C_init(int ncenters,
+    INTTYPE C_init(INTTYPE ncenters,
                C_AtomCenter * atoms,
-               int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
+               INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               INTTYPE * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -44,9 +44,9 @@ extern "C" {
     }
 
 
-    int C_init2(int ncenters,
+    INTTYPE C_init2(INTTYPE ncenters,
                 C_AtomCenter * atoms,
-                int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                 const char * auxfilename)
     {
         // Molecule
@@ -70,7 +70,7 @@ extern "C" {
 
 
 
-    void C_cleanup(int df_handle)
+    void C_cleanup(INTTYPE df_handle)
     {
         if(dftensors_.count(df_handle) > 0)
         {
@@ -92,7 +92,7 @@ extern "C" {
         dftensors_.clear();
     }
 
-    void C_QAO(int df_handle, double * matout, int matsize)
+    void C_QAO(INTTYPE df_handle, double * matout, INTTYPE matsize)
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
@@ -101,17 +101,23 @@ extern "C" {
         dftensors_[df_handle]->Qso(matout, matsize);
     }
 
-    int C_TensorDimensions(int df_handle, int * d1, int * d2, int * d3)
+    INTTYPE C_TensorDimensions(INTTYPE df_handle, INTTYPE * d1, INTTYPE * d2, INTTYPE * d3)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         //DFTensor class takes d1-d3 by reference
-        dftensors_[df_handle]->TensorDimensions(*d1, *d2, *d3);
+        // use regular ints first
+        int t1, t2, t3;
+        dftensors_[df_handle]->TensorDimensions(t1, t2, t3);
+
+        *d1 = t1;
+        *d2 = t2;
+        *d3 = t3;
     }
 
 
-    int C_CalculateERI(int df_handle, double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
+    INTTYPE C_CalculateERI(INTTYPE df_handle, double * qso, INTTYPE qsosize, INTTYPE shell1, INTTYPE shell2, INTTYPE shell3, INTTYPE shell4, double * outbuffer, INTTYPE buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -120,13 +126,13 @@ extern "C" {
     }
 
 
-    int C_CalculateERIMulti(int df_handle,
-                            double * qso, int qsosize,
-                            int shell1, int nshell1,
-                            int shell2, int nshell2,
-                            int shell3, int nshell3,
-                            int shell4, int nshell4,
-                            double * outbuffer, int buffersize)
+    INTTYPE C_CalculateERIMulti(INTTYPE df_handle,
+                            double * qso, INTTYPE qsosize,
+                            INTTYPE shell1, INTTYPE nshell1,
+                            INTTYPE shell2, INTTYPE nshell2,
+                            INTTYPE shell3, INTTYPE nshell3,
+                            INTTYPE shell4, INTTYPE nshell4,
+                            double * outbuffer, INTTYPE buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -135,7 +141,7 @@ extern "C" {
                                                         shell3, nshell3, shell4, nshell4, outbuffer, buffersize);
     }
 
-    void C_ReorderQ_GAMESS(int df_handle, double * qso, int qsosize)
+    void C_ReorderQ_GAMESS(INTTYPE df_handle, double * qso, INTTYPE qsosize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
