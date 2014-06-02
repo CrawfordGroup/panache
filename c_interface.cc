@@ -22,7 +22,7 @@ extern "C" {
 
 
     int_t C_init(int_t ncenters,
-               C_AtomCenter * atoms,
+               C_AtomCenter * atoms, int_t normalized,
                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
     {
@@ -32,10 +32,10 @@ extern "C" {
 
         // Construct the basis set info
         auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                            primary_nshellspercenter, primary_shells);
+                            primary_nshellspercenter, primary_shells, normalized);
 
         auto auxBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                        aux_nshellspercenter, aux_shells);
+                        aux_nshellspercenter, aux_shells, normalized);
 
         panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis);
         dftensors_[tensor_index_] = dft;
@@ -45,7 +45,7 @@ extern "C" {
 
 
     int_t C_init2(int_t ncenters,
-                    C_AtomCenter * atoms,
+                    C_AtomCenter * atoms, int_t normalized,
                     int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                     const char * auxfilename)
     {
@@ -55,7 +55,7 @@ extern "C" {
 
         // Construct the basis set info
         auto primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                            primary_nshellspercenter, primary_shells);
+                            primary_nshellspercenter, primary_shells, normalized);
 
         // Gaussian input file parser for the auxiliary basis
         std::shared_ptr<panache::Gaussian94BasisSetParser> parser(new panache::Gaussian94BasisSetParser);

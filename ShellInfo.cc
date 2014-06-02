@@ -44,6 +44,11 @@ ShellInfo::ShellInfo(int am, const std::vector<double> &c,
         normalize_shell();
         erd_normalize_shell();
     }
+    else
+    {
+        coef_ = original_coef_;
+        erd_coef_ = original_coef_;
+    }
 }
 
 ShellInfo ShellInfo::copy()

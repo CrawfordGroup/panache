@@ -270,7 +270,7 @@ TestInfo::~TestInfo()
 void TestInfo::TestBasisConversion(int_t nshells, int_t * nshellspercenter, C_ShellInfo * shells, BasisTest & test)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    auto basis = BasisSetFromArrays(mol, ncenters_, nshellspercenter, shells);
+    auto basis = BasisSetFromArrays(mol, ncenters_, nshellspercenter, shells, false);
 
     test.nprim.set_thisrun(basis->nprimitive());
     test.nbf.set_thisrun(basis->nbf());
@@ -358,8 +358,8 @@ void TestInfo::TestMatrix(double * mat,
 void TestInfo::TestQsoMatrix(void)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
-    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_, false);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_, false);
 
     // to test reading of basis sets from file
     //std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
@@ -383,8 +383,8 @@ void TestInfo::TestERI(void)
     std::cout << "Testing ERI generation from Qso\n";
 
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
-    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_);
-    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_, false);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_, false);
 
     DFTensor dft(primary, aux);
 

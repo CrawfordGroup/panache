@@ -27,12 +27,12 @@ extern "C" {
 
 
     int_t C_init(int_t ncenters,
-               C_AtomCenter * atoms,
+               C_AtomCenter * atoms, int_t normalized,  
                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
 
     int_t C_init2(int_t ncenters,
-                C_AtomCenter * atoms,
+                C_AtomCenter * atoms, int_t normalized,
                 int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                 const char * auxfilename);
 

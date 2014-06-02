@@ -15,7 +15,7 @@ extern "C" {
 
 
     void fortran_init_(int_t * ncenters,
-                       double * xyz, char * symbols, int_t * symbollen, 
+                       double * xyz, char * symbols, int_t * symbollen, int_t * normalized, 
                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
@@ -94,7 +94,7 @@ extern "C" {
             }
         }
 
-        *dfhandle = C_init(*ncenters, atoms,
+        *dfhandle = C_init(*ncenters, atoms, *normalized,
                            primary_nshellspercenter, primary_shells,
                            aux_nshellspercenter, aux_shells);
 
@@ -125,7 +125,7 @@ extern "C" {
 
 
     void fortran_init2_(int_t * ncenters,
-                        double * xyz, char * symbols, int_t * symbollen,
+                        double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         const char * auxfilename, int_t * auxfilenamelen, int_t * dfhandle)
@@ -235,7 +235,7 @@ extern "C" {
         strncpy(cfname, auxfilename, *auxfilenamelen);
         cfname[*auxfilenamelen] = '\0';
 
-        *dfhandle = C_init2(*ncenters, atoms,
+        *dfhandle = C_init2(*ncenters, atoms, *normalized,
                             primary_nshellspercenter, primary_shells,
                             cfname);
 
@@ -256,72 +256,6 @@ extern "C" {
         delete [] csymbols;
 
 
-    }
-
-    void fortran_init3_(int_t * ncenters,
-                        double * xyz, double * Z,
-                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
-                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
-                        const char * auxfilename, int_t * auxfilenamelen, int_t * dfhandle)
-    {
-        // Make molecule struct
-        C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
-
-        for(int_t i = 0; i < *ncenters; i++)
-        {
-            atoms[i].symbol = Z_to_sym[static_cast<int_t>(Z[i])].c_str(); 
-
-            atoms[i].center[0] = xyz[i];
-            atoms[i].center[1] = xyz[i+(*ncenters)];
-            atoms[i].center[2] = xyz[i+2*(*ncenters)];
-        }
-
-        int_t p_nshell = 0;
-        for(int_t i = 0; i < *ncenters; i++)
-        {
-            p_nshell += primary_nshellspercenter[i];
-        }
-
-        C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
-
-        int_t prim_count = 0;
-        for(int_t i = 0; i < p_nshell; i++)
-        {
-            primary_shells[i].nprim   = primary_nprimpershell[i];
-            primary_shells[i].am      = primary_am[i];
-            primary_shells[i].ispure  = primary_is_pure[i];
-            primary_shells[i].exp     = new double[primary_shells[i].nprim];
-            primary_shells[i].coef    = new double[primary_shells[i].nprim];
-            for(int_t j = 0; j < primary_shells[i].nprim; j++)
-            {
-                primary_shells[i].exp[j] = primary_exp[prim_count];
-                primary_shells[i].coef[j] = primary_coef[prim_count++];
-            }
-        }
-
-
-        // create a real, null-terminated c string
-        char * cfname = new char[*auxfilenamelen+1];
-        strncpy(cfname, auxfilename, *auxfilenamelen);
-        cfname[*auxfilenamelen] = '\0';
-
-        *dfhandle = C_init2(*ncenters, atoms,
-                            primary_nshellspercenter, primary_shells,
-                            cfname);
-
-
-        // Free memory
-        delete [] cfname;
-        for(int_t i = 0; i < p_nshell; i++)
-        {
-            delete [] primary_shells[i].exp;
-            delete [] primary_shells[i].coef;
-        }
-
-        delete [] primary_shells;
-
-        delete [] atoms;
-        
     }
 
     void fortran_tensordimensions_(int_t * df_handle, int_t * d1, int_t * d2, int_t * d3, int_t * matsize)
