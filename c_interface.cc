@@ -114,6 +114,7 @@ extern "C" {
         *d1 = t1;
         *d2 = t2;
         *d3 = t3;
+        return t1 * t2 * t3;
     }
 
 
