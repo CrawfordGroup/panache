@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(libpanache CXX)
 #enable_language(Fortran) # liberd
-enable_language(C) # Required for find_package(lapack)
 
 # A simple macro that sets a boolean
 #   based on whether or not a given path string
@@ -30,6 +29,18 @@ set(PANACHE_CXX_INCLUDEDIRS ${CMAKE_SOURCE_DIR})
 set(PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 list(APPEND PANACHE_CXX_FLAGS "-g" "-O0")
+
+
+# Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
+# If unset, 32-bit interface is used
+set(USE_64LAPACK "" CACHE FILEPATH "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
+if(USE_64LAPACK)
+  list(APPEND PANACHE_CXX_FLAGS "-DUSE_664LAPACK")
+  message(STATUS "Using 64-bit lapack interface")
+else(USE_64LAPACK)
+  message(STATUS "Using 32-bit lapack interface")
+endif(USE_64LAPACK)
+
 
 
 # PANACHE uses the 'restrict' keyword for optimization
@@ -119,8 +130,6 @@ add_library(panache
             SymmetryOperation.cc
             TwoBodyAOInt.cc
             Vector.cc
-            blas_intfc.cc
-            blas_intfc23.cc
             block_matrix.cc
             c_interface.cc
             fortran_interface.cc
@@ -129,7 +138,6 @@ add_library(panache
             init_array.cc
             int_array.cc
             invert.cc
-            lapack_intfc.cc
             lubksb.cc
             ludcmp.cc
             schmidt.cc
@@ -137,6 +145,7 @@ add_library(panache
             sq_to_tri.cc
             zero.cc
             Testing.cc
+            Lapack.cc
             ${LIBINT_FILES}
             )
 

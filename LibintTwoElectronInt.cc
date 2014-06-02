@@ -5,7 +5,7 @@
 #include "BasisFunctionMacros.h"
 #include "AOShellCombinationsIterator.h"
 #include "Fjt.h"
-#include "qt.h"
+#include "Lapack.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 

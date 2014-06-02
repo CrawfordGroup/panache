@@ -29,7 +29,7 @@
 #include "FittingMetric.h"
 #include "Molecule.h"
 #include "BasisSet.h"
-#include "qt.h"
+#include "Lapack.h"
 
 // for reordering
 #include "Orderings.h"

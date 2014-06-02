@@ -31,7 +31,7 @@
 
 #include "FittingMetric.h"
 #include "BasisSet.h"
-#include "qt.h"
+#include "Lapack.h"
 
 //MKL Header
 #ifdef HAVE_MKL

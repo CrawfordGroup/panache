@@ -21,7 +21,7 @@
  */
 
 #include <cstring>
-#include "qt.h"
+#include "Lapack.h"
 #include <algorithm>
 #include <numeric>
 #include "Matrix.h"

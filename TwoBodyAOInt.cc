@@ -20,7 +20,7 @@
  *@END LICENSE
  */
 
-#include "qt.h"
+#include "Lapack.h"
 #include "SphericalTransform.h"
 #include "TwoBodyAOInt.h"
 #include "BasisFunctionMacros.h"

@@ -29,7 +29,7 @@
  */
 #include "Molecule.h"
 #include "Vector.h"
-#include "qt.h"
+#include "Lapack.h"
 #include "libciomr.h"
 #include "Output.h"
 

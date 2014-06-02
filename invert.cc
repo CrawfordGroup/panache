@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <cmath>
 #include "libciomr.h"
-#include "qt.h"
+#include "Lapack.h"
 #include "Output.h"
 
 namespace panache {

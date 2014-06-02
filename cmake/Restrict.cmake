@@ -7,7 +7,7 @@ MACRO(TEST_RESTRICT VARIABLE)
     FOREACH(KEYWORD "__restrict__" "__restrict" "restrict")
             IF(NOT TEST_${VARIABLE})
                 TRY_COMPILE(TEST_${VARIABLE} "${CMAKE_BINARY_DIR}"
-                            "${CMAKE_SOURCE_DIR}/cmake/TestRestrict.c"
+                            "${CMAKE_SOURCE_DIR}/cmake/TestRestrict.cc"
                             COMPILE_DEFINITIONS "-DTESTRESTRICTDEF=${KEYWORD}" )
                 SET(LAST_RESTRICT_KEYWORD ${KEYWORD})
             ENDIF(NOT TEST_${VARIABLE})

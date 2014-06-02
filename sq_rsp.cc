@@ -28,7 +28,7 @@
 
 #include "libciomr.h"
 #include <cstdlib>
-#include "qt.h"
+#include "Lapack.h"
 
 namespace panache {
 
