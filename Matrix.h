@@ -710,24 +710,6 @@ public:
     void diagonalize(SharedMatrix& metric, SharedMatrix& eigvectors, std::shared_ptr<Vector>& eigvalues, diagonalize_order nMatz = ascending);
     /// @}
 
-    /// @{
-    /// General SVD, such that A = USV. U, S, and V must be allocated by the caller.
-    void svd(SharedMatrix& U, SharedVector& S, SharedMatrix& V);
-    /// @}
-
-    /// @{
-    /// General SVD, such that A = USV. U, S, and V must be allocated by the caller.
-    /// all M columns of U and all N rows of V**T are returned in the arrays U and VT;
-    /// This assumes totally symmetric quantities.
-    void svd_a(SharedMatrix& U, SharedVector& S, SharedMatrix& V);
-    /// @}
-
-    /*! Extract a conditioned orthonormal basis from this SPD matrix
-     *  via canonical orthogonalization.
-     *  @param delta, the relative condition to maintain
-     *  @return X, a SharedMatrix with m x m' dimension (m' < m if conditioning occurred)
-     */
-    SharedMatrix canonical_orthogonalization(double delta = 0.0, SharedMatrix eigvec = SharedMatrix());
 
     /*! Computes the fully pivoted partial Cholesky factorization of a real symmetric
      * positive semidefinite matrix A, to numerical precision \delta.
@@ -786,12 +768,6 @@ public:
      */
     void invert();
 
-    /*! Computes the inverse of a matrix using the LU factorization.
-     *  This method inverts U and then computes inv(A) by solving the system
-     *  inv(A)*L = inv(U) for inv(A).
-     */
-    void general_invert();
-
     /*! Computes the pseudo power of a real symmetric matrix
     *   A using eigendecomposition. This operation is uniquely defined
     *   for all symmetric matrices for integral alpha, and for
@@ -814,15 +790,6 @@ public:
     *   \returns a Dimension object with the remaining sizes. Can be used in a View.
     */
     Dimension power(double alpha, double cutoff = 1.0E-12);
-
-    /*!
-    * Computes the approximate 
-    * exponential of a general real square matrix via Pade 
-    * symmetric Pade approximation (orthonormality guaranteed)
-    * (defaults to a 2 x 2 Pade table, with no
-    * scaling or balancing)
-    */
-    void expm(int n = 2, bool scale = false);
 
     /// Swap rows i and j
     void swap_rows(int h, int i, int j);

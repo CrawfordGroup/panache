@@ -17,7 +17,7 @@ ENDMACRO(PATH_TO_BOOL PATHVAR BOOLVAR)
 
 
 # Include the header files from the source directory
-set(PANACHE_CXX_INCLUDEDIRS ${CMAKE_SOURCE_DIR})
+list(APPEND PANACHE_CXX_INCLUDEDIRS ${CMAKE_SOURCE_DIR})
 
 
 #####################################
@@ -26,7 +26,7 @@ set(PANACHE_CXX_INCLUDEDIRS ${CMAKE_SOURCE_DIR})
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
 # -DFC_SYMBOL - what fortran symbols to use in libqt
-set(PANACHE_CXX_FLAGS "--std=c++11")
+list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 list(APPEND PANACHE_CXX_FLAGS "-g" "-O0")
 
