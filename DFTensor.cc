@@ -74,13 +74,9 @@ void DFTensor::print_header()
 
     output::printf(" => Primary Basis Set <= \n\n");
     primary_->print_detail();
-    //primary_->print_by_level(outfile,print_);
-    //fflush(outfile);
 
     output::printf(" => Auxiliary Basis Set <= \n\n");
     auxiliary_->print_detail();
-    //auxiliary_->print_by_level(outfile,print_);
-    //fflush(outfile);
 }
 
 void DFTensor::build_metric()

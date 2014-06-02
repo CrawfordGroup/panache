@@ -129,6 +129,29 @@ extern "C" {
                         INTTYPE * primary_nprimpershell, DBLTYPE * primary_exp, DBLTYPE * primary_coef,
                         const char * auxfilename, INTTYPE * auxfilenamelen, INTTYPE * dfhandle)
     {
+        // DUMP
+        /*
+        std::cout << "ncenters: " << *ncenters << "\n";
+        std::cout << "XYZ: \n";
+        int cc = 0;
+        for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < (*ncenters); j++)
+                std::cout << xyz[cc++] << "   ";
+            std::cout << "\n";
+        }
+        std::cout << "symbol len: " << *symbollen << "\n";
+        std::cout << "Symbols: \n";
+        cc = 0;
+        for(int i = 0; i < *ncenters; i++)
+        {
+            std::cout << "\"";
+            for(int j = 0; j < *symbollen; j++)
+                std::cout << symbols[cc++];
+            std::cout << "\"\n";
+        }
+        */
+
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
 
@@ -160,20 +183,32 @@ extern "C" {
             atoms[i].center[0] = xyz[i];
             atoms[i].center[1] = xyz[i+(*ncenters)];
             atoms[i].center[2] = xyz[i+2*(*ncenters)];
+            //std::cout << "Adding atom " << i << "(" << atoms[i].symbol << ") with center:\n";
+            //std::cout << atoms[i].center[0] << "  " << atoms[i].center[1] << "  " << atoms[i].center[2] << "\n";
         }
 
         INTTYPE p_nshell = 0;
         for(INTTYPE i = 0; i < *ncenters; i++)
         {
             p_nshell += primary_nshellspercenter[i];
-            std::cout << "NSHELLPERCENTER " << i << " = " << primary_nshellspercenter[i] << "\n";
+            //std::cout << "NSHELLPERCENTER " << i << " = " << primary_nshellspercenter[i] << "\n";
         }
 
         C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
 
         INTTYPE prim_count = 0;
+        /*
+        std::cout << "P_NSHELL: " << p_nshell << "\n";
+        std::cout << "NPRIMPERSHELL: \n";
+        for(int i = 0; i < p_nshell; i++)
+            std::cout << primary_nprimpershell[i] << "  ";
+        std::cout << "\n";
+        */
+
         for(INTTYPE i = 0; i < p_nshell; i++)
         {
+            //std::cout << "shell " << i << " nprim " << primary_nprimpershell[i]
+            //          << " am " << primary_am[i] << " pure? " << primary_is_pure[i] << "\n";
             primary_shells[i].nprim   = primary_nprimpershell[i];
             primary_shells[i].am      = primary_am[i];
             primary_shells[i].ispure  = primary_is_pure[i];
@@ -186,10 +221,13 @@ extern "C" {
             }
         }
 
-        std::cout << "SIZEOF INT: " << sizeof(INTTYPE) << "\n";
-        std::cout << "NCENTER: " << *ncenters << "\n";
+        /*
         std::cout << "PRIMCOUNT: " << prim_count << "\n";
-        std::cout << "P_NSHELL: " << p_nshell << "\n";
+        std::cout << "exp, coef\n";
+        for(int i = 0; i < prim_count; i++)
+            std::cout << primary_exp[i] << "  " << primary_coef[i] << "\n";
+        std::cout << "\n";
+        */
 
         // create a real, null-terminated c string
         char * cfname = new char[*auxfilenamelen+1];
@@ -199,7 +237,6 @@ extern "C" {
         *dfhandle = C_init2(*ncenters, atoms,
                             primary_nshellspercenter, primary_shells,
                             cfname);
-
 
         // Free memory
         delete [] cfname;
@@ -226,7 +263,6 @@ extern "C" {
                         INTTYPE * primary_nprimpershell, DBLTYPE * primary_exp, DBLTYPE * primary_coef,
                         const char * auxfilename, INTTYPE * auxfilenamelen, INTTYPE * dfhandle)
     {
-        std::cout << "HEREHERE\n";
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
 

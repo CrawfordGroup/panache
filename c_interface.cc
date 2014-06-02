@@ -45,9 +45,9 @@ extern "C" {
 
 
     INTTYPE C_init2(INTTYPE ncenters,
-                C_AtomCenter * atoms,
-                INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                const char * auxfilename)
+                    C_AtomCenter * atoms,
+                    INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                    const char * auxfilename)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
