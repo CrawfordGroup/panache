@@ -28,7 +28,7 @@ namespace testing
 // so that any parsing errors just throw an exeption. Catch those,
 // and throw a TestingParserException
 int TestInfo::ReadBasisFile(const string & filename,
-                            INTTYPE * &nshellspercenter,
+                            int_t * &nshellspercenter,
                             C_ShellInfo * &shells,
                             TestInfo::BasisTest & test)
 {
@@ -51,7 +51,7 @@ int TestInfo::ReadBasisFile(const string & filename,
         test.nbf.set(nbf);
         test.nprim.set(nprim);
 
-        nshellspercenter = new INTTYPE[ncenters];
+        nshellspercenter = new int_t[ncenters];
         for(int i = 0; i < ncenters; i++)
         {
             f >> nshellspercenter[i];
@@ -205,8 +205,8 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
 
     // Read in the basis set information
-    INTTYPE pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
-    INTTYPE acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
+    int_t pcenters = ReadBasisFile(primary_basis_filename, primary_nshellspercenter_, primary_shells_, primary_test_);
+    int_t acenters = ReadBasisFile(aux_basis_filename,     aux_nshellspercenter_,     aux_shells_,     aux_test_);
 
 
     // Make sure all files agree on the number of centers
@@ -267,7 +267,7 @@ TestInfo::~TestInfo()
 }
 
 
-void TestInfo::TestBasisConversion(INTTYPE nshells, INTTYPE * nshellspercenter, C_ShellInfo * shells, BasisTest & test)
+void TestInfo::TestBasisConversion(int_t nshells, int_t * nshellspercenter, C_ShellInfo * shells, BasisTest & test)
 {
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
     auto basis = BasisSetFromArrays(mol, ncenters_, nshellspercenter, shells);

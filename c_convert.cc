@@ -5,8 +5,8 @@ namespace panache
 {
 
 std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::Molecule> molecule,
-        INTTYPE ncenters,
-        INTTYPE * nshellspercenter,
+        int_t ncenters,
+        int_t * nshellspercenter,
         struct C_ShellInfo * shells)
 {
     // Construct the basis set info
@@ -42,7 +42,7 @@ std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::M
 
 }
 
-std::shared_ptr<panache::Molecule> MoleculeFromArrays(INTTYPE ncenters, C_AtomCenter * atoms)
+std::shared_ptr<panache::Molecule> MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms)
 {
     std::shared_ptr<panache::Molecule> molecule(new panache::Molecule());
 

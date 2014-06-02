@@ -14,33 +14,34 @@ const std::string Z_to_sym [] = {
 extern "C" {
 
 
-    void fortran_init_(INTTYPE * ncenters,
-                       DBLTYPE * xyz, char * symbols,
-                       INTTYPE * primary_nshellspercenter, INTTYPE * primary_am, INTTYPE * primary_is_pure,
-                       INTTYPE * primary_nprimpershell, DBLTYPE * primary_exp, DBLTYPE * primary_coef,
-                       INTTYPE * aux_nshellspercenter, INTTYPE * aux_am, INTTYPE * aux_is_pure,
-                       INTTYPE * aux_nprimpershell, DBLTYPE * aux_exp, DBLTYPE * aux_coef, INTTYPE * dfhandle)
+    void fortran_init_(int_t * ncenters,
+                       double * xyz, char * symbols, int_t * symbollen, 
+                       int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
+                       int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
+                       int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
+                       int_t * aux_nprimpershell, double * aux_exp, double * aux_coef, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
 
         char ** csymbols = new char*[*ncenters];
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
         {
-            csymbols[i] = new char[5];
-            csymbols[i][0] = csymbols[i][1] = csymbols[i][2] 
-                           = csymbols[i][3] = csymbols[i][4] = '\0';
+            csymbols[i] = new char[*symbollen+1];
+            for(int_t j = 0; j < ((*symbollen)+1); j++)
+                csymbols[i][j] = '\0';
         }
+
 
         // symbols should be basically a long, space-delimited string
         // length is ncenters * 4, but is NOT null delimited.
         // fortran inserts spaces instead.
 
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
         {
-            for(INTTYPE j = 0; j < 4; j++)
+            for(int_t j = 0; j < *symbollen; j++)
             {
-                char c = symbols[i * 4 + j];
+                char c = symbols[i * (*symbollen) + j];
                 if(c != ' ')
                     csymbols[i][j] = c;
             }
@@ -52,9 +53,9 @@ extern "C" {
             atoms[i].center[2] = xyz[i+2*(*ncenters)];
         }
 
-        INTTYPE p_nshell = 0;
-        INTTYPE a_nshell = 0;
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        int_t p_nshell = 0;
+        int_t a_nshell = 0;
+        for(int_t i = 0; i < *ncenters; i++)
         {
             p_nshell += primary_nshellspercenter[i];
             a_nshell += aux_nshellspercenter[i];
@@ -63,15 +64,15 @@ extern "C" {
         C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
         C_ShellInfo * aux_shells = new C_ShellInfo[a_nshell];
 
-        INTTYPE prim_count = 0;
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        int_t prim_count = 0;
+        for(int_t i = 0; i < p_nshell; i++)
         {
             primary_shells[i].nprim   = primary_nprimpershell[i];
             primary_shells[i].am      = primary_am[i];
             primary_shells[i].ispure  = primary_is_pure[i];
-            primary_shells[i].exp     = new DBLTYPE[primary_shells[i].nprim];
-            primary_shells[i].coef    = new DBLTYPE[primary_shells[i].nprim];
-            for(INTTYPE j = 0; j < primary_shells[i].nprim; j++)
+            primary_shells[i].exp     = new double[primary_shells[i].nprim];
+            primary_shells[i].coef    = new double[primary_shells[i].nprim];
+            for(int_t j = 0; j < primary_shells[i].nprim; j++)
             {
                 primary_shells[i].exp[j] = primary_exp[prim_count];
                 primary_shells[i].coef[j] = primary_coef[prim_count++];
@@ -79,14 +80,14 @@ extern "C" {
         }
 
         prim_count = 0;
-        for(INTTYPE i = 0; i < a_nshell; i++)
+        for(int_t i = 0; i < a_nshell; i++)
         {
             aux_shells[i].nprim   = aux_nprimpershell[i];
             aux_shells[i].am      = aux_am[i];
             aux_shells[i].ispure  = aux_is_pure[i];
-            aux_shells[i].exp     = new DBLTYPE[aux_shells[i].nprim];
-            aux_shells[i].coef    = new DBLTYPE[aux_shells[i].nprim];
-            for(INTTYPE j = 0; j < aux_shells[i].nprim; j++)
+            aux_shells[i].exp     = new double[aux_shells[i].nprim];
+            aux_shells[i].coef    = new double[aux_shells[i].nprim];
+            for(int_t j = 0; j < aux_shells[i].nprim; j++)
             {
                 aux_shells[i].exp[j] = aux_exp[prim_count];
                 aux_shells[i].coef[j] = aux_coef[prim_count++];
@@ -98,13 +99,13 @@ extern "C" {
                            aux_nshellspercenter, aux_shells);
 
         // Free memory
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        for(int_t i = 0; i < p_nshell; i++)
         {
             delete [] primary_shells[i].exp;
             delete [] primary_shells[i].coef;
         }
 
-        for(INTTYPE i = 0; i < a_nshell; i++)
+        for(int_t i = 0; i < a_nshell; i++)
         {
             delete [] aux_shells[i].exp;
             delete [] aux_shells[i].coef;
@@ -115,7 +116,7 @@ extern "C" {
 
         delete [] atoms;
 
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
             delete [] csymbols[i];
         delete [] csymbols;
 
@@ -123,11 +124,11 @@ extern "C" {
     }
 
 
-    void fortran_init2_(INTTYPE * ncenters,
-                        DBLTYPE * xyz, char * symbols, INTTYPE * symbollen,
-                        INTTYPE * primary_nshellspercenter, INTTYPE * primary_am, INTTYPE * primary_is_pure,
-                        INTTYPE * primary_nprimpershell, DBLTYPE * primary_exp, DBLTYPE * primary_coef,
-                        const char * auxfilename, INTTYPE * auxfilenamelen, INTTYPE * dfhandle)
+    void fortran_init2_(int_t * ncenters,
+                        double * xyz, char * symbols, int_t * symbollen,
+                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
+                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
+                        const char * auxfilename, int_t * auxfilenamelen, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -156,10 +157,10 @@ extern "C" {
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
 
         char ** csymbols = new char*[*ncenters];
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
         {
             csymbols[i] = new char[*symbollen+1];
-            for(INTTYPE j = 0; j < ((*symbollen)+1); j++)
+            for(int_t j = 0; j < ((*symbollen)+1); j++)
                 csymbols[i][j] = '\0';
         }
 
@@ -169,9 +170,9 @@ extern "C" {
         // So the extra element from above guarentee room for a null
         // character
 
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
         {
-            for(INTTYPE j = 0; j < *symbollen; j++)
+            for(int_t j = 0; j < *symbollen; j++)
             {
                 char c = symbols[i * (*symbollen) + j];
                 if(c != ' ')
@@ -187,8 +188,8 @@ extern "C" {
             //std::cout << atoms[i].center[0] << "  " << atoms[i].center[1] << "  " << atoms[i].center[2] << "\n";
         }
 
-        INTTYPE p_nshell = 0;
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        int_t p_nshell = 0;
+        for(int_t i = 0; i < *ncenters; i++)
         {
             p_nshell += primary_nshellspercenter[i];
             //std::cout << "NSHELLPERCENTER " << i << " = " << primary_nshellspercenter[i] << "\n";
@@ -196,7 +197,7 @@ extern "C" {
 
         C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
 
-        INTTYPE prim_count = 0;
+        int_t prim_count = 0;
         /*
         std::cout << "P_NSHELL: " << p_nshell << "\n";
         std::cout << "NPRIMPERSHELL: \n";
@@ -205,16 +206,16 @@ extern "C" {
         std::cout << "\n";
         */
 
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        for(int_t i = 0; i < p_nshell; i++)
         {
             //std::cout << "shell " << i << " nprim " << primary_nprimpershell[i]
             //          << " am " << primary_am[i] << " pure? " << primary_is_pure[i] << "\n";
             primary_shells[i].nprim   = primary_nprimpershell[i];
             primary_shells[i].am      = primary_am[i];
             primary_shells[i].ispure  = primary_is_pure[i];
-            primary_shells[i].exp     = new DBLTYPE[primary_shells[i].nprim];
-            primary_shells[i].coef    = new DBLTYPE[primary_shells[i].nprim];
-            for(INTTYPE j = 0; j < primary_shells[i].nprim; j++)
+            primary_shells[i].exp     = new double[primary_shells[i].nprim];
+            primary_shells[i].coef    = new double[primary_shells[i].nprim];
+            for(int_t j = 0; j < primary_shells[i].nprim; j++)
             {
                 primary_shells[i].exp[j] = primary_exp[prim_count];
                 primary_shells[i].coef[j] = primary_coef[prim_count++];
@@ -240,7 +241,7 @@ extern "C" {
 
         // Free memory
         delete [] cfname;
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        for(int_t i = 0; i < p_nshell; i++)
         {
             delete [] primary_shells[i].exp;
             delete [] primary_shells[i].coef;
@@ -250,48 +251,48 @@ extern "C" {
 
         delete [] atoms;
 
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
             delete [] csymbols[i];
         delete [] csymbols;
 
 
     }
 
-    void fortran_init3_(INTTYPE * ncenters,
-                        DBLTYPE * xyz, DBLTYPE * Z,
-                        INTTYPE * primary_nshellspercenter, INTTYPE * primary_am, INTTYPE * primary_is_pure,
-                        INTTYPE * primary_nprimpershell, DBLTYPE * primary_exp, DBLTYPE * primary_coef,
-                        const char * auxfilename, INTTYPE * auxfilenamelen, INTTYPE * dfhandle)
+    void fortran_init3_(int_t * ncenters,
+                        double * xyz, double * Z,
+                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
+                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
+                        const char * auxfilename, int_t * auxfilenamelen, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
 
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        for(int_t i = 0; i < *ncenters; i++)
         {
-            atoms[i].symbol = Z_to_sym[static_cast<INTTYPE>(Z[i])].c_str(); 
+            atoms[i].symbol = Z_to_sym[static_cast<int_t>(Z[i])].c_str(); 
 
             atoms[i].center[0] = xyz[i];
             atoms[i].center[1] = xyz[i+(*ncenters)];
             atoms[i].center[2] = xyz[i+2*(*ncenters)];
         }
 
-        INTTYPE p_nshell = 0;
-        for(INTTYPE i = 0; i < *ncenters; i++)
+        int_t p_nshell = 0;
+        for(int_t i = 0; i < *ncenters; i++)
         {
             p_nshell += primary_nshellspercenter[i];
         }
 
         C_ShellInfo * primary_shells = new C_ShellInfo[p_nshell];
 
-        INTTYPE prim_count = 0;
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        int_t prim_count = 0;
+        for(int_t i = 0; i < p_nshell; i++)
         {
             primary_shells[i].nprim   = primary_nprimpershell[i];
             primary_shells[i].am      = primary_am[i];
             primary_shells[i].ispure  = primary_is_pure[i];
-            primary_shells[i].exp     = new DBLTYPE[primary_shells[i].nprim];
-            primary_shells[i].coef    = new DBLTYPE[primary_shells[i].nprim];
-            for(INTTYPE j = 0; j < primary_shells[i].nprim; j++)
+            primary_shells[i].exp     = new double[primary_shells[i].nprim];
+            primary_shells[i].coef    = new double[primary_shells[i].nprim];
+            for(int_t j = 0; j < primary_shells[i].nprim; j++)
             {
                 primary_shells[i].exp[j] = primary_exp[prim_count];
                 primary_shells[i].coef[j] = primary_coef[prim_count++];
@@ -311,7 +312,7 @@ extern "C" {
 
         // Free memory
         delete [] cfname;
-        for(INTTYPE i = 0; i < p_nshell; i++)
+        for(int_t i = 0; i < p_nshell; i++)
         {
             delete [] primary_shells[i].exp;
             delete [] primary_shells[i].coef;
@@ -323,18 +324,18 @@ extern "C" {
         
     }
 
-    void fortran_tensordimensions_(INTTYPE * df_handle, INTTYPE * d1, INTTYPE * d2, INTTYPE * d3, INTTYPE * matsize)
+    void fortran_tensordimensions_(int_t * df_handle, int_t * d1, int_t * d2, int_t * d3, int_t * matsize)
     {
         *matsize = C_TensorDimensions(*df_handle, d1, d2, d3);
     }
 
 
-    void fortran_qao_(INTTYPE * df_handle, DBLTYPE * matout, INTTYPE * matsize)
+    void fortran_qao_(int_t * df_handle, double * matout, int_t * matsize)
     {
         C_QAO(*df_handle, matout, *matsize);
     }
 
-    void fortran_cleanup_(INTTYPE * df_handle)
+    void fortran_cleanup_(int_t * df_handle)
     {
         C_cleanup(*df_handle);
     }
@@ -344,21 +345,21 @@ extern "C" {
         C_cleanup_all();
     }
 
-    void fortran_eri_(INTTYPE * df_handle, DBLTYPE * qso, INTTYPE * qsosize,
-               INTTYPE * shell1, INTTYPE * shell2, INTTYPE * shell3, INTTYPE * shell4,
-               DBLTYPE * outbuffer, INTTYPE * buffersize, INTTYPE * ncalc)
+    void fortran_eri_(int_t * df_handle, double * qso, int_t * qsosize,
+               int_t * shell1, int_t * shell2, int_t * shell3, int_t * shell4,
+               double * outbuffer, int_t * buffersize, int_t * ncalc)
     {
         *ncalc = C_CalculateERI(*df_handle, qso, *qsosize, *shell1, *shell2, *shell3, *shell4,
                        outbuffer, *buffersize);
     }
 
-    void fortran_eri_multi_(INTTYPE * df_handle,
-                           DBLTYPE * qso, INTTYPE * qsosize,
-                           INTTYPE * shell1, INTTYPE * nshell1,
-                           INTTYPE * shell2, INTTYPE * nshell2,
-                           INTTYPE * shell3, INTTYPE * nshell3,
-                           INTTYPE * shell4, INTTYPE * nshell4,
-                           DBLTYPE * outbuffer, INTTYPE * buffersize, INTTYPE * ncalc)
+    void fortran_eri_multi_(int_t * df_handle,
+                           double * qso, int_t * qsosize,
+                           int_t * shell1, int_t * nshell1,
+                           int_t * shell2, int_t * nshell2,
+                           int_t * shell3, int_t * nshell3,
+                           int_t * shell4, int_t * nshell4,
+                           double * outbuffer, int_t * buffersize, int_t * ncalc)
     {
         *ncalc = C_CalculateERIMulti(*df_handle, qso, *qsosize,
                                      *shell1, *nshell1, *shell2, *nshell2,
@@ -366,8 +367,8 @@ extern "C" {
                                      outbuffer, *buffersize);
     }
 
-    void fortran_reorderq_gamess_(INTTYPE * df_handle,
-                                  DBLTYPE * qso, INTTYPE * qsosize)
+    void fortran_reorderq_gamess_(int_t * df_handle,
+                                  double * qso, int_t * qsosize)
     {
         C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
     }

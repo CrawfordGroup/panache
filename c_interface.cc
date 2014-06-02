@@ -21,10 +21,10 @@ std::map<int, panache::DFTensor *> dftensors_;
 extern "C" {
 
 
-    INTTYPE C_init(INTTYPE ncenters,
+    int_t C_init(int_t ncenters,
                C_AtomCenter * atoms,
-               INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               INTTYPE * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
+               int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -44,9 +44,9 @@ extern "C" {
     }
 
 
-    INTTYPE C_init2(INTTYPE ncenters,
+    int_t C_init2(int_t ncenters,
                     C_AtomCenter * atoms,
-                    INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                    int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                     const char * auxfilename)
     {
         // Molecule
@@ -70,7 +70,7 @@ extern "C" {
 
 
 
-    void C_cleanup(INTTYPE df_handle)
+    void C_cleanup(int_t df_handle)
     {
         if(dftensors_.count(df_handle) > 0)
         {
@@ -92,7 +92,7 @@ extern "C" {
         dftensors_.clear();
     }
 
-    void C_QAO(INTTYPE df_handle, double * matout, INTTYPE matsize)
+    void C_QAO(int_t df_handle, double * matout, int_t matsize)
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
@@ -101,7 +101,7 @@ extern "C" {
         dftensors_[df_handle]->Qso(matout, matsize);
     }
 
-    INTTYPE C_TensorDimensions(INTTYPE df_handle, INTTYPE * d1, INTTYPE * d2, INTTYPE * d3)
+    int_t C_TensorDimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -117,7 +117,7 @@ extern "C" {
     }
 
 
-    INTTYPE C_CalculateERI(INTTYPE df_handle, double * qso, INTTYPE qsosize, INTTYPE shell1, INTTYPE shell2, INTTYPE shell3, INTTYPE shell4, double * outbuffer, INTTYPE buffersize)
+    int_t C_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -126,13 +126,13 @@ extern "C" {
     }
 
 
-    INTTYPE C_CalculateERIMulti(INTTYPE df_handle,
-                            double * qso, INTTYPE qsosize,
-                            INTTYPE shell1, INTTYPE nshell1,
-                            INTTYPE shell2, INTTYPE nshell2,
-                            INTTYPE shell3, INTTYPE nshell3,
-                            INTTYPE shell4, INTTYPE nshell4,
-                            double * outbuffer, INTTYPE buffersize)
+    int_t C_CalculateERIMulti(int_t df_handle,
+                            double * qso, int_t qsosize,
+                            int_t shell1, int_t nshell1,
+                            int_t shell2, int_t nshell2,
+                            int_t shell3, int_t nshell3,
+                            int_t shell4, int_t nshell4,
+                            double * outbuffer, int_t buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -141,7 +141,7 @@ extern "C" {
                                                         shell3, nshell3, shell4, nshell4, outbuffer, buffersize);
     }
 
-    void C_ReorderQ_GAMESS(INTTYPE df_handle, double * qso, INTTYPE qsosize)
+    void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");

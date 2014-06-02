@@ -1,22 +1,19 @@
 #ifndef PANACHE_C_INTERFACE_H
 #define PANACHE_C_INTERFACE_H
 
-#ifndef INTTYPE
-    #define INTTYPE int64_t
+#ifdef USE_64PANACHE
+    #define int_t int64_t
+#else
+    #define int_t int32_t
 #endif
-
-#ifndef DBLTYPE
-    #define DBLTYPE double
-#endif
-
 
 extern "C" {
 
     struct C_ShellInfo
     {
-        INTTYPE nprim;
-        INTTYPE am;
-        INTTYPE ispure;
+        int_t nprim;
+        int_t am;
+        int_t ispure;
         double * exp; // of length nprim
         double * coef; // of length nprim
     };
@@ -29,34 +26,34 @@ extern "C" {
 
 
 
-    INTTYPE C_init(INTTYPE ncenters,
+    int_t C_init(int_t ncenters,
                C_AtomCenter * atoms,
-               INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               INTTYPE * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
+               int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
 
-    INTTYPE C_init2(INTTYPE ncenters,
+    int_t C_init2(int_t ncenters,
                 C_AtomCenter * atoms,
-                INTTYPE * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                 const char * auxfilename);
 
-    void C_QAO(INTTYPE df_handle, double * matout, INTTYPE matsize);
+    void C_QAO(int_t df_handle, double * matout, int_t matsize);
 
-    void C_cleanup(INTTYPE df_handle);
+    void C_cleanup(int_t df_handle);
     void C_cleanup_all(void);
 
-    INTTYPE C_TensorDimensions(INTTYPE df_handle, INTTYPE * d1, INTTYPE * d2, INTTYPE * d3);
+    int_t C_TensorDimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3);
 
-    INTTYPE C_CalculateERI(INTTYPE df_handle, double * qso, INTTYPE qsosize, INTTYPE shell1, INTTYPE shell2, INTTYPE shell3, INTTYPE shell4, double * outbuffer, INTTYPE buffersize);
+    int_t C_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
 
-    INTTYPE C_CalculateERIMulti(INTTYPE df_handle,
-                            double * qso, INTTYPE qsosize,
-                            INTTYPE shell1, INTTYPE nshell1,
-                            INTTYPE shell2, INTTYPE nshell2,
-                            INTTYPE shell3, INTTYPE nshell3,
-                            INTTYPE shell4, INTTYPE nshell4,
-                            double * outbuffer, INTTYPE buffersize);
+    int_t C_CalculateERIMulti(int_t df_handle,
+                            double * qso, int_t qsosize,
+                            int_t shell1, int_t nshell1,
+                            int_t shell2, int_t nshell2,
+                            int_t shell3, int_t nshell3,
+                            int_t shell4, int_t nshell4,
+                            double * outbuffer, int_t buffersize);
 
-    void C_ReorderQ_GAMESS(INTTYPE df_handle, double * qso, INTTYPE qsosize);
+    void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize);
 }
 
     

@@ -33,14 +33,25 @@ list(APPEND PANACHE_CXX_FLAGS "-g" "-O0")
 
 # Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
 # If unset, 32-bit interface is used
-set(USE_64LAPACK "" CACHE FILEPATH "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
+set(USE_64LAPACK FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
+
 if(USE_64LAPACK)
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_664LAPACK")
+  list(APPEND PANACHE_CXX_FLAGS "-DUSE_64LAPACK")
   message(STATUS "Using 64-bit lapack interface")
 else(USE_64LAPACK)
   message(STATUS "Using 32-bit lapack interface")
 endif(USE_64LAPACK)
 
+
+# Whether the C and Fortran interfaces should be 64-bit
+set(USE_64PANACHE FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
+
+if(USE_64PANACHE)
+  list(APPEND PANACHE_CXX_FLAGS "-DUSE_64PANACHE")
+  message(STATUS "Building 64-bit C/Fortran interface")
+else(USE_64PANACHE)
+  message(STATUS "Building 32-bit C/Fortran interface")
+endif(USE_64PANACHE)
 
 
 # PANACHE uses the 'restrict' keyword for optimization
