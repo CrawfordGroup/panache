@@ -45,7 +45,7 @@ namespace panache
 
 DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
                    std::shared_ptr<BasisSet> auxiliary)
-    : primary_(primary), auxiliary_(auxiliary)
+    : primary_(primary), auxiliary_(auxiliary), matfile_(nullptr), filename_("Test.mat")
 {
     common_init();
 }
@@ -400,8 +400,82 @@ void DFTensor::ReorderQ_GAMESS(double * qso, int qsosize)
     ReorderQ(qso, qsosize, go);
 }
 
+void DFTensor::OpenFile(void)
+{
+    if(filename_ == "")
+        throw RuntimeError("Error - no file specified!");
+
+    // ok to call if it hasn't been opened yet
+    CloseFile();
+
+    matfile_ = new std::fstream(filename_.c_str());
+
+    if(!matfile_->is_open())
+        throw RuntimeError("Error - cannot open file");
+
+    // enable exceptions
+    matfile_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+}
+
+void DFTensor::CloseFile(void)
+{
+    if(matfile_ != nullptr)
+    {
+        if(matfile_->is_open())
+            matfile_->close();
+        delete matfile_;
+    }
+}
+
+
+void DFTensor::ResetFile(void)
+{
+    matfile_->seekg(0);
+    matfile_->seekp(0);
+    curq_ = 0;
+}
+
+void DFTensor::WriteQToDisk(double const * d, size_t nq)
+{
+    // assume file is open?
+    matfile_->write(reinterpret_cast<const char *>(d), nq*sizeof(double)*auxiliary_->nbf());
+    // will throw exception if there is a problem
+}
+
+void DFTensor::ReadQFromDisk(double * d, size_t nq)
+{
+    // assume file is open?
+
+    // Matrix is written with stripes over aux basis. We read in
+    // for a specific 'q' value, however.
+
+    int nso = primary_->nbf();
+    int skip = ((nso * nso)-1)*sizeof(double);
+    int naux = auxiliary_->nbf();
+
+    size_t pos = 0;
+
+    for(size_t i = 0; i < nq; i++)
+    {
+        for(size_t j = 0; j < naux; j++)
+        {
+            matfile_->read(reinterpret_cast<char *>(d+(pos++)), sizeof(double)); 
+            matfile_->seekg(skip, std::ios_base::cur); // jump nso^2 elements to get to the next one
+        }
+
+        // we have read in one q stripe
+        // jump to the beginning and start a new one
+        curq_++;
+        matfile_->seekg(curq_*sizeof(double), std::ios_base::beg);
+        
+    }
+    // will throw exception if there is a problem
+}
+
+
 
 }
+
 
 
 

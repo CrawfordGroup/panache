@@ -23,18 +23,23 @@
 #ifndef PANACHE_DFTENSOR_H
 #define PANACHE_DFTENSOR_H
 
+#include <fstream>
 #include "Matrix.h"
 
-namespace panache {
+
+namespace panache
+{
 
 class Molecule;
 class BasisSet;
 
-namespace reorder {
+namespace reorder
+{
 class Orderings;
 }
 
-class DFTensor {
+class DFTensor
+{
 
 protected:
 
@@ -57,10 +62,31 @@ protected:
     void build_metric();
     void print_header();
 
+    /// Filename for the matrix on disk
+    std::string filename_;
+
+    /// fstream object for the matrix on disk
+    std::fstream  * matfile_;
+
+
+    void OpenFile(void);
+    void CloseFile(void);
+    void ResetFile(void);
+
+    // nq = number of q blocks to write
+    void WriteQToDisk(double const * d, size_t nq);
+
+    // nq = number of q blocks to read
+    void ReadQFromDisk(double * d, size_t nq);
+
+    // current q being read from disk
+    int curq_;
+
+
 public:
 
     DFTensor(std::shared_ptr<BasisSet> primary,
-                   std::shared_ptr<BasisSet> auxiliary);
+             std::shared_ptr<BasisSet> auxiliary);
 
     ~DFTensor();
 
@@ -83,3 +109,4 @@ public:
 }
 
 #endif //PANACHE_DFTENSOR_H
+
