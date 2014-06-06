@@ -98,7 +98,8 @@ extern "C" {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->Qso(matout, matsize);
+        dftensors_[df_handle]->Qso(true);
+        dftensors_[df_handle]->GetBatch(matout, matsize);
     }
 
     int_t C_TensorDimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3)

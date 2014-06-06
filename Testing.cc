@@ -367,12 +367,28 @@ void TestInfo::TestQsoMatrix(void)
     //auto aux = BasisSet::construct(parser, mol, "cc-pvdz-ri.gbs");
 
     DFTensor dft(primary, aux);
+    dft.Qso(true);
 
     int d1, d2, d3;
     size_t matsize = dft.TensorDimensions(d1, d2, d3);
 
     double * mat = new double[matsize];
-    dft.Qso(mat, matsize);
+
+
+    // Test getting it all at once
+    // dft.GetBatch(mat, matsize);
+
+    // test getting in batches
+    double * buf = new double[3*d2*d3];
+    int curq = 0;
+    int n;
+    while(n = dft.GetBatch(buf, 3*d2*d3))
+    {
+        std::copy(buf, buf+n*d2*d3, mat+curq*d2*d3);
+        curq += n;
+    }
+    delete [] buf;
+
     TestMatrix(mat, matsize, qso_test_);
     delete [] mat;
 }

@@ -69,15 +69,14 @@ protected:
     std::unique_ptr<std::fstream> matfile_;
 
 
+
     void OpenFile(void);
     void CloseFile(void);
     void ResetFile(void);
 
-    void ReadQFromDisk(size_t q, double * d);
-
-    // current q being read from disk
+    std::unique_ptr<double> qso_;
+    bool isinmem_;
     int curq_;
-
 
 public:
 
@@ -86,8 +85,11 @@ public:
 
     ~DFTensor();
 
-    void Qso(double * A, size_t length);
     int TensorDimensions(int & d1, int & d2, int & d3);
+
+    // Calculate the Q matrix
+    void Qso(bool inmem);
+    int GetBatch(double * mat, size_t size);
 
 
 /*

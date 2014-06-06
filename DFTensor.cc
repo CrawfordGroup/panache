@@ -45,9 +45,10 @@ namespace panache
 
 DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
                    std::shared_ptr<BasisSet> auxiliary)
-    : primary_(primary), auxiliary_(auxiliary), matfile_(nullptr), filename_("/home/ben/Test.mat")
+    : primary_(primary), auxiliary_(auxiliary), filename_("/home/ben/Test.mat")
 {
     common_init();
+    curq_ = 0;
 }
 
 DFTensor::~DFTensor()
@@ -100,11 +101,8 @@ int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 }
 
 
-void DFTensor::Qso(double * A, size_t length)
+void DFTensor::Qso(bool inmem)
 {
-    OpenFile();
-    ResetFile();
-
     //! \todo I think this should be nbf, but I'm not positive
     int nso = primary_->nbf();
     int nso2 = nso*nso;
@@ -112,11 +110,6 @@ void DFTensor::Qso(double * A, size_t length)
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
-    if(length != naux * nso * nso)
-        throw RuntimeError("Incorrect length array given to Qso");
-
-    double * B = new double[naux*maxpershell2];
-    double * A2 = new double[naux*maxpershell2];
 
     double** Jp = metric_->pointer();
 
@@ -129,70 +122,155 @@ void DFTensor::Qso(double * A, size_t length)
 
     const double* buffer = eri->buffer();
 
-    for (int M = 0; M < primary_->nshell(); M++)
+    isinmem_ = inmem; // store this so we know later
+    qso_.reset();
+    curq_ = 0;
+
+    if(!inmem)
     {
-        int nm = primary_->shell(M).nfunction();
+        OpenFile();
+        ResetFile();
 
-        for (int N = 0; N < primary_->nshell(); N++)
+        double * A = new double[naux*maxpershell2];
+        double * B = new double[naux*maxpershell2];
+        for (int M = 0; M < primary_->nshell(); M++)
         {
-            int nn = primary_->shell(N).nfunction();
+            int nm = primary_->shell(M).nfunction();
 
-            for (int P = 0; P < auxiliary_->nshell(); P++)
+            for (int N = 0; N < primary_->nshell(); N++)
             {
-                int np = auxiliary_->shell(P).nfunction();
-                int pstart = auxiliary_->shell(P).function_index();
+                int nn = primary_->shell(N).nfunction();
 
-                eri->compute_shell(P,0,M,N);
-
-                for (int p = 0, index = 0; p < np; p++)
+                for (int P = 0; P < auxiliary_->nshell(); P++)
                 {
-                    for (int m = 0; m < nm; m++)
+                    int np = auxiliary_->shell(P).nfunction();
+                    int pstart = auxiliary_->shell(P).function_index();
+
+                    eri->compute_shell(P,0,M,N);
+
+                    for (int p = 0, index = 0; p < np; p++)
                     {
-                        for (int n = 0; n < nn; n++, index++)
+                        for (int m = 0; m < nm; m++)
                         {
-                            B[(p + pstart)*nm*nn + m*nn + n] = buffer[index];
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[(p + pstart)*nm*nn + m*nn + n] = buffer[index];
+                            }
+                        }
+                    }
+                }
+
+                // we now have a set of columns of B, although "condensed"
+                // we can do a DGEMM with J
+                C_DGEMM('N','N',naux, nm*nn, naux, 1.0, Jp[0], naux, B, nm*nn, 0.0,
+                        A, nm*nn);
+
+
+                // write to disk
+                int mstart = primary_->shell(M).function_index();
+                int nstart = primary_->shell(N).function_index();
+
+                //! \todo rearrange to that writes are more sequential
+                for (int m = 0; m < nm; m++)
+                {
+                    for (int n = 0; n < nn; n++)
+                    {
+                        for (int p = 0; p < naux; p++)
+                        {
+                            matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + (n+nstart)), std::ios_base::beg);
+                            matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn + n), sizeof(double));
                         }
                     }
                 }
             }
 
-            // we now have a set of columns of B, although "condensed"
-            // we can do a DGEMM with J
-            C_DGEMM('N','N',naux, nm*nn, naux, 1.0, Jp[0], naux, B, nm*nn, 0.0,
-                    A2, nm*nn);
+        }
 
+        delete [] A;
+        delete [] B;
 
-            // write to disk
-            int mstart = primary_->shell(M).function_index();
-            int nstart = primary_->shell(N).function_index();
+        ResetFile();
 
-            for (int m = 0; m < nm; m++)
+    }
+    else
+    {
+        double * B = new double[naux*nso2];
+        qso_ = std::unique_ptr<double>(new double[naux*nso2]);
+
+        for (int P = 0; P < auxiliary_->nshell(); P++)
+        {
+            int np = auxiliary_->shell(P).nfunction();
+            int pstart = auxiliary_->shell(P).function_index();
+            for (int M = 0; M < primary_->nshell(); M++)
             {
-                for (int n = 0; n < nn; n++)
+                int nm = primary_->shell(M).nfunction();
+                int mstart = primary_->shell(M).function_index();
+                for (int N = 0; N < primary_->nshell(); N++)
                 {
-                    for (int p = 0; p < naux; p++)
+                    int nn = primary_->shell(N).nfunction();
+                    int nstart = primary_->shell(N).function_index();
+
+                    eri->compute_shell(P,0,M,N);
+
+                    for (int p = 0, index = 0; p < np; p++)
                     {
-                        matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + (n+nstart)), std::ios_base::beg);
-                        matfile_->write(reinterpret_cast<const char *>(A2 + p*nm*nn + m*nn + n), sizeof(double));
+                        for (int m = 0; m < nm; m++)
+                        {
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[(p + pstart)*nso2 + (m + mstart) * nso + (n + nstart)] = buffer[index];
+                            }
+                        }
                     }
                 }
             }
-
-
-
         }
+
+        C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, B, nso * nso, 0.0,
+                qso_.get(), nso * nso);
+
+        delete [] B;
     }
 
-    ResetFile();
-
-    // for now, just sort back into A
-    for(int q = 0; q < naux; q++)
-        ReadQFromDisk(q, A+(q*nso2));
-
-    delete [] B;
-    delete [] A2;
-
 }
+
+int DFTensor::GetBatch(double * mat, size_t size)
+{
+    int nso = primary_->nbf();
+    int nso2 = nso*nso;
+    int naux = auxiliary_->nbf();
+
+    int nq = (size / (nso*nso) );
+    int toget = std::min(nq, (naux - curq_));
+
+    if(size < nso2)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    if(toget == 0)
+        return 0;
+
+    int start = curq_ * nso2;
+
+    // all reads should be sequential
+    if(isinmem_)
+    {
+        std::copy(qso_.get() + start, 
+                  qso_.get() + start + toget*nso2,
+                  mat);
+    }
+    else
+    {
+        matfile_->seekg(start*sizeof(double), std::ios_base::beg);
+        matfile_->read(reinterpret_cast<char *>(mat), toget*nso2*sizeof(double));
+    }
+    
+
+    curq_ += toget;
+
+    return toget;
+}
+
+
 
 /*
 int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
@@ -446,9 +524,9 @@ void DFTensor::OpenFile(void)
     CloseFile();
 
     matfile_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(), std::fstream::in |
-                                                                                 std::fstream::out |
-                                                                                 std::fstream::binary |
-                                                                                 std::fstream::trunc));
+               std::fstream::out |
+               std::fstream::binary |
+               std::fstream::trunc));
 
     if(!matfile_->is_open())
         throw RuntimeError(filename_);
@@ -475,21 +553,5 @@ void DFTensor::ResetFile(void)
     curq_ = 0;
 }
 
-void DFTensor::ReadQFromDisk(size_t q, double * d)
-{
-    // assume file is open?
-    int nso = primary_->nbf();
-    int nso2 = nso*nso;
-
-    matfile_->seekg(q*nso2*sizeof(double), std::ios_base::beg);
-    matfile_->read(reinterpret_cast<char *>(d), nso2*sizeof(double));
- 
-    // will throw exception if there is a problem
 }
-
-
-
-}
-
-
 
