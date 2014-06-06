@@ -66,18 +66,14 @@ protected:
     std::string filename_;
 
     /// fstream object for the matrix on disk
-    std::fstream  * matfile_;
+    std::unique_ptr<std::fstream> matfile_;
 
 
     void OpenFile(void);
     void CloseFile(void);
     void ResetFile(void);
 
-    // nq = number of q blocks to write
-    void WriteQToDisk(double const * d, size_t nq);
-
-    // nq = number of q blocks to read
-    void ReadQFromDisk(double * d, size_t nq);
+    void ReadQFromDisk(size_t q, double * d);
 
     // current q being read from disk
     int curq_;

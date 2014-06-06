@@ -45,13 +45,14 @@ namespace panache
 
 DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
                    std::shared_ptr<BasisSet> auxiliary)
-    : primary_(primary), auxiliary_(auxiliary), matfile_(nullptr), filename_("Test.mat")
+    : primary_(primary), auxiliary_(auxiliary), matfile_(nullptr), filename_("/home/ben/Test.mat")
 {
     common_init();
 }
 
 DFTensor::~DFTensor()
 {
+    CloseFile();
 }
 
 void DFTensor::common_init()
@@ -101,15 +102,22 @@ int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 
 void DFTensor::Qso(double * A, size_t length)
 {
+    OpenFile();
+    ResetFile();
+
     //! \todo I think this should be nbf, but I'm not positive
     int nso = primary_->nbf();
+    int nso2 = nso*nso;
     int naux = auxiliary_->nbf();
+    int maxpershell = primary_->max_function_per_shell();
+    int maxpershell2 = maxpershell*maxpershell;
 
     if(length != naux * nso * nso)
         throw RuntimeError("Incorrect length array given to Qso");
 
-    SharedMatrix B(new Matrix("Bso", naux, nso * nso));
-    double** Bp = B->pointer();
+    double * B = new double[naux*maxpershell2];
+    double * A2 = new double[naux*maxpershell2];
+
     double** Jp = metric_->pointer();
 
     output::printf("\n===========================\nINSIDE BPPSI::DFTENSOR::QSO\n===========================\n");
@@ -121,18 +129,18 @@ void DFTensor::Qso(double * A, size_t length)
 
     const double* buffer = eri->buffer();
 
-    for (int P = 0; P < auxiliary_->nshell(); P++)
+    for (int M = 0; M < primary_->nshell(); M++)
     {
-        int np = auxiliary_->shell(P).nfunction();
-        int pstart = auxiliary_->shell(P).function_index();
-        for (int M = 0; M < primary_->nshell(); M++)
+        int nm = primary_->shell(M).nfunction();
+
+        for (int N = 0; N < primary_->nshell(); N++)
         {
-            int nm = primary_->shell(M).nfunction();
-            int mstart = primary_->shell(M).function_index();
-            for (int N = 0; N < primary_->nshell(); N++)
+            int nn = primary_->shell(N).nfunction();
+
+            for (int P = 0; P < auxiliary_->nshell(); P++)
             {
-                int nn = primary_->shell(N).nfunction();
-                int nstart = primary_->shell(N).function_index();
+                int np = auxiliary_->shell(P).nfunction();
+                int pstart = auxiliary_->shell(P).function_index();
 
                 eri->compute_shell(P,0,M,N);
 
@@ -142,23 +150,48 @@ void DFTensor::Qso(double * A, size_t length)
                     {
                         for (int n = 0; n < nn; n++, index++)
                         {
-                            Bp[p + pstart][(m + mstart) * nso + (n + nstart)] = buffer[index];
+                            B[(p + pstart)*nm*nn + m*nn + n] = buffer[index];
                         }
                     }
                 }
             }
+
+            // we now have a set of columns of B, although "condensed"
+            // we can do a DGEMM with J
+            C_DGEMM('N','N',naux, nm*nn, naux, 1.0, Jp[0], naux, B, nm*nn, 0.0,
+                    A2, nm*nn);
+
+
+            // write to disk
+            int mstart = primary_->shell(M).function_index();
+            int nstart = primary_->shell(N).function_index();
+
+            for (int m = 0; m < nm; m++)
+            {
+                for (int n = 0; n < nn; n++)
+                {
+                    for (int p = 0; p < naux; p++)
+                    {
+                        matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + (n+nstart)), std::ios_base::beg);
+                        matfile_->write(reinterpret_cast<const char *>(A2 + p*nm*nn + m*nn + n), sizeof(double));
+                    }
+                }
+            }
+
+
+
         }
     }
 
-    C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, Bp[0], nso * nso, 0.0,
-            A, nso * nso);
+    ResetFile();
 
-    if (debug_)
-    {
-        //metric_->print();
-        //B->print();
-        //A->print();
-    }
+    // for now, just sort back into A
+    for(int q = 0; q < naux; q++)
+        ReadQFromDisk(q, A+(q*nso2));
+
+    delete [] B;
+    delete [] A2;
+
 }
 
 /*
@@ -412,10 +445,13 @@ void DFTensor::OpenFile(void)
     // ok to call if it hasn't been opened yet
     CloseFile();
 
-    matfile_ = new std::fstream(filename_.c_str());
+    matfile_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(), std::fstream::in |
+                                                                                 std::fstream::out |
+                                                                                 std::fstream::binary |
+                                                                                 std::fstream::trunc));
 
     if(!matfile_->is_open())
-        throw RuntimeError("Error - cannot open file");
+        throw RuntimeError(filename_);
 
     // enable exceptions
     matfile_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
@@ -423,11 +459,11 @@ void DFTensor::OpenFile(void)
 
 void DFTensor::CloseFile(void)
 {
-    if(matfile_ != nullptr)
+    if(matfile_)
     {
         if(matfile_->is_open())
             matfile_->close();
-        delete matfile_;
+        matfile_.reset();
     }
 }
 
@@ -439,51 +475,21 @@ void DFTensor::ResetFile(void)
     curq_ = 0;
 }
 
-void DFTensor::WriteQToDisk(double const * d, size_t nq)
+void DFTensor::ReadQFromDisk(size_t q, double * d)
 {
     // assume file is open?
-    matfile_->write(reinterpret_cast<const char *>(d), nq*sizeof(double)*auxiliary_->nbf());
-    // will throw exception if there is a problem
-}
-
-void DFTensor::ReadQFromDisk(double * d, size_t nq)
-{
-    // assume file is open?
-
-    // Matrix is written with stripes over aux basis. We read in
-    // for a specific 'q' value, however.
-
     int nso = primary_->nbf();
-    int skip = ((nso * nso)-1)*sizeof(double);
-    int naux = auxiliary_->nbf();
+    int nso2 = nso*nso;
 
-    size_t pos = 0;
-
-    for(size_t i = 0; i < nq; i++)
-    {
-        for(size_t j = 0; j < naux; j++)
-        {
-            matfile_->read(reinterpret_cast<char *>(d+(pos++)), sizeof(double)); 
-            matfile_->seekg(skip, std::ios_base::cur); // jump nso^2 elements to get to the next one
-        }
-
-        // we have read in one q stripe
-        // jump to the beginning and start a new one
-        curq_++;
-        matfile_->seekg(curq_*sizeof(double), std::ios_base::beg);
-        
-    }
+    matfile_->seekg(q*nso2*sizeof(double), std::ios_base::beg);
+    matfile_->read(reinterpret_cast<char *>(d), nso2*sizeof(double));
+ 
     // will throw exception if there is a problem
 }
 
 
 
 }
-
-
-
-
-
 
 
 
