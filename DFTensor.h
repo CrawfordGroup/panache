@@ -93,6 +93,8 @@ public:
     void Qso(double * A, size_t length);
     int TensorDimensions(int & d1, int & d2, int & d3);
 
+
+/*
     int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
 
     int CalculateERIMulti(double * qso, int qsosize,
@@ -104,6 +106,7 @@ public:
 
     void ReorderQ(double * qso, int qsosize, const reorder::Orderings & order);
     void ReorderQ_GAMESS(double * qso, int qsosize);
+*/
 };
 
 }

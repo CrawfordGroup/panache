@@ -614,7 +614,7 @@ public:
 
     /*! \brief Tests ERI generation from the QSO matrix
      */
-    void TestERI(void);
+    //void TestERI(void);
 
 
     /*! \brief Print the results of all the tests.

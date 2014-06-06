@@ -340,7 +340,7 @@ void TestInfo::TestMatrix(double * mat,
     for(size_t i = 0; i < size; i++)
     {
         sum += mat[i];
-        checksum += mat[i]*static_cast<double>(i);
+        checksum += mat[i]*static_cast<double>(i+1);
     }
 
     test.sum.set_thisrun(sum);
@@ -377,7 +377,7 @@ void TestInfo::TestQsoMatrix(void)
     delete [] mat;
 }
 
-
+/*
 void TestInfo::TestERI(void)
 {
     std::cout << "Testing ERI generation from Qso\n";
@@ -434,6 +434,7 @@ void TestInfo::TestERI(void)
     delete [] dfbuf;
     delete [] qso;
 }
+*/
 
 int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
                                 int nshells, int nprim,

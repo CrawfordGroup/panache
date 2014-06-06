@@ -93,8 +93,8 @@ void DFTensor::build_metric()
 
 int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 {
-    d1 = d2 = primary_->nbf();
-    d3 = auxiliary_->nbf();
+    d2 = d3 = primary_->nbf();
+    d1 = auxiliary_->nbf();
     return d1 * d2 * d3;
 }
 
@@ -150,12 +150,8 @@ void DFTensor::Qso(double * A, size_t length)
         }
     }
 
-//    C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, Bp[0], nso * nso, 0.0,
-//            A, nso * nso);
-
-    // Do the transpose of above - this makes ERI generation "faster"
-    C_DGEMM('T','T',nso*nso, naux, naux, 1.0, Bp[0], nso*nso, Jp[0], naux, 0.0,
-            A, naux);
+    C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, Bp[0], nso * nso, 0.0,
+            A, nso * nso);
 
     if (debug_)
     {
@@ -165,8 +161,12 @@ void DFTensor::Qso(double * A, size_t length)
     }
 }
 
+/*
 int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
 {
+    NOTE - MUST CHANGE THIS FUNCTION TO PROPER ORIENTATION OF THE
+    QSO MATRIX - IT CAN'T BE A PLAIN DDOT ANYMORE!
+
     //! \todo do something with qsosize
 
     int nfa = primary_->shell(shell1).nfunction();
@@ -215,6 +215,9 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
                                 int shell4, int nshell4,
                                 double * outbuffer, int buffersize)
 {
+    NOTE - MUST CHANGE THIS FUNCTION TO PROPER ORIENTATION OF THE
+    QSO MATRIX - IT CAN'T BE A PLAIN DDOT ANYMORE!
+
     //! \todo do something with qsosize
     int nint = 0;
 
@@ -270,8 +273,7 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
     }
     return nint;
 }
-
-
+*/
 
 
 // note - passing by value for the vector
@@ -327,7 +329,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
 
 
 
-
+/*
 void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & order)
 {
     using namespace reorder;
@@ -399,6 +401,8 @@ void DFTensor::ReorderQ_GAMESS(double * qso, int qsosize)
     reorder::GAMESS_Ordering go;
     ReorderQ(qso, qsosize, go);
 }
+*/
+
 
 void DFTensor::OpenFile(void)
 {

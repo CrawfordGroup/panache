@@ -117,7 +117,7 @@ extern "C" {
         return t1 * t2 * t3;
     }
 
-
+/*
     int_t C_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
@@ -149,5 +149,6 @@ extern "C" {
 
         dftensors_[df_handle]->ReorderQ_GAMESS(qso, qsosize);
     }
+*/
 }
 

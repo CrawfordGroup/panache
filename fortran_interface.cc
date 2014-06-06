@@ -279,6 +279,7 @@ extern "C" {
         C_cleanup_all();
     }
 
+/*
     void fortran_eri_(int_t * df_handle, double * qso, int_t * qsosize,
                int_t * shell1, int_t * shell2, int_t * shell3, int_t * shell4,
                double * outbuffer, int_t * buffersize, int_t * ncalc)
@@ -306,6 +307,7 @@ extern "C" {
     {
         C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
     }
+*/
 
     void fortran_stdout_(void)
     {
