@@ -76,6 +76,11 @@ protected:
 
     /// Number of MO (# of columns of Cmo)
     int nmo_;
+    int nmo2_;
+
+    // Holds QC intermediate
+    std::unique_ptr<double[]> qc_;
+    std::unique_ptr<double[]> q_;
 
     int nso_;
     int naux_;
@@ -99,7 +104,7 @@ public:
     int TensorDimensions(int & naux, int & nso2);
 
     // Calculate the Q matrix
-    void GenQ(bool inmem);//, double * cmo, int nmo, cmo_is_trans);
+    void GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans);
     int GetBatch(double * mat, size_t size);
 
 

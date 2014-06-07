@@ -367,10 +367,18 @@ void TestInfo::TestQsoMatrix(void)
     //auto aux = BasisSet::construct(parser, mol, "cc-pvdz-ri.gbs");
 
     DFTensor dft(primary, aux);
-    dft.GenQ(true);
-
     int naux, nso2;
     size_t matsize = dft.TensorDimensions(naux, nso2);
+
+    // generate fake CMO matrices for now
+    std::vector<double> ident(nso2);
+    int nso = primary->nbf();
+    for(int i = 0, ij = 0; i < nso; i++)
+    for(int j = 0; j < nso; j++, ij++)
+        ident[ij] = (i == j ? 1.0 : 0.0 );
+
+    dft.GenQ(true, &ident[0], nso, false);
+
 
     double * mat = new double[matsize];
 

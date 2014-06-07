@@ -93,13 +93,13 @@ extern "C" {
     }
 
 
-    void panache_genq(int_t df_handle, int_t inmem) 
+    void panache_genq(int_t df_handle, int_t inmem, double * cmo, int_t nmo, int_t cmo_is_trans) 
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->GenQ(inmem);
+        dftensors_[df_handle]->GenQ(inmem, cmo, nmo, cmo_is_trans);
     }
 
 

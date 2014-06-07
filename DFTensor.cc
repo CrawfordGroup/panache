@@ -52,6 +52,7 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
     Cmo_ = nullptr;
     Cmo_trans_ = false;
     nmo_ = 0;
+    nmo2_ = 0;
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
     naux_ = auxiliary_->nbf();
@@ -107,11 +108,19 @@ int DFTensor::TensorDimensions(int & naux, int & nso2)
 }
 
 
-void DFTensor::GenQ(bool inmem)//, double * cmo, int cmo, bool cmo_is_trans)
+void DFTensor::GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans)
 {
+
+    Cmo_ = cmo;
+    Cmo_trans_ = cmo_is_trans;
+    nmo_ = nmo;
+    nmo2_ = nmo*nmo;
+
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
+    qc_ = std::unique_ptr<double[]>(new double[nso_*nmo]);
+    q_ = std::unique_ptr<double[]>(new double[nso2_]);
 
     double** Jp = metric_->pointer();
 
@@ -235,32 +244,49 @@ void DFTensor::GenQ(bool inmem)//, double * cmo, int cmo, bool cmo_is_trans)
 
 int DFTensor::GetBatch(double * mat, size_t size)
 {
-
-    int nq = (size / nso2_ );
+    int nq = (size / nmo2_ );
     int toget = std::min(nq, (naux_ - curq_));
 
-    if(size < nso2_)
+    if(size < nmo2_)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
     if(toget == 0)
         return 0;
 
-    int start = curq_ * nso2_;
 
-    // all reads should be sequential
-    if(isinmem_)
-    {
-        std::copy(qso_.get() + start,
-                  qso_.get() + start + toget*nso2_,
-                  mat);
-    }
-    else
-    {
-        matfile_->seekg(start*sizeof(double), std::ios_base::beg);
-        matfile_->read(reinterpret_cast<char *>(mat), toget*nso2_*sizeof(double));
-    }
+    // all reads should be sequential, therefore we can just start at the beginning
+    //  (reset file at end of GenQ) and go from there
+    //if(!isinmem_)
+    //    matfile_->seekg(start*sizeof(double), std::ios_base::beg);
 
-    curq_ += toget;
+    for(int i = 0; i < toget; i++)
+    {
+        int start = curq_ * nso2_;
+
+        if(isinmem_)
+        {
+            std::copy(qso_.get() + start,
+                      qso_.get() + start + nso2_,
+                      q_.get());
+        }
+        else
+            matfile_->read(reinterpret_cast<char *>(q_.get()), nso2_*sizeof(double));
+
+        // Apply the C matrices
+        if(Cmo_trans_)
+        {
+            C_DGEMM('N','N',nmo_, nso_, nso_, 1.0, Cmo_, nmo_, q_.get(), nso_, 0.0, qc_.get(), nso_);
+            C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nmo_, 0.0, mat + i*nmo2_, nmo_);
+        }
+        else
+        {
+            C_DGEMM('N','T',nmo_, nso_, nso_, 1.0, Cmo_, nmo_, q_.get(), nso_, 0.0, qc_.get(), nso_);
+            C_DGEMM('N','N',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nmo_, 0.0, mat + i*nmo2_, nmo_);
+        }
+
+        curq_++;
+
+    }
 
     return toget;
 }
@@ -549,5 +575,6 @@ void DFTensor::ResetFile(void)
 }
 
 }
+
 
 
