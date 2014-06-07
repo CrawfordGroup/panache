@@ -68,7 +68,18 @@ protected:
     /// fstream object for the matrix on disk
     std::unique_ptr<std::fstream> matfile_;
 
+    /// C matrix from the caller
+    double * Cmo_;
 
+    /// Whether the matrix is the transpose or not (think calling from FORTRAN)
+    bool Cmo_trans_;
+
+    /// Number of MO (# of columns of Cmo)
+    int nmo_;
+
+    int nso_;
+    int naux_;
+    int nso2_;
 
     void OpenFile(void);
     void CloseFile(void);
@@ -88,7 +99,7 @@ public:
     int TensorDimensions(int & d1, int & d2, int & d3);
 
     // Calculate the Q matrix
-    void GenQ(bool inmem);
+    void GenQ(bool inmem);//, double * cmo, int nmo, cmo_is_trans);
     int GetBatch(double * mat, size_t size);
 
 

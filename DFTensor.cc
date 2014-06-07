@@ -49,6 +49,12 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
 {
     common_init();
     curq_ = 0;
+    Cmo_ = nullptr;
+    Cmo_trans_ = false;
+    nmo_ = 0;
+    nso_ = primary_->nbf();
+    nso2_ = nso_*nso_;
+    naux_ = auxiliary_->nbf();
 }
 
 DFTensor::~DFTensor()
@@ -101,12 +107,8 @@ int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 }
 
 
-void DFTensor::GenQ(bool inmem)
+void DFTensor::GenQ(bool inmem)//, double * cmo, int cmo, bool cmo_is_trans)
 {
-    //! \todo I think this should be nbf, but I'm not positive
-    int nso = primary_->nbf();
-    int nso2 = nso*nso;
-    int naux = auxiliary_->nbf();
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
@@ -131,8 +133,8 @@ void DFTensor::GenQ(bool inmem)
         OpenFile();
         ResetFile();
 
-        double * A = new double[naux*maxpershell2];
-        double * B = new double[naux*maxpershell2];
+        double * A = new double[naux_*maxpershell2];
+        double * B = new double[naux_*maxpershell2];
         for (int M = 0; M < primary_->nshell(); M++)
         {
             int nm = primary_->shell(M).nfunction();
@@ -162,7 +164,7 @@ void DFTensor::GenQ(bool inmem)
 
                 // we now have a set of columns of B, although "condensed"
                 // we can do a DGEMM with J
-                C_DGEMM('N','N',naux, nm*nn, naux, 1.0, Jp[0], naux, B, nm*nn, 0.0,
+                C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, Jp[0], naux_, B, nm*nn, 0.0,
                         A, nm*nn);
 
 
@@ -171,11 +173,11 @@ void DFTensor::GenQ(bool inmem)
                 int nstart = primary_->shell(N).function_index();
 
                 //! \todo rearrange to that writes are more sequential
-                for (int p = 0; p < naux; p++)
+                for (int p = 0; p < naux_; p++)
                 {
                     for (int m = 0; m < nm; m++)
                     {
-                        matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + nstart), std::ios_base::beg);
+                        matfile_->seekp(sizeof(double)*(p*nso2_ + (m+mstart)*nso_ + nstart), std::ios_base::beg);
                         matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn), nn*sizeof(double));
                     }
                 }
@@ -191,8 +193,8 @@ void DFTensor::GenQ(bool inmem)
     }
     else
     {
-        double * B = new double[naux*nso2];
-        qso_ = std::unique_ptr<double[]>(new double[naux*nso2]);
+        double * B = new double[naux_*nso2_];
+        qso_ = std::unique_ptr<double[]>(new double[naux_*nso2_]);
 
         for (int P = 0; P < auxiliary_->nshell(); P++)
         {
@@ -215,7 +217,7 @@ void DFTensor::GenQ(bool inmem)
                         {
                             for (int n = 0; n < nn; n++, index++)
                             {
-                                B[(p + pstart)*nso2 + (m + mstart) * nso + (n + nstart)] = buffer[index];
+                                B[(p + pstart)*nso2_ + (m + mstart) * nso_ + (n + nstart)] = buffer[index];
                             }
                         }
                     }
@@ -223,8 +225,8 @@ void DFTensor::GenQ(bool inmem)
             }
         }
 
-        C_DGEMM('N','N',naux, nso * nso, naux, 1.0, Jp[0], naux, B, nso * nso, 0.0,
-                qso_.get(), nso * nso);
+        C_DGEMM('N','N',naux_, nso2_, naux_, 1.0, Jp[0], naux_, B, nso2_, 0.0,
+                qso_.get(), nso2_);
 
         delete [] B;
     }
@@ -233,34 +235,30 @@ void DFTensor::GenQ(bool inmem)
 
 int DFTensor::GetBatch(double * mat, size_t size)
 {
-    int nso = primary_->nbf();
-    int nso2 = nso*nso;
-    int naux = auxiliary_->nbf();
 
-    int nq = (size / (nso*nso) );
-    int toget = std::min(nq, (naux - curq_));
+    int nq = (size / nso2_ );
+    int toget = std::min(nq, (naux_ - curq_));
 
-    if(size < nso2)
+    if(size < nso2_)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
     if(toget == 0)
         return 0;
 
-    int start = curq_ * nso2;
+    int start = curq_ * nso2_;
 
     // all reads should be sequential
     if(isinmem_)
     {
         std::copy(qso_.get() + start,
-                  qso_.get() + start + toget*nso2,
+                  qso_.get() + start + toget*nso2_,
                   mat);
     }
     else
     {
         matfile_->seekg(start*sizeof(double), std::ios_base::beg);
-        matfile_->read(reinterpret_cast<char *>(mat), toget*nso2*sizeof(double));
+        matfile_->read(reinterpret_cast<char *>(mat), toget*nso2_*sizeof(double));
     }
-
 
     curq_ += toget;
 
