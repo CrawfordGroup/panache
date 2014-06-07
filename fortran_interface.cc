@@ -258,9 +258,9 @@ extern "C" {
 
     }
 
-    void panachef_tensordimensions_(int_t * df_handle, int_t * d1, int_t * d2, int_t * d3, int_t * matsize)
+    void panachef_tensordimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
     {
-        *matsize = panache_tensordimensions(*df_handle, d1, d2, d3);
+        *matsize = panache_tensordimensions(*df_handle, naux, nso2);
     }
 
 

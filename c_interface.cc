@@ -112,20 +112,19 @@ extern "C" {
     }
 
 
-    int_t panache_tensordimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3)
+    int_t panache_tensordimensions(int_t df_handle, int_t * naux, int_t * nso2)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         //DFTensor class takes d1-d3 by reference
         // use regular ints first
-        int t1, t2, t3;
-        dftensors_[df_handle]->TensorDimensions(t1, t2, t3);
+        int t1, t2;
+        int tot = dftensors_[df_handle]->TensorDimensions(t1, t2);
 
-        *d1 = t1;
-        *d2 = t2;
-        *d3 = t3;
-        return t1 * t2 * t3;
+        *naux = t1;
+        *nso2 = t2;
+        return tot;
     }
 
 /*

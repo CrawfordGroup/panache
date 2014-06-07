@@ -42,7 +42,7 @@ extern "C" {
     void panache_cleanup(int_t df_handle);
     void panache_cleanup_all(void);
 
-    int_t panache_tensordimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3);
+    int_t panache_tensordimensions(int_t df_handle, int_t * naux, int_t * nso2);
 
 /*
     int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);

@@ -99,11 +99,11 @@ void DFTensor::build_metric()
     }
 }
 
-int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
+int DFTensor::TensorDimensions(int & naux, int & nso2)
 {
-    d2 = d3 = primary_->nbf();
-    d1 = auxiliary_->nbf();
-    return d1 * d2 * d3;
+    nso2 = nso2_;
+    naux = naux_;
+    return nso2*naux;
 }
 
 

@@ -369,8 +369,8 @@ void TestInfo::TestQsoMatrix(void)
     DFTensor dft(primary, aux);
     dft.GenQ(true);
 
-    int d1, d2, d3;
-    size_t matsize = dft.TensorDimensions(d1, d2, d3);
+    int naux, nso2;
+    size_t matsize = dft.TensorDimensions(naux, nso2);
 
     double * mat = new double[matsize];
 
@@ -379,12 +379,12 @@ void TestInfo::TestQsoMatrix(void)
     // dft.GetBatch(mat, matsize);
 
     // test getting in batches
-    double * buf = new double[3*d2*d3];
+    double * buf = new double[3*nso2];
     int curq = 0;
     int n;
-    while(n = dft.GetBatch(buf, 3*d2*d3))
+    while(n = dft.GetBatch(buf, 3*nso2))
     {
-        std::copy(buf, buf+n*d2*d3, mat+curq*d2*d3);
+        std::copy(buf, buf+n*nso2, mat+curq*nso2);
         curq += n;
     }
     delete [] buf;

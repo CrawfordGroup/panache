@@ -96,7 +96,7 @@ public:
 
     ~DFTensor();
 
-    int TensorDimensions(int & d1, int & d2, int & d3);
+    int TensorDimensions(int & naux, int & nso2);
 
     // Calculate the Q matrix
     void GenQ(bool inmem);//, double * cmo, int nmo, cmo_is_trans);
