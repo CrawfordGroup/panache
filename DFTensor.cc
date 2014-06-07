@@ -171,15 +171,12 @@ void DFTensor::GenQ(bool inmem)
                 int nstart = primary_->shell(N).function_index();
 
                 //! \todo rearrange to that writes are more sequential
-                for (int m = 0; m < nm; m++)
+                for (int p = 0; p < naux; p++)
                 {
-                    for (int n = 0; n < nn; n++)
+                    for (int m = 0; m < nm; m++)
                     {
-                        for (int p = 0; p < naux; p++)
-                        {
-                            matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + (n+nstart)), std::ios_base::beg);
-                            matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn + n), sizeof(double));
-                        }
+                        matfile_->seekp(sizeof(double)*(p*nso2 + (m+mstart)*nso + nstart), std::ios_base::beg);
+                        matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn), nn*sizeof(double));
                     }
                 }
             }
@@ -254,7 +251,7 @@ int DFTensor::GetBatch(double * mat, size_t size)
     // all reads should be sequential
     if(isinmem_)
     {
-        std::copy(qso_.get() + start, 
+        std::copy(qso_.get() + start,
                   qso_.get() + start + toget*nso2,
                   mat);
     }
@@ -263,7 +260,7 @@ int DFTensor::GetBatch(double * mat, size_t size)
         matfile_->seekg(start*sizeof(double), std::ios_base::beg);
         matfile_->read(reinterpret_cast<char *>(mat), toget*nso2*sizeof(double));
     }
-    
+
 
     curq_ += toget;
 
@@ -554,4 +551,5 @@ void DFTensor::ResetFile(void)
 }
 
 }
+
 
