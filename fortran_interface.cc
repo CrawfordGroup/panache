@@ -14,7 +14,7 @@ const std::string Z_to_sym [] = {
 extern "C" {
 
 
-    void fortran_init_(int_t * ncenters,
+    void panachef_init_(int_t * ncenters,
                        double * xyz, char * symbols, int_t * symbollen, int_t * normalized, 
                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
@@ -94,9 +94,9 @@ extern "C" {
             }
         }
 
-        *dfhandle = C_init(*ncenters, atoms, *normalized,
-                           primary_nshellspercenter, primary_shells,
-                           aux_nshellspercenter, aux_shells);
+        *dfhandle = panache_init(*ncenters, atoms, *normalized,
+                                 primary_nshellspercenter, primary_shells,
+                                 aux_nshellspercenter, aux_shells);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -124,7 +124,7 @@ extern "C" {
     }
 
 
-    void fortran_init2_(int_t * ncenters,
+    void panachef_init2_(int_t * ncenters,
                         double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
@@ -235,9 +235,9 @@ extern "C" {
         strncpy(cfname, auxfilename, *auxfilenamelen);
         cfname[*auxfilenamelen] = '\0';
 
-        *dfhandle = C_init2(*ncenters, atoms, *normalized,
-                            primary_nshellspercenter, primary_shells,
-                            cfname);
+        *dfhandle = panache_init2(*ncenters, atoms, *normalized,
+                                  primary_nshellspercenter, primary_shells,
+                                  cfname);
 
         // Free memory
         delete [] cfname;
@@ -258,29 +258,34 @@ extern "C" {
 
     }
 
-    void fortran_tensordimensions_(int_t * df_handle, int_t * d1, int_t * d2, int_t * d3, int_t * matsize)
+    void panachef_tensordimensions_(int_t * df_handle, int_t * d1, int_t * d2, int_t * d3, int_t * matsize)
     {
-        *matsize = C_TensorDimensions(*df_handle, d1, d2, d3);
+        *matsize = panache_tensordimensions(*df_handle, d1, d2, d3);
     }
 
 
-    void fortran_qao_(int_t * df_handle, double * matout, int_t * matsize)
+    void panachef_genq_(int_t * df_handle, int_t * inmem)
     {
-        C_QAO(*df_handle, matout, *matsize);
+        panache_genq(*df_handle, *inmem);
     }
 
-    void fortran_cleanup_(int_t * df_handle)
+    void panachef_getbatch_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
     {
-        C_cleanup(*df_handle);
+        *nq = panache_getbatch(*df_handle, matout, *matsize);
     }
 
-    void fortran_cleanup_all_(void)
+    void panachef_cleanup_(int_t * df_handle)
     {
-        C_cleanup_all();
+        panache_cleanup(*df_handle);
+    }
+
+    void panachef_cleanup_all_(void)
+    {
+        panache_cleanup_all();
     }
 
 /*
-    void fortran_eri_(int_t * df_handle, double * qso, int_t * qsosize,
+    void panachef_eri_(int_t * df_handle, double * qso, int_t * qsosize,
                int_t * shell1, int_t * shell2, int_t * shell3, int_t * shell4,
                double * outbuffer, int_t * buffersize, int_t * ncalc)
     {
@@ -288,7 +293,7 @@ extern "C" {
                        outbuffer, *buffersize);
     }
 
-    void fortran_eri_multi_(int_t * df_handle,
+    void panachef_eri_multi_(int_t * df_handle,
                            double * qso, int_t * qsosize,
                            int_t * shell1, int_t * nshell1,
                            int_t * shell2, int_t * nshell2,
@@ -302,14 +307,14 @@ extern "C" {
                                      outbuffer, *buffersize);
     }
 
-    void fortran_reorderq_gamess_(int_t * df_handle,
+    void panachef_reorderq_gamess_(int_t * df_handle,
                                   double * qso, int_t * qsosize)
     {
         C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
     }
 */
 
-    void fortran_stdout_(void)
+    void panachef_stdout_(void)
     {
         panache::output::SetOutput(&std::cout);
     }

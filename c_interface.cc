@@ -21,7 +21,7 @@ std::map<int, panache::DFTensor *> dftensors_;
 extern "C" {
 
 
-    int_t C_init(int_t ncenters,
+    int_t panache_init(int_t ncenters,
                C_AtomCenter * atoms, int_t normalized,
                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
@@ -44,7 +44,7 @@ extern "C" {
     }
 
 
-    int_t C_init2(int_t ncenters,
+    int_t panache_init2(int_t ncenters,
                     C_AtomCenter * atoms, int_t normalized,
                     int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                     const char * auxfilename)
@@ -70,7 +70,7 @@ extern "C" {
 
 
 
-    void C_cleanup(int_t df_handle)
+    void panache_cleanup(int_t df_handle)
     {
         if(dftensors_.count(df_handle) > 0)
         {
@@ -84,7 +84,7 @@ extern "C" {
 
 
 
-    void C_cleanup_all(void)
+    void panache_cleanup_all(void)
     {
         for(auto it : dftensors_)
             delete it.second;
@@ -92,17 +92,27 @@ extern "C" {
         dftensors_.clear();
     }
 
-    void C_QAO(int_t df_handle, double * matout, int_t matsize)
+
+    void panache_genq(int_t df_handle, int_t inmem) 
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->Qso(true);
-        dftensors_[df_handle]->GetBatch(matout, matsize);
+        dftensors_[df_handle]->GenQ(inmem);
     }
 
-    int_t C_TensorDimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3)
+
+    int panache_getbatch(int_t df_handle, double * matout, int_t matsize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        return dftensors_[df_handle]->GetBatch(matout, matsize);
+    }
+
+
+    int_t panache_tensordimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -119,7 +129,7 @@ extern "C" {
     }
 
 /*
-    int_t C_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
+    int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -128,7 +138,7 @@ extern "C" {
     }
 
 
-    int_t C_CalculateERIMulti(int_t df_handle,
+    int_t panache_CalculateERIMulti(int_t df_handle,
                             double * qso, int_t qsosize,
                             int_t shell1, int_t nshell1,
                             int_t shell2, int_t nshell2,
@@ -143,7 +153,7 @@ extern "C" {
                                                         shell3, nshell3, shell4, nshell4, outbuffer, buffersize);
     }
 
-    void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize)
+    void panache_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");

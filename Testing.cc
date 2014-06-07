@@ -367,7 +367,7 @@ void TestInfo::TestQsoMatrix(void)
     //auto aux = BasisSet::construct(parser, mol, "cc-pvdz-ri.gbs");
 
     DFTensor dft(primary, aux);
-    dft.Qso(true);
+    dft.GenQ(true);
 
     int d1, d2, d3;
     size_t matsize = dft.TensorDimensions(d1, d2, d3);

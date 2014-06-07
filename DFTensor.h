@@ -74,7 +74,7 @@ protected:
     void CloseFile(void);
     void ResetFile(void);
 
-    std::unique_ptr<double> qso_;
+    std::unique_ptr<double[]> qso_;
     bool isinmem_;
     int curq_;
 
@@ -88,7 +88,7 @@ public:
     int TensorDimensions(int & d1, int & d2, int & d3);
 
     // Calculate the Q matrix
-    void Qso(bool inmem);
+    void GenQ(bool inmem);
     int GetBatch(double * mat, size_t size);
 
 

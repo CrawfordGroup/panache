@@ -26,24 +26,26 @@ extern "C" {
 
 
 
-    int_t C_init(int_t ncenters,
-               C_AtomCenter * atoms, int_t normalized,  
-               int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
+    int_t panache_init(int_t ncenters,
+                       C_AtomCenter * atoms, int_t normalized,  
+                       int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                      int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
 
-    int_t C_init2(int_t ncenters,
-                C_AtomCenter * atoms, int_t normalized,
-                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                const char * auxfilename);
+    int_t panache_init2(int_t ncenters,
+                        C_AtomCenter * atoms, int_t normalized,
+                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                        const char * auxfilename);
 
-    void C_QAO(int_t df_handle, double * matout, int_t matsize);
+    void panache_genq(int_t df_handle, int_t inmem);
+    int panache_getbatch(int_t df_handle, double * matout, int_t matsize);
 
-    void C_cleanup(int_t df_handle);
-    void C_cleanup_all(void);
+    void panache_cleanup(int_t df_handle);
+    void panache_cleanup_all(void);
 
-    int_t C_TensorDimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3);
+    int_t panache_tensordimensions(int_t df_handle, int_t * d1, int_t * d2, int_t * d3);
 
-    int_t C_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
+/*
+    int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
 
     int_t C_CalculateERIMulti(int_t df_handle,
                             double * qso, int_t qsosize,
@@ -54,6 +56,7 @@ extern "C" {
                             double * outbuffer, int_t buffersize);
 
     void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize);
+*/
 }
 
     

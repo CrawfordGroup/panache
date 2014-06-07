@@ -101,7 +101,7 @@ int DFTensor::TensorDimensions(int & d1, int & d2, int & d3)
 }
 
 
-void DFTensor::Qso(bool inmem)
+void DFTensor::GenQ(bool inmem)
 {
     //! \todo I think this should be nbf, but I'm not positive
     int nso = primary_->nbf();
@@ -195,7 +195,7 @@ void DFTensor::Qso(bool inmem)
     else
     {
         double * B = new double[naux*nso2];
-        qso_ = std::unique_ptr<double>(new double[naux*nso2]);
+        qso_ = std::unique_ptr<double[]>(new double[naux*nso2]);
 
         for (int P = 0; P < auxiliary_->nshell(); P++)
         {
