@@ -37,7 +37,7 @@ extern "C" {
                         const char * auxfilename);
 
     void panache_genq(int_t df_handle, int_t inmem, double * cmo, int_t nmo, int_t cmo_is_trans); 
-    int panache_getbatch(int_t df_handle, double * matout, int_t matsize);
+    int panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize);
 
     void panache_cleanup(int_t df_handle);
     void panache_cleanup_all(void);

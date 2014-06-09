@@ -6,9 +6,14 @@
 #define TEST_MOLECULE_XYZ_THRESHOLD 1e-11
 #define TEST_MOLECULE_Z_THRESHOLD 1e-11
 #define TEST_MOLECULE_MASS_THRESHOLD 1e-11
+
 #define TEST_QSO_ELEMENT_THRESHOLD 1e-12
 #define TEST_QSO_SUM_THRESHOLD 1e-8
 #define TEST_QSO_CHECKSUM_THRESHOLD 1.0
+
+#define TEST_QMO_ELEMENT_THRESHOLD 1e-10
+#define TEST_QMO_SUM_THRESHOLD 1e-7
+#define TEST_QMO_CHECKSUM_THRESHOLD 2.0
 
 #include <stdexcept>
 #include <string>
@@ -232,7 +237,8 @@ typedef TestResult<std::string> STestResult;     //!< Test result for a string
  *             - Primary basis set
  *             - Auxiliary basis set
  *         - Generation of 3-index integrals
- *         - Generation of the Q matrix
+ *         - Generation of the Qso matrix
+ *         - Generation of the Qmo matrix
  */
 class TestInfo
 {
@@ -315,6 +321,8 @@ private:
     MoleculeTest molecule_test_; //!< Tests the molecule
 
     MatrixTest qso_test_; //!< Tests the Qso matrix
+    MatrixTest qmo_test_; //!< Tests the Qmo matrix
+    SharedMatrix cmo_matrix_; //!< The CMO Matrix used in the Qmo test
 
 
     // These are used internally to know what to test, etc
@@ -402,6 +410,16 @@ private:
                         double element_threshold,
                         double sum_threshold,
                         double checksum_threshold);
+
+
+
+
+    /*! \brief Reads a MO coefficient matrix
+     *
+     * \param [in] filename The full path to the file
+     * \return The MO coefficient matrix from the file
+     */
+    SharedMatrix ReadCMatrix(const string & filename);
 
 
     /*! \brief Prints a row in the results table (a single test)
@@ -610,6 +628,10 @@ public:
     /*! \brief Tests the Qso Matrix
      */
     void TestQsoMatrix(void);
+
+    /*! \brief Tests the Qmo Matrix
+     */
+    void TestQmoMatrix(void);
 
 
     /*! \brief Tests ERI generation from the QSO matrix

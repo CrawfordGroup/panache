@@ -269,9 +269,9 @@ extern "C" {
         panache_genq(*df_handle, *inmem, cmo, *nmo, *cmo_is_trans);
     }
 
-    void panachef_getbatch_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
+    void panachef_getbatch_qso_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
     {
-        *nq = panache_getbatch(*df_handle, matout, *matsize);
+        *nq = panache_getbatch_qso(*df_handle, matout, *matsize);
     }
 
     void panachef_cleanup_(int_t * df_handle)

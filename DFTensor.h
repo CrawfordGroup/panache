@@ -90,9 +90,12 @@ protected:
     void CloseFile(void);
     void ResetFile(void);
 
+    // buffers and placeholders for transformations
     std::unique_ptr<double[]> qso_;
     bool isinmem_;
     int curq_;
+
+    int GetBatch_Base(double * mat, size_t size);
 
 public:
 
@@ -105,7 +108,9 @@ public:
 
     // Calculate the Q matrix
     void GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans);
-    int GetBatch(double * mat, size_t size);
+
+    int GetBatch_Qso(double * mat, size_t size);
+    int GetBatch_Qmo(double * mat, size_t size);
 
 
 /*

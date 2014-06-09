@@ -103,12 +103,12 @@ extern "C" {
     }
 
 
-    int panache_getbatch(int_t df_handle, double * matout, int_t matsize)
+    int panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        return dftensors_[df_handle]->GetBatch(matout, matsize);
+        return dftensors_[df_handle]->GetBatch_Qso(matout, matsize);
     }
 
 

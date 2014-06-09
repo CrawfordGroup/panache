@@ -195,11 +195,15 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     string aux_basis_filename(dir);
     string molecule_filename(dir);
     string qso_filename(dir);
+    string qmo_filename(dir);
+    string cmo_filename(dir);
 
     primary_basis_filename.append("basis.primary");
     aux_basis_filename.append("basis.aux");
     molecule_filename.append("geometry");
     qso_filename.append("qso");
+    qmo_filename.append("qmo");
+    cmo_filename.append("cmat");
 
     // Read in the molecule
     ncenters_ = ReadMolecule(molecule_filename, atoms_, molecule_test_);
@@ -237,8 +241,44 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
     ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD,
                    TEST_QSO_SUM_THRESHOLD,
                    TEST_QSO_CHECKSUM_THRESHOLD);
+
+    // Read in Qmo tests
+    ReadMatrixInfo(qmo_filename, qmo_test_, TEST_QMO_ELEMENT_THRESHOLD,
+                   TEST_QMO_SUM_THRESHOLD,
+                   TEST_QMO_CHECKSUM_THRESHOLD);
+
+    cmo_matrix_ = ReadCMatrix(cmo_filename);
 }
 
+SharedMatrix TestInfo::ReadCMatrix(const string & filename)
+{
+    ifstream f(filename.c_str());
+
+    if(!f.is_open())
+        throw TestingParserException("Cannot open file!", filename);
+
+    f.exceptions(std::ifstream::failbit |
+                 std::ifstream::badbit  |
+                 std::ifstream::eofbit);
+    try
+    {
+        int nrow, ncol;
+
+        f >> nrow >> ncol;
+
+        SharedMatrix mat(new Matrix(nrow, ncol));
+
+        for(int i = 0; i < nrow; i++)
+        for(int j = 0; j < ncol; j++)
+            f >> mat->pointer(0)[i][j];
+
+        return mat;
+    }
+    catch(...)
+    {
+        throw TestingParserException("Error parsing matrix file", filename);
+    }
+}
 
 
 TestInfo::~TestInfo()
@@ -390,7 +430,7 @@ void TestInfo::TestQsoMatrix(void)
     double * buf = new double[3*nso2];
     int curq = 0;
     int n;
-    while(n = dft.GetBatch(buf, 3*nso2))
+    while(n = dft.GetBatch_Qso(buf, 3*nso2))
     {
         std::copy(buf, buf+n*nso2, mat+curq*nso2);
         curq += n;
@@ -398,6 +438,40 @@ void TestInfo::TestQsoMatrix(void)
     delete [] buf;
 
     TestMatrix(mat, matsize, qso_test_);
+    delete [] mat;
+}
+
+void TestInfo::TestQmoMatrix(void)
+{
+    auto mol = MoleculeFromArrays(ncenters_, atoms_);
+    auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_, false);
+    auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_, false);
+
+    DFTensor dft(primary, aux);
+    int naux, nso2;
+    size_t matsize = dft.TensorDimensions(naux, nso2);
+
+    int nso = primary->nbf();
+    dft.GenQ(true, cmo_matrix_->pointer(0)[0], nso, false);
+
+    double * mat = new double[matsize];
+
+
+    // Test getting it all at once
+    // dft.GetBatch(mat, matsize);
+
+    // test getting in batches
+    double * buf = new double[3*nso2];
+    int curq = 0;
+    int n;
+    while(n = dft.GetBatch_Qmo(buf, 3*nso2))
+    {
+        std::copy(buf, buf+n*nso2, mat+curq*nso2);
+        curq += n;
+    }
+    delete [] buf;
+
+    TestMatrix(mat, matsize, qmo_test_);
     delete [] mat;
 }
 
@@ -640,6 +714,9 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
     ////////////////////////////////////////////////////////////////
     out << "\n\n\n";
     failures += PrintMatrixResults(out, "QSO", qso_test_);
+
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QMO", qmo_test_);
 
     ////////////////////////////////////////////////////////////////
     // Overall results
