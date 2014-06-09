@@ -79,8 +79,6 @@ protected:
     int nmo2_;
 
     // Holds QC intermediate
-    std::unique_ptr<double[]> qc_;
-    std::unique_ptr<double[]> q_;
 
     int nso_;
     int naux_;
@@ -91,9 +89,12 @@ protected:
     void ResetFile(void);
 
     // buffers and placeholders for transformations
-    std::unique_ptr<double[]> qso_;
-    bool isinmem_;
-    int curq_;
+    std::unique_ptr<double[]> qso_; // holds the entire Q matrix
+    std::unique_ptr<double[]> qc_;  // holds C(T) Q
+    std::unique_ptr<double[]> q_;   // holds just one Q
+
+    bool isinmem_; // Is Q completely in memory?
+    int curq_;     // next Q to be (batch) read
 
     int GetBatch_Base(double * mat, size_t size);
 
@@ -104,10 +105,12 @@ public:
 
     ~DFTensor();
 
-    int TensorDimensions(int & naux, int & nso2);
+    int QsoDimensions(int & naux, int & nso2);
 
     // Calculate the Q matrix
-    void GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans);
+    void GenQso(bool inmem);
+
+    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans);
 
     int GetBatch_Qso(double * mat, size_t size);
     int GetBatch_Qmo(double * mat, size_t size);

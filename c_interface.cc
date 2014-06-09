@@ -92,18 +92,26 @@ extern "C" {
         dftensors_.clear();
     }
 
-
-    void panache_genq(int_t df_handle, int_t inmem, double * cmo, int_t nmo, int_t cmo_is_trans) 
+    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans)
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->GenQ(inmem, cmo, nmo, cmo_is_trans);
+        dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
+    }
+
+    void panache_genqso(int_t df_handle, int_t inmem)
+    {
+        // matsize is checked in here
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->GenQso(inmem);
     }
 
 
-    int panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize)
+    int_t panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -111,8 +119,16 @@ extern "C" {
         return dftensors_[df_handle]->GetBatch_Qso(matout, matsize);
     }
 
+    int_t panache_getbatch_qmo(int_t df_handle, double * matout, int_t matsize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-    int_t panache_tensordimensions(int_t df_handle, int_t * naux, int_t * nso2)
+        return dftensors_[df_handle]->GetBatch_Qmo(matout, matsize);
+    }
+
+
+    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
@@ -120,7 +136,7 @@ extern "C" {
         //DFTensor class takes d1-d3 by reference
         // use regular ints first
         int t1, t2;
-        int tot = dftensors_[df_handle]->TensorDimensions(t1, t2);
+        int tot = dftensors_[df_handle]->QsoDimensions(t1, t2);
 
         *naux = t1;
         *nso2 = t2;

@@ -36,13 +36,16 @@ extern "C" {
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                         const char * auxfilename);
 
-    void panache_genq(int_t df_handle, int_t inmem, double * cmo, int_t nmo, int_t cmo_is_trans); 
-    int panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize);
+    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans); 
+    void panache_genqso(int_t df_handle, int_t inmem);
+
+    int_t panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize);
+    int_t panache_getbatch_qmo(int_t df_handle, double * matout, int_t matsize);
 
     void panache_cleanup(int_t df_handle);
     void panache_cleanup_all(void);
 
-    int_t panache_tensordimensions(int_t df_handle, int_t * naux, int_t * nso2);
+    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2);
 
 /*
     int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);

@@ -408,20 +408,11 @@ void TestInfo::TestQsoMatrix(void)
 
     DFTensor dft(primary, aux);
     int naux, nso2;
-    size_t matsize = dft.TensorDimensions(naux, nso2);
+    size_t matsize = dft.QsoDimensions(naux, nso2);
 
-    // generate fake CMO matrices for now
-    std::vector<double> ident(nso2);
-    int nso = primary->nbf();
-    for(int i = 0, ij = 0; i < nso; i++)
-    for(int j = 0; j < nso; j++, ij++)
-        ident[ij] = (i == j ? 1.0 : 0.0 );
-
-    dft.GenQ(true, &ident[0], nso, false);
-
+    dft.GenQso(true);
 
     double * mat = new double[matsize];
-
 
     // Test getting it all at once
     // dft.GetBatch(mat, matsize);
@@ -449,10 +440,11 @@ void TestInfo::TestQmoMatrix(void)
 
     DFTensor dft(primary, aux);
     int naux, nso2;
-    size_t matsize = dft.TensorDimensions(naux, nso2);
+    size_t matsize = dft.QsoDimensions(naux, nso2);
 
     int nso = primary->nbf();
-    dft.GenQ(true, cmo_matrix_->pointer(0)[0], nso, false);
+    dft.SetCMatrix(cmo_matrix_->pointer(0)[0], nso, false);
+    dft.GenQso(true);
 
     double * mat = new double[matsize];
 

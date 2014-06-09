@@ -100,27 +100,29 @@ void DFTensor::build_metric()
     }
 }
 
-int DFTensor::TensorDimensions(int & naux, int & nso2)
+int DFTensor::QsoDimensions(int & naux, int & nso2)
 {
     nso2 = nso2_;
     naux = naux_;
     return nso2*naux;
 }
 
-
-void DFTensor::GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans)
+void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 {
-
     Cmo_ = cmo;
     Cmo_trans_ = cmo_is_trans;
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
 
+    // allocate the buffers for C^T Q C
+    qc_ = std::unique_ptr<double[]>(new double[nso_*nmo_]);
+    q_ = std::unique_ptr<double[]>(new double[nso2_]);
+}
+
+void DFTensor::GenQso(bool inmem)
+{
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
-
-    qc_ = std::unique_ptr<double[]>(new double[nso_*nmo]);
-    q_ = std::unique_ptr<double[]>(new double[nso2_]);
 
     double** Jp = metric_->pointer();
 
@@ -134,6 +136,7 @@ void DFTensor::GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans)
     const double* buffer = eri->buffer();
 
     isinmem_ = inmem; // store this so we know later
+
     qso_.reset();
     curq_ = 0;
 
@@ -244,10 +247,10 @@ void DFTensor::GenQ(bool inmem, double * cmo, int nmo, bool cmo_is_trans)
 
 int DFTensor::GetBatch_Base(double * mat, size_t size)
 {
-    if(size < nmo2_)
+    if(size < nso2_)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
-    int nq = (size / nmo2_ );
+    int nq = (size / nso2_ );
     int toget = std::min(nq, (naux_ - curq_));
 
     int start = curq_ * nso2_;
@@ -279,10 +282,13 @@ int DFTensor::GetBatch_Qso(double * mat, size_t size)
 
 int DFTensor::GetBatch_Qmo(double * mat, size_t size)
 {
-    if(size < nso2_)
+    if(Cmo_ == nullptr)
+        throw RuntimeError("Error - I don't have a C matrix!");
+
+    if(size < nmo2_)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
-    int nq = (size / nso2_ );
+    int nq = (size / nmo2_ );
     int toget = std::min(nq, (naux_ - curq_));
 
     for(int i = 0; i < nq; i++)

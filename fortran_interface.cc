@@ -258,20 +258,30 @@ extern "C" {
 
     }
 
-    void panachef_tensordimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
+    void panachef_qsodimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
     {
-        *matsize = panache_tensordimensions(*df_handle, naux, nso2);
+        *matsize = panache_qsodimensions(*df_handle, naux, nso2);
     }
 
 
-    void panachef_genq_(int_t * df_handle, int_t * inmem, double * cmo, int_t * nmo, int_t * cmo_is_trans)
+    void panachef_genqso_(int_t * df_handle, int_t * inmem)
     {
-        panache_genq(*df_handle, *inmem, cmo, *nmo, *cmo_is_trans);
+        panache_genqso(*df_handle, *inmem);
+    }
+
+    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
+    {
+        panache_setcmatrix(*df_handle, cmo, *nmo, *cmo_is_trans);
     }
 
     void panachef_getbatch_qso_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
     {
         *nq = panache_getbatch_qso(*df_handle, matout, *matsize);
+    }
+
+    void panachef_getbatch_qmo_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
+    {
+        *nq = panache_getbatch_qmo(*df_handle, matout, *matsize);
     }
 
     void panachef_cleanup_(int_t * df_handle)
