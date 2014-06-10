@@ -537,10 +537,10 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    failures +=  Test(out, "# of primitives", test.nprim);
-    failures +=  Test(out, "# of shells", test.nshell);
-    failures +=  Test(out, "# of ao", test.nao);
-    failures +=  Test(out, "# of bf", test.nbf);
+    failures +=  Test(out, "# of primitives", test.nprim, verbose);
+    failures +=  Test(out, "# of shells", test.nshell, verbose);
+    failures +=  Test(out, "# of ao", test.nao, verbose);
+    failures +=  Test(out, "# of bf", test.nbf, verbose);
 
 
     if(failures > 0)
@@ -553,7 +553,7 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
     {
         stringstream ss;
         ss << "# of shells / center " << i;
-        failures +=  Test(out, ss.str(), test.center_nshell.at(i));
+        failures +=  Test(out, ss.str(), test.center_nshell.at(i), verbose);
     }
 
 
@@ -561,19 +561,19 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
     {
         stringstream ss;
         ss << "# of primitives / shell " << i;
-        failures +=  Test(out, ss.str(), test.shell_nprim.at(i));
+        failures +=  Test(out, ss.str(), test.shell_nprim.at(i), verbose);
     }
     for(int i = 0; i < nshells; i++)
     {
         stringstream ss;
         ss << "Angular momentum / shell " << i;
-        failures +=  Test(out, ss.str(), test.shell_am.at(i));
+        failures +=  Test(out, ss.str(), test.shell_am.at(i), verbose);
     }
     for(int i = 0; i < nshells; i++)
     {
         stringstream ss;
         ss << "Is pure? / shell " << i;
-        failures +=  Test(out, ss.str(), test.shell_ispure.at(i));
+        failures +=  Test(out, ss.str(), test.shell_ispure.at(i), verbose);
     }
 
 
@@ -581,17 +581,19 @@ int TestInfo::PrintBasisResults(std::ostream & out, const string & type,
     {
         stringstream ss;
         ss << "Exponent (Primitive " << i << ")";
-        failures +=  Test(out, ss.str(), test.exp.at(i));
+        failures +=  Test(out, ss.str(), test.exp.at(i), verbose);
     }
 
     for(int i = 0; i < nprim; i++)
     {
         stringstream ss;
         ss << "Coefficient (Primitive " << i << ")";
-        failures +=  Test(out, ss.str(), test.coef.at(i));
+        failures +=  Test(out, ss.str(), test.coef.at(i), verbose);
     }
 
 
+    if(!verbose && failures == 0)
+        out << "           ... no failed tests!\n";
     out << "\n";
     out << "***********************************************************************\n";
     out << "Basis Set (" << type << ") conversion result: " << (failures ? "FAIL" : "PASS");
@@ -615,12 +617,12 @@ int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    failures +=  Test(out, "# of elements", test.length);
+    failures +=  Test(out, "# of elements", test.length, verbose);
 
     bool testelements = (failures > 0) ? false : true;
         
-    failures +=  Test(out, "sum", test.sum);
-    failures +=  Test(out, "checksum", test.checksum);
+    failures +=  Test(out, "sum", test.sum, verbose);
+    failures +=  Test(out, "checksum", test.checksum, verbose);
 
     if(!testelements)
     {
@@ -632,9 +634,11 @@ int TestInfo::PrintMatrixResults(std::ostream & out, const string & type,
     {
         stringstream ss;
         ss << "Element " << test.elements[i].index;
-        failures +=  Test(out, ss.str(), test.elements[i].test);
+        failures +=  Test(out, ss.str(), test.elements[i].test, verbose);
     }
 
+    if(!verbose && failures == 0)
+        out << "           ... no failed tests!\n";
     out << "\n";
     out << "***********************************************************************\n";
     out << "Matrix \"" << type << "\" result: " << (failures ? "FAIL" : "PASS");
@@ -657,13 +661,14 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
     out << "--------------------------------------\n";
     out << "Results for test: " << testname_ << "\n";
     out << "--------------------------------------\n";
+
     out << "Molecule Conversion Test\n\n";
 
     PrintRow(out, "Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator(out);
-    mol_failures += Test(out, "# of atoms", molecule_test_.natom);
-    mol_failures += Test(out, "# of atoms (+ dummies)", molecule_test_.nallatom);
-    mol_failures += Test(out, "Schoenflies Symbol", molecule_test_.schoen);
+    mol_failures += Test(out, "# of atoms", molecule_test_.natom, verbose);
+    mol_failures += Test(out, "# of atoms (+ dummies)", molecule_test_.nallatom, verbose);
+    mol_failures += Test(out, "Schoenflies Symbol", molecule_test_.schoen, verbose);
 
     for(int i = 0; i < ncenters_; i++)
     {
@@ -671,10 +676,12 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
         {
             stringstream ss;
             ss << "Center " << i << " (" << ((c == 0) ? 'x' : ((c == 1) ? 'y' : 'z')) << ")";
-            mol_failures += Test(out, ss.str(), molecule_test_.xyz[c].at(i));
+            mol_failures += Test(out, ss.str(), molecule_test_.xyz[c].at(i), verbose);
         }
     }
 
+    if(!verbose && mol_failures == 0)
+        out << "           ... no failed tests!\n";
     out << "\n";
     out << "***********************************************************************\n";
     out << "Molecule conversion result: " << (mol_failures ? "FAIL" : "PASS");
@@ -705,10 +712,10 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
     // Matrix testing
     ////////////////////////////////////////////////////////////////
     out << "\n\n\n";
-    failures += PrintMatrixResults(out, "QSO", qso_test_);
+    failures += PrintMatrixResults(out, "QSO", qso_test_, verbose);
 
     out << "\n\n\n";
-    failures += PrintMatrixResults(out, "QMO", qmo_test_);
+    failures += PrintMatrixResults(out, "QMO", qmo_test_, verbose);
 
     ////////////////////////////////////////////////////////////////
     // Overall results

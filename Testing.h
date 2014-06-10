@@ -94,7 +94,7 @@ struct TestResult
     data_type thisrun;       //!< The data actually obtained
     data_type diff;          //!< The difference
     data_type threshold;     //!< The threshold above which the test fails
-
+    bool isset;              //!< Whether or not the data for this run has been set or not
 
     /*! \brief Constructor
      *
@@ -107,6 +107,7 @@ struct TestResult
     {
         diff = thisrun = static_cast<data_type>(0);
         set(ref, thr);
+        isset = false;
     }
 
 
@@ -115,6 +116,7 @@ struct TestResult
     TestResult()
     {
         reference = thisrun = diff = threshold = static_cast<data_type>(0);
+        isset = false;
     }
 
 
@@ -151,6 +153,7 @@ struct TestResult
      */
     void set_thisrun(data_type r)
     {
+        isset = true;
         thisrun = r;
         diff = (thisrun - reference);
         if(diff < 0)
@@ -167,7 +170,7 @@ struct TestResult<std::string>
     std::string reference;     //!< The reference string to be compared against
     std::string thisrun;       //!< The string actually obtained
     bool diff;                 //!< True if different, false if same
-
+    bool isset;                //!< Whether or not the data for this run has been set or not
 
     /*! \brief Constructor
      *
@@ -177,6 +180,7 @@ struct TestResult<std::string>
     {
         diff = false;
         set(ref);
+        isset = false;
     }
 
 
@@ -186,6 +190,7 @@ struct TestResult<std::string>
     {
         reference = thisrun = "";
         diff = false;
+        isset = false;
     }
 
 
@@ -216,6 +221,7 @@ struct TestResult<std::string>
     {
         thisrun = r;
         diff = (thisrun != reference);
+        isset = true;
     }
 };
 
@@ -274,7 +280,7 @@ private:
      */
     struct MoleculeTest
     {
-        ITestResult natom;        //!< Number of centers in the molecule
+        ITestResult natom;       //!< Number of centers in the molecule
         ITestResult nallatom;    //!< Number of centers in the molecule (including dummies)
         STestResult schoen;      //!< Schoenflies symbol
 
@@ -327,21 +333,21 @@ private:
 
     // These are used internally to know what to test, etc
     // Usually read in from the test files or otherwise deduced
-    int_t ncenters_;   //!< Number of centers in the moleulce
+    int_t ncenters_;        //!< Number of centers in the moleulce
 
-    int_t primary_nshells_;  //!< Number of shells in the primary basis
-    int_t aux_nshells_; //!< Number of shells in the auxiliary basis set
+    int_t primary_nshells_; //!< Number of shells in the primary basis
+    int_t aux_nshells_;     //!< Number of shells in the auxiliary basis set
 
-    int_t primary_nprim_; //!< Number of primitives in the primary basis set
-    int_t aux_nprim_;     //!< Number of primitives in the auxiliary basis set
+    int_t primary_nprim_;   //!< Number of primitives in the primary basis set
+    int_t aux_nprim_;       //!< Number of primitives in the auxiliary basis set
 
     int_t * primary_nshellspercenter_;  //!< Number of shells on each center for the primary basis set
     int_t * aux_nshellspercenter_;      //!< Number of shells on each center for the auxiliary basis set
 
-    C_ShellInfo * primary_shells_;    //!< Shell information for the primary basis set
-    C_ShellInfo * aux_shells_;        //!< Shell information for the auxiliary basis set
+    C_ShellInfo * primary_shells_;      //!< Shell information for the primary basis set
+    C_ShellInfo * aux_shells_;          //!< Shell information for the auxiliary basis set
 
-    C_AtomCenter * atoms_; //!< Specification of the molecule
+    C_AtomCenter * atoms_;  //!< Specification of the molecule
 
 
     // Parsers
@@ -422,6 +428,8 @@ private:
     SharedMatrix ReadCMatrix(const string & filename);
 
 
+
+
     /*! \brief Prints a row in the results table (a single test)
      *
      * \param [in] out Stream to print to
@@ -448,6 +456,8 @@ private:
         out << std::setw(15) << std::left << thresh;
         out << std::setw(15) << std::left << result << "\n";
     }
+
+
 
 
     /*! \brief Overload for printing strings (usually header rows)
@@ -479,6 +489,7 @@ private:
     }
 
 
+
     /*! \brief Prints a line of 100 dashes
      *
      * \param [in] out Stream to print to
@@ -489,20 +500,28 @@ private:
     }
 
 
+
     /*! \brief Checks the results of a test and prints a row with the results
      *
      * \param [in] out Stream to print to
      * \param [in] name A descriptive name of the test
      * \param [in] test The test to check and print
+     * \param [in] alwaysprint Set to true to print the test to the screen, even if it passes
      * \return 0 if the test passes, otherwise 1
      */
     template<typename T>
     static int Test(std::ostream & out,
                     const std::string & name,
-                    const TestResult<T> & test)
+                    const TestResult<T> & test,
+                    bool alwaysprint = true)
     {
-        const char * pass = test.check() ? "pass" : "FAIL";
-        PrintRow(out, name, test.reference, test.thisrun, test.diff, test.threshold, pass);
+        const char * pass = "UNTESTED";
+
+        if(test.isset)
+            pass = test.check() ? "pass" : "FAIL";
+
+        if(alwaysprint || test.check() == false)
+            PrintRow(out, name, test.reference, test.thisrun, test.diff, test.threshold, pass);
 
         if(test.check())
             return 0;
@@ -516,15 +535,23 @@ private:
      * \param [in] out Stream to print to
      * \param [in] name A descriptive name of the test
      * \param [in] test The test to check and print
+     * \param [in] alwaysprint Set to true to print the test to the screen, even if it passes
      * \return 0 if the test passes, otherwise 1
      */
     static int Test(std::ostream & out,
                     const std::string & name,
-                    const STestResult & test)
+                    const STestResult & test,
+                    bool alwaysprint = true)
     {
-        const char * pass = test.check() ? "pass" : "FAIL";
+        const char * pass = "UNTESTED";
+
+        if(test.isset)
+            pass = test.check() ? "pass" : "FAIL";
+
         const std::string diff = test.diff ? "T" : "F";
-        PrintRow(out, name, test.reference, test.thisrun, diff, std::string("-"), pass);
+
+        if(alwaysprint || test.check() == false)
+            PrintRow(out, name, test.reference, test.thisrun, diff, std::string("-"), pass);
 
         if(test.check())
             return 0;
