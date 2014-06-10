@@ -26,6 +26,10 @@
 #include <fstream>
 #include "Matrix.h"
 
+#ifdef PANACHE_TIMING
+#include "Timing.h"
+#endif
+
 
 namespace panache
 {
@@ -97,6 +101,15 @@ protected:
     int curq_;     // next Q to be (batch) read
 
     int GetBatch_Base(double * mat, size_t size);
+
+
+    #ifdef PANACHE_TIMING
+    // Timing stuff
+    timing::Timer timer_genqso,  // total time spent in GenQso
+                  timer_q3index, // time spent building the 3 index tensor part of Qso
+                  timer_qdiskio; // time spent writing Qso to disk
+    #endif
+
 
 public:
 

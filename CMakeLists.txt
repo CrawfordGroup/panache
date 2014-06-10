@@ -31,6 +31,16 @@ list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 list(APPEND PANACHE_CXX_FLAGS "-g" "-O0")
 
 
+# Is timing enabled?
+set(PANACHE_TIMING FALSE CACHE BOOL "Enable timing of some panache functionality")
+if(PANACHE_TIMING)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_TIMING")
+  message(STATUS "Enabling timing of panache functionality")
+endif(PANACHE_TIMING)
+
+
+
+
 # Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
 # If unset, 32-bit interface is used
 set(USE_64LAPACK FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")

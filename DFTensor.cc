@@ -61,6 +61,10 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
 DFTensor::~DFTensor()
 {
     CloseFile();
+    #ifdef PANACHE_TIMING
+    output::printf("  **DFTensor Timers (in microseconds):"); 
+    output::printf("    Total GenQso: %lu", timer_genqso.Microseconds()); 
+    #endif
 }
 
 void DFTensor::common_init()
@@ -121,6 +125,10 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
 void DFTensor::GenQso(bool inmem)
 {
+    #ifdef PANACHE_TIMING
+    timer_genqso.Start();  
+    #endif
+
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
@@ -242,6 +250,10 @@ void DFTensor::GenQso(bool inmem)
 
         delete [] B;
     }
+
+    #ifdef PANACHE_TIMING
+    timer_genqso.End();
+    #endif
 
 }
 
