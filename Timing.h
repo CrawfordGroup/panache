@@ -29,7 +29,7 @@ public:
         begin = panacheclock::now();
     }
 
-    void End(void)
+    void Stop(void)
     {
         end = panacheclock::now();
         dur += (end - begin);
