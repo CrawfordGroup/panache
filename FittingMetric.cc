@@ -108,7 +108,6 @@ void FittingMetric::form_fitting_metric()
         Jbuffer[Q] = Jint[Q]->buffer();
     }
 
-    #pragma omp parallel for schedule (dynamic) num_threads(nthread)
     for (int MU=0; MU < aux_->nshell(); ++MU) {
         int nummu = aux_->shell(MU).nfunction();
 

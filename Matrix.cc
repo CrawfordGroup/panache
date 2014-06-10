@@ -306,7 +306,6 @@ void Matrix::copy(const Matrix* cp)
     }
 
     // When here we are the same size
-    #pragma omp parallel for
     for (int h=0; h<nirrep_; ++h) {
         if (rowspi_[h] != 0 && colspi_[h^symmetry_] != 0)
             memcpy(&(matrix_[h][0][0]), &(cp->matrix_[h][0][0]), rowspi_[h] * colspi_[h^symmetry_] * sizeof(double));
@@ -917,7 +916,6 @@ void Matrix::add(const Matrix * const plus)
         if (size) {
             lhs = matrix_[h][0];
             rhs = plus->matrix_[h][0];
-            //#pragma omp parallel for
             for (size_t ij=0; ij<size; ++ij) {
                 lhs[ij] += rhs[ij];
             }
@@ -943,7 +941,6 @@ void Matrix::subtract(const Matrix* const plus)
         if (size) {
             lhs = matrix_[h][0];
             rhs = plus->matrix_[h][0];
-            //#pragma omp parallel for
             for (size_t ij=0; ij<size; ++ij) {
                 lhs[ij] -= rhs[ij];
             }
@@ -1018,7 +1015,6 @@ double Matrix::sum_of_squares()
 {
     double sum = (double)0.0;
     for (int h=0; h<nirrep_; ++h) {
-        #pragma omp parallel for
         for (int i=0; i<rowspi_[h]; ++i) {
             for (int j=0; j<colspi_[h^symmetry_]; ++j) {
                 sum += matrix_[h][i][j] * matrix_[h][i][j];
