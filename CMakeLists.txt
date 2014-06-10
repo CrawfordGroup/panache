@@ -123,6 +123,7 @@ endif(NOT(USE_LIBINT OR USE_LIBINT2))
 # Also add .cc files to be compiled based on the libint version
 ################################################################
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 if(USE_LIBINT)
   message(STATUS "Using Libint headers from ${LIBINT_INCLUDE_PATH}")
