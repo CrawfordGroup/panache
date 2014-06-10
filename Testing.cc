@@ -728,6 +728,16 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
 }
 
 
+void TestInfo::RunTests(void)
+{
+    TestMoleculeConversion();
+    TestBasisConversion();
+    TestQsoMatrix();
+    TestQmoMatrix();
+    //TestERI();
+}
+
+
 }
 } //close namespace panache::testing
 

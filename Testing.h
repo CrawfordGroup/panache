@@ -639,6 +639,11 @@ public:
     //void TestERI(void);
 
 
+    /*! \brief Runs all tests
+     */
+    void RunTests(void);
+
+
     /*! \brief Print the results of all the tests.
      *
      *  Be sure to run them first!
@@ -648,6 +653,7 @@ public:
      *  \return The number of failed tests
      */
     int PrintResults(std::ostream & out, bool verbose = false);
+
 
 
 };
