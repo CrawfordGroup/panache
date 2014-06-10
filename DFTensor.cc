@@ -62,8 +62,8 @@ DFTensor::~DFTensor()
 {
     CloseFile();
     #ifdef PANACHE_TIMING
-    output::printf("  **DFTensor Timers (in microseconds):"); 
-    output::printf("    Total GenQso: %lu", timer_genqso.Microseconds()); 
+    output::printf("  **DFTensor Timers (in microseconds):\n"); 
+    output::printf("    Total GenQso: %lu\n", timer_genqso.Microseconds()); 
     #endif
 }
 
@@ -74,7 +74,6 @@ void DFTensor::common_init()
     debug_ = 0;
 
     print_header();
-    output::printf("\n===========================\nINSIDE BPPSI::DFTENSOR::COMMON_INIT\n===========================\n");
 
     molecule_ = primary_->molecule();
 
@@ -133,9 +132,6 @@ void DFTensor::GenQso(bool inmem)
     int maxpershell2 = maxpershell*maxpershell;
 
     double** Jp = metric_->pointer();
-
-    output::printf("\n===========================\nINSIDE BPPSI::DFTENSOR::QSO\n===========================\n");
-
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 

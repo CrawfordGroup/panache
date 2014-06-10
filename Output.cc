@@ -3,13 +3,15 @@
 namespace
 {
 
-#ifdef PANACHE_OUTPUT_C
-FILE * _outfile = NULL;
-#else
 #define BUFSIZE 256
+
+FILE * _outfile = NULL;
+
 char _buffer[BUFSIZE];
+
 std::ostream * _outstream = NULL;
-#endif
+
+bool use_stream = true;
 
 } // close anonymous namespace
 
@@ -19,16 +21,32 @@ namespace panache
 namespace output
 {
 
-#ifdef PANACHE_OUTPUT_C
 
 void SetOutput(FILE * outfile)
 {
     _outfile = outfile;
+    use_stream = false;
 }
+
+void SetOutput(std::ostream * outstream)
+{
+    _outstream = outstream;
+    use_stream = true;
+}
+
 
 void printf(const char * format, ...)
 {
-    if(_outfile)
+    if(use_stream && _outstream)
+    {
+        va_list args;
+        va_start (args, format);
+        vsnprintf(_buffer, BUFSIZE, format, args);
+        va_end(args);
+        (*_outstream) << _buffer;
+    }
+
+    if(!use_stream && _outfile)
     {
         va_list args;
         va_start (args, format);
@@ -37,28 +55,7 @@ void printf(const char * format, ...)
     }
 }
 
-#else
-
-void SetOutput(std::ostream * outstream)
-{
-    _outstream = outstream;
-}
-
-void printf(const char * format, ...)
-{
-    if(_outstream)
-    {
-        va_list args;
-        va_start (args, format);
-        vsnprintf(_buffer, BUFSIZE, format, args);
-        va_end(args);
-        (*_outstream) << _buffer;
-    }
-}
-
-#endif
-
-
 } //close namespace panache
 } //close namespace output
+
 

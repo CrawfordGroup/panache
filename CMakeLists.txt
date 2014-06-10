@@ -40,7 +40,6 @@ endif(PANACHE_TIMING)
 
 
 
-
 # Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
 # If unset, 32-bit interface is used
 set(USE_64LAPACK FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")

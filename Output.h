@@ -3,11 +3,7 @@
 
 #include <cstdio>
 #include <cstdarg>
-
-#ifndef PANACHE_OUTPUT_C
 #include <ostream>
-#endif
-
 
 
 namespace panache
@@ -15,11 +11,8 @@ namespace panache
 namespace output
 {
 
-#ifdef PANACHE_OUTPUT_C
 void SetOutput(FILE * outfile);
-#else
 void SetOutput(std::ostream * outstream);
-#endif
 
 void printf(const char * format, ...);
 
