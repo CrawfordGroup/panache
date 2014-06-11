@@ -115,10 +115,10 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
 void DFTensor::GenQso(bool inmem)
 {
-    #ifdef PANACHE_TIMING
+#ifdef PANACHE_TIMING
     timer_genqso.Reset();
-    timer_genqso.Start();  
-    #endif
+    timer_genqso.Start();
+#endif
 
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
@@ -176,7 +176,7 @@ void DFTensor::GenQso(bool inmem)
                 C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, Jp[0], naux_, B, nm*nn, 0.0,
                         A, nm*nn);
 
-                
+
                 // write to disk
                 int mstart = primary_->shell(M).function_index();
                 int nstart = primary_->shell(N).function_index();
@@ -205,18 +205,19 @@ void DFTensor::GenQso(bool inmem)
         double * B = new double[naux_*nso2_];
         qso_ = std::unique_ptr<double[]>(new double[naux_*nso2_]);
 
-        for (int P = 0; P < auxiliary_->nshell(); P++)
+        for (int M = 0; M < primary_->nshell(); M++)
         {
-            int np = auxiliary_->shell(P).nfunction();
-            int pstart = auxiliary_->shell(P).function_index();
-            for (int M = 0; M < primary_->nshell(); M++)
+            int nm = primary_->shell(M).nfunction();
+            int mstart = primary_->shell(M).function_index();
+            for (int N = 0; N < primary_->nshell(); N++)
             {
-                int nm = primary_->shell(M).nfunction();
-                int mstart = primary_->shell(M).function_index();
-                for (int N = 0; N < primary_->nshell(); N++)
+                int nn = primary_->shell(N).nfunction();
+                int nstart = primary_->shell(N).function_index();
+
+                for (int P = 0; P < auxiliary_->nshell(); P++)
                 {
-                    int nn = primary_->shell(N).nfunction();
-                    int nstart = primary_->shell(N).function_index();
+                    int np = auxiliary_->shell(P).nfunction();
+                    int pstart = auxiliary_->shell(P).function_index();
 
                     eri->compute_shell(P,0,M,N);
 
@@ -240,11 +241,11 @@ void DFTensor::GenQso(bool inmem)
         delete [] B;
     }
 
-    #ifdef PANACHE_TIMING
+#ifdef PANACHE_TIMING
     timer_genqso.Stop();
     output::printf("  **TIMER: DFTensor Total GenQso (%s): %lu\n",
-                    (inmem ? "CORE" : "DISK"), timer_genqso.Microseconds()); 
-    #endif
+                   (inmem ? "CORE" : "DISK"), timer_genqso.Microseconds());
+#endif
 
 }
 
@@ -599,6 +600,7 @@ void DFTensor::ResetFile(void)
 }
 
 }
+
 
 
 
