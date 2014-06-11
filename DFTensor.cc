@@ -55,6 +55,7 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
     nmo2_ = 0;
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
+    nsotri_ = ( (nso_ * (nso_+1) ) )/2;
     naux_ = auxiliary_->nbf();
 }
 
@@ -147,25 +148,30 @@ void DFTensor::GenQso(bool inmem)
         for (int M = 0; M < primary_->nshell(); M++)
         {
             int nm = primary_->shell(M).nfunction();
+            int mstart = primary_->shell(M).function_index();
+            int mend = mstart + nm;
 
-            for (int N = 0; N < primary_->nshell(); N++)
+            for (int N = 0; N < M; N++)
             {
                 int nn = primary_->shell(N).nfunction();
+                int nstart = primary_->shell(N).function_index();
+                int nend = nstart + nn;
 
                 for (int P = 0; P < auxiliary_->nshell(); P++)
                 {
                     int np = auxiliary_->shell(P).nfunction();
                     int pstart = auxiliary_->shell(P).function_index();
+                    int pend = pstart + np;
 
                     eri->compute_shell(P,0,M,N);
 
-                    for (int p = 0, index = 0; p < np; p++)
+                    for (int p = pstart, index = 0; p < pend; p++)
                     {
                         for (int m = 0; m < nm; m++)
                         {
                             for (int n = 0; n < nn; n++, index++)
                             {
-                                B[(p + pstart)*nm*nn + m*nn + n] = buffer[index];
+                                B[p*nm*nn + m*nn + n] = buffer[index];
                             }
                         }
                     }
@@ -178,18 +184,59 @@ void DFTensor::GenQso(bool inmem)
 
 
                 // write to disk
-                int mstart = primary_->shell(M).function_index();
-                int nstart = primary_->shell(N).function_index();
 
                 //! \todo rearrange to that writes are more sequential?
                 for (int p = 0; p < naux_; p++)
                 {
+                    for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                    {
+                        matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + nstart), std::ios_base::beg);
+                        matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m0*nn), nn*sizeof(double));
+                    }
+
+                }
+            }
+
+
+            // Special Case: N = M
+            for (int P = 0; P < auxiliary_->nshell(); P++)
+            {
+                int np = auxiliary_->shell(P).nfunction();
+                int pstart = auxiliary_->shell(P).function_index();
+                int pend = pstart + np;
+
+                eri->compute_shell(P,0,M,M);
+
+                for (int p = pstart, index = 0; p < pend; p++)
+                {
                     for (int m = 0; m < nm; m++)
                     {
-                        matfile_->seekp(sizeof(double)*(p*nso2_ + (m+mstart)*nso_ + nstart), std::ios_base::beg);
-                        matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn), nn*sizeof(double));
+                        for (int n = 0; n < nm; n++, index++)
+                        {
+                            B[p*nm*nm + m*nm + n] = buffer[index];
+                        }
                     }
                 }
+            }
+
+            // we now have a set of columns of B, although "condensed"
+            // we can do a DGEMM with J
+            C_DGEMM('N','N',naux_, nm*nm, naux_, 1.0, Jp[0], naux_, B, nm*nm, 0.0,
+                    A, nm*nm);
+
+
+            // write to disk
+            //! \todo rearrange to that writes are more sequential?
+            for (int p = 0; p < naux_; p++)
+            {
+                int nwrite = 1;
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                {
+                    matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + mstart), std::ios_base::beg);
+                    matfile_->write(reinterpret_cast<const char *>(A + p*nm*nm + m0*nm), nwrite*sizeof(double));
+                    nwrite += 1;
+                }
+
             }
 
         }
@@ -202,41 +249,71 @@ void DFTensor::GenQso(bool inmem)
     }
     else
     {
-        double * B = new double[naux_*nso2_];
-        qso_ = std::unique_ptr<double[]>(new double[naux_*nso2_]);
+        // only store the triangular parts!
+        // (Actually only the lower triangle here, including the diagonal
+
+        // Note - the case where N=M is split out to avoid having an if (n == m) or
+        // something similar inside the 3-fold loop
+
+        double * B = new double[naux_*nsotri_];
+        qso_ = std::unique_ptr<double[]>(new double[naux_*nsotri_]);
 
         for (int M = 0; M < primary_->nshell(); M++)
         {
             int nm = primary_->shell(M).nfunction();
             int mstart = primary_->shell(M).function_index();
-            for (int N = 0; N < primary_->nshell(); N++)
+            int mend = mstart + nm;
+
+            for (int N = 0; N < M; N++)
             {
                 int nn = primary_->shell(N).nfunction();
                 int nstart = primary_->shell(N).function_index();
+                int nend = nstart + nn;
 
                 for (int P = 0; P < auxiliary_->nshell(); P++)
                 {
                     int np = auxiliary_->shell(P).nfunction();
                     int pstart = auxiliary_->shell(P).function_index();
+                    int pend = pstart + np;
 
                     eri->compute_shell(P,0,M,N);
 
-                    for (int p = 0, index = 0; p < np; p++)
+                    for (int p = pstart, index = 0; p < pend; p++)
                     {
-                        for (int m = 0; m < nm; m++)
+                        for (int m = mstart; m < mend; m++)
                         {
-                            for (int n = 0; n < nn; n++, index++)
+                            for (int n = nstart; n < nend; n++, index++)
                             {
-                                B[(p + pstart)*nso2_ + (m + mstart) * nso_ + (n + nstart)] = buffer[index];
+                                // note - because of the setup above, M > N, and therefore
+                                //  m > n
+                                B[p*nsotri_ + ((m*(m+1))>>1) + n] = buffer[index];
                             }
                         }
                     }
                 }
             }
+
+            // special case: N == M
+            for (int P = 0; P < auxiliary_->nshell(); P++)
+            {
+                int np = auxiliary_->shell(P).nfunction();
+                int pstart = auxiliary_->shell(P).function_index();
+
+                eri->compute_shell(P,0,M,M);
+
+                for (int p = 0; p < np; p++)
+                {
+                    for (int m0 = 0, m = mstart; m < mend; m++, m0++)
+                    {
+                        for (int n0 = 0, n = mstart; n <= m; n++, n0++)
+                            B[(p + pstart)*nsotri_ + ((m*(m+1))>>1) + n] = buffer[p*nm*nm + m0*nm + n0];
+                    }
+                }
+            }
         }
 
-        C_DGEMM('N','N',naux_, nso2_, naux_, 1.0, Jp[0], naux_, B, nso2_, 0.0,
-                qso_.get(), nso2_);
+        C_DGEMM('N','N',naux_, nsotri_, naux_, 1.0, Jp[0], naux_, B, nsotri_, 0.0,
+                qso_.get(), nsotri_);
 
         delete [] B;
     }
@@ -257,19 +334,46 @@ int DFTensor::GetBatch_Base(double * mat, size_t size)
     int nq = (size / nso2_ );
     int toget = std::min(nq, (naux_ - curq_));
 
-    int start = curq_ * nso2_;
-
     // all reads should be sequential, therefore we can just start at the beginning
     //  (reset file at end of GenQ) and go from there
 
     if(isinmem_)
     {
-        std::copy(qso_.get() + start,
-                  qso_.get() + start + toget*nso2_,
-                  mat);
+        int start = curq_ * nsotri_;
+
+        for(int q = 0; q < toget; q++)
+        {
+            // expand the triangular matrix
+            for(int i = 0; i < nso_; i++)
+            for(int j = 0; j <= i; j++)
+            {
+                mat[q*nso2_ + i*nso_ + j] = mat[q*nso2_ + j*nso_ + i]
+                                          = qso_[start + ((i*(i+1))>>1) + j];
+            }
+
+            start += nsotri_;
+        }
     }
     else
-        matfile_->read(reinterpret_cast<char *>(mat), toget*nso2_*sizeof(double));
+    {
+        double * buf = new double[toget*nsotri_];
+
+        matfile_->read(reinterpret_cast<char *>(buf), toget*nsotri_*sizeof(double));
+        
+
+        for(int q = 0; q < toget; q++)
+        {
+            // expand the triangular matrix
+            for(int i = 0; i < nso_; i++)
+            for(int j = 0; j <= i; j++)
+            {
+                mat[q*nso2_ + i*nso_ + j] = mat[q*nso2_ + j*nso_ + i]
+                                          = buf[q*nsotri_ + ((i*(i+1))>>1) + j];
+            }
+        }
+
+        delete [] buf;
+    }
 
 
     curq_+= toget;

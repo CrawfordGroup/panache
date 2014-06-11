@@ -87,6 +87,7 @@ protected:
     int nso_;
     int naux_;
     int nso2_;
+    int nsotri_;
 
     void OpenFile(void);
     void CloseFile(void);
