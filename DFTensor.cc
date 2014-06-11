@@ -63,8 +63,6 @@ DFTensor::~DFTensor()
     CloseFile();
     #ifdef PANACHE_TIMING
     output::printf("  **DFTensor Timers (in microseconds):\n"); 
-    output::printf("    3-index Generation: %lu\n", timer_q3index.Microseconds()); 
-    output::printf("           Qso Disk IO: %lu\n", timer_qdiskio.Microseconds()); 
     output::printf("          Total GenQso: %lu\n", timer_genqso.Microseconds()); 
     #endif
 }
@@ -149,10 +147,6 @@ void DFTensor::GenQso(bool inmem)
         double * A = new double[naux_*maxpershell2];
         double * B = new double[naux_*maxpershell2];
 
-        #ifdef PANACHE_TIMING
-        timer_q3index.Start();  
-        #endif
-
         for (int M = 0; M < primary_->nshell(); M++)
         {
             int nm = primary_->shell(M).nfunction();
@@ -186,12 +180,6 @@ void DFTensor::GenQso(bool inmem)
                         A, nm*nn);
 
                 
-                #ifdef PANACHE_TIMING
-                timer_q3index.Stop();  
-                //timer_qdiskio.Start();  
-                #endif
-
-
                 // write to disk
                 int mstart = primary_->shell(M).function_index();
                 int nstart = primary_->shell(N).function_index();
@@ -205,13 +193,6 @@ void DFTensor::GenQso(bool inmem)
                         matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m*nn), nn*sizeof(double));
                     }
                 }
-
-                #ifdef PANACHE_TIMING
-                timer_qdiskio.Stop();  
-                timer_q3index.Start();  
-                #endif
-                
-
             }
 
         }
@@ -224,10 +205,6 @@ void DFTensor::GenQso(bool inmem)
     }
     else
     {
-        #ifdef PANACHE_TIMING
-        timer_q3index.Start();  
-        #endif
-
         double * B = new double[naux_*nso2_];
         qso_ = std::unique_ptr<double[]>(new double[naux_*nso2_]);
 
@@ -264,10 +241,6 @@ void DFTensor::GenQso(bool inmem)
                 qso_.get(), nso2_);
 
         delete [] B;
-
-        #ifdef PANACHE_TIMING
-        timer_q3index.Stop();  
-        #endif
     }
 
     #ifdef PANACHE_TIMING

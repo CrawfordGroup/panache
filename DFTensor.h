@@ -105,9 +105,7 @@ protected:
 
     #ifdef PANACHE_TIMING
     // Timing stuff
-    timing::Timer timer_genqso,  // total time spent in GenQso
-                  timer_q3index, // time spent building the 3 index tensor part of Qso
-                  timer_qdiskio; // time spent writing Qso to disk
+    timing::Timer timer_genqso;  // total time spent in GenQso
     #endif
 
 

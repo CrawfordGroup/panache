@@ -238,17 +238,25 @@ TestInfo::TestInfo(const std::string & testname, const std::string & dir)
         aux_nprim_ += aux_shells_[i].nprim;
 
     // Read in Qso tests
-    ReadMatrixInfo(qso_filename, qso_test_, TEST_QSO_ELEMENT_THRESHOLD,
+    ReadMatrixInfo(qso_filename, qso_disk_block_test_, TEST_QSO_ELEMENT_THRESHOLD,
                    TEST_QSO_SUM_THRESHOLD,
                    TEST_QSO_CHECKSUM_THRESHOLD);
+    // store in the other tests as well
+    qso_disk_full_test_ = qso_mem_block_test_ = qso_mem_full_test_ = qso_disk_block_test_;
+
 
     // Read in Qmo tests
-    ReadMatrixInfo(qmo_filename, qmo_test_, TEST_QMO_ELEMENT_THRESHOLD,
+    ReadMatrixInfo(qmo_filename, qmo_disk_block_test_, TEST_QMO_ELEMENT_THRESHOLD,
                    TEST_QMO_SUM_THRESHOLD,
                    TEST_QMO_CHECKSUM_THRESHOLD);
+    // store in the other tests as well
+    qmo_disk_full_test_ = qmo_mem_block_test_ = qmo_mem_full_test_ = qmo_disk_block_test_;
 
+    // Read in the SO-MO coefficient matrix
     cmo_matrix_ = ReadCMatrix(cmo_filename);
 }
+
+
 
 SharedMatrix TestInfo::ReadCMatrix(const string & filename)
 {
@@ -409,63 +417,122 @@ void TestInfo::TestQsoMatrix(void)
     DFTensor dft(primary, aux);
     int naux, nso2;
     size_t matsize = dft.QsoDimensions(naux, nso2);
-
-    dft.GenQso(true);
-
     double * mat = new double[matsize];
-
-    // Test getting it all at once
-    // dft.GetBatch(mat, matsize);
-
-    // test getting in batches
     double * buf = new double[3*nso2];
+
+    ///////////////////////////////////////////
+    // Test having it in memory, read by block
+    ///////////////////////////////////////////
+    dft.GenQso(true);
     int curq = 0;
     int n;
     while(n = dft.GetBatch_Qso(buf, 3*nso2))
     {
+        // store in my matrix
         std::copy(buf, buf+n*nso2, mat+curq*nso2);
         curq += n;
     }
-    delete [] buf;
+    TestMatrix(mat, matsize, qso_mem_block_test_);
 
-    TestMatrix(mat, matsize, qso_test_);
+    //////////////////////////////////////////////
+    // Test having it in memory, read all at once
+    //////////////////////////////////////////////
+    dft.GenQso(true);
+    dft.GetBatch_Qso(mat, matsize);
+    TestMatrix(mat, matsize, qso_mem_full_test_);
+
+
+    ///////////////////////////////////////////
+    // Test disk storage, read by block
+    ///////////////////////////////////////////
+    dft.GenQso(false);
+    curq = 0;
+    while(n = dft.GetBatch_Qso(buf, 3*nso2))
+    {
+        // store in my matrix
+        std::copy(buf, buf+n*nso2, mat+curq*nso2);
+        curq += n;
+    }
+    TestMatrix(mat, matsize, qso_disk_block_test_);
+
+    //////////////////////////////////////////////
+    // Test disk storage, read all at once
+    //////////////////////////////////////////////
+    dft.GenQso(false);
+    dft.GetBatch_Qso(mat, matsize);
+    TestMatrix(mat, matsize, qso_disk_full_test_);
+
+    delete [] buf;
     delete [] mat;
 }
 
 void TestInfo::TestQmoMatrix(void)
 {
+    // note - in this case, nmo = nso
     auto mol = MoleculeFromArrays(ncenters_, atoms_);
     auto primary = BasisSetFromArrays(mol, ncenters_, primary_nshellspercenter_, primary_shells_, false);
     auto aux = BasisSetFromArrays(mol, ncenters_, aux_nshellspercenter_, aux_shells_, false);
 
+    // to test reading of basis sets from file
+    //std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
+    //auto primary = BasisSet::construct(parser, mol, "6-31gss.gbs");
+    //auto aux = BasisSet::construct(parser, mol, "cc-pvdz-ri.gbs");
+
     DFTensor dft(primary, aux);
     int naux, nso2;
     size_t matsize = dft.QsoDimensions(naux, nso2);
-
-    int nso = primary->nbf();
-    dft.SetCMatrix(cmo_matrix_->pointer(0)[0], nso, false);
-    dft.GenQso(true);
-
     double * mat = new double[matsize];
-
-
-    // Test getting it all at once
-    // dft.GetBatch(mat, matsize);
-
-    // test getting in batches
     double * buf = new double[3*nso2];
+
+    dft.SetCMatrix(cmo_matrix_->pointer(0)[0], primary->nbf(), false);
+
+    ///////////////////////////////////////////
+    // Test having it in memory, read by block
+    ///////////////////////////////////////////
+    dft.GenQso(true);
     int curq = 0;
     int n;
     while(n = dft.GetBatch_Qmo(buf, 3*nso2))
     {
+        // store in my matrix
         std::copy(buf, buf+n*nso2, mat+curq*nso2);
         curq += n;
     }
-    delete [] buf;
+    TestMatrix(mat, matsize, qmo_mem_block_test_);
 
-    TestMatrix(mat, matsize, qmo_test_);
+    //////////////////////////////////////////////
+    // Test having it in memory, read all at once
+    //////////////////////////////////////////////
+    dft.GenQso(true);
+    dft.GetBatch_Qmo(mat, matsize);
+    TestMatrix(mat, matsize, qmo_mem_full_test_);
+
+
+    ///////////////////////////////////////////
+    // Test disk storage, read by block
+    ///////////////////////////////////////////
+    dft.GenQso(false);
+    curq = 0;
+    while(n = dft.GetBatch_Qmo(buf, 3*nso2))
+    {
+        // store in my matrix
+        std::copy(buf, buf+n*nso2, mat+curq*nso2);
+        curq += n;
+    }
+    TestMatrix(mat, matsize, qmo_disk_block_test_);
+
+    //////////////////////////////////////////////
+    // Test disk storage, read all at once
+    //////////////////////////////////////////////
+    dft.GenQso(false);
+    dft.GetBatch_Qmo(mat, matsize);
+    TestMatrix(mat, matsize, qmo_disk_full_test_);
+
+    delete [] buf;
     delete [] mat;
 }
+
+
 
 /*
 void TestInfo::TestERI(void)
@@ -712,17 +779,29 @@ int TestInfo::PrintResults(std::ostream & out, bool verbose)
     // Matrix testing
     ////////////////////////////////////////////////////////////////
     out << "\n\n\n";
-    failures += PrintMatrixResults(out, "QSO", qso_test_, verbose);
+    failures += PrintMatrixResults(out, "QSO (on disk, by block)", qso_disk_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QSO (on disk, in full)", qso_disk_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QSO (in memory, by block)", qso_mem_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QSO (in memory, in full)", qso_mem_full_test_, verbose);
 
     out << "\n\n\n";
-    failures += PrintMatrixResults(out, "QMO", qmo_test_, verbose);
+    failures += PrintMatrixResults(out, "QMO (on disk, by block)", qmo_disk_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QMO (on disk, in full)", qmo_disk_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QMO (in memory, by block)", qmo_mem_block_test_, verbose);
+    out << "\n\n\n";
+    failures += PrintMatrixResults(out, "QMO (in memory, in full)", qmo_mem_full_test_, verbose);
 
     ////////////////////////////////////////////////////////////////
     // Overall results
     ////////////////////////////////////////////////////////////////
     out << "\n\n\n";
     out << "=============================================================\n";
-    out << "= OVERALL RESULT: " << (failures ? "FAIL" : "PASS");
+    out << "= " << testname_ << ": " << (failures ? "FAIL" : "PASS");
 
     if(failures)
         out << " (" << failures << " failures)";

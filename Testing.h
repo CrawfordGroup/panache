@@ -326,9 +326,14 @@ private:
     BasisTest aux_test_;        //!< Tests the auxiliary basis set
     MoleculeTest molecule_test_; //!< Tests the molecule
 
-    MatrixTest qso_test_; //!< Tests the Qso matrix
-    MatrixTest qmo_test_; //!< Tests the Qmo matrix
-    SharedMatrix cmo_matrix_; //!< The CMO Matrix used in the Qmo test
+    MatrixTest qso_disk_block_test_; //!< Tests the Qso matrix (on disk, read by blocks)
+    MatrixTest qso_disk_full_test_;  //!< Tests the Qso matrix (on disk, read in full)
+    MatrixTest qso_mem_block_test_;  //!< Tests the Qso matrix (in memory, read by blocks)
+    MatrixTest qso_mem_full_test_;   //!< Tests the Qso matrix (in memory disk, read in full)
+    MatrixTest qmo_disk_block_test_; //!< Tests the Qmo matrix (on disk, read by blocks)
+    MatrixTest qmo_disk_full_test_;  //!< Tests the Qmo matrix (on disk, read in full)
+    MatrixTest qmo_mem_block_test_;  //!< Tests the Qmo matrix (in memory, read by blocks)
+    MatrixTest qmo_mem_full_test_;   //!< Tests the Qmo matrix (in memory disk, read in full)
 
 
     // These are used internally to know what to test, etc
@@ -348,6 +353,8 @@ private:
     C_ShellInfo * aux_shells_;          //!< Shell information for the auxiliary basis set
 
     C_AtomCenter * atoms_;  //!< Specification of the molecule
+
+    SharedMatrix cmo_matrix_; //!< The CMO Matrix used in the Qmo test
 
 
     // Parsers
