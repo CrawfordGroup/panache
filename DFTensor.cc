@@ -61,10 +61,6 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
 DFTensor::~DFTensor()
 {
     CloseFile();
-    #ifdef PANACHE_TIMING
-    output::printf("  **DFTensor Timers (in microseconds):\n"); 
-    output::printf("          Total GenQso: %lu\n", timer_genqso.Microseconds()); 
-    #endif
 }
 
 void DFTensor::common_init()
@@ -120,6 +116,7 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 void DFTensor::GenQso(bool inmem)
 {
     #ifdef PANACHE_TIMING
+    timer_genqso.Reset();
     timer_genqso.Start();  
     #endif
 
@@ -245,6 +242,8 @@ void DFTensor::GenQso(bool inmem)
 
     #ifdef PANACHE_TIMING
     timer_genqso.Stop();
+    output::printf("  **TIMER: DFTensor Total GenQso (%s): %lu\n",
+                    (inmem ? "CORE" : "DISK"), timer_genqso.Microseconds()); 
     #endif
 
 }
