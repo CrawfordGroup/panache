@@ -49,6 +49,13 @@ void C_DTRSM(char side, char uplo, char transa, char diag,
              int_t m, int_t n, double alpha, double* a, int_t lda, double* b, int_t ldb);
 
 
+void C_DSYMM(char side, char uplo, int_t m, int_t n, double alpha,
+             double* a, int_t lda, double* b, int_t ldb,
+             double beta, double* c, int_t ldc);
+
+void C_DTRMM(char side, char uplo, char transa, char diag,
+             int_t m, int_t n, double alpha, double* a, int_t lda, double * b, int_t ldb);
+
 
 
 // Lapack

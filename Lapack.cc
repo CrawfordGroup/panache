@@ -12,6 +12,8 @@
 #define F_DGEMM  dgemm
 #define F_DGEMV  dgemv
 #define F_DTRSM  dtrsm
+#define F_DSYMM  dsymm
+#define F_DTRMM  dtrmm
 
 #define F_DGEQRF dgeqrf
 #define F_DGESDD dgesdd
@@ -36,6 +38,8 @@
 #define F_DGEMM  dgemm_
 #define F_DGEMV  dgemv_
 #define F_DTRSM  dtrsm_
+#define F_DSYMM  dsymm_
+#define F_DTRMM  dtrmm_
 
 #define F_DGEQRF dgeqrf_
 #define F_DGESDD dgesdd_
@@ -60,6 +64,8 @@
 #define F_DGEMM  DGEMM
 #define F_DGEMV  DGEMV
 #define F_DTRSM  DTRSM
+#define F_DSYMM  DSYMM
+#define F_DTRMM  DTRMM
 
 #define F_DGEQRF DGEQRF
 #define F_DGESDD DGESDD
@@ -84,6 +90,8 @@
 #define F_DGEMM  DGEMM_
 #define F_DGEMV  DGEMV_
 #define F_DTRSM  DTRSM_
+#define F_DSYMM  DSYMM_
+#define F_DTRMM  DTRMM_
 
 #define F_DGEQRF DGEQRF_
 #define F_DGESDD DGESDD_
@@ -113,15 +121,12 @@ extern void F_DSCAL(int_t *n, double *alpha, double *vec, int_t *inc);
 extern void F_DSWAP(int_t *length, double *x, int_t *inc_x, double *y, int_t *inc_y);
 
 // Blas 2/3
-extern void F_DGEMM(char *transa, char *transb, int_t *m, int_t *n, int_t *k,
-                    double *alpha, double *A, int_t *lda,
-                    double *B, int_t *ldb, 
-                    double *beta, double *C, int_t *ldc);
-extern void F_DGEMV(char *transa, int_t *m, int_t *n, 
-                    double *alpha, double *A, int_t *lda,
-                    double *X, int_t *inc_x,
-                    double *beta, double *Y, int_t *inc_y);
+extern void F_DGEMM(char*, char*, int_t*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*, double*, double*, int_t*);
+extern void F_DGEMV(char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*, double*, double*, int_t*);
 extern void F_DTRSM(char*, char*, char*, char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*);
+extern void F_DSYMM(char*, char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*, double*, double*, int_t*);
+extern void F_DTRMM(char*, char*, char*, char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*);
+
 
 // Lapack
 extern int_t F_DGEQRF(int_t*, int_t*, double*, int_t*, double*, double*, int_t*,  int_t*);
@@ -222,6 +227,31 @@ void C_DTRSM(char side, char uplo, char transa, char diag,
     ::F_DTRSM(&side, &uplo, &transa, &diag, &n, &m, &alpha, a, &lda, b, &ldb);
 }
 
+
+void C_DSYMM(char side, char uplo, int_t m, int_t n, double alpha, double* a, int_t lda, double* b, int_t ldb, double beta, double* c, int_t ldc)
+{
+    if(m == 0 || n == 0) return;
+    if (uplo == 'U' || uplo == 'u') uplo = 'L';
+    else if (uplo == 'L' || uplo == 'l') uplo = 'U';
+    else throw std::invalid_argument("C_DSYMM uplo argument is invalid.");
+    if (side == 'L' || side == 'L') side = 'R';
+    else if (side == 'R' || side == 'r') side = 'L';
+    else throw std::invalid_argument("C_DSYMM side argument is invalid.");
+    ::F_DSYMM(&side, &uplo, &n, &m, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+}
+
+
+void C_DTRMM(char side, char uplo, char transa, char diag, int_t m, int_t n, double alpha, double* a, int_t lda, double* b, int_t ldb)
+{
+    if(m == 0 || n == 0) return;
+    if (uplo == 'U' || uplo == 'u') uplo = 'L';
+    else if (uplo == 'L' || uplo == 'l') uplo = 'U';
+    else throw std::invalid_argument("C_DTRMM uplo argument is invalid.");
+    if (side == 'L' || side == 'L') side = 'R';
+    else if (side == 'R' || side == 'r') side = 'L';
+    else throw std::invalid_argument("C_DTRMM side argument is invalid.");
+    ::F_DTRMM(&side, &uplo, &transa, &diag, &n, &m, &alpha, a, &lda, b, &ldb);
+}
 
 
 

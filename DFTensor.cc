@@ -40,6 +40,11 @@
 #include "ERDERI.h"
 #include "Output.h"
 
+#ifndef PANACHE_QBUF_SIZE
+  #define PANACHE_QBUF_SIZE 4
+#endif
+
+
 namespace panache
 {
 
@@ -57,6 +62,10 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
     nso2_ = nso_*nso_;
     nsotri_ = ( (nso_ * (nso_+1) ) )/2;
     naux_ = auxiliary_->nbf();
+
+    // buffer for some q
+    q_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nsotri_]);
+    q_single_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nso2_]);
 }
 
 DFTensor::~DFTensor()
@@ -111,7 +120,6 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
     // allocate the buffers for C^T Q C
     qc_ = std::unique_ptr<double[]>(new double[nso_*nmo_]);
-    q_ = std::unique_ptr<double[]>(new double[nso2_]);
 }
 
 void DFTensor::GenQso(bool inmem)
@@ -326,67 +334,51 @@ void DFTensor::GenQso(bool inmem)
 
 }
 
-int DFTensor::GetBatch_Base(double * mat, size_t size)
+void DFTensor::GetBatch_Base(double * mat, int ntoget)
 {
-    if(size < nso2_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-    int nq = (size / nso2_ );
-    int toget = std::min(nq, (naux_ - curq_));
-
     // all reads should be sequential, therefore we can just start at the beginning
     //  (reset file at end of GenQ) and go from there
 
     if(isinmem_)
-    {
-        int start = curq_ * nsotri_;
-
-        for(int q = 0; q < toget; q++)
-        {
-            // expand the triangular matrix
-            for(int i = 0; i < nso_; i++)
-            for(int j = 0; j <= i; j++)
-            {
-                mat[q*nso2_ + i*nso_ + j] = mat[q*nso2_ + j*nso_ + i]
-                                          = qso_[start + ((i*(i+1))>>1) + j];
-            }
-
-            start += nsotri_;
-        }
-    }
+        std::copy(qso_.get() + curq_*nsotri_, qso_.get() + (curq_+ntoget)*nsotri_, mat);
     else
-    {
-        double * buf = new double[toget*nsotri_];
+        matfile_->read(reinterpret_cast<char *>(mat), ntoget*nsotri_*sizeof(double));
 
-        matfile_->read(reinterpret_cast<char *>(buf), toget*nsotri_*sizeof(double));
-        
-
-        for(int q = 0; q < toget; q++)
-        {
-            // expand the triangular matrix
-            for(int i = 0; i < nso_; i++)
-            for(int j = 0; j <= i; j++)
-            {
-                mat[q*nso2_ + i*nso_ + j] = mat[q*nso2_ + j*nso_ + i]
-                                          = buf[q*nsotri_ + ((i*(i+1))>>1) + j];
-            }
-        }
-
-        delete [] buf;
-    }
-
-
-    curq_+= toget;
-
-
-    return toget;
+    curq_ += ntoget;
 }
 
 
 int DFTensor::GetBatch_Qso(double * mat, size_t size)
 {
-    return GetBatch_Base(mat, size);
+    if(size < nso2_)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    int nq = (size / nso2_);
+    int toget = std::min(nq, (naux_ - curq_));
+    int got = 0;
+
+    while(got < toget)
+    {
+        int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
+
+        GetBatch_Base(q_.get(), togetbatch);
+
+        // expand into mat
+        int index = 0;
+        for(int i = 0; i < togetbatch; i++)
+        {
+            for(int j = 0; j < nso_; j++)
+            for(int k = 0; k <= j; k++)
+                mat[got*nso2_ + k*nso_ + j] = mat[got*nso2_ + j*nso_ + k] = q_[index++];
+
+            got++;
+        }
+
+    }
+    
+    return toget;
 }
+
 
 int DFTensor::GetBatch_Qmo(double * mat, size_t size)
 {
@@ -398,24 +390,49 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
 
     int nq = (size / nmo2_ );
     int toget = std::min(nq, (naux_ - curq_));
+    int got = 0;
 
-    for(int i = 0; i < nq; i++)
+    while(got < toget)
     {
-        // get one q - should always return 1 here
-        if(GetBatch_Base(q_.get(), nso2_))
+        int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
+
+        GetBatch_Base(q_.get(), togetbatch);
+
+        int index = 0;
+
+        for(int i = 0; i < togetbatch; i++)
         {
             // Apply the C matrices
+            // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
+            // so first expand into a buffer. But we only need to fill half and we can use DSYMM
+            // (we fill the lower triangle)
+            for(int j = 0; j < nso_; j++)
+            for(int k = 0; k <= j; k++)
+                q_single_[j*nso_ + k] = q_[index++];
+
+
             if(Cmo_trans_)
             {
-                C_DGEMM('N','N',nmo_, nso_, nso_, 1.0, Cmo_, nmo_, q_.get(), nso_, 0.0, qc_.get(), nso_);
-                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nmo_, 0.0, mat + i*nmo2_, nmo_);
+                // matrix multiply w/ triangular matrix
+                C_DSYMM('R','L',nmo_,nso_,1.0, q_single_.get(), nso_, Cmo_, nso_, 0.0, qc_.get(), nso_);
+
+               // Then regular matrix multiplication
+                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nso_, 0.0, mat + got*nmo2_, nmo_);
             }
             else
             {
-                C_DGEMM('T','N',nmo_, nso_, nso_, 1.0, Cmo_, nmo_, q_.get(), nso_, 0.0, qc_.get(), nso_);
-                C_DGEMM('N','N',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nmo_, 0.0, mat + i*nmo2_, nmo_);
+                // matrix multiply w/ symmetric matrix
+                C_DSYMM('L','L',nso_,nmo_,1.0, q_single_.get(), nso_, Cmo_, nmo_, 0.0, qc_.get(), nmo_);
+
+                // Then regular matrix multiplication
+                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, qc_.get(), nmo_, 0.0, mat + got*nmo2_, nmo_);
             }
+
+            got++;
+
         }
+
+
     }
 
     return toget;

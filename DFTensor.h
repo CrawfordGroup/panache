@@ -94,12 +94,14 @@ protected:
     // buffers and placeholders for transformations
     std::unique_ptr<double[]> qso_; // holds the entire Q matrix
     std::unique_ptr<double[]> qc_;  // holds C(T) Q
-    std::unique_ptr<double[]> q_;   // holds just one Q
+    std::unique_ptr<double[]> q_;   // holds a couple Q (packed storage)
+    std::unique_ptr<double[]> q_single_;   // holds a single Q (expanded storage)
+
 
     bool isinmem_; // Is Q completely in memory?
     int curq_;     // next Q to be (batch) read
 
-    int GetBatch_Base(double * mat, size_t size);
+    void GetBatch_Base(double * mat, int ntoget);
 
 
     // Timing stuff
