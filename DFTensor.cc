@@ -703,6 +703,13 @@ void DFTensor::ResetFile(void)
     curq_ = 0;
 }
 
+void DFTensor::ResetBatches(void)
+{
+    curq_ = 0;
+    if(!isinmem_)
+        ResetFile();
+}
+
 }
 
 

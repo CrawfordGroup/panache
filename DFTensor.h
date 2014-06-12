@@ -123,6 +123,7 @@ public:
     int GetBatch_Qso(double * mat, size_t size);
     int GetBatch_Qmo(double * mat, size_t size);
 
+    void ResetBatches(void);
 
 /*
     int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
