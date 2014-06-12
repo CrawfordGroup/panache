@@ -26,9 +26,7 @@
 #include <fstream>
 #include "Matrix.h"
 
-#ifdef PANACHE_TIMING
 #include "Timing.h"
-#endif
 
 
 namespace panache
@@ -104,10 +102,8 @@ protected:
     int GetBatch_Base(double * mat, size_t size);
 
 
-    #ifdef PANACHE_TIMING
     // Timing stuff
     timing::Timer timer_genqso;  // total time spent in GenQso
-    #endif
 
 
 public:
