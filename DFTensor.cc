@@ -41,7 +41,7 @@
 #include "Output.h"
 
 #ifndef PANACHE_QBUF_SIZE
-#define PANACHE_QBUF_SIZE 4
+#define PANACHE_QBUF_SIZE 10
 #endif
 
 #ifdef _OPENMP
@@ -127,7 +127,7 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
     nmo2_ = nmo*nmo;
 
     // allocate the buffers for C^T Q C
-    qc_ = std::unique_ptr<double[]>(new double[nso_*nmo_]);
+    qc_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nso_ * nmo_]);
 }
 
 void DFTensor::GenQso(bool inmem)
@@ -378,18 +378,28 @@ int DFTensor::GetBatch_Qso(double * mat, size_t size)
     {
         int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
 
+        // see comments in GetBatch_Qmo
+        int nthread = std::min(togetbatch, nthreads_);
+
         GetBatch_Base(q_.get(), togetbatch);
 
         // expand into mat
-        int index = 0;
+        // OpenMP actually slowed down my tests...
+        //#ifdef _OPENMP
+        //#pragma omp parallel for schedule(dynamic) num_threads(nthread)
+        //#endif
         for(int i = 0; i < togetbatch; i++)
         {
+            double * my_q = q_.get() + i*nsotri_;
+
+            int index = 0;
             for(int j = 0; j < nso_; j++)
                 for(int k = 0; k <= j; k++)
-                    mat[got*nso2_ + k*nso_ + j] = mat[got*nso2_ + j*nso_ + k] = q_[index++];
+                    mat[(got+i)*nso2_ + k*nso_ + j] = mat[(got+i)*nso2_ + j*nso_ + k] = my_q[index++];
 
-            got++;
         }
+
+        got += togetbatch;;
 
     }
 
@@ -424,45 +434,64 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
     int toget = std::min(nq, (naux_ - curq_));
     int got = 0;
 
+
     while(got < toget)
     {
         int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
 
+
+        // The for loop below is threaded with openmp
+        // Create at most enough threads to process one of the buffers
+        // in each thread. Note that several buffers (q_single_, q_)
+        // are dimensioned by PANACHE_QBUF_SIZE, so each thread
+        // can safely access one if we restrict the number of threads
+        // like this
+        int nthread = std::min(togetbatch, nthreads_);
+
+
         GetBatch_Base(q_.get(), togetbatch);
 
-        int index = 0;
 
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) num_threads(nthread)
+        #endif
         for(int i = 0; i < togetbatch; i++)
         {
+            double * my_q_single = q_single_.get() + i*nso2_;
+            double * my_q = q_.get() + i*nsotri_;
+            double * my_qc = qc_.get() + i*nso_*nmo_;
+
             // Apply the C matrices
             // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
             // so first expand into a buffer. But we only need to fill half and we can use DSYMM
             // (we fill the lower triangle)
+            int index = 0;
             for(int j = 0; j < nso_; j++)
                 for(int k = 0; k <= j; k++)
-                    q_single_[j*nso_ + k] = q_[index++];
+                    my_q_single[j*nso_ + k] = my_q[index++];
 
 
             if(Cmo_trans_)
             {
                 // matrix multiply w/ triangular matrix
-                C_DSYMM('R','L',nmo_,nso_,1.0, q_single_.get(), nso_, Cmo_, nso_, 0.0, qc_.get(), nso_);
+                C_DSYMM('R','L',nmo_,nso_,1.0, my_q_single, nso_, Cmo_, nso_, 0.0, my_qc, nso_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, qc_.get(), nso_, Cmo_, nso_, 0.0, mat + got*nmo2_, nmo_);
+                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_, nso_, 0.0, mat + (got+i)*nmo2_, nmo_);
             }
             else
             {
                 // matrix multiply w/ symmetric matrix
-                C_DSYMM('L','L',nso_,nmo_,1.0, q_single_.get(), nso_, Cmo_, nmo_, 0.0, qc_.get(), nmo_);
+                C_DSYMM('L','L',nso_,nmo_,1.0, my_q_single, nso_, Cmo_, nmo_, 0.0, my_qc, nmo_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, qc_.get(), nmo_, 0.0, mat + got*nmo2_, nmo_);
+                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, my_qc, nmo_, 0.0, mat + (got+i)*nmo2_, nmo_);
             }
 
-            got++;
 
         }
+
+        got += togetbatch;
 
 
     }
