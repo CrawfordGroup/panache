@@ -44,6 +44,7 @@
 #define PANACHE_QBUF_SIZE 4
 #endif
 
+#include <omp.h>
 
 namespace panache
 {
@@ -66,6 +67,11 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
     // buffer for some q
     q_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nsotri_]);
     q_single_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nso2_]);
+
+    nthreads_ = 1;
+    #ifdef _OPENMP
+      nthreads_ = omp_get_max_threads();
+    #endif
 }
 
 DFTensor::~DFTensor()
@@ -124,6 +130,7 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
 void DFTensor::GenQso(bool inmem)
 {
+
 #ifdef PANACHE_TIMING
     timer_genqso.Reset();
     timer_genqso.Start();
@@ -136,18 +143,27 @@ void DFTensor::GenQso(bool inmem)
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
-    std::shared_ptr<TwoBodyAOInt> eri = GetERI(auxiliary_,zero,primary_,primary_);
+    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<const double *> eribuffers;
+    std::vector<double *> A, B;
 
-    const double* buffer = eri->buffer();
+    for(int i = 0; i < nthreads_; i++)
+    {
+        eris.push_back(GetERI(auxiliary_,zero,primary_,primary_));
+        eribuffers.push_back(eris[eris.size()-1]->buffer());
+
+        // temporary buffers
+        A.push_back(new double[naux_*maxpershell2]);
+        B.push_back(new double[naux_*maxpershell2]);
+    }
 
     isinmem_ = inmem; // store this so we know later
 
     qso_.reset();
     curq_ = 0;
+    CloseFile(); // safe even if not opened
 
-    double * A = new double[naux_*maxpershell2];
-    double * B = new double[naux_*maxpershell2];
-
+    // Allocate memory or open the file on disk
     if(!inmem)
     {
         OpenFile();
@@ -157,8 +173,14 @@ void DFTensor::GenQso(bool inmem)
         qso_ = std::unique_ptr<double[]>(new double[nsotri_ * naux_]);
 
 
+    
+
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+    #endif
     for (int M = 0; M < primary_->nshell(); M++)
     {
+        int threadnum = omp_get_thread_num();
         int nm = primary_->shell(M).nfunction();
         int mstart = primary_->shell(M).function_index();
         int mend = mstart + nm;
@@ -175,7 +197,7 @@ void DFTensor::GenQso(bool inmem)
                 int pstart = auxiliary_->shell(P).function_index();
                 int pend = pstart + np;
 
-                eri->compute_shell(P,0,M,N);
+                eris[threadnum]->compute_shell(P,0,M,N);
 
                 for (int p = pstart, index = 0; p < pend; p++)
                 {
@@ -183,7 +205,7 @@ void DFTensor::GenQso(bool inmem)
                     {
                         for (int n = 0; n < nn; n++, index++)
                         {
-                            B[p*nm*nn + m*nn + n] = buffer[index];
+                            B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
                         }
                     }
                 }
@@ -191,18 +213,22 @@ void DFTensor::GenQso(bool inmem)
 
             // we now have a set of columns of B, although "condensed"
             // we can do a DGEMM with J
-            C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, Jp[0], naux_, B, nm*nn, 0.0,
-                    A, nm*nn);
+            // Access to Jp are only reads, so that is safe in parallel
+            C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, Jp[0], naux_, B[threadnum], nm*nn, 0.0,
+                    A[threadnum], nm*nn);
 
 
             // write to disk or store in memory
             //! \todo rearrange to that writes are more sequential?
             if(inmem)
             {
+                // safe to write to qso_ in parallel - each thread writes to a different spot
                 for (int p = 0; p < naux_; p++)
                 {
                     for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                        std::copy(A+p*nm*nn+m0*nn, A+p*nm*nn+m0*nn+nn, qso_.get() + p*nsotri_ + ((m*(m+1))>>1) + nstart);
+                        std::copy(A[threadnum]+p*nm*nn+m0*nn,
+                                  A[threadnum]+p*nm*nn+m0*nn+nn, 
+                                  qso_.get() + p*nsotri_ + ((m*(m+1))>>1) + nstart);
                 }
             }
             else
@@ -211,8 +237,14 @@ void DFTensor::GenQso(bool inmem)
                 {
                     for (int m0 = 0, m = mstart; m < mend; m0++, m++)
                     {
-                        matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + nstart), std::ios_base::beg);
-                        matfile_->write(reinterpret_cast<const char *>(A + p*nm*nn + m0*nn), nn*sizeof(double));
+                        // must be done in a critical section
+                        #ifdef _OPENMP
+                        #pragma omp critical
+                        #endif
+                        {
+                            matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + nstart), std::ios_base::beg);
+                            matfile_->write(reinterpret_cast<const char *>(A[threadnum] + p*nm*nn + m0*nn), nn*sizeof(double));
+                        }
                     }
                 }
             }
@@ -222,11 +254,12 @@ void DFTensor::GenQso(bool inmem)
         // Special Case: N = M
         for (int P = 0; P < auxiliary_->nshell(); P++)
         {
+            int threadnum = omp_get_thread_num();
             int np = auxiliary_->shell(P).nfunction();
             int pstart = auxiliary_->shell(P).function_index();
             int pend = pstart + np;
 
-            eri->compute_shell(P,0,M,M);
+            eris[threadnum]->compute_shell(P,0,M,M);
 
             for (int p = pstart, index = 0; p < pend; p++)
             {
@@ -234,7 +267,7 @@ void DFTensor::GenQso(bool inmem)
                 {
                     for (int n = 0; n < nm; n++, index++)
                     {
-                        B[p*nm*nm + m*nm + n] = buffer[index];
+                        B[threadnum][p*nm*nm + m*nm + n] = eribuffers[threadnum][index];
                     }
                 }
             }
@@ -242,20 +275,23 @@ void DFTensor::GenQso(bool inmem)
 
         // we now have a set of columns of B, although "condensed"
         // we can do a DGEMM with J
-        C_DGEMM('N','N',naux_, nm*nm, naux_, 1.0, Jp[0], naux_, B, nm*nm, 0.0,
-                A, nm*nm);
+        C_DGEMM('N','N',naux_, nm*nm, naux_, 1.0, Jp[0], naux_, B[threadnum], nm*nm, 0.0,
+                A[threadnum], nm*nm);
 
 
         // write to disk
         //! \todo rearrange to that writes are more sequential?
         if(inmem)
         {
+            // safe to write to qso_ in parallel - each thread writes to a different spot
             for (int p = 0; p < naux_; p++)
             {
                 int nwrite = 1;
                 for (int m0 = 0, m = mstart; m < mend; m0++, m++)
                 {
-                    std::copy(A+p*nm*nm+m0*nm, A+p*nm*nm+m0*nm+nwrite, qso_.get()+p*nsotri_ + ((m*(m+1))>>1) + mstart);
+                    std::copy(A[threadnum]+p*nm*nm+m0*nm,
+                              A[threadnum]+p*nm*nm+m0*nm+nwrite,
+                              qso_.get()+p*nsotri_ + ((m*(m+1))>>1) + mstart);
                     nwrite += 1;
                 }
             }
@@ -267,9 +303,15 @@ void DFTensor::GenQso(bool inmem)
                 int nwrite = 1;
                 for (int m0 = 0, m = mstart; m < mend; m0++, m++)
                 {
-                    matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + mstart), std::ios_base::beg);
-                    matfile_->write(reinterpret_cast<const char *>(A + p*nm*nm + m0*nm), nwrite*sizeof(double));
-                    nwrite += 1;
+                    // must be done in a critical section
+                    #ifdef _OPENMP
+                    #pragma omp critical
+                    #endif
+                    {
+                        matfile_->seekp(sizeof(double)*(p*nsotri_ + ((m*(m+1))>>1) + mstart), std::ios_base::beg);
+                        matfile_->write(reinterpret_cast<const char *>(A[threadnum] + p*nm*nm + m0*nm), nwrite*sizeof(double));
+                        nwrite += 1;
+                    }
                 }
             }
         }
@@ -279,8 +321,11 @@ void DFTensor::GenQso(bool inmem)
     if(!inmem)
         ResetFile();
 
-    delete [] A;
-    delete [] B;
+    for(int i = 0; i < nthreads_; i++)
+    {
+        delete [] A[i];
+        delete [] B[i];
+    }
 
 #ifdef PANACHE_TIMING
     timer_genqso.Stop();

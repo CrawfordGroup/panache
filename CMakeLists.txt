@@ -43,17 +43,27 @@ list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 
-# Release, debug, etc
-#if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#  list(APPEND PANACHE_CXX_FLAGS "-g" "-O0")
-#endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#
-#if(CMAKE_BUILD_TYPE STREQUAL "Release")
-#  list(APPEND PANACHE_CXX_FLAGS "-O2")
-#endif(CMAKE_BUILD_TYPE STREQUAL "Release")
+
+#####################################
+# OpenMP
+#####################################
+set(PANACHE_OPENMP TRUE CACHE BOOL "Enable OpenMP")
+if(PANACHE_OPENMP)
+  message(STATUS "Enabling OpenMP for Panache")
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    message(STATUS "Found OpenMP. Remember to link to OpenMP libraries when building your final project")
+    list(APPEND PANACHE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${OpenMP_CXX_FLAGS}")
+  else(OPENMP_FOUND)
+    message(WARNING "OpenMP was not found! Disabling...")
+  endif(OPENMP_FOUND)
+endif(PANACHE_OPENMP)
 
 
+
+#####################################
 # Timing of panache stuff
+#####################################
 set(PANACHE_TIMING FALSE CACHE BOOL "Enable timing of some panache functionality")
 if(PANACHE_TIMING)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_TIMING")

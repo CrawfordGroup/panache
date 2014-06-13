@@ -108,6 +108,9 @@ protected:
     timing::Timer timer_genqso;  // total time spent in GenQso
 
 
+    // Threading
+    int nthreads_;
+
 public:
 
     DFTensor(std::shared_ptr<BasisSet> primary,
