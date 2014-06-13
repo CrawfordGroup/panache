@@ -44,7 +44,9 @@
 #define PANACHE_QBUF_SIZE 4
 #endif
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 namespace panache
 {
@@ -180,7 +182,11 @@ void DFTensor::GenQso(bool inmem)
     #endif
     for (int M = 0; M < primary_->nshell(); M++)
     {
-        int threadnum = omp_get_thread_num();
+        int threadnum = 0;
+        #ifdef _OPENMP
+            threadnum = omp_get_thread_num();
+        #endif
+
         int nm = primary_->shell(M).nfunction();
         int mstart = primary_->shell(M).function_index();
         int mend = mstart + nm;
@@ -254,7 +260,6 @@ void DFTensor::GenQso(bool inmem)
         // Special Case: N = M
         for (int P = 0; P < auxiliary_->nshell(); P++)
         {
-            int threadnum = omp_get_thread_num();
             int np = auxiliary_->shell(P).nfunction();
             int pstart = auxiliary_->shell(P).function_index();
             int pend = pstart + np;
