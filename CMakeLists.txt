@@ -196,7 +196,6 @@ add_library(panache
             sq_rsp.cc
             sq_to_tri.cc
             zero.cc
-            Testing.cc
             Lapack.cc
             ${LIBINT_FILES}
             )
