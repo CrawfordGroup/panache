@@ -52,8 +52,9 @@ namespace panache
 {
 
 DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
-                   std::shared_ptr<BasisSet> auxiliary)
-    : primary_(primary), auxiliary_(auxiliary), filename_("/home/ben/Test.mat")
+                   std::shared_ptr<BasisSet> auxiliary,
+                   const std::string & filename)
+    : primary_(primary), auxiliary_(auxiliary), filename_(filename)
 {
     common_init();
     curq_ = 0;

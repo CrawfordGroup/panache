@@ -24,7 +24,8 @@ extern "C" {
     int_t panache_init(int_t ncenters,
                C_AtomCenter * atoms, int_t normalized,
                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells)
+               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+               const char * filename)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -37,7 +38,7 @@ extern "C" {
         auto auxBasis = panache::BasisSetFromArrays(molecule, ncenters,
                         aux_nshellspercenter, aux_shells, normalized);
 
-        panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis);
+        panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis, filename);
         dftensors_[tensor_index_] = dft;
 
         return tensor_index_++;
@@ -47,7 +48,7 @@ extern "C" {
     int_t panache_init2(int_t ncenters,
                     C_AtomCenter * atoms, int_t normalized,
                     int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                    const char * auxfilename)
+                    const char * auxfilename, const char * matfilename)
     {
         // Molecule
         std::shared_ptr<panache::Molecule> molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -61,7 +62,7 @@ extern "C" {
         std::shared_ptr<panache::Gaussian94BasisSetParser> parser(new panache::Gaussian94BasisSetParser);
         auto auxBasis = panache::BasisSet::construct(parser, molecule, auxfilename);
 
-        panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis);
+        panache::DFTensor * dft = new panache::DFTensor(primaryBasis, auxBasis, matfilename);
         dftensors_[tensor_index_] = dft;
 
         return tensor_index_++;

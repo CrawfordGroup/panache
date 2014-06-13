@@ -29,12 +29,13 @@ extern "C" {
     int_t panache_init(int_t ncenters,
                        C_AtomCenter * atoms, int_t normalized,  
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                      int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells);
+                       int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+                       const char * filename);
 
     int_t panache_init2(int_t ncenters,
                         C_AtomCenter * atoms, int_t normalized,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename);
+                        const char * auxfilename, const char * filename);
 
     void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans); 
     void panache_genqso(int_t df_handle, int_t inmem);

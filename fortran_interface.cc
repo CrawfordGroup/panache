@@ -19,7 +19,8 @@ extern "C" {
                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
-                       int_t * aux_nprimpershell, double * aux_exp, double * aux_coef, int_t * dfhandle)
+                       int_t * aux_nprimpershell, double * aux_exp, double * aux_coef,
+                       const char * filename, int_t * filenamelen, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -96,7 +97,7 @@ extern "C" {
 
         *dfhandle = panache_init(*ncenters, atoms, *normalized,
                                  primary_nshellspercenter, primary_shells,
-                                 aux_nshellspercenter, aux_shells);
+                                 aux_nshellspercenter, aux_shells, filename);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -128,7 +129,8 @@ extern "C" {
                         double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
-                        const char * auxfilename, int_t * auxfilenamelen, int_t * dfhandle)
+                        const char * auxfilename, int_t * auxfilenamelen, const char * matfilename,
+                        int_t * matfilenamelen, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -232,15 +234,20 @@ extern "C" {
 
         // create a real, null-terminated c string
         char * cfname = new char[*auxfilenamelen+1];
+        char * mfname = new char[*matfilenamelen+1];
         strncpy(cfname, auxfilename, *auxfilenamelen);
+        strncpy(mfname, matfilename, *matfilenamelen);
         cfname[*auxfilenamelen] = '\0';
+        cfname[*matfilenamelen] = '\0';
 
         *dfhandle = panache_init2(*ncenters, atoms, *normalized,
                                   primary_nshellspercenter, primary_shells,
-                                  cfname);
+                                  cfname, mfname);
 
         // Free memory
         delete [] cfname;
+        delete [] mfname;
+
         for(int_t i = 0; i < p_nshell; i++)
         {
             delete [] primary_shells[i].exp;
