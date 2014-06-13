@@ -166,7 +166,7 @@ void DFTensor::GenQso(bool inmem)
     CloseFile(); // safe even if not opened
 
     // Allocate memory or open the file on disk
-    if(!inmem)
+    if(!isinmem_)
     {
         OpenFile();
         ResetFile();
@@ -226,7 +226,7 @@ void DFTensor::GenQso(bool inmem)
 
             // write to disk or store in memory
             //! \todo rearrange to that writes are more sequential?
-            if(inmem)
+            if(isinmem_)
             {
                 // safe to write to qso_ in parallel - each thread writes to a different spot
                 for (int p = 0; p < naux_; p++)
@@ -286,7 +286,7 @@ void DFTensor::GenQso(bool inmem)
 
         // write to disk
         //! \todo rearrange to that writes are more sequential?
-        if(inmem)
+        if(isinmem_)
         {
             // safe to write to qso_ in parallel - each thread writes to a different spot
             for (int p = 0; p < naux_; p++)
@@ -323,7 +323,7 @@ void DFTensor::GenQso(bool inmem)
 
     }
 
-    if(!inmem)
+    if(!isinmem_)
         ResetFile();
 
     for(int i = 0; i < nthreads_; i++)
@@ -334,8 +334,14 @@ void DFTensor::GenQso(bool inmem)
 
 #ifdef PANACHE_TIMING
     timer_genqso.Stop();
-    output::printf("  **TIMER: DFTensor Total GenQso (%s): %lu\n",
-                   (inmem ? "CORE" : "DISK"), timer_genqso.Microseconds());
+    output::printf("  **TIMER: DFTensor Total GenQso (%s): %lu (%lu calls)\n",
+                   (inmem ? "CORE" : "DISK"),
+                   timer_genqso.Microseconds(),
+                   timer_genqso.TimesCalled());
+
+    // reset the other timers
+    timer_getbatch_qso.Reset();
+    timer_getbatch_qmo.Reset();
 #endif
 
 }
@@ -356,6 +362,11 @@ void DFTensor::GetBatch_Base(double * mat, int ntoget)
 
 int DFTensor::GetBatch_Qso(double * mat, size_t size)
 {
+
+#ifdef PANACHE_TIMING
+    timer_getbatch_qso.Start();
+#endif
+
     if(size < nso2_)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
@@ -382,12 +393,27 @@ int DFTensor::GetBatch_Qso(double * mat, size_t size)
 
     }
 
+#ifdef PANACHE_TIMING
+    timer_getbatch_qso.Stop();
+    if(toget == 0)
+    {
+        output::printf("  **TIMER: DFTensor Total GetBatch_Qso (%s): %lu (%lu calls)\n",
+                       (isinmem_ ? "CORE" : "DISK"),
+                       timer_getbatch_qso.Microseconds(),
+                       timer_getbatch_qso.TimesCalled());
+    }
+#endif
+
     return toget;
 }
 
 
 int DFTensor::GetBatch_Qmo(double * mat, size_t size)
 {
+#ifdef PANACHE_TIMING
+    timer_getbatch_qmo.Start();
+#endif
+
     if(Cmo_ == nullptr)
         throw RuntimeError("Error - I don't have a C matrix!");
 
@@ -440,6 +466,17 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
 
 
     }
+
+#ifdef PANACHE_TIMING
+    timer_getbatch_qmo.Stop();
+    if(toget == 0)
+    {
+        output::printf("  **TIMER: DFTensor Total GetBatch_Qmo (%s): %lu (%lu calls)\n",
+                       (isinmem_ ? "CORE" : "DISK"),
+                       timer_getbatch_qmo.Microseconds(),
+                       timer_getbatch_qmo.TimesCalled());
+    }
+#endif
 
     return toget;
 }

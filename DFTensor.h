@@ -106,6 +106,8 @@ protected:
 
     // Timing stuff
     timing::Timer timer_genqso;  // total time spent in GenQso
+    timing::Timer timer_getbatch_qso;  // total time spent in GetBatch_Qso
+    timing::Timer timer_getbatch_qmo;  // total time spent in GetBatch_Qmo
 
 
     // Threading

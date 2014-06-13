@@ -16,7 +16,7 @@ class Timer
 private:
     panacheclock::time_point begin, end;
     panacheclock::duration dur;
-    unsigned int nmeasurements;
+    unsigned long int nmeasurements;
 
 public:
     Timer()
@@ -48,19 +48,24 @@ public:
         nmeasurements = 0;
     }
 
-    unsigned long int Seconds(void)
+    unsigned long int Seconds(void) const
     {
         return std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     }
 
-    unsigned long int Milliseconds(void)
+    unsigned long int Milliseconds(void) const
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     }
 
-    unsigned long int Microseconds(void)
+    unsigned long int Microseconds(void) const
     {
         return std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+    }
+
+    unsigned long int TimesCalled(void) const
+    {
+        return nmeasurements;
     }
 
 };
