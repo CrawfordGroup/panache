@@ -102,9 +102,17 @@ extern "C" {
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
     }
 
+    void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->SetOutputBuffer(matout, matsize);
+    
+    }
+
     void panache_genqso(int_t df_handle, int_t inmem)
     {
-        // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
@@ -112,20 +120,20 @@ extern "C" {
     }
 
 
-    int_t panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize)
+    int_t panache_getbatch_qso(int_t df_handle)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        return dftensors_[df_handle]->GetBatch_Qso(matout, matsize);
+        return dftensors_[df_handle]->GetBatch_Qso();
     }
 
-    int_t panache_getbatch_qmo(int_t df_handle, double * matout, int_t matsize)
+    int_t panache_getbatch_qmo(int_t df_handle)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        return dftensors_[df_handle]->GetBatch_Qmo(matout, matsize);
+        return dftensors_[df_handle]->GetBatch_Qmo();
     }
 
 

@@ -281,14 +281,19 @@ extern "C" {
         panache_setcmatrix(*df_handle, cmo, *nmo, *cmo_is_trans);
     }
 
-    void panachef_getbatch_qso_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
+    void panachef_setoutputbuffer_(int_t * df_handle, double * buffer, int_t * bufsize)
     {
-        *nq = panache_getbatch_qso(*df_handle, matout, *matsize);
+        panache_setoutputbuffer(*df_handle, buffer, *bufsize);
     }
 
-    void panachef_getbatch_qmo_(int_t * df_handle, double * matout, int_t * matsize, int_t * nq)
+    void panachef_getbatch_qso_(int_t * df_handle, int_t * nq)
     {
-        *nq = panache_getbatch_qmo(*df_handle, matout, *matsize);
+        *nq = panache_getbatch_qso(*df_handle);
+    }
+
+    void panachef_getbatch_qmo_(int_t * df_handle, int_t * nq)
+    {
+        *nq = panache_getbatch_qmo(*df_handle);
     }
 
     void panachef_cleanup_(int_t * df_handle)

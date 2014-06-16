@@ -40,8 +40,9 @@ extern "C" {
     void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans); 
     void panache_genqso(int_t df_handle, int_t inmem);
 
-    int_t panache_getbatch_qso(int_t df_handle, double * matout, int_t matsize);
-    int_t panache_getbatch_qmo(int_t df_handle, double * matout, int_t matsize);
+    void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize);
+    int_t panache_getbatch_qso(int_t df_handle);
+    int_t panache_getbatch_qmo(int_t dfhandle);
 
     void panache_cleanup(int_t df_handle);
     void panache_cleanup_all(void);

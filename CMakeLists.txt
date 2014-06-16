@@ -72,8 +72,10 @@ endif(PANACHE_TIMING)
 
 
 
+#####################################
 # Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
 # If unset, 32-bit interface is used
+#####################################
 set(USE_64LAPACK FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
 
 if(USE_64LAPACK)
@@ -84,7 +86,20 @@ else(USE_64LAPACK)
 endif(USE_64LAPACK)
 
 
+#####################################
+# Prefetching from disk
+#####################################
+set(USE_DISKPREFETCH FALSE CACHE BOOL "Prefetch next batch from disk in separate thread")
+
+if(USE_DISKPREFETCH)
+  list(APPEND PANACHE_CXX_FLAGS "-DUSE_DISKPREFETCH")
+  message(WARNING "Enabling disk prefetching. THIS IS EXPERIMENTAL")
+endif(USE_DISKPREFETCH)
+
+
+#####################################
 # Whether the C and Fortran interfaces should be 64-bit
+#####################################
 set(USE_64PANACHE FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
 
 if(USE_64PANACHE)
@@ -95,8 +110,10 @@ else(USE_64PANACHE)
 endif(USE_64PANACHE)
 
 
+#####################################
 # PANACHE uses the 'restrict' keyword for optimization
 # This will test for the proper variation of the keyword
+#####################################
 include(cmake/Restrict.cmake)
 test_restrict(RESTRICT)
 list(APPEND PANACHE_CXX_FLAGS "-Drestrict=${RESTRICT}")

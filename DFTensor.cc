@@ -67,9 +67,10 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
     nsotri_ = ( (nso_ * (nso_+1) ) )/2;
     naux_ = auxiliary_->nbf();
 
-    // buffer for some q
-    q_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nsotri_]);
-    q_single_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nso2_]);
+    outbuffer_ = nullptr;
+    outbuffersize_ = 0; 
+
+
 
     nthreads_ = 1;
     #ifdef _OPENMP
@@ -126,9 +127,6 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
     Cmo_trans_ = cmo_is_trans;
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
-
-    // allocate the buffers for C^T Q C
-    qc_ = std::unique_ptr<double[]>(new double[PANACHE_QBUF_SIZE * nso_ * nmo_]);
 }
 
 void DFTensor::GenQso(bool inmem)
@@ -347,66 +345,86 @@ void DFTensor::GenQso(bool inmem)
 
 }
 
-void DFTensor::GetBatch_Base(double * mat, int ntoget)
+
+
+void DFTensor::SetOutputBuffer(double * buf, size_t size)
+{
+    outbuffer_ = buf;
+    outbuffersize_ = size;
+
+
+}
+
+
+
+int DFTensor::GetBatch_Base(int ntoget)
 {
     // all reads should be sequential, therefore we can just start at the beginning
     //  (reset file at end of GenQ) and go from there
 
-    if(isinmem_)
-        std::copy(qso_.get() + curq_*nsotri_, qso_.get() + (curq_+ntoget)*nsotri_, mat);
-    else
-        matfile_->read(reinterpret_cast<char *>(mat), ntoget*nsotri_*sizeof(double));
+    int actualtoget = std::min(ntoget, naux_ - curq_);
 
-    curq_ += ntoget;
+    if(actualtoget <= 0)
+        return 0;
+
+    if(isinmem_)
+        std::copy(qso_.get() + curq_*nsotri_, qso_.get() + (curq_+actualtoget)*nsotri_, q_.get());
+    else
+        matfile_->read(reinterpret_cast<char *>(q_.get()), actualtoget*nsotri_*sizeof(double));
+
+    curq_ += actualtoget;
+
+    return actualtoget;
 }
 
 
-int DFTensor::GetBatch_Qso(double * mat, size_t size)
+
+
+int DFTensor::GetBatch_Qso(void)
 {
 
 #ifdef PANACHE_TIMING
     timer_getbatch_qso.Start();
 #endif
 
-    if(size < nso2_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
+    int nq = (outbuffersize_ / nso2_);
 
-    int nq = (size / nso2_);
-    int toget = std::min(nq, (naux_ - curq_));
-    int got = 0;
-
-    while(got < toget)
+    // is this the first batch?
+    if(curq_ == 0)
     {
-        int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
+        if(outbuffersize_ < nso2_)
+            throw RuntimeError("Error - buffer is to small to hold even one row!");
 
-        // see comments in GetBatch_Qmo
-        int nthread = std::min(togetbatch, nthreads_);
+        // allocate buffers for some q
+        q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+    }
 
-        GetBatch_Base(q_.get(), togetbatch);
 
+    // get a batch    
+    int gotten;
+    if(gotten = GetBatch_Base(nq))
+    {
         // expand into mat
-        // OpenMP actually slowed down my tests...
-        //#ifdef _OPENMP
-        //#pragma omp parallel for schedule(dynamic) num_threads(nthread)
-        //#endif
-        for(int i = 0; i < togetbatch; i++)
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+        #endif
+        for(int i = 0; i < gotten; i++)
         {
             double * my_q = q_.get() + i*nsotri_;
 
             int index = 0;
             for(int j = 0; j < nso_; j++)
                 for(int k = 0; k <= j; k++)
-                    mat[(got+i)*nso2_ + k*nso_ + j] = mat[(got+i)*nso2_ + j*nso_ + k] = my_q[index++];
-
+                    outbuffer_[i*nso2_ + k*nso_ + j] 
+                             = outbuffer_[i*nso2_ + j*nso_ + k]
+                             = my_q[index++];
         }
-
-        got += togetbatch;;
-
     }
+
 
 #ifdef PANACHE_TIMING
     timer_getbatch_qso.Stop();
-    if(toget == 0)
+    if(gotten == 0)
     {
         output::printf("  **TIMER: DFTensor Total GetBatch_Qso (%s): %lu (%lu calls)\n",
                        (isinmem_ ? "CORE" : "DISK"),
@@ -415,11 +433,19 @@ int DFTensor::GetBatch_Qso(double * mat, size_t size)
     }
 #endif
 
-    return toget;
+    if(gotten == 0)
+    {
+        // free memory
+        q_.reset();
+    }
+
+    return gotten;
 }
 
 
-int DFTensor::GetBatch_Qmo(double * mat, size_t size)
+
+
+int DFTensor::GetBatch_Qmo(void)
 {
 #ifdef PANACHE_TIMING
     timer_getbatch_qmo.Start();
@@ -428,38 +454,32 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
     if(Cmo_ == nullptr)
         throw RuntimeError("Error - I don't have a C matrix!");
 
-    if(size < nmo2_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-    int nq = (size / nmo2_ );
-    int toget = std::min(nq, (naux_ - curq_));
-    int got = 0;
+    int nq = (outbuffersize_ / nmo2_ );
 
 
-    while(got < toget)
+    // first batch?
+    if(curq_ == 0)
     {
-        int togetbatch = std::min(toget - got, PANACHE_QBUF_SIZE);
+        if(outbuffersize_ < nmo2_)
+            throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+        // allocate buffers for some q
+        q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+        q_single_ = std::unique_ptr<double[]>(new double[nq * nmo2_]);
+        qc_ = std::unique_ptr<double[]>(new double[nq * nmo_ * nso_]);
+    }
 
 
-        // The for loop below is threaded with openmp
-        // Create at most enough threads to process one of the buffers
-        // in each thread. Note that several buffers (q_single_, q_)
-        // are dimensioned by PANACHE_QBUF_SIZE, so each thread
-        // can safely access one if we restrict the number of threads
-        // like this
-        int nthread = std::min(togetbatch, nthreads_);
-
-
-        GetBatch_Base(q_.get(), togetbatch);
-
-
+    int gotten;
+    if(gotten = GetBatch_Base(nq))
+    {
         #ifdef _OPENMP
-        #pragma omp parallel for schedule(dynamic) num_threads(nthread)
+        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
         #endif
-        for(int i = 0; i < togetbatch; i++)
+        for(int i = 0; i < gotten; i++)
         {
-            double * my_q_single = q_single_.get() + i*nso2_;
             double * my_q = q_.get() + i*nsotri_;
+            double * my_q_single = q_single_.get() + i*nso2_;
             double * my_qc = qc_.get() + i*nso_*nmo_;
 
             // Apply the C matrices
@@ -478,7 +498,7 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
                 C_DSYMM('R','L',nmo_,nso_,1.0, my_q_single, nso_, Cmo_, nso_, 0.0, my_qc, nso_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_, nso_, 0.0, mat + (got+i)*nmo2_, nmo_);
+                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_, nso_, 0.0, outbuffer_ + i*nmo2_, nmo_);
             }
             else
             {
@@ -486,20 +506,14 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
                 C_DSYMM('L','L',nso_,nmo_,1.0, my_q_single, nso_, Cmo_, nmo_, 0.0, my_qc, nmo_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, my_qc, nmo_, 0.0, mat + (got+i)*nmo2_, nmo_);
+                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, my_qc, nmo_, 0.0, outbuffer_ + i*nmo2_, nmo_);
             }
-
-
         }
-
-        got += togetbatch;
-
-
     }
 
 #ifdef PANACHE_TIMING
     timer_getbatch_qmo.Stop();
-    if(toget == 0)
+    if(gotten == 0)
     {
         output::printf("  **TIMER: DFTensor Total GetBatch_Qmo (%s): %lu (%lu calls)\n",
                        (isinmem_ ? "CORE" : "DISK"),
@@ -508,7 +522,15 @@ int DFTensor::GetBatch_Qmo(double * mat, size_t size)
     }
 #endif
 
-    return toget;
+    if(gotten == 0)
+    {
+        // free memory
+        q_.reset();
+        q_single_.reset();
+        qc_.reset();
+    }
+
+    return gotten;
 }
 
 

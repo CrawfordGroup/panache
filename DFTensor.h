@@ -24,9 +24,13 @@
 #define PANACHE_DFTENSOR_H
 
 #include <fstream>
-#include "Matrix.h"
 
+#include "Matrix.h"
 #include "Timing.h"
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 
 namespace panache
@@ -97,11 +101,15 @@ protected:
     std::unique_ptr<double[]> q_;   // holds a couple Q (packed storage)
     std::unique_ptr<double[]> q_single_;   // holds a single Q (expanded storage)
 
+    double * outbuffer_;
+    size_t outbuffersize_;
 
     bool isinmem_; // Is Q completely in memory?
     int curq_;     // next Q to be (batch) read
+    int curbatchq_;     // next Q to be (batch) read
+    double * curbatch_; // Where the current batch is
 
-    void GetBatch_Base(double * mat, int ntoget);
+    int GetBatch_Base(int ntoget);
 
 
     // Timing stuff
@@ -112,6 +120,15 @@ protected:
 
     // Threading
     int nthreads_;
+
+
+    // Prefetching
+    std::thread prefetchthread_;
+
+    std::unique_ptr<double[]> q2_;
+    std::mutex buf1, buf2;
+    std::condition_variable cv_filled, cv_used;
+
 
 public:
 
@@ -128,10 +145,12 @@ public:
 
     void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans);
 
-    int GetBatch_Qso(double * mat, size_t size);
-    int GetBatch_Qmo(double * mat, size_t size);
+    void SetOutputBuffer(double * buf, size_t size);
+    int GetBatch_Qso(void);
+    int GetBatch_Qmo(void);
 
     void ResetBatches(void);
+
 
 /*
     int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
