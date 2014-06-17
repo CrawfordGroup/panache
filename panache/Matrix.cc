@@ -32,12 +32,14 @@
 #include "Lapack.h"
 #include "libciomr.h"
 #include "Output.h"
+#include "Matrix.h"
 
 #include <fstream>
 #include <algorithm>
 #include <cctype>
 #include <sstream>
 #include <string>
+#include <cstring> // memset
 
 using namespace std;
 
@@ -722,34 +724,6 @@ double **Matrix::to_block_matrix() const
 
     delete[] col_offset;
     return temp;
-}
-
-void Matrix::symmetrize(std::shared_ptr<Molecule> molecule)
-{
-    if (nirrep_ > 1 || rowspi_[0] != molecule->natom() || colspi_[0] != 3)
-        throw RuntimeError("Molecule::symmetrize: Matrix cannot be symmetrized.");
-
-    // Symmetrize the gradients to remove any noise:
-    CharacterTable ct = molecule->point_group()->char_table();
-
-    // Obtain atom mapping of atom * symm op to atom
-    int **atom_map = compute_atom_map(molecule);
-
-    Matrix temp = *this;
-
-    // Symmetrize the gradients to remove any noise
-    for (int atom=0; atom<molecule->natom(); ++atom) {
-        for (int g=0; g<ct.order(); ++g) {
-
-            int Gatom = atom_map[atom][g];
-
-            SymmetryOperation so = ct.symm_operation(g);
-
-            add(atom, 0, so(0, 0) * temp(Gatom, 0) / ct.order());
-            add(atom, 1, so(1, 1) * temp(Gatom, 1) / ct.order());
-            add(atom, 2, so(2, 2) * temp(Gatom, 2) / ct.order());
-        }
-    }
 }
 
 void Matrix::identity()

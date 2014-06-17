@@ -25,6 +25,7 @@
     \ingroup MINTS
 */
 #include <cstdlib>
+#include <cstring> // memset
 
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
@@ -47,7 +48,7 @@ BasisSet::BasisSet()
 
     // Add a dummy atom at the origin, to hold this basis function
     molecule_ = shared_ptr<Molecule>(new Molecule);
-    molecule_->add_atom(0, 0.0, 0.0, 0.0);
+    molecule_->add_atom(0.0, 0.0, 0.0, "");
     // Fill with data representing a single S function, at the origin, with 0 exponent
     n_uprimitive_ = 1;
     n_shells_ = 1;
@@ -210,9 +211,8 @@ void BasisSet::print_detail(FILE * out) const
         output::printf("    cartesian\n");
     output::printf("    ****\n");
 
-    for (int uA = 0; uA < molecule_->nunique(); uA++)
+    for (int A = 0; A < molecule_->natom(); A++)
     {
-        const int A = molecule_->unique(uA);
         output::printf("   %2s %3d\n",molecule_->symbol(A).c_str(),A+1);
 
         int first_shell = center_to_shell_[A];
@@ -425,50 +425,6 @@ std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetPars
 
     return basisset;
 }
-
-// Free functions
-int **compute_shell_map(int **atom_map, const std::shared_ptr<BasisSet> &basis)
-{
-    int **shell_map;
-
-    BasisSet& gbs = *basis.get();
-    Molecule& mol = *gbs.molecule().get();
-
-    // create the character table for the point group
-    CharacterTable ct = mol.point_group()->char_table();
-
-    int natom = mol.natom();
-    int ng = ct.order();
-
-    int nshell = basis->nshell();
-    shell_map = new int*[nshell];
-    for (int i=0; i < nshell; i++)
-        shell_map[i] = new int[ng];
-
-    for (int i=0; i<natom; i++) {
-        // hopefully, shells on equivalent centers will be numbered in the same
-        // order
-        for (int s=0; s < gbs.nshell_on_center(i); s++) {
-            int shellnum = gbs.shell_on_center(i,s);
-            for (int g=0; g < ng; g++) {
-                shell_map[shellnum][g] = gbs.shell_on_center(atom_map[i][g],s);
-            }
-        }
-    }
-
-    return shell_map;
-}
-
-void delete_shell_map(int **shell_map, const std::shared_ptr<BasisSet> &basis)
-{
-    int nshell = basis->nshell();
-    if (shell_map) {
-        for (int i=0; i < nshell; i++)
-            delete[] shell_map[i];
-        delete[] shell_map;
-    }
-}
-
 
 } // close namespace panache
 

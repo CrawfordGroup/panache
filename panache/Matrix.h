@@ -496,11 +496,6 @@ public:
         return symmetry_;
     }
 
-    /**
-     * Symmetrizes the matrix using information from the given Molecule.
-     */
-    void symmetrize(std::shared_ptr<Molecule> mol);
-
     /// Set this to identity
     void identity();
     /// Zeros this out

@@ -20,12 +20,14 @@
  *@END LICENSE
  */
 
+#include <cstring> // memcpy, memset
+
 #include "Lapack.h"
 #include "SphericalTransform.h"
+#include "Molecule.h"
 #include "TwoBodyAOInt.h"
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
-#include "Molecule.h"
 
 namespace panache
 {
