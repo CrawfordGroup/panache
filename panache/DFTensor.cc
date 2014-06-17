@@ -40,10 +40,6 @@
 #include "ERDERI.h"
 #include "Output.h"
 
-#ifndef PANACHE_QBUF_SIZE
-#define PANACHE_QBUF_SIZE 10
-#endif
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
