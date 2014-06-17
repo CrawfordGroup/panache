@@ -196,7 +196,7 @@ if(USE_LIBINT2)
   set(LIBINT_FILES "${LIBINT_FILES}" Libint2TwoElectronInt.cc Libint2ERI.cc)
   message(STATUS "Using Libint2 headers from ${LIBINT_INCLUDEDIR}")
   message(STATUS "Using Libint2 library from ${LIBINT_LIBRARYDIR}")
-  message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
+  message(STATUS "Using Libint2 library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT2")
 endif(USE_LIBINT2)
 

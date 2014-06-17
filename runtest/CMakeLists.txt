@@ -2,7 +2,9 @@
 # Runtest C/C++ target
 #############################
 add_executable(runtest runtest.cc)
+
 target_link_libraries(runtest panache ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES})
+
 string(REPLACE ";" " " RUNTEST_CXX_FLAGS "${RUNTEST_CXX_FLAGS}")
 set_target_properties(runtest PROPERTIES COMPILE_FLAGS ${RUNTEST_CXX_FLAGS})
 set_target_properties(runtest PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/panache")
@@ -18,8 +20,10 @@ endif(OPENMP_FOUND)
 # FRuntest F90 target
 #############################
 add_executable(fruntest fruntest.f90)
+
 set_target_properties(fruntest PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(fruntest panache ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES} stdc++)
+
 string(REPLACE ";" " " FRUNTEST_F90_FLAGS "${FRUNTEST_F90_FLAGS}")
 set_target_properties(fruntest PROPERTIES COMPILE_FLAGS ${FRUNTEST_F90_FLAGS})
 
