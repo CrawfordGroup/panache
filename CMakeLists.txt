@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(libpanache CXX)
-#enable_language(Fortran) # liberd
+project(panache CXX)
 
 ###################################################
 # A simple macro that sets a boolean
@@ -86,6 +85,7 @@ else(USE_64LAPACK)
 endif(USE_64LAPACK)
 
 
+
 #####################################
 # Prefetching from disk
 #####################################
@@ -93,8 +93,9 @@ set(PANACHE_DISKPREFETCH FALSE CACHE BOOL "Prefetch next batch from disk in sepa
 
 if(PANACHE_DISKPREFETCH)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_DISKPREFETCH")
-  message(WARNING "Enabling disk prefetching. THIS IS EXPERIMENTAL")
+  message(WARNING "Enabling disk prefetching. THIS IS EXPERIMENTAL AND MAY REQUIRE A VERY NEW COMPILER")
 endif(PANACHE_DISKPREFETCH)
+
 
 
 #####################################
@@ -108,6 +109,7 @@ if(USE_64PANACHE)
 else(USE_64PANACHE)
   message(STATUS "Building 32-bit C/Fortran interface")
 endif(USE_64PANACHE)
+
 
 
 #####################################
@@ -175,68 +177,9 @@ endif(USE_SLOWERI)
 
 
 ######################
-# Create the library
+# Add subdirectories
 ######################
-add_library(panache 
-            AOIntegralsIterator.cc
-            AOShellCombinationsIterator.cc
-            BasisSet.cc
-            BasisSetParser.cc
-            CartesianIter.cc
-            CharacterTable.cc
-            CoordEntry.cc
-            DFTensor.cc
-            Dimension.cc
-            ERDERI.cc
-            ERDTwoElectronInt.cc
-            FittingMetric.cc
-            Fjt.cc
-            GaussianShell.cc
-            IntegralParameters.cc
-            IrreducibleRepresentation.cc
-            Math.cc
-            Matrix.cc
-            Molecule.cc
-            Output.cc
-            PetiteList.cc
-            PointGroup.cc
-            ShellInfo.cc
-            ShellRotation.cc
-            SolidHarmonic.cc
-            SphericalTransform.cc
-            SymRep.cc
-            SymmOps.cc
-            SymmetryOperation.cc
-            TwoBodyAOInt.cc
-            Vector.cc
-            block_matrix.cc
-            c_interface.cc
-            fortran_interface.cc
-            c_convert.cc
-            dot.cc
-            init_array.cc
-            int_array.cc
-            invert.cc
-            lubksb.cc
-            ludcmp.cc
-            schmidt.cc
-            sq_rsp.cc
-            sq_to_tri.cc
-            zero.cc
-            Lapack.cc
-            ${LIBINT_FILES}
-            )
-
-##############################################
-# Panache library compiler flags, etc
-##############################################
-# Compiler definitions list need to be split
-string(REPLACE ";" " " PANACHE_CXX_FLAGS "${PANACHE_CXX_FLAGS}")
-set_target_properties(panache PROPERTIES COMPILE_FLAGS ${PANACHE_CXX_FLAGS})
-set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${PANACHE_CXX_INCLUDEDIRS}")
+add_subdirectory(panache)
 
 
-# FOR NOW
-file(GLOB HFILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-install(FILES ${HFILES} DESTINATION include/panache)
-install(TARGETS panache ARCHIVE DESTINATION lib)
+
