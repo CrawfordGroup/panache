@@ -45,9 +45,14 @@ list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 
 # Ditto for test programs
-list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
-list(APPEND FRUNTEST_F90_FLAGS "-warn all")
+list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wunused-variable")
 
+# Todo - other compiler types?
+if(CMAKE_COMPILER_IS_GNUG77)
+  list(APPEND FRUNTEST_F90_FLAGS "-Wall")
+else(CMAKE_COMPILER_IS_GNUG77)
+  list(APPEND FRUNTEST_F90_FLAGS "-warn all")
+endif(CMAKE_COMPILER_IS_GNUG77)
 
 
 #####################################
