@@ -322,7 +322,7 @@ void FittingMetric::form_cholesky_inverse()
 
         // Cholesky Decomposition
         double** J = metric_->pointer(h);
-        int info = C_DPOTRF('L', metric_->colspi()[h], J[0], metric_->colspi()[h]);
+        C_DPOTRF('L', metric_->colspi()[h], J[0], metric_->colspi()[h]);
         for (int A = 0; A < metric_->colspi()[h]; A++)
             for (int B = 0; B < A; B++)
                 J[A][B] = 0.0;
@@ -442,7 +442,7 @@ void FittingMetric::form_eig_inverse(double tol)
         double* eigval = new double[n];
         int lwork = n * 3;
         double* work = new double[lwork];
-        int stat = C_DSYEV('v','u',n,Wp[0],n,eigval,work,lwork);
+        C_DSYEV('v','u',n,Wp[0],n,eigval,work,lwork);
         delete[] work;
 
         SharedMatrix Jcopy(new Matrix("Jcopy", n, n));
@@ -497,7 +497,7 @@ void FittingMetric::form_full_eig_inverse(double tol)
         double* eigval = new double[n];
         int lwork = n * 3;
         double* work = new double[lwork];
-        int stat = C_DSYEV('v','u',n,Wp[0],n,eigval,work,lwork);
+        C_DSYEV('v','u',n,Wp[0],n,eigval,work,lwork);
         delete[] work;
 
         SharedMatrix Jcopy(new Matrix("Jcopy", n, n));
@@ -566,7 +566,7 @@ void FittingMetric::form_cholesky_factor()
 
         // Cholesky Decomposition
         double** J = metric_->pointer(h);
-        int info = C_DPOTRF('L', metric_->colspi()[h], J[0], metric_->colspi()[h]);
+        C_DPOTRF('L', metric_->colspi()[h], J[0], metric_->colspi()[h]);
     }
     metric_->set_name("SO Basis Cholesky Factor (Full)");
 }

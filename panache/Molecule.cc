@@ -2178,7 +2178,6 @@ void Molecule::set_full_point_group(double zero_tol)
         else
             phi = acos(dot);
 
-        int Cn_x, Cn_y;
         bool is_D = false;
         if (fabs(phi) > 1.0e-14)
         {

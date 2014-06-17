@@ -245,7 +245,7 @@ call panachef_setoutputbuffer(dfhandle, qbuf, 5*matd2)
 curq = 1
 call panachef_getbatch_qso(dfhandle, nread)
 do while (nread > 0)
-  qso((curq-1)*matd2+1:(curq-1+nread)*matd2) = qbuf(:)
+  qso((curq-1)*matd2+1:(curq-1+nread)*matd2) = qbuf(1:5*matd2)
   curq = curq + nread
   call panachef_getbatch_qso(dfhandle, nread)
 end do

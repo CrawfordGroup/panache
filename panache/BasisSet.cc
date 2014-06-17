@@ -358,7 +358,6 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
     max_nprimitive_ = 0;
     for (int n = 0; n < natom; ++n)
     {
-        const shared_ptr<CoordEntry> &atom = molecule_->atom_entry(n);
         const vector<ShellInfo>& shells = shellmap[n];
         int ustart = primitive_start[n];
         int uend = primitive_end[n];
@@ -416,8 +415,6 @@ std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetPars
 
     for(int i = 0; i < mol->natom(); i++)
     {
-        bool not_found = true;
-
         std::vector<std::string> filecontents;
 
         filecontents = parser->load_file(path);

@@ -135,8 +135,7 @@ unsigned char CharacterTable::bits()
 
 int CharacterTable::make_table()
 {
-    int i,j,ei,gi;
-    char label[4];
+    int gi;
 
     switch (bits_) {
     case PointGroups::C1:
@@ -181,9 +180,6 @@ int CharacterTable::make_table()
     SymmetryOperation so;
 
     _inv = new int[nirrep_];
-
-    // the angle to rotate about the principal axis
-    double theta = (nt) ? 2.0*M_PI/nt : 2.0*M_PI;
 
     // Handle irreducible representations:
     switch (bits_) {

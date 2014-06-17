@@ -194,7 +194,7 @@ void DFTensor::GenQso(bool inmem)
         {
             int nn = primary_->shell(N).nfunction();
             int nstart = primary_->shell(N).function_index();
-            int nend = nstart + nn;
+            //int nend = nstart + nn;
 
             for (int P = 0; P < auxiliary_->nshell(); P++)
             {

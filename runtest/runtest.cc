@@ -315,7 +315,7 @@ int TestMatrix(const string & title, const string & reffile,
     double sum = 0;
     double checksum = 0;
 
-    for(size_t i = 0; i < matsize; i++)
+    for(int i = 0; i < matsize; i++)
     {
         sum += mat[i];
         checksum += mat[i]*static_cast<double>(i+1);
@@ -490,7 +490,7 @@ int main(int argc, char ** argv)
         unique_ptr<double[]> outbuf(new double[buffsize]);
         dft.SetOutputBuffer(outbuf.get(), buffsize);
 
-        while(n = dft.GetBatch_Qso())
+        while((n = dft.GetBatch_Qso()))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nso2, mat.get() + curq*nso2);
             curq += n;
@@ -520,7 +520,7 @@ int main(int argc, char ** argv)
  
         dft.SetCMatrix(cmat->pointer(0)[0], nmo, false);
 
-        while(n = dft.GetBatch_Qmo())
+        while((n = dft.GetBatch_Qmo()))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
             curq += n;

@@ -91,11 +91,7 @@ size_t SlowTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
     int am2 = s2.am();
     int am3 = s3.am();
     int am4 = s4.am();
-    int am = am1 + am2 + am3 + am4; // total am
-    int nprim1;
-    int nprim2;
-    int nprim3;
-    int nprim4;
+
     double A[3], B[3], C[3], D[3];
 
     A[0] = s1.center()[0];

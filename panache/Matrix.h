@@ -711,105 +711,12 @@ public:
     /// @}
 
 
-    /*! Computes the fully pivoted partial Cholesky factorization of a real symmetric
-     * positive semidefinite matrix A, to numerical precision \delta.
-     *
-     * The results L is dimpi x sigpi, where dimpi is the dimension of the original
-     * matrix, and sigpi is the number of columns required to reach accuracy delta.
-     * Sigpi is strictly less than or equal to dimpi
-     *
-     * The decomposition is of the form:
-     *   A' \approx LL^T,
-     *  where A is the original matrix, and L is the resultant
-     *  Cholesky factor. The error matrix is:
-     *   D = A - A'
-     *
-     * This function recursively computes the Schur complement to determine the
-     * optimal ordering of columns.
-     *
-     * This algorithm requires up to 3 total core matrices of the size of the original
-     * These are 1) the original, 2) The resultant, and 3) a temporary matrix
-     *
-     * \param delta, double,  maximum allowed error in the error matrix D, which always
-     * occurs on the diagonal. Defaults to 0.0, in which case the numerically
-     * exact factor is returned.
-     * \param throw_if_negative, bool, throw if pivot <= 0.0 is detected?
-     * \return L, SharedMatrix, with rows of dimension dimpi and columns of
-     * dimension sigpi
-     */
-     SharedMatrix partial_cholesky_factorize(double delta = 0.0, bool throw_if_negative = false);
-    
-     /*! Computes a low-rank factorization <P,N> such that PP'-NN' \approx A in an optimal sense in the 2-norm.
-     * Columns of P,N are truncated after the singular values fall below delta
-     * P contains columns corresponding to positive eigenvalues, N to columns corresponding to negative eigenvalues/ 
-     * This is the real Hermitian-indefinite analog of partial Cholesky factorization.
-     *
-     * This algorithm requires memory equivalent to this matrix plus the equivalent eigendecompositon
-     * call via DSYEV
-     *
-     * \param delta, double,  maximum allowed 2-norm of the error matrix D,
-     * Defaults to 0.0, in which case the numerically
-     * exact square root is returned.
-     * \return P positive part of square root, with only significant columns included
-     * \return N negative part of square root, with only significant columns included
-     */
-    std::pair<SharedMatrix, SharedMatrix> partial_square_root(double delta = 0.0);
-
-    /*! Computes the Cholesky factorization of a real symmetric
-     *  positive definite matrix A.
-     *
-     *  This is the block version of the algorithm, calling Level 3 BLAS.
-     */
-    void cholesky_factorize();
-
     /*! Computes the inverse of a real symmetric positive definite
      *  matrix A using the Cholesky factorization A = L*L**T
      *  computed by cholesky_factorize().
      */
     void invert();
 
-    /*! Computes the pseudo power of a real symmetric matrix
-    *   A using eigendecomposition. This operation is uniquely defined
-    *   for all symmetric matrices for integral alpha, and for
-    *   all symmetric positive definite matrices for all alpha.
-    *
-    *   A fractional power of a Hermitian non-SPD matrix is not uniquely
-    *   defined due to the ambiguity of the complex roots of unity, and
-    *   will often be returned as NaN due to the formation of an imaginary
-    *   root of an eigenvalue. Fractional powers should only be called for SPD
-    *   matrices, and integral powers should always be specified with literals.
-    *
-    *   For negative powers, this operation is very sensitive to condition,
-    *   and will discard eigenvectors corresponding to small eigenvalues which
-    *   contribute to a condition number smaller than cutoff.
-    *   The resultant power is actually a pseudo-power
-    *
-    *   \param alpha  The power to raise the matrix to
-    *   \param cutoff The smallest absolute value of a condition number to allow to
-    *   contribute in the formation of a negative power of A
-    *   \returns a Dimension object with the remaining sizes. Can be used in a View.
-    */
-    Dimension power(double alpha, double cutoff = 1.0E-12);
-
-    /// Swap rows i and j
-    void swap_rows(int h, int i, int j);
-    /// Swap cols i and j
-    void swap_columns(int h, int i, int j);
-
-    /*! Average off-diagonal elements */
-    void hermitivitize();
-    /*! Copy lower triangle to upper triangle */
-    void copy_lower_to_upper();
-    /*! Copy upper triangle to lower triangle */
-    void copy_upper_to_lower();
-    /*! Zero lower triangle */
-    void zero_lower();
-    /*! Zero upper triangle */
-    void zero_upper();
-    /*! Zero row */
-    void zero_row(int h, int i);
-    /*! Zero column */
-    void zero_column(int h, int i);
 
     // Reference versions of the above functions
     /// Transform a by transformer save result to this

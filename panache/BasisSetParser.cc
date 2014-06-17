@@ -107,8 +107,6 @@ std::vector<std::string> BasisSetParser::load_file(const std::string& filename)
     if (!infile)
         throw RuntimeError("BasisSetParser::parse: Unable to open basis set file: " + filename);
 
-    bool found_basisname = false;
-
     while (getline(infile, text).good())
         lines.push_back(text);
 
