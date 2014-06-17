@@ -17,7 +17,6 @@ add_library(panache
             Matrix.cc
             Molecule.cc
             Output.cc
-            PetiteList.cc
             PointGroup.cc
             ShellInfo.cc
             ShellRotation.cc

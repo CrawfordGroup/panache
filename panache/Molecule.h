@@ -186,7 +186,7 @@ public:
     /// The number of active fragments in the molecule
     int nactive_fragments();
     /// Number of atoms
-    int natom() const { return atoms_.size(); }
+    unsigned int natom() const { return atoms_.size(); }
     /// Number of all atoms (includes dummies)
     int nallatom() const { return full_atoms_.size(); }
     /// Nuclear charge of atom

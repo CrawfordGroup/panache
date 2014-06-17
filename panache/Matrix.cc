@@ -167,7 +167,6 @@ Matrix::Matrix(const string& name, const Dimension& rows, const Dimension& cols,
     matrix_ = NULL;
     symmetry_ = symmetry;
 
-    // This will happen in PetiteList::aotoso()
     if (rows.n() == 1) {
         nirrep_ = cols.n();
         rowspi_ = Dimension(nirrep_);
@@ -195,7 +194,6 @@ Matrix::Matrix(const Dimension& rows, const Dimension& cols, int symmetry)
     matrix_ = NULL;
     symmetry_ = symmetry;
 
-    // This will happen in PetiteList::aotoso()
     if (rows.n() == 1) {
         nirrep_ = cols.n();
         rowspi_ = Dimension(nirrep_);

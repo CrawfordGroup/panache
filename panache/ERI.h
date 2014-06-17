@@ -15,10 +15,12 @@
 #include "SlowERI.h"
 #endif
 
+using std::shared_ptr;
+
 namespace panache {
 
-inline std::shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
-                                            shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
+inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
+                                       shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
 {
             #ifdef USE_LIBINT
               return std::shared_ptr<TwoBodyAOInt>(new LibintERI(bs1, bs2, bs3, bs4));
@@ -31,9 +33,9 @@ inline std::shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_p
             #endif
 }
 
-inline std::shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
-                                               shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
-                                               shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
+inline shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
+                                          shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
+                                          shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
 {
             #ifdef USE_LIBINT
               return std::shared_ptr<TwoBodyAOInt>(new LibintErfERI(omega, bs1, bs2, bs3, bs4));
