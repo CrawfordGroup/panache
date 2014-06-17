@@ -4,27 +4,19 @@ add_library(panache
             BasisSet.cc
             BasisSetParser.cc
             CartesianIter.cc
-            CharacterTable.cc
-            CoordEntry.cc
             DFTensor.cc
             Dimension.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc
             IntegralParameters.cc
-            IrreducibleRepresentation.cc
             Math.cc
             Matrix.cc
             Molecule.cc
             Output.cc
-            PointGroup.cc
             ShellInfo.cc
-            ShellRotation.cc
             SolidHarmonic.cc
             SphericalTransform.cc
-            SymRep.cc
-            SymmOps.cc
-            SymmetryOperation.cc
             TwoBodyAOInt.cc
             Vector.cc
             block_matrix.cc
