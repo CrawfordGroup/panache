@@ -356,6 +356,66 @@ void DFTensor::SetOutputBuffer(double * buf, size_t size)
 }
 
 
+#ifdef PANACHE_DISKPREFETCH
+int DFTensor::GetBatch_Base(int ntoget)
+{
+    int actualtoget = std::min(ntoget, naux_ - curq_);
+
+    if(actualtoget <= 0)
+        return 0;
+
+    if(isinmem_)
+    {
+        std::copy(qso_.get() + curq_*nsotri_, qso_.get() + (curq_+actualtoget)*nsotri_, q_.get());
+        curq_ += actualtoget;
+    }
+    else
+    {
+        if(curq_ == 0)
+        {
+            // first time through - just grab the data
+            matfile_->read(reinterpret_cast<char *>(q_.get()), actualtoget*nsotri_*sizeof(double));
+        }
+        else
+        {
+            // wait for the filling of q2_ to finish
+            int futureget = fill_future_.get();
+
+            if(futureget != actualtoget)
+            {
+                std::cout << "Error: future returned " << futureget << " but I expected " << actualtoget << "\n";
+                throw RuntimeError("Async error");
+            }
+
+            // swap
+            std::swap(q_, q2_);
+        }
+
+        curq_ += actualtoget;
+
+        // async get the next batch into q2
+        int futuretoget = std::min(ntoget, naux_ - curq_);
+
+        if(futuretoget != 0)
+        {
+            fill_future_ = std::async(std::launch::async,                                 // policy
+                                      [] (int toget, size_t bytes, double * outbuf, std::fstream * file)  // function/lambda
+                                         { 
+                                            //std::cout << "PREFETCHING " << toget << " MATRICES ( " << bytes << " BYTES)...";
+                                            file->read(reinterpret_cast<char *>(outbuf), bytes); 
+                                            //std::cout << "Done\n";
+                                            return toget;
+                                         },
+                                      futuretoget, futuretoget*nsotri_*sizeof(double), q2_.get(), matfile_.get()  // args to lambda
+                                    );
+        }
+    }
+
+
+    return actualtoget;
+}
+
+#else
 
 int DFTensor::GetBatch_Base(int ntoget)
 {
@@ -376,7 +436,7 @@ int DFTensor::GetBatch_Base(int ntoget)
 
     return actualtoget;
 }
-
+#endif
 
 
 
@@ -397,6 +457,10 @@ int DFTensor::GetBatch_Qso(void)
 
         // allocate buffers for some q
         q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+        #endif
     }
 
 
@@ -437,6 +501,10 @@ int DFTensor::GetBatch_Qso(void)
     {
         // free memory
         q_.reset();
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_.reset();
+        #endif
     }
 
     return gotten;
@@ -465,6 +533,12 @@ int DFTensor::GetBatch_Qmo(void)
 
         // allocate buffers for some q
         q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+        #endif
+
+
         q_single_ = std::unique_ptr<double[]>(new double[nq * nmo2_]);
         qc_ = std::unique_ptr<double[]>(new double[nq * nmo_ * nso_]);
     }
@@ -528,6 +602,11 @@ int DFTensor::GetBatch_Qmo(void)
         q_.reset();
         q_single_.reset();
         qc_.reset();
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_.reset();
+        #endif
+
     }
 
     return gotten;

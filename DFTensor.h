@@ -28,9 +28,7 @@
 #include "Matrix.h"
 #include "Timing.h"
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
+#include <future>
 
 
 namespace panache
@@ -123,12 +121,8 @@ protected:
 
 
     // Prefetching
-    std::thread prefetchthread_;
-
     std::unique_ptr<double[]> q2_;
-    std::mutex buf1, buf2;
-    std::condition_variable cv_filled, cv_used;
-
+    std::future<int> fill_future_;
 
 public:
 

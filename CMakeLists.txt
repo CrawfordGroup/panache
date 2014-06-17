@@ -89,12 +89,12 @@ endif(USE_64LAPACK)
 #####################################
 # Prefetching from disk
 #####################################
-set(USE_DISKPREFETCH FALSE CACHE BOOL "Prefetch next batch from disk in separate thread")
+set(PANACHE_DISKPREFETCH FALSE CACHE BOOL "Prefetch next batch from disk in separate thread")
 
-if(USE_DISKPREFETCH)
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_DISKPREFETCH")
+if(PANACHE_DISKPREFETCH)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_DISKPREFETCH")
   message(WARNING "Enabling disk prefetching. THIS IS EXPERIMENTAL")
-endif(USE_DISKPREFETCH)
+endif(PANACHE_DISKPREFETCH)
 
 
 #####################################
