@@ -210,14 +210,6 @@ public:
      */
     static shared_ptr<BasisSet> zero_ao_basis_set();
 
-    /// Global arrays of x, y, z exponents
-    static std::vector<Vector3> exp_ao[];
-
-    //! Returns the value of the sorted shell list.
-    int get_ao_sorted_shell(const int &i) { return sorted_ao_shell_list_[i]; }
-    //! Returns the vector of sorted shell list.
-    std::vector<int> get_ao_sorted_list() { return sorted_ao_shell_list_; }
-
     static
     std::shared_ptr<BasisSet> construct(const std::shared_ptr<BasisSetParser>& parser,
                                         const std::shared_ptr<Molecule>& mol,
@@ -228,23 +220,6 @@ public:
     void print_summary(FILE *out = stdout) const;
     void print_detail(FILE *out = stdout) const;
 };
-
-inline
-bool shell_sorter_ncenter(const GaussianShell& d1, const GaussianShell& d2)
-{
-    return d1.ncenter() < d2.ncenter();
-}
-
-inline
-bool shell_sorter_am(const GaussianShell& d1, const GaussianShell& d2)
-{
-    return d1.am() < d2.am();
-}
-
-
-// Free functions
-int **compute_shell_map(int **atom_map, const std::shared_ptr<BasisSet> &);
-void delete_shell_map(int **shell_map, const std::shared_ptr<BasisSet> &);
 
 } // close namespace panache
 
