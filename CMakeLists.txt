@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(panache CXX)
+enable_language(C) # Required for find_package(lapack)
+enable_language(Fortran) # Test program
+
 
 ###################################################
 # A simple macro that sets a boolean
@@ -12,7 +15,8 @@ macro(PATH_TO_BOOL PATHVAR BOOLVAR)
     set(${BOOLVAR} False)
   else(${PATHVAR} STREQUAL "")
     set(${BOOLVAR} True)
-    list(APPEND PANACHE_CXX_INCLUDEDIRS ${${PATHVAR}})
+    set(LIBINT_INCLUDEDIR ${${PATHVAR}}/include)
+    set(LIBINT_LIBRARYDIR ${${PATHVAR}}/lib)
   endif(${PATHVAR} STREQUAL "")
 endmacro(PATH_TO_BOOL PATHVAR BOOLVAR)
 
@@ -26,21 +30,24 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 
-#####################################################
-# Include the header files from the source directory
-#####################################################
-list(APPEND PANACHE_CXX_INCLUDEDIRS ${CMAKE_SOURCE_DIR})
-
-
 #####################################
 # Compiler flags
 #####################################
+# PANACHE_CXX_FLAGS - flags for main library
+# RUNTEST_CXX_FLAGS - flags for the C++ test program
+# FRUNTEST_F90_FLAGS - flags for the Fortran90 test program
+
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
 # -DFC_SYMBOL - what fortran symbols to use in libqt
 list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
+
+# Ditto for test programs
+list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
+list(APPEND FRUNTEST_F90_FLAGS "-warn all")
+
 
 
 #####################################
@@ -52,7 +59,10 @@ if(PANACHE_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)
     message(STATUS "Found OpenMP. Remember to link to OpenMP libraries when building your final project")
-    list(APPEND PANACHE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${OpenMP_CXX_FLAGS}")
+    list(APPEND PANACHE_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
+    list(APPEND RUNTEST_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
+    # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
+    list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else(OPENMP_FOUND)
     message(WARNING "OpenMP was not found! Disabling...")
   endif(OPENMP_FOUND)
@@ -68,6 +78,18 @@ if(PANACHE_TIMING)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_TIMING")
   message(STATUS "Enabling timing of panache functionality")
 endif(PANACHE_TIMING)
+
+
+
+############################
+# Find lapack/blas/mkl, etc
+############################
+find_package(LAPACK)
+if(NOT LAPACK_FOUND)
+  message(FATAL_ERROR "LAPACK MODULE NOT FOUND")
+else(NOT LAPACK_FOUND)
+  message(STATUS "LAPACK Libraries: ${LAPACK_LIBRARIES}")
+endif(NOT LAPACK_FOUND)
 
 
 
@@ -127,12 +149,12 @@ list(APPEND PANACHE_CXX_FLAGS "-Drestrict=${RESTRICT}")
 # Path to various libints
 # These should be set by the user using the command line or cmake gui
 ################################################################
-set(LIBINT_INCLUDE_PATH "" CACHE FILEPATH "Path to libint include directory")
-set(LIBINT2_INCLUDE_PATH "" CACHE FILEPATH "Path to libint2 include directory")
+set(LIBINT_PATH "" CACHE FILEPATH "Path to libint directory")
+set(LIBINT2_PATH "" CACHE FILEPATH "Path to libint2 directory")
 
 # Parse these using the macro
-PATH_TO_BOOL(LIBINT_INCLUDE_PATH USE_LIBINT)
-PATH_TO_BOOL(LIBINT2_INCLUDE_PATH USE_LIBINT2)
+PATH_TO_BOOL(LIBINT_PATH USE_LIBINT)
+PATH_TO_BOOL(LIBINT2_PATH USE_LIBINT2)
 
 # You can't use both versions of libint...
 if(USE_LIBINT AND USE_LIBINT2)
@@ -151,24 +173,35 @@ endif(NOT(USE_LIBINT OR USE_LIBINT2))
 ################################################################
 # Print some messages and set the defines for use in the code
 # Also add .cc files to be compiled based on the libint version
+# as well as libint library filename
 ################################################################
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 if(USE_LIBINT)
-  message(STATUS "Using Libint headers from ${LIBINT_INCLUDE_PATH}")
+  set(LIBINT_LIBRARY "${LIBINT_LIBRARYDIR}/libint.a")
   set(LIBINT_FILES "${LIBINT_FILES}" LibintTwoElectronInt.cc LibintERI.cc)
+  message(STATUS "Using Libint headers from ${LIBINT_INCLUDEDIR}")
+  message(STATUS "Using Libint library from ${LIBINT_LIBRARYDIR}")
+  message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT")
 endif(USE_LIBINT)
 
 if(USE_LIBINT2)
-  message(STATUS "Using Libint2 headers from ${LIBINT2_INCLUDE_PATH}")
+  # Note - must add directory with header files. libint2.h includes
+  # other files via #include <somefile.h>. Therefore, just adding
+  # .../include and then using #include <libint2/libint2.h> will not work!
+  set(LIBINT_INCLUDEDIR ${LIBINT_INCLUDEDIR}/libint2)
+  set(LIBINT_LIBRARY "${LIBINT_LIBRARYDIR}/libint2.a")
   set(LIBINT_FILES "${LIBINT_FILES}" Libint2TwoElectronInt.cc Libint2ERI.cc)
+  message(STATUS "Using Libint2 headers from ${LIBINT_INCLUDEDIR}")
+  message(STATUS "Using Libint2 library from ${LIBINT_LIBRARYDIR}")
+  message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT2")
 endif(USE_LIBINT2)
 
 if(USE_SLOWERI)
-  message(STATUS "Using Libint2 headers from ${LIBINT2_INCLUDE_PATH}")
+  message(STATUS "Using internal SlowERI")
   set(LIBINT_FILES "${LIBINT_FILES}" SlowTwoElectronInt.cc SlowERI.cc SlowERIBase.cc)
   list(APPEND PANACHE_CXX_FLAGS "-DUSE_SLOWERI")
 endif(USE_SLOWERI)
@@ -180,6 +213,7 @@ endif(USE_SLOWERI)
 # Add subdirectories
 ######################
 add_subdirectory(panache)
+add_subdirectory(runtest)
 
 
 

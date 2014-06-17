@@ -8,8 +8,6 @@ add_library(panache
             CoordEntry.cc
             DFTensor.cc
             Dimension.cc
-            ERDERI.cc
-            ERDTwoElectronInt.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc
@@ -55,6 +53,7 @@ add_library(panache
 string(REPLACE ";" " " PANACHE_CXX_FLAGS "${PANACHE_CXX_FLAGS}")
 set_target_properties(panache PROPERTIES COMPILE_FLAGS ${PANACHE_CXX_FLAGS})
 set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${PANACHE_CXX_INCLUDEDIRS}")
+set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${LIBINT_INCLUDEDIR}")
 
 
 # For now, install all header files
