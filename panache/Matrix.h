@@ -176,17 +176,6 @@ public:
     /// Destructor, frees memory
     ~Matrix();
 
-    /**
-     * Initializes a matrix
-     *
-     * @param nirreps Number of blocks in this matrix.
-     * @param rowspi Array of length nirreps giving row dimensionality.
-     * @param colspi Array of length nirreps giving column dimensionality.
-     */
-    void init(int nirrep, const int *rowspi, const int *colspi, const std::string& name = "", int symmetry = 0);
-
-    void init(const Dimension& rowspi, const Dimension& colspi, const std::string& name = "", int symmetry = 0);
-
     /// Creates an exact copy of the matrix and returns it.
     SharedMatrix clone() const;
 
@@ -546,8 +535,6 @@ public:
     void scale(double);
     /// Returns the sum of the squares of this
     double sum_of_squares();
-    /// Returns the rms of this
-    double rms();
     /// Add val to an element of this
     void add(int h, int m, int n, double val) {
         matrix_[h][m][n] += val;
@@ -571,55 +558,6 @@ public:
     void scale_row(int h, int m, double a);
     /// Scale column n of irrep h by a
     void scale_column(int h, int n, double a);
-
-    /** Special function to transform a SimpleMatrix (no symmetry) into
-     *  a symmetry matrix.
-     *
-     *  \param a SimpleMatrix to transform
-     *  \param transformer The matrix returned by PetiteList::aotoso() that acts as the transformer
-     */
-    void apply_symmetry(const SharedMatrix& a, const SharedMatrix& transformer);
-
-    /** Special function to transform a SimpleMatrix (no symmetry) into
-     *  a symmetry matrix.
-     *
-     *  \param a SimpleMatrix to transform
-     *  \param transformer The matrix returned by PetiteList::sotoao() that acts as the transformer
-     */
-    void remove_symmetry(const SharedMatrix& a, const SharedMatrix& SO2AO);
-    /** Performs a the transformation L^ F R. Result goes to this.
-     *
-     * \param L left transformation matrix (will be transposed)
-     * \param F matrix to apply transformation to
-     * \param R right transformation matrix (will not be transposed)
-     */
-    void transform(const SharedMatrix& L,
-                   const SharedMatrix& F,
-                   const SharedMatrix& R);
-
-    /// @{
-    /// Transform a by transformer save result to this
-    void transform(const Matrix* const a, const Matrix* const transformer);
-    void transform(const SharedMatrix& a, const SharedMatrix& transformer);
-    /// @}
-
-    /// @{
-    /// Transform this by transformer
-    void transform(const Matrix* const transformer);
-    void transform(const SharedMatrix& transformer);
-    /// @}
-
-    /// @{
-    /// Back transform a by transformer save result to this
-    void back_transform(const Matrix* const a, const Matrix* const transformer);
-    void back_transform(const SharedMatrix& a, const SharedMatrix& transformer);
-    /// @}
-
-    /// @{
-    /// Back transform this by transformer
-    void back_transform(const Matrix* const transformer);
-    void back_transform(const SharedMatrix& transformer);
-    /// @}
 
     /// Returns the vector dot product of this by rhs
     double vector_dot(const Matrix* const rhs);
@@ -790,10 +728,6 @@ public:
     double& operator()(int h, int i, int j) { return matrix_[h][i][j]; }
     const double& operator()(int h, int i, int j) const { return matrix_[h][i][j]; }
     /// @}
-
-    // Serializable pure virtual functions:
-    void send();
-    void recv();
 
     /// @{
     /// Checks matrix equality.
