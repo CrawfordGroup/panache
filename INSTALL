@@ -1,0 +1,79 @@
+libPANACHE Compilation/Installation
+===================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------
+CMake options
+--------------
+
+LIBINT_PATH
+LIBINT2_PATH
+
+    Path to the top level directory of libint or libint2. This directory
+    structure should be:
+
+    LIBINT2_PATH
+        include
+           libint2
+                libint2.h
+                (others) 
+        lib
+            libint2.a
+
+    or
+
+    LIBINT_PATH
+        include
+            libint
+                libtint.h
+                (others)
+        lib
+            libint.a
+
+
+
+USE_64LAPACK            
+
+    Enable if you plan on linking to 64-bit lapack or MKL (ie mkl ilp64
+    libraries)
+
+
+PANACHE_OPENMP
+
+    Enable OpenMP. Whether or not OpenMP is used depends on if your
+    compiler supports it.
+
+
+PANACHE_TIMING
+
+    Enable timing of some functions. Timings will be printed to the
+    usual output
+
+
+PANACHE_DISKPREFETCH
+
+    Prefetching of the next batch from disk. Highly experimental, and
+    requires a very new compiler (GCC 4.8 or Intel 15 [beta]).
+
+
+USE_64PANACHE
+
+    Use 64-bit C/Fortran interfaces to libpanache. May be required if
+    compiling the Fortran code with 64-bit integers.
+

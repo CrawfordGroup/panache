@@ -1,0 +1,22 @@
+/////////////////////////
+// MAINPAGE            //
+/////////////////////////
+/*! \mainpage
+
+\section intro_sec Introduction & Rationale
+
+
+
+
+
+\section compiling_link_sec Compiling & Installing
+see \ref compiling_page
+
+\section usage_link_sec Usage
+see \ref usage_page
+
+
+\section license_sec License
+TODO
+
+ */
