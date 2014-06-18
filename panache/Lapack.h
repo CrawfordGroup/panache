@@ -2,7 +2,6 @@
 #define PANACHE_LAPACK_H
 
 #include <cstdint>
-#include <cstdio> // will not be needed once schmidt and invert_matrix prototypes are moved
 #ifdef USE_64LAPACK
   #define int_t int64_t
 #else
@@ -10,11 +9,6 @@
 #endif
 
 namespace panache {
-
-//! \todo MOVE THESE
-void schmidt(double **A, int rows, int cols, FILE *outfile);
-double invert_matrix(double **a, double **y, int N, FILE *outfile);
-
 
 
 // BLAS

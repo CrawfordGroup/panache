@@ -48,7 +48,6 @@
 //
 
 #include <cmath>
-#include "libciomr.h"
 #include "Math.h"
 #include "Fjt.h"
 #include "IntegralParameters.h"
@@ -136,15 +135,13 @@ Taylor_Fjt::Taylor_Fjt(unsigned int mmax, double accuracy) :
     }
 
     // allocate the grid (see the comments below)
-    {
-        const int nrow = max_T_+1;
-        const int ncol = max_m_+1;
-        grid_ = block_matrix(nrow, ncol);
-        //grid_ = new double*[nrow];
-        //grid_[0] = new double[nrow*ncol];
-        //for(int r=1; r<nrow; ++r)
-        //    grid_[r] = grid_[r-1] + ncol;
-    }
+    const int nrow = max_T_+1;
+    const int ncol = max_m_+1;
+    grid_.allocate(nrow, ncol);
+    //grid_ = new double*[nrow];
+    //grid_[0] = new double[nrow*ncol];
+    //for(int r=1; r<nrow; ++r)
+    //    grid_[r] = grid_[r-1] + ncol;
 
     /*-------------------------------------------------------
     Tabulate the gamma function from t=delT to T_crit[m]:
@@ -179,7 +176,7 @@ Taylor_Fjt::Taylor_Fjt(unsigned int mmax, double accuracy) :
             } while (term > epsilon);
             //            } while (term > epsilon || term > sum*relative_zero_);
 
-            grid_[T_idx][m] = sum;
+            grid_(T_idx,m) = sum;
         }
     }
 }
@@ -189,8 +186,6 @@ Taylor_Fjt::~Taylor_Fjt()
     delete[] F_;
     delete[] T_crit_;
     T_crit_ = 0;
-    free_block(grid_);
-    grid_ = NULL;
 }
 
 /* Using the tabulated incomplete gamma function in gtable, compute
@@ -247,57 +242,57 @@ Taylor_Fjt::values(int l, double T)
     else {
         const int T_ind = (int)std::floor(0.5+T*oodelT_);
         const double h = T_ind * delT_ - T;
-        const double* F_row = grid_[T_ind] + l;
+        const double* F_row = &grid_(T_ind, l);
 
         for(int j=l; j>=jrecur; --j, --F_row) {
 
             /*--- Taylor interpolation ---*/
             F_[j] =          F_row[0]
-        #if TAYLOR_INTERPOLATION_ORDER > 0
+            #if TAYLOR_INTERPOLATION_ORDER > 0
                     +       h*(F_row[1]
-                   #endif
-                   #if TAYLOR_INTERPOLATION_ORDER > 1
-                               +oon[2]*h*(F_row[2]
-                              #endif
-                              #if TAYLOR_INTERPOLATION_ORDER > 2
-                                          +oon[3]*h*(F_row[3]
-                                         #endif
-                                         #if TAYLOR_INTERPOLATION_ORDER > 3
-                                                     +oon[4]*h*(F_row[4]
-                                                    #endif
-                                                    #if TAYLOR_INTERPOLATION_ORDER > 4
-                                                                +oon[5]*h*(F_row[5]
-                                                               #endif
-                                                               #if TAYLOR_INTERPOLATION_ORDER > 5
-                                                                           +oon[6]*h*(F_row[6]
-                                                                          #endif
-                                                                          #if TAYLOR_INTERPOLATION_ORDER > 6
-                                                                                      +oon[7]*h*(F_row[7]
-                                                                                     #endif
-                                                                                     #if TAYLOR_INTERPOLATION_ORDER > 7
-                                                                                                 +oon[8]*h*(F_row[8])
-                                                                                     #endif
-                                                                                     #if TAYLOR_INTERPOLATION_ORDER > 6
-                                                                                                 )
-                                                                          #endif
-                                                                          #if TAYLOR_INTERPOLATION_ORDER > 5
-                                                                                      )
-                                                               #endif
-                                                               #if TAYLOR_INTERPOLATION_ORDER > 4
-                                                                           )
-                                                    #endif
-                                                    #if TAYLOR_INTERPOLATION_ORDER > 3
-                                                                )
-                                         #endif
-                                         #if TAYLOR_INTERPOLATION_ORDER > 2
-                                                     )
-                              #endif
-                              #if TAYLOR_INTERPOLATION_ORDER > 1
-                                          )
-                   #endif
-                   #if TAYLOR_INTERPOLATION_ORDER > 0
-                               )
-        #endif
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 1
+                    +oon[2]*h*(F_row[2]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 2
+                    +oon[3]*h*(F_row[3]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 3
+                    +oon[4]*h*(F_row[4]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 4
+                    +oon[5]*h*(F_row[5]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 5
+                    +oon[6]*h*(F_row[6]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 6
+                    +oon[7]*h*(F_row[7]
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 7
+                    +oon[8]*h*(F_row[8])
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 6
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 5
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 4
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 3
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 2
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 1
+                    )
+            #endif
+            #if TAYLOR_INTERPOLATION_ORDER > 0
+                    )
+            #endif
                     ;
         } // interpolation for F_j(T), jrecur<=j<=l
     } // if T < T_crit

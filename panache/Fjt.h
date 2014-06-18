@@ -51,6 +51,7 @@
 #define PANACHE_FJT_H
 
 #include <memory>
+#include "SimpleMatrix.h"
 
 namespace panache {
 
@@ -82,7 +83,7 @@ public:
     /// Implements Fjt::values()
     double *values(int J, double T);
 private:
-    double **grid_;            /* Table of "exact" Fm(T) values. Row index corresponds to
+    SimpleMatrix grid_;            /* Table of "exact" Fm(T) values. Row index corresponds to
                                   values of T (max_T+1 rows), column index to values
                                   of m (max_m+1 columns) */
     double delT_;              /* The step size for T, depends on cutoff */

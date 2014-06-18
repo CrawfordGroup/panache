@@ -18,20 +18,9 @@ add_library(panache
             SphericalTransform.cc
             TwoBodyAOInt.cc
             Vector.cc
-            block_matrix.cc
             c_interface.cc
             fortran_interface.cc
             c_convert.cc
-            dot.cc
-            init_array.cc
-            int_array.cc
-            invert.cc
-            lubksb.cc
-            ludcmp.cc
-            schmidt.cc
-            sq_rsp.cc
-            sq_to_tri.cc
-            zero.cc
             Lapack.cc
             ${LIBINT_FILES}
             )

@@ -39,6 +39,7 @@ private:
         {
             delete [] data_;
             data_ = nullptr;
+            nrow_ = ncol_ = 0;
         }
     }
 
@@ -47,9 +48,14 @@ public:
     SimpleMatrix & operator=(const SimpleMatrix & rhs) = delete;
 
     SimpleMatrix(unsigned int nrow, unsigned int ncol)
-        : nrow_(nrow),ncol_(ncol)
+        : data_(nullptr),nrow_(nrow),ncol_(ncol)
     {
-        data_ = new double[nrow*ncol];
+        allocate(nrow,ncol);
+    }
+
+    SimpleMatrix(void)
+        : data_(nullptr),nrow_(0),ncol_(0)
+    {
     }
 
     unsigned int nrow(void) const
@@ -80,6 +86,14 @@ public:
     double * pointer(void)
     {
         return data_;
+    }
+
+    void allocate(unsigned int nrow, unsigned int ncol)
+    {
+        Delete_();
+        nrow_ = nrow;
+        ncol_ = ncol;
+        data_ = new double[nrow*ncol];
     }
 
     double const * pointer(void) const

@@ -4,8 +4,8 @@
 #include "BasisSet.h"
 #include "BasisFunctionMacros.h"
 #include "AOShellCombinationsIterator.h"
-#include "libciomr.h"
 #include "CartesianIter.h"
+
 namespace panache
 {
 

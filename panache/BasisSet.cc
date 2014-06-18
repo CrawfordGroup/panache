@@ -30,7 +30,6 @@
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
 #include "Molecule.h"
-#include "libciomr.h"
 #include "Output.h"
 #include "BasisSetParser.h"
 
