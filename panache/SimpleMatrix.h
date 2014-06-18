@@ -43,8 +43,14 @@ private:
     }
 
 public:
-    Matrix(const Matrix & rhs) = delete;
-    Matrix & operator=(const Matrix & rhs) = delete;
+    SimpleMatrix(const SimpleMatrix & rhs) = delete;
+    SimpleMatrix & operator=(const SimpleMatrix & rhs) = delete;
+
+    SimpleMatrix(unsigned int nrow, unsigned int ncol)
+        : nrow_(nrow),ncol_(ncol)
+    {
+        data_ = new double[nrow*ncol];
+    }
 
     unsigned int nrow(void) const
     {
@@ -56,13 +62,7 @@ public:
         return ncol_;
     }
 
-    Matrix(unsigned int nrow, unsigned int ncol)
-        : nrow_(nrow),ncol_(ncol)
-    {
-        data_ = new double[nrow*ncol];
-    }
-
-    ~Matrix()
+    ~SimpleMatrix()
     {
         Delete_();
     }

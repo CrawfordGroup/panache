@@ -1,16 +1,14 @@
 #ifndef PANACHE_SOLIDHARMONIC_H
 #define PANACHE_SOLIDHARMONIC_H
 
-
-//! \todo change to forward declaration after creating/moving matrix class
-#include "Matrix.h"
-
 namespace panache {
+
+class SimpleMatrix;
 
 namespace SolidHarmonic {
 
-void solidharm(unsigned int l, int m, unsigned int r2, Matrix& coefmat);
-void solidharmonic(int l, Matrix &coefmat);
+void solidharm(unsigned int l, int m, unsigned int r2, SimpleMatrix& coefmat);
+void solidharmonic(int l, SimpleMatrix &coefmat);
 
 // there ordering here is arbitrary and doesn't have to match the
 // basis set ordering

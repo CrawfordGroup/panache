@@ -42,7 +42,7 @@ private:
 
 
     void init();
-    void init_inverse();
+    //void init_inverse();
 
 
 public:
@@ -78,12 +78,14 @@ public:
         return r;
     }
 
+    /*
     static SphericalTransform GenerateInverse(int l, int subl = -1)
     {
         SphericalTransform r(l, subl);
         r.init_inverse();
         return r;
     }
+    */
 
 };
 

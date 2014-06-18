@@ -1,9 +1,10 @@
 #include <cmath>
+#include "SimpleMatrix.h"
 #include "SphericalTransform.h"
 #include "SolidHarmonic.h"
 #include "BasisFunctionMacros.h" // INT_**
 
-using panache::Matrix;
+using panache::SimpleMatrix;
 
 namespace panache {
 
@@ -11,7 +12,7 @@ void SphericalTransform::init()
 {
 //    output::printf("spher\n");
     int cartdim = INT_NCART(l_);
-    Matrix coefmat(cartdim, cartdim);
+    SimpleMatrix coefmat(cartdim, cartdim);
     coefmat.zero();
 
     // Compute the solid harmonic matrix elements
@@ -53,12 +54,12 @@ void SphericalTransform::init()
     }
 }
 
-
+/*
 void SphericalTransform::init_inverse()
 {
 //    output::printf("ispher\n");
     int cartdim = SolidHarmonic::ncart(l_);
-    Matrix coefmat(cartdim, cartdim);
+    SimpleMatrix coefmat(cartdim, cartdim);
     coefmat.zero();
 
     // Compute the solid harmonic matrix elements
@@ -99,5 +100,6 @@ void SphericalTransform::init_inverse()
         }
     }
 }
+*/
 
 } // close namespace

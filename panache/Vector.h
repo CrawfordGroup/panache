@@ -261,8 +261,6 @@ public:
     //const_iterator end_irrep(int h) const
     //    { return const_iterator(vector_[h]) + dimpi_[h]; }
     /// @}
-
-    friend class Matrix;
 };
 
 /*! \ingroup MINTS */
