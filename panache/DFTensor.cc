@@ -105,9 +105,8 @@ void DFTensor::print_header()
 
 void DFTensor::build_metric()
 {
-    std::shared_ptr<FittingMetric> met(new FittingMetric(auxiliary_, true));
-    met->form_eig_inverse();
-    metric_ = met->get_metric();
+    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_));
+    fittingmetric_->form_eig_inverse();
 }
 
 int DFTensor::QsoDimensions(int & naux, int & nso2)
@@ -136,7 +135,7 @@ void DFTensor::GenQso(bool inmem)
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
-    double** Jp = metric_->pointer();
+    double * J = fittingmetric_->get_metric();
 
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
@@ -214,8 +213,8 @@ void DFTensor::GenQso(bool inmem)
 
             // we now have a set of columns of B, although "condensed"
             // we can do a DGEMM with J
-            // Access to Jp are only reads, so that is safe in parallel
-            C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, Jp[0], naux_, B[threadnum], nm*nn, 0.0,
+            // Access to J are only reads, so that is safe in parallel
+            C_DGEMM('N','N',naux_, nm*nn, naux_, 1.0, J, naux_, B[threadnum], nm*nn, 0.0,
                     A[threadnum], nm*nn);
 
 
@@ -275,7 +274,7 @@ void DFTensor::GenQso(bool inmem)
 
         // we now have a set of columns of B, although "condensed"
         // we can do a DGEMM with J
-        C_DGEMM('N','N',naux_, nm*nm, naux_, 1.0, Jp[0], naux_, B[threadnum], nm*nm, 0.0,
+        C_DGEMM('N','N',naux_, nm*nm, naux_, 1.0, J, naux_, B[threadnum], nm*nm, 0.0,
                 A[threadnum], nm*nm);
 
 

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "DFTensor.h"
+#include "Matrix.h"
 #include "Output.h"
 #include "c_convert.h" // int_t comes in through here
 

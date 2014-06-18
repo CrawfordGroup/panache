@@ -34,17 +34,20 @@ class FittingMetric {
 protected:
     /// Pointer to the auxiliary basis set
     std::shared_ptr<BasisSet> aux_;
+
+    /// Number of auxiliary basis functions
+    int naux_;
+
     /// Pointer to the poisson basis set
     std::shared_ptr<BasisSet> pois_;
     /// Is the metric poisson?
     bool is_poisson_;
-    /// Should we force C1?
-    bool force_C1_;
     /// Range separation omega (0.0 if not used)
     double omega_;
 
     /// The fitting metric or symmetric inverse
-    SharedMatrix metric_;
+    double * metric_;
+
     /// The indices (per irrep) of pivots
     std::shared_ptr<IntVector> pivots_;
     /// The indices (per irrep) of reverse pivots
@@ -61,11 +64,11 @@ protected:
 public:
 
     /// DF Fitting Metric
-    FittingMetric(std::shared_ptr<BasisSet> aux, bool force_C1 = false);
+    FittingMetric(std::shared_ptr<BasisSet> aux);
     // DF Fitting Metric
-    FittingMetric(std::shared_ptr<BasisSet> aux, double omega, bool force_C1 = false);
+    FittingMetric(std::shared_ptr<BasisSet> aux, double omega);
     /// Poisson Fitting Metric
-    FittingMetric(std::shared_ptr<BasisSet> aux, std::shared_ptr<BasisSet> pois, bool force_C1 = false);
+    //FittingMetric(std::shared_ptr<BasisSet> aux, std::shared_ptr<BasisSet> pois, bool force_C1 = false);
 
     /// Destructor
     ~FittingMetric();
@@ -78,9 +81,11 @@ public:
     bool is_inverted() const {return is_inverted_; }
 
     /// The fitting metric or symmetric inverse
-    SharedMatrix get_metric() const {return metric_; }
+    double * get_metric() const {return metric_; }
+
     /// The vector of pivots (for stability) (pivoted->global)
     std::shared_ptr<IntVector> get_pivots() const {return pivots_; }
+
     /// The vector of back pivots (for stability) (global->pivoted)
     std::shared_ptr<IntVector> get_reverse_pivots() const {return rev_pivots_; }
 
@@ -91,18 +96,21 @@ public:
 
     /// Build the raw fitting metric (sets up indices to canonical)
     void form_fitting_metric();
+    /// Build the eigendecomposed half inverse metric (calls form_fitting_metric)
+    void form_eig_inverse(double tol = 1.0E-10);
+
+/*
     /// Build the Cholesky half inverse metric (calls form_fitting_metric)
     void form_cholesky_inverse();
     /// Build the QR half inverse metric (calls form_fitting_metric)
     void form_QR_inverse(double tol = 1.0E-10);
-    /// Build the eigendecomposed half inverse metric (calls form_fitting_metric)
-    void form_eig_inverse(double tol = 1.0E-10);
     /// Build the full inverse metric. NOT RECOMMENDED: Numerical stability (calls form_fitting_metric)
     void form_full_inverse();
     /// Build the full inverse metric.
     void form_full_eig_inverse(double tol = 1.0E-10);
     /// Build the full metric's Cholesky factor. RECOMMENDED: Numerical stability
     void form_cholesky_factor();
+*/
 };
 
 }

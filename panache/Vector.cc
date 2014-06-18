@@ -24,7 +24,6 @@
 #include "Lapack.h"
 #include <algorithm>
 #include <numeric>
-#include "Matrix.h"
 #include "Vector.h"
 #include "Output.h"
 
@@ -217,16 +216,6 @@ double *Vector::to_block_vector() {
     }
 
     return temp;
-}
-
-void Vector::gemv(bool transa, double alpha, Matrix* A, Vector* X, double beta)
-{
-    char trans = transa ? 't' : 'n';
-
-    for (int h =0; h < nirrep_; ++h) {
-        C_DGEMV(trans, A->rowspi_[h], A->colspi_[h], alpha, &(A->matrix_[h][0][0]),
-                A->rowspi_[h], &(X->vector_[h][0]), 1, beta, &(vector_[h][0]), 1);
-    }
 }
 
 double Vector::dot(Vector* X)

@@ -25,7 +25,6 @@
 
 #include <fstream>
 
-#include "Matrix.h"
 #include "Timing.h"
 
 #include <future>
@@ -36,6 +35,7 @@ namespace panache
 
 class Molecule;
 class BasisSet;
+class FittingMetric;
 
 namespace reorder
 {
@@ -60,7 +60,7 @@ protected:
     std::shared_ptr<BasisSet> auxiliary_;
 
     /// Symmetric inverse fitting metric
-    SharedMatrix metric_;
+    std::shared_ptr<FittingMetric> fittingmetric_;
 
     void common_init();
     void build_metric();

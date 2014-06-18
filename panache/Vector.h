@@ -32,7 +32,6 @@
 namespace panache {
 
 class Dimension;
-class Matrix;
 class VectorIterator;
 class Vector;
 typedef std::shared_ptr<Vector> SharedVector;
@@ -84,7 +83,7 @@ public:
     ~Vector();
 
     /**
-     * Convenient creation function return SharedMatrix
+     * Convenient creation function return SharedVector
      */
     static SharedVector create(const std::string& name,
                                const Dimension& dim);
@@ -212,9 +211,6 @@ public:
     void copy(const Vector* rhs);
     /// Copies rhs to this
     void copy(const Vector& rhs);
-
-    /// General matrix vector multiplication
-    void gemv(bool transa, double alpha, Matrix* A, Vector* X, double beta);
 
     /// Vector dot product
     double dot(Vector* X);

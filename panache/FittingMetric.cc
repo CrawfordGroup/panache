@@ -24,7 +24,6 @@
 #include <utility>
 #include <cstring> // memset
 
-#include "Matrix.h"
 #include "Vector.h"
 
 #include "ERI.h"
@@ -41,13 +40,20 @@
 namespace panache
 {
 
-FittingMetric::FittingMetric(std::shared_ptr<BasisSet> aux, bool force_C1) :
-    aux_(aux), is_poisson_(false), is_inverted_(false), force_C1_(force_C1), omega_(0.0)
+FittingMetric::FittingMetric(std::shared_ptr<BasisSet> aux) :
+    aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(0.0),
+    metric_(new double[naux_*naux_])
+{
+}
+
+FittingMetric::FittingMetric(std::shared_ptr<BasisSet> aux, double omega) :
+    aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(omega)
 {
 }
 
 FittingMetric::~FittingMetric()
 {
+    delete [] metric_;
 }
 
 void FittingMetric::form_fitting_metric()
@@ -55,12 +61,7 @@ void FittingMetric::form_fitting_metric()
     is_inverted_ = false;
     algorithm_ = "NONE";
 
-    // Sizing/symmetry indexing
-    int naux = aux_->nbf();
-
     // Build the full DF/Poisson matrix in the AO basis first
-    SharedMatrix AOmetric(new Matrix("AO Basis DF Metric", naux, naux));
-    double** W = AOmetric->pointer(0);
     std::shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
 
     // Only thread if not already in parallel (handy for local fitting)
@@ -111,8 +112,8 @@ void FittingMetric::form_fitting_metric()
                 {
                     int onu = aux_->shell(NU).function_index() + nu;
 
-                    W[omu][onu] = Jbuffer[thread][index];
-                    W[onu][omu] = Jbuffer[thread][index];
+                    //! \todo packed storage?
+                    metric_[omu*naux_+onu] = metric_[onu*naux_+omu] = Jbuffer[thread][index];
                 }
             }
         }
@@ -120,20 +121,70 @@ void FittingMetric::form_fitting_metric()
     delete[] Jbuffer;
     delete[] Jint;
 
-
-    metric_ = AOmetric;
-    metric_->set_name("SO Basis Fitting Metric");
-    pivots_ = std::shared_ptr<IntVector>(new IntVector(naux));
-    rev_pivots_ = std::shared_ptr<IntVector>(new IntVector(naux));
+    pivots_ = std::shared_ptr<IntVector>(new IntVector(naux_));
+    rev_pivots_ = std::shared_ptr<IntVector>(new IntVector(naux_));
     int* piv = pivots_->pointer();
     int* rpiv = pivots_->pointer();
-    for (int Q = 0; Q < naux; Q++)
+    for (int Q = 0; Q < naux_; Q++)
     {
         piv[Q] = Q;
         rpiv[Q] = Q;
     }
 }
 
+void FittingMetric::form_eig_inverse(double tol)
+{
+    is_inverted_ = true;
+    algorithm_ = "EIG";
+
+    form_fitting_metric();
+
+    //metric_->print();
+
+    int n = naux_;
+    int n2 = n*n;
+
+    // Copy J to W
+    double * W = new double[n2];
+    C_DCOPY(n*n,metric_,1,W,1);
+
+    double* eigval = new double[n];
+    int lwork = n * 3;
+    double* work = new double[lwork];
+    C_DSYEV('v','u',n,W,n,eigval,work,lwork);
+    delete[] work;
+
+    double * Jcopy = new double[n2];
+
+    C_DCOPY(n*n,W,1,Jcopy,1);
+
+    // Now form Jp^{-1/2} = U(T)*j'^{-1/2}*U,
+    // where j'^{-1/2} is the diagonal matrix of the inverse square roots
+    // of the eigenvalues, and U is the matrix of eigenvectors of J'
+    double max_J = eigval[n-1];
+
+    int nsig = 0;
+    for (int ind=0; ind<n; ind++)
+    {
+        if (eigval[ind] / max_J < tol || eigval[ind] <= 0.0)
+            eigval[ind] = 0.0;
+        else
+        {
+            nsig++;
+            eigval[ind] = 1.0 / sqrt(eigval[ind]);
+        }
+        // scale one set of eigenvectors by the diagonal elements j^{-1/2}
+        C_DSCAL(n, eigval[ind], W + ind*n, 1);
+    }
+    delete[] eigval;
+
+    C_DGEMM('T','N',n,n,n,1.0,Jcopy,n,W,n,0.0,metric_,n);
+
+    delete [] Jcopy;
+    delete [] W;
+}
+
+/*
 void FittingMetric::form_cholesky_inverse()
 {
     is_inverted_ = true;
@@ -248,64 +299,6 @@ void FittingMetric::form_QR_inverse(double tol)
     metric_->set_name("SO Basis Fitting Inverse (QR)");
 }
 
-void FittingMetric::form_eig_inverse(double tol)
-{
-    is_inverted_ = true;
-    algorithm_ = "EIG";
-
-    form_fitting_metric();
-
-    //metric_->print();
-
-    for (int h = 0; h < metric_->nirrep(); h++)
-    {
-
-        if (metric_->colspi()[h] == 0) continue;
-
-        double** J = metric_->pointer(h);
-        int n = metric_->colspi()[h];
-
-        // Copy J to W
-        SharedMatrix W(new Matrix("W", n, n));
-        double** Wp = W->pointer();
-        C_DCOPY(n*(unsigned long int)n,J[0],1,Wp[0],1);
-
-        double* eigval = new double[n];
-        int lwork = n * 3;
-        double* work = new double[lwork];
-        C_DSYEV('v','u',n,Wp[0],n,eigval,work,lwork);
-        delete[] work;
-
-        SharedMatrix Jcopy(new Matrix("Jcopy", n, n));
-        double** Jcopyp = Jcopy->pointer();
-
-        C_DCOPY(n*(unsigned long int)n,Wp[0],1,Jcopyp[0],1);
-
-        // Now form Jp^{-1/2} = U(T)*j'^{-1/2}*U,
-        // where j'^{-1/2} is the diagonal matrix of the inverse square roots
-        // of the eigenvalues, and U is the matrix of eigenvectors of J'
-        double max_J = eigval[n-1];
-
-        int nsig = 0;
-        for (int ind=0; ind<n; ind++)
-        {
-            if (eigval[ind] / max_J < tol || eigval[ind] <= 0.0)
-                eigval[ind] = 0.0;
-            else
-            {
-                nsig++;
-                eigval[ind] = 1.0 / sqrt(eigval[ind]);
-            }
-            // scale one set of eigenvectors by the diagonal elements j^{-1/2}
-            C_DSCAL(n, eigval[ind], Wp[ind], 1);
-        }
-        delete[] eigval;
-
-        C_DGEMM('T','N',n,n,n,1.0,Jcopyp[0],n,Wp[0],n,0.0,J[0],n);
-
-    }
-    metric_->set_name("SO Basis Fitting Inverse (Eig)");
-}
 void FittingMetric::form_full_eig_inverse(double tol)
 {
     is_inverted_ = true;
@@ -457,5 +450,6 @@ void FittingMetric::pivot()
             R[P[i]] = i;
     }
 }
+*/
 
 } // close namespace panache
