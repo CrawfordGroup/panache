@@ -11,7 +11,6 @@ add_library(panache
             GaussianShell.cc
             IntegralParameters.cc
             Math.cc
-            Matrix.cc
             Molecule.cc
             Output.cc
             ShellInfo.cc

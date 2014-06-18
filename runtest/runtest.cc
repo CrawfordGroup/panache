@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "DFTensor.h"
-#include "Matrix.h"
+#include "SimpleMatrix.h"
 #include "Output.h"
 #include "c_convert.h" // int_t comes in through here
 
@@ -350,7 +350,7 @@ int TestMatrix(const string & title, const string & reffile,
 }
 
 
-SharedMatrix ReadCMatrixFile(const string & filename)
+std::shared_ptr<SimpleMatrix> ReadCMatrixFile(const string & filename)
 {
     ifstream f(filename.c_str());
 
@@ -366,11 +366,11 @@ SharedMatrix ReadCMatrixFile(const string & filename)
 
         f >> nrow >> ncol;
 
-        SharedMatrix mat(new Matrix(nrow, ncol));
+        std::shared_ptr<SimpleMatrix> mat(new SimpleMatrix(nrow, ncol));
 
         for(int i = 0; i < nrow; i++)
         for(int j = 0; j < ncol; j++)
-            f >> mat->pointer(0)[i][j];
+            f >> (*mat)(i,j);
 
         return mat;
     }
@@ -519,7 +519,7 @@ int main(int argc, char ** argv)
         //mat = unique_ptr<double[]>(new double[naux*nmo2]);
         //dft.SetOutputBuffer(outbuf.get(), buffsize);
  
-        dft.SetCMatrix(cmat->pointer(0)[0], nmo, false);
+        dft.SetCMatrix(cmat->pointer(), nmo, false);
 
         while((n = dft.GetBatch_Qmo()))
         {
