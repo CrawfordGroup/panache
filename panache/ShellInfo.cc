@@ -70,7 +70,7 @@ double ShellInfo::primitive_normalization(int p)
     double tmp1 = l_ + 1.5;
     double g = 2.0 * exp_[p];
     double z = pow(g, tmp1);
-    double normg = sqrt( (pow(2.0, l_) * z) / (M_PI * sqrt(M_PI) * Math::double_factorial_nminus1(2*l_)));
+    double normg = sqrt( (pow(2.0, l_) * z) / (M_PI * sqrt(M_PI) * math::double_factorial_nminus1(2*l_)));
     return normg;
 }
 
@@ -94,7 +94,7 @@ void ShellInfo::erd_normalize_shell()
     }
     double prefac = 1.0;
     if(l_ > 1)
-        prefac = pow(2.0, 2*l_) / Math::double_factorial_nminus1(2*l_);
+        prefac = pow(2.0, 2*l_) / math::double_factorial_nminus1(2*l_);
     double norm = sqrt(prefac / sum);
     for(int j = 0; j < nprimitive(); j++){
         erd_coef_.push_back(original_coef_[j] * norm);
@@ -114,7 +114,7 @@ void ShellInfo::contraction_normalization()
         }
     }
 
-    double tmp = ((2.0*M_PI/M_2_SQRTPI) * Math::double_factorial_nminus1(2*l_))/pow(2.0, l_);
+    double tmp = ((2.0*M_PI/M_2_SQRTPI) * math::double_factorial_nminus1(2*l_))/pow(2.0, l_);
     double norm = sqrt(1.0 / (tmp*e_sum));
 
     // Set the normalization

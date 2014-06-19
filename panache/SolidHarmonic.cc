@@ -28,7 +28,7 @@ using namespace std;
 
 namespace panache {
 
-namespace SolidHarmonic {
+namespace solidharmonic {
 
 
 static uint64_t binomial(int n, int c1)

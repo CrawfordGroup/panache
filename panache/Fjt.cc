@@ -87,7 +87,7 @@ Taylor_Fjt::Taylor_Fjt(unsigned int mmax, double accuracy) :
     n=TAYLOR_ORDER terms here:
     error <= delT^n/(n+1)!
    ---------------------------------------*/
-    delT_ = 2.0*std::pow(cutoff_*Math::factorial(interp_order_+1),
+    delT_ = 2.0*std::pow(cutoff_*math::factorial(interp_order_+1),
                          1.0/interp_order_);
     oodelT_ = 1.0/delT_;
     max_m_ = mmax + interp_order_ - 1;
@@ -103,7 +103,7 @@ Taylor_Fjt::Taylor_Fjt(unsigned int mmax, double accuracy) :
       the interpolation
      ------------------------------------------*/
         double T = -log(cutoff_);
-        const double egamma = cutoff_ * sqrt_pi * Math::double_factorial_nminus1(2*m)/std::pow(2.0,m);
+        const double egamma = cutoff_ * sqrt_pi * math::double_factorial_nminus1(2*m)/std::pow(2.0,m);
         double T_new = T;
         double func;
         do {

@@ -1,6 +1,6 @@
 
 namespace panache {
-namespace Math {
+namespace math {
 
 
 //! \todo lookup table

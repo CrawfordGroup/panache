@@ -16,7 +16,7 @@ void SphericalTransform::init()
     coefmat.zero();
 
     // Compute the solid harmonic matrix elements
-    SolidHarmonic::solidharmonic(l_, coefmat);
+    solidharmonic::solidharmonic(l_, coefmat);
 
 //    output::printf("SphericalTransform: l = %d\n", l_);
 //    coefmat.print();
@@ -26,9 +26,9 @@ void SphericalTransform::init()
     int cartindex = 0;
 
     for (int i=1; i<=(l_-subl_)/2; ++i)
-        pureindex += SolidHarmonic::npure(subl_+2*i);
+        pureindex += solidharmonic::npure(subl_+2*i);
 
-    for (int p=0; p<SolidHarmonic::npure(subl_); ++p) {
+    for (int p=0; p<solidharmonic::npure(subl_); ++p) {
         cartindex = 0;
 //        for (int ii=0; ii<=l_; ++ii) {
 //            int a = l_ - ii;
@@ -39,7 +39,7 @@ void SphericalTransform::init()
             for (int b=0; (a+b)<=l_; ++b) {
                 int c = l_ - a -b;
 
-                int cart1 = SolidHarmonic::icart(a, b, c);
+                int cart1 = solidharmonic::icart(a, b, c);
                 int cart2 = INT_CARTINDEX(a+b+c, a, b);
 
 //                output::printf("cart1 = %d, p+pureindex=%d\n", cart1, p+pureindex);
@@ -58,12 +58,12 @@ void SphericalTransform::init()
 void SphericalTransform::init_inverse()
 {
 //    output::printf("ispher\n");
-    int cartdim = SolidHarmonic::ncart(l_);
+    int cartdim = solidharmonic::ncart(l_);
     SimpleMatrix coefmat(cartdim, cartdim);
     coefmat.zero();
 
     // Compute the solid harmonic matrix elements
-    SolidHarmonic::solidharmonic(l_, coefmat);
+    solidharmonic::solidharmonic(l_, coefmat);
 
     // Invert and transpose the coefficient matrix
     coefmat.invert();
@@ -74,9 +74,9 @@ void SphericalTransform::init_inverse()
     int cartindex = 0;
 
     for (int i=1; i<=(l_-subl_)/2; ++i)
-        pureindex += SolidHarmonic::npure(subl_+2*i);
+        pureindex += solidharmonic::npure(subl_+2*i);
 
-    for (int p=0; p<SolidHarmonic::npure(subl_); ++p) {
+    for (int p=0; p<solidharmonic::npure(subl_); ++p) {
         cartindex = 0;
 //        for (int ii=0; ii<=l_; ++ii) {
 //            int c = l_ - ii;
@@ -87,7 +87,7 @@ void SphericalTransform::init_inverse()
             for (int b=0; (a+b)<=l_; ++b) {
                 int c = l_ - a -b;
 
-                int cart1 = SolidHarmonic::icart(a, b, c);
+                int cart1 = solidharmonic::icart(a, b, c);
                 int cart2 = INT_CARTINDEX(a+b+c, a, b);
 
                 double coef = coefmat(cart1, p+pureindex);

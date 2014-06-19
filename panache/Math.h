@@ -3,7 +3,7 @@
 
 
 namespace panache {
-namespace Math {
+namespace math {
 
 double factorial(int n);
 double double_factorial(int n);

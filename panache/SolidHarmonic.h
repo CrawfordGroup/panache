@@ -5,7 +5,7 @@ namespace panache {
 
 class SimpleMatrix;
 
-namespace SolidHarmonic {
+namespace solidharmonic {
 
 void solidharm(unsigned int l, int m, unsigned int r2, SimpleMatrix& coefmat);
 void solidharmonic(int l, SimpleMatrix &coefmat);
