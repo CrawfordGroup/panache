@@ -1,3 +1,8 @@
+/*! \file
+ *  \brief C interface to the PANACHE library (source)
+ *  \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include <map>
 
 #include "c_interface.h"

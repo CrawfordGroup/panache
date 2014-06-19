@@ -1,5 +1,5 @@
 /*! \file
- *  \brief C interface to the PANACHE library
+ *  \brief C interface to the PANACHE library (header)
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -14,7 +14,7 @@ extern "C" {
 
     /*!
      * \brief Holds information about a single basis set shell
-     */ 
+     */
     struct C_ShellInfo
     {
         int_t nprim;    //!< Number of primitives in this shell
@@ -28,7 +28,7 @@ extern "C" {
 
     /*!
      * \brief Information about a basis function center
-     * 
+     *
      * \todo Rename?
      */
     struct C_AtomCenter
@@ -49,16 +49,16 @@ extern "C" {
      * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
      *
      * \param [in] ncenters    The number of basis function centers
-     * \param [in] atoms       Information about the centers. This is expected to be of length ncenters.
+     * \param [in] atoms       Information about the centers. This is expected to be of length \p ncenters.
      * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
      * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
-     *                                       Expected to be of length ncenters.
+     *                                       Expected to be of length \p ncenters.
      * \param [in] primary_shells  Information about each shell in the primary basis.
-     *                             Length should be the sum of primary_nshellspercenter.
+     *                             Length should be the sum of \p primary_nshellspercenter.
      * \param [in] aux_nshellspercenter  Number of shells on each center for the auxiliary (density fitting) basis.
-     *                                   Expected to be of length ncenters.
+     *                                   Expected to be of length \p ncenters.
      * \param [in] aux_shells  Information about each shell in the auxiliary (density fitting) basis.
-     *                         Length should be the sum of aux_nshellspercenter.
+     *                         Length should be the sum of \p aux_nshellspercenter.
      * \param [in] filename A full path to a file to be used if storing matrices to disk.
      *                      Not referenced if the disk is not used. Should not be set to "NULL", but
      *                      may be set to an empty string if disk is not to be used.
@@ -66,7 +66,7 @@ extern "C" {
      * \return A handle representing this particular density-fitting calculation.
      */
     int_t panache_init(int_t ncenters,
-                       C_AtomCenter * atoms, int_t normalized,  
+                       C_AtomCenter * atoms, int_t normalized,
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
                        const char * filename);
@@ -83,12 +83,12 @@ extern "C" {
      * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
      *
      * \param [in] ncenters    The number of basis function centers
-     * \param [in] atoms       Information about the centers. This is expected to be of length ncenters.
+     * \param [in] atoms       Information about the centers. This is expected to be of length \p ncenters.
      * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
      * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
-     *                                       Expected to be of length ncenters.
+     *                                       Expected to be of length \p ncenters.
      * \param [in] primary_shells  Information about each shell in the primary basis.
-     *                             Length should be the sum of primary_nshellspercenter.
+     *                             Length should be the sum of \p primary_nshellspercenter.
      * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
      * \param [in] filename A full path to a file to be used if storing matrices to disk.
      *                      Not referenced if the disk is not used. Should not be set to "NULL", but
@@ -125,7 +125,7 @@ extern "C" {
 
 
 
-    /*! 
+    /*!
      * \brief Queries information about the expected matrix dimensions
      *
      * Useful for determining buffer sizes or determining if Qso should be placed in memory.
@@ -147,7 +147,7 @@ extern "C" {
      * \brief Generates the basic Qso matrix
      *
      * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory. 
+     * about memory.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
@@ -166,7 +166,7 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] buffer A pointer to memory for a buffer (of \p bufsize size)
      * \param [in] bufsize Number of elements in \p buffer (not number of bytes)
-     */ 
+     */
     void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize);
 
 
@@ -235,28 +235,29 @@ extern "C" {
      *
      * No automatic handling, closing, etc, is done by PANACHE.
      *
-     * \param [in] out Output file pointer to use. 
+     * \param [in] out Output file pointer to use.
      *
-     */ 
+     */
     void panache_output(FILE * out);
 
 
 
 
-/*
-    int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
+    /*
+        int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
 
-    int_t C_CalculateERIMulti(int_t df_handle,
-                            double * qso, int_t qsosize,
-                            int_t shell1, int_t nshell1,
-                            int_t shell2, int_t nshell2,
-                            int_t shell3, int_t nshell3,
-                            int_t shell4, int_t nshell4,
-                            double * outbuffer, int_t buffersize);
+        int_t C_CalculateERIMulti(int_t df_handle,
+                                double * qso, int_t qsosize,
+                                int_t shell1, int_t nshell1,
+                                int_t shell2, int_t nshell2,
+                                int_t shell3, int_t nshell3,
+                                int_t shell4, int_t nshell4,
+                                double * outbuffer, int_t buffersize);
 
-    void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize);
-*/
-}
+        void C_ReorderQ_GAMESS(int_t df_handle, double * qso, int_t qsosize);
+    */
+} // end extern "C"
 
-    
+
 #endif
+

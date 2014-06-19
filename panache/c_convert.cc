@@ -1,3 +1,7 @@
+/*! \file
+ *  \brief Conversions from C-style arrays to C++ objects (source)
+ *  \author Benjamin Pritchard (ben@bennyp.org)
+ */
 
 #include "c_convert.h"
 
