@@ -24,6 +24,8 @@ extern "C" {
         double * coef;  //!< Coefficients of the primitives of this shell (expected to be of length nprim)
     };
 
+
+
     /*!
      * \brief Information about a basis function center
      * 
@@ -99,17 +101,136 @@ extern "C" {
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                         const char * auxfilename, const char * filename);
 
-    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans); 
+
+
+
+
+    /*!
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo
+     *
+     * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
+     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
+     *
+     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+     * changed after calling this function.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
+     * \param [in] nmo Number of MOs in this C matrix
+     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
+     *                          is in column-major order.
+     */
+    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans);
+
+
+
+
+    /*! 
+     * \brief Queries information about the expected matrix dimensions
+     *
+     * Useful for determining buffer sizes or determining if Qso should be placed in memory.
+     * The size of Qso (unpacked) will be naux * nso2, and batches of Qso will be read in
+     * multiples of nso2 (for panache_getbatch_qso()).
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] nso2 Number of primary basis functions squared (nso*nso)
+     * \return Total size of an unpacked Qso (ie naux * nso2)
+     */
+    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2);
+
+
+
+
+
+    /*!
+     * \brief Generates the basic Qso matrix
+     *
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory. 
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] inmem Store the Qso matrix in memoryof auxiliary basis functions
+     * \param [out] nso2 Number of primary basis functions squared (nso*nso)
+     * \return Total size of an unpacked Qso (ie naux * nso2)
+     */
     void panache_genqso(int_t df_handle, int_t inmem);
 
+
+
+    /*!
+     * \brief Sets the buffer used for storing batches of Qso or Qmo
+     *
+     * Batches are read in multiples of either nso2 (panache_getbatch_qso(), see panache_qsodimensions()) or
+     * nmo*nmo (panache_getbatch_qmo()). How many can fit in the buffer is determined automatically
+     * from the matsize parameter. Any 'left over' buffer space is not used.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] matout A pointer to memory for a buffer (of \p matsize size)
+     * \param [in] matsize Number of elements in \p matout (not number of bytes)
+     */ 
     void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize);
+
+
+
+
+    /*!
+     * \brief Retrieves a batch of Qso
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nso2 elements (see panache_qsodimensions()).
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \return The number of batches actually stored in the buffer.
+     */
     int_t panache_getbatch_qso(int_t df_handle);
+
+
+
+    /*!
+     * \brief Retrieves a batch of Qmo
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo*nmo elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \return The number of batches actually stored in the buffer.
+     */
     int_t panache_getbatch_qmo(int_t dfhandle);
 
+
+    /*!
+     * \brief Clean up a particular density-fitting calculation and free memory
+     *
+     * You should not attempt to use the handle afterwards
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF
+     *                       calculation to be cleaned up
+     */
     void panache_cleanup(int_t df_handle);
+
+
+
+    /*!
+     * \brief Cleans up all density fitting calculations
+     *
+     * All handles are invalid after this point
+     */
     void panache_cleanup_all(void);
 
-    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2);
+
 
 /*
     int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);

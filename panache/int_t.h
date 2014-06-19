@@ -10,7 +10,8 @@
 
 /*! \def int_t
  *
- *  \brief Set to either int64_t or int32_t, depending on the USE_64PANACHE option. See \ref USE_64PANACHE_sec
+ *  \brief Is set to either int64_t or int32_t, depending on the USE_64PANACHE option.
+ *         See \ref compiling_f64bit_sec
  */
 
 #ifdef USE_64PANACHE
@@ -22,7 +23,8 @@
 
 /*! \def lapack_int_t
  *
- *  \brief Set to either int64_t or int32_t, depending on the USE_64LAPACK option. See \ref USE_64LAPACK_sec
+ *  \brief Is set to either int64_t or int32_t, depending on the USE_64LAPACK option.
+ *         See \ref compiling_lapack64
  */
 #ifdef USE_64LAPACK
   #define lapack_int_t int64_t
