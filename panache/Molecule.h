@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ *  \brief Simple class to hold molecule information 
+ *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_MOLECULE_H
@@ -31,16 +14,24 @@
 
 namespace panache {
 
+
+/*!
+ * \brief Class to hold information about the system
+ */
 class Molecule
 {
 private:
+
+    /*!
+     * \brief Holds information about an atom or other center
+     */ 
     struct Atom
     {
-        std::string symbol;
-        double x,y,z;
+        std::string symbol; //!< Atomic symbol
+        Vector3 coord; //!< coordinates
 
         Atom(const std::string & symbol, double x, double y, double z)
-            : symbol(symbol),x(x),y(y),z(z) 
+            : symbol(symbol),coord({x,y,z})
         {   }
 
     };
@@ -48,43 +39,111 @@ private:
     std::vector<Atom> atoms_;
 
 public:
-    Molecule();
-
     // delete other copy constructors, etc
     Molecule(const Molecule& other) = delete;
     Molecule & operator=(const Molecule& other) = delete;
-    ~Molecule();
 
-    /**
-     * Add an atom to the molecule
-     * \param x cartesian coordinate
-     * \param y cartesian coordinate
-     * \param z cartesian coordinate
-     * \param symb atomic symbol to use
+    /*!
+     * \brief Default constructor
      */
-    void add_atom(double x, double y, double z, const std::string & symb);
+    Molecule()
+    { };
+
+
+    // no specific destructor needed
+
+
+    /*!
+     * \brief Add an atom to the molecule
+     * \param [in] x cartesian coordinate
+     * \param [in] y cartesian coordinate
+     * \param [in] z cartesian coordinate
+     * \param [in] symb atomic symbol to use
+     */
+    void add_atom(double x, double y, double z, const std::string & symb)
+    {
+        atoms_.push_back(Atom(symb, x, y, z));
+    }
                   
 
-    /// Number of atoms
+    /*!
+     *  \brief Returns the number of atoms
+     */
     unsigned int natom() const { return atoms_.size(); }
 
-    /// x position of atom
-    double x(int atom) const;
-    /// y position of atom
-    double y(int atom) const;
-    /// z position of atom
-    double z(int atom) const;
 
-    /// Returns a Vector3 with x, y, z position of atom
-    Vector3 xyz(int atom) const;
+    /*!
+     *  \brief Returns the x-coordinate of an atom
+     *  \param [in] atom Number of the atom to get the x-coordinate for
+     *  \return The x-coordinate of atom \p atom
+     */
+    double x(int atom) const
+    {
+        return atoms_[atom].coord[0];
+    }
 
-    /// Returns x, y, or z component of 'atom'
-    double xyz(int atom, int _xyz) const;
 
-    /// Returns the cleaned up label of the atom (C2 => C, H4 = H)
-    std::string symbol(int atom) const;
+    /*!
+     *  \brief Returns the y-coordinate of an atom
+     *  \param [in] atom Number of the atom to get the y-coordinate for
+     *  \return The y-coordinate of atom \p atom
+     */
+    double y(int atom) const
+    {
+        return atoms_[atom].coord[1];
+    }
+
+
+    /*!
+     *  \brief Returns the z-coordinate of an atom
+     *  \param [in] atom Number of the atom to get the z-coordinate for
+     *  \return The z-coordinate of atom \p atom
+     */
+    double z(int atom) const
+    {
+        return atoms_[atom].coord[2];
+    }
+
+
+    /*!
+     * \brief Returns a Vector3 with x, y, z position of an atom
+     * \param [in] atom Number of the atom to get the coordinates for
+     * \return All coordinates of atom \p atom
+     */
+    Vector3 xyz(int atom) const
+    {
+        return atoms_[atom].coord;
+    }
+
+
+    /*!
+     *  \brief Returns the x, y, or z-coordinate of an atom
+     *  \param [in] atom Number of the atom to get the coordinate for
+     *  \param [in] _xyz Coordinate number to get (0 = x, 1 = y, 2 = z)
+     *  \return The given coordinate of atom \p atom
+     */
+    double xyz(int atom, int _xyz) const
+    {
+        return atoms_[atom].coord[_xyz];
+    }
+
+
+
+    /*!
+     * \brief Returns the atomic symbol for an atom
+     * \param [in] atom Number of the atom to get the symbol for
+     * \return Symbol of atom \p atom
+     */
+    std::string symbol(int atom) const
+    {
+        return atoms_[atom].symbol;
+    }
 };
 
+
+/*!
+ * \brief A shared pointer to a Molecule object
+ */
 typedef std::shared_ptr<Molecule> SharedMolecule;
 
 }

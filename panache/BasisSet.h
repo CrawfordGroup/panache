@@ -212,7 +212,7 @@ public:
 
     static
     std::shared_ptr<BasisSet> construct(const std::shared_ptr<BasisSetParser>& parser,
-                                        const std::shared_ptr<Molecule>& mol,
+                                        const SharedMolecule& mol,
                                         const std::string& path);
 
 

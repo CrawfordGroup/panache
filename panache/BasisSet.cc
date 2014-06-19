@@ -46,7 +46,7 @@ BasisSet::BasisSet()
     initialized_shared_ = true;
 
     // Add a dummy atom at the origin, to hold this basis function
-    molecule_ = shared_ptr<Molecule>(new Molecule);
+    molecule_ = SharedMolecule(new Molecule);
     molecule_->add_atom(0.0, 0.0, 0.0, "");
     // Fill with data representing a single S function, at the origin, with 0 exponent
     n_uprimitive_ = 1;
@@ -116,7 +116,7 @@ void BasisSet::delete_arrays(void)
 }
 
 
-shared_ptr<Molecule> BasisSet::molecule() const
+SharedMolecule BasisSet::molecule() const
 {
     return molecule_;
 }
@@ -407,7 +407,7 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
 
 
 std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
-        const std::shared_ptr<Molecule>& mol,
+        const SharedMolecule& mol,
         const std::string& path)
 {
     std::vector<std::vector<ShellInfo>> basis_atom_shell;
