@@ -1,3 +1,8 @@
+/*! \file
+ *  \brief Functions for managing output to the terminal (source)
+ *  \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "Output.h"
 
 namespace
