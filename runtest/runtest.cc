@@ -5,6 +5,7 @@
 #include <array>
 #include <memory>
 #include <utility>
+#include <cmath>
 
 #include "DFTensor.h"
 #include "SimpleMatrix.h"
@@ -265,7 +266,7 @@ template<typename T> int TestAndPrint(const string & title, T val, T ref, T thre
 {
     bool ok = true;
 
-    T diff = abs(val - ref);
+    T diff = std::abs(val - ref);
     if(diff > threshold)
         ok = false;
 

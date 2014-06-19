@@ -21,6 +21,7 @@
  */
 
 #include <cstdlib>
+#include <cmath>
 
 #include "ShellInfo.h"
 #include "BasisFunctionMacros.h" // for INT_NCART and INT_NFUNC

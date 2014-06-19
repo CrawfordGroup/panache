@@ -41,7 +41,6 @@ Molecule::~Molecule()
 void Molecule::add_atom(double x, double y, double z,
                         const std::string & label)
 {
-    Vector3 temp(x, y, z);
     atoms_.push_back(Atom(label, x, y, z));
 }
 
@@ -52,7 +51,7 @@ std::string Molecule::symbol(int atom) const
 
 Vector3 Molecule::xyz(int atom) const
 {
-    return Vector3(atoms_[atom].x, atoms_[atom].y, atoms_[atom].z);
+    return Vector3({atoms_[atom].x, atoms_[atom].y, atoms_[atom].z});
 }
 
 double Molecule::x(int atom) const

@@ -30,6 +30,7 @@
 #include "Molecule.h"
 #include "BasisSet.h"
 #include "Lapack.h"
+#include "Exception.h"
 
 // for reordering
 #include "Orderings.h"
