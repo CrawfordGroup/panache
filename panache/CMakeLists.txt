@@ -17,7 +17,6 @@ add_library(panache
             SolidHarmonic.cc
             SphericalTransform.cc
             TwoBodyAOInt.cc
-            Vector.cc
             c_interface.cc
             fortran_interface.cc
             c_convert.cc

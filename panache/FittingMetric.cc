@@ -24,8 +24,6 @@
 #include <utility>
 #include <cstring> // memset
 
-#include "Vector.h"
-
 #include "ERI.h"
 
 #include "FittingMetric.h"
@@ -121,15 +119,10 @@ void FittingMetric::form_fitting_metric()
     delete[] Jbuffer;
     delete[] Jint;
 
-    pivots_ = std::shared_ptr<IntVector>(new IntVector(naux_));
-    rev_pivots_ = std::shared_ptr<IntVector>(new IntVector(naux_));
-    int* piv = pivots_->pointer();
-    int* rpiv = pivots_->pointer();
+    pivots_.resize(naux_);
+    rev_pivots_.resize(naux_);
     for (int Q = 0; Q < naux_; Q++)
-    {
-        piv[Q] = Q;
-        rpiv[Q] = Q;
-    }
+        pivots_[Q] = rev_pivots_[Q] = Q;
 }
 
 void FittingMetric::form_eig_inverse(double tol)

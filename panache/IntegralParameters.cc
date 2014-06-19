@@ -20,7 +20,6 @@
  *@END LICENSE
  */
 
-#include "Vector.h"
 #include "IntegralParameters.h"
 
 namespace panache {
@@ -30,7 +29,7 @@ CorrelationFactor::CorrelationFactor(unsigned int nparam)
 {
 }
 
-CorrelationFactor::CorrelationFactor(std::shared_ptr<Vector> coeff, std::shared_ptr<Vector> exponent)
+CorrelationFactor::CorrelationFactor(const std::vector<double> & coeff, const std::vector<double> & exponent)
 {
     set_params(coeff, exponent);
 }
@@ -41,16 +40,14 @@ CorrelationFactor::~CorrelationFactor()
     delete[] exponent_;
 }
 
-void CorrelationFactor::set_params(std::shared_ptr<Vector> coeff, std::shared_ptr<Vector> exponent)
+void CorrelationFactor::set_params(const std::vector<double> & coeff, const std::vector<double> & exponent)
 {
-    int nparam = coeff->dim();
+    int nparam = coeff.size();
     if (nparam) {
         coeff_ = new double[nparam];
         exponent_ = new double[nparam];
-        for (int i=0; i<nparam; ++i) {
-            coeff_[i] = coeff->get(0, i);
-            exponent_[i] = exponent->get(0, i);
-        }
+        std::copy(coeff.begin(), coeff.end(), coeff_);
+        std::copy(exponent.begin(), exponent.end(), exponent_);
     }
 }
 
@@ -58,30 +55,32 @@ FittedSlaterCorrelationFactor::FittedSlaterCorrelationFactor(double exponent)
     : CorrelationFactor(6)
 {
     // Perform the fit.
-    SharedVector exps(new Vector(6));
-    SharedVector coeffs(new Vector(6));
+    std::vector<double> exps(6);
+    std::vector<double> coeffs(6);
 
     slater_exponent_ = exponent;
 
     // The fitting coefficients
-    coeffs->set(0, 0, -0.3144);
-    coeffs->set(0, 1, -0.3037);
-    coeffs->set(0, 2, -0.1681);
-    coeffs->set(0, 3, -0.09811);
-    coeffs->set(0, 4, -0.06024);
-    coeffs->set(0, 5, -0.03726);
+    coeffs[0] = -0.3144;
+    coeffs[1] = -0.3037;
+    coeffs[2] = -0.1681;
+    coeffs[3] = -0.09811;
+    coeffs[4] = -0.06024;
+    coeffs[5] = -0.03726;
 
     // and the exponents
-    exps->set(0, 0, 0.2209);
-    exps->set(0, 1, 1.004);
-    exps->set(0, 2, 3.622);
-    exps->set(0, 3, 12.16);
-    exps->set(0, 4, 45.87);
-    exps->set(0, 5, 254.4);
+    exps[0] = 0.2209;
+    exps[1] = 1.004;
+    exps[2] = 3.622;
+    exps[3] = 12.16;
+    exps[4] = 45.87;
+    exps[5] = 254.4;
 
     // They just need to be scaled
     double expsq = exponent * exponent;
-    exps->scale(expsq);
+    for(auto & it : exps)
+        it *= expsq;
+
     set_params(coeffs, exps);
 }
 

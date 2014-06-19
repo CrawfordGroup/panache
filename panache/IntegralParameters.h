@@ -23,11 +23,9 @@
 #ifndef PANACHE_INTEGRALPARAMETERS_H
 #define PANACHE_INTEGRALPARAMETERS_H
 
-#include <memory>
+#include <vector>
 
 namespace panache {
-
-class Vector;
 
 class IntegralParameters
 {
@@ -49,12 +47,12 @@ private:
 
 public:
     CorrelationFactor(unsigned int nparam);
-    CorrelationFactor(std::shared_ptr<Vector> coeff,
-                      std::shared_ptr<Vector> exponent);
+    CorrelationFactor(const std::vector<double> & coeff,
+                      const std::vector<double> & exponent);
     virtual ~CorrelationFactor();
 
-    void set_params(std::shared_ptr<Vector> coeff,
-                    std::shared_ptr<Vector> exponent);
+    void set_params(const std::vector<double> & coeff,
+                    const std::vector<double> & exponent);
     double *exponent() const { return exponent_; }
     double *coeff() const { return coeff_; }
 };

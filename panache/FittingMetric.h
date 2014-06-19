@@ -23,11 +23,12 @@
 #ifndef PANACHE_FITTINGMETRIC_H
 #define PANACHE_FITTINGMETRIC_H
 
+#include <vector>
+
 namespace panache {
 
 class BasisSet;
 class Molecule;
-class IntVector;
 
 class FittingMetric {
 
@@ -49,9 +50,9 @@ protected:
     double * metric_;
 
     /// The indices (per irrep) of pivots
-    std::shared_ptr<IntVector> pivots_;
+    std::vector<int> pivots_;
     /// The indices (per irrep) of reverse pivots
-    std::shared_ptr<IntVector> rev_pivots_;
+    std::vector<int> rev_pivots_;
 
     /// The fitting algorithm selected
     std::string algorithm_;
@@ -84,10 +85,10 @@ public:
     double * get_metric() const {return metric_; }
 
     /// The vector of pivots (for stability) (pivoted->global)
-    std::shared_ptr<IntVector> get_pivots() const {return pivots_; }
+    std::vector<int> get_pivots() const {return pivots_; }
 
     /// The vector of back pivots (for stability) (global->pivoted)
-    std::shared_ptr<IntVector> get_reverse_pivots() const {return rev_pivots_; }
+    std::vector<int> get_reverse_pivots() const {return rev_pivots_; }
 
     /// The gaussian fitting basis
     std::shared_ptr<BasisSet> get_auxiliary_basis() const {return aux_; }
