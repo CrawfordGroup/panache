@@ -1,19 +1,70 @@
+/*! \file
+ *  \brief Fortran interface to the PANACHE library
+ *  \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
+
 #include <iostream>
 #include <cstring> // strncpy
 
 #include "c_interface.h"
 #include "Output.h"
 
-const std::string Z_to_sym [] = {
-//0-10
-"XXX ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"
-};
-
-
 
 extern "C" {
 
 
+    /*!
+     * \brief Initializes a new density-fitting calculation
+     *
+     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * is used to identify this particular calculation.
+     *
+     * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \param [in] ncenters    The number of basis function centers
+     * \param [in] xyz         Coordinates of the basis function centers. In order:
+     *                         (x1, x2, ..., xN, y1, y2, ..., yN, z1, z2, ..., zN)
+     * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+     * \param [in] symbollen   Length of each symbol in \p symbols
+     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
+     *
+     * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+     *                                       Expected to be of length ncenters.
+     * \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
+     *                         Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_is_pure  Whether each shell is pure/spherical or not (primary basis).
+     *                              Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_nprimpershell  Number of primitives in each shell of the primary basis. 
+     *                                    Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_exp  All exponents for all shells of the primary basis. 
+     *                          Length should be the sum of primary_nprimpershell, with grouping
+     *                          by shell.
+     * \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
+     *                          Length should be the sum of primary_nprimpershell, with grouping
+     *                          by shell.
+     *
+     * \param [in] aux_nshellspercenter  Number of shells on each center for the auxiliary basis.
+     *                                   Expected to be of length ncenters.
+     * \param [in] aux_am  Angular momentum of each shell (s = 0, p = 1, etc) in the auxiliary basis. 
+     *                     Length should be the sum of aux_nshellspercenter.
+     * \param [in] aux_is_pure  Whether each shell is pure/spherical or not (auxiliary basis).
+     *                          Length should be the sum of aux_nshellspercenter.
+     * \param [in] aux_nprimpershell  Number of primitives in each shell of the auxiliary basis. 
+     *                                Length should be the sum of aux_nshellspercenter.
+     * \param [in] aux_exp  All exponents for all shells of the auxiliary basis. 
+     *                      Length should be the sum of aux_nprimpershell, with grouping
+     *                      by shell.
+     * \param [in] aux_coef All basis function coefficients for all shells of the auxiliary basis. 
+     *                      Length should be the sum of aux_nprimpershell, with grouping
+     *                      by shell.
+     * \param [in] filename A full path to a file to be used if storing matrices to disk.
+     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                      may be set to an empty string if disk is not to be used.
+     * \param [in] filenamelen Actual length of \p filename
+     *
+     * \param [out] dfhandle A handle representing this particular density-fitting calculation.
+     */
     void panachef_init_(int_t * ncenters,
                        double * xyz, char * symbols, int_t * symbollen, int_t * normalized, 
                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
@@ -125,6 +176,45 @@ extern "C" {
     }
 
 
+    /*!
+     * \brief Initializes a new density-fitting calculation using an auxiliary basis set file
+     *
+     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * is used to identify this particular calculation.
+     *
+     * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \param [in] ncenters    The number of basis function centers
+     * \param [in] xyz         Coordinates of the basis function centers. In order:
+     *                         (x1, x2, ..., xN, y1, y2, ..., yN, z1, z2, ..., zN)
+     * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+     * \param [in] symbollen   Length of each symbol in \p symbols
+     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
+     *
+     * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+     *                                       Expected to be of length ncenters.
+     * \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
+     *                         Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_is_pure  Whether each shell is pure/spherical or not (primary basis).
+     *                              Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_nprimpershell  Number of primitives in each shell of the primary basis. 
+     *                                    Length should be the sum of primary_nshellspercenter.
+     * \param [in] primary_exp  All exponents for all shells of the primary basis. 
+     *                          Length should be the sum of primary_nprimpershell, with grouping
+     *                          by shell.
+     * \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
+     *                          Length should be the sum of primary_nprimpershell, with grouping
+     *                          by shell.
+     * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
+     * \param [in] auxfilenamelen Actual length of \p auxfilename
+     *
+     * \param [in] matfilename A full path to a file to be used if storing matrices to disk.
+     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                      may be set to an empty string if disk is not to be used.
+     * \param [in] matfilenamelen Actual length of \p filename
+     *
+     * \param [out] dfhandle A handle representing this particular density-fitting calculation.
+     */
     void panachef_init2_(int_t * ncenters,
                         double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
@@ -265,45 +355,167 @@ extern "C" {
 
     }
 
+
+    
+    /*!
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo
+     *
+     * The matrix is expected be nso x nmo (MOs in the columns) in column-major order.
+     * If it is nmo x nso, or the matrix is in row major order, set \p cmo_is_trans.
+     *
+     * \note This is different from panache_setcmatrix(), as fortran column-major order
+     * matrices are handled automatically.
+     *
+     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+     * changed after calling this function.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
+     * \param [in] nmo Number of MOs in this C matrix
+     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
+     *                          is in row-major order.
+     */
+    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
+    {
+        if(cmo_is_trans)
+          panache_setcmatrix(*df_handle, cmo, *nmo, 0);
+        else
+          panache_setcmatrix(*df_handle, cmo, *nmo, 1);
+    }
+
+
+
+    /*! 
+     * \brief Queries information about the expected matrix dimensions
+     *
+     * Useful for determining buffer sizes or determining if Qso should be placed in memory.
+     * The size of Qso (unpacked) will be naux * nso2, and batches of Qso will be read in
+     * multiples of nso2 (for panache_getbatch_qso()).
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] nso2 Number of primary basis functions squared (nso*nso)
+     * \param [out] Total size of an unpacked Qso tensor (ie naux * nso2)
+     */
     void panachef_qsodimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
     {
         *matsize = panache_qsodimensions(*df_handle, naux, nso2);
     }
 
 
+
+    /*!
+     * \brief Generates the basic Qso matrix
+     *
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory. 
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
+     */
     void panachef_genqso_(int_t * df_handle, int_t * inmem)
     {
         panache_genqso(*df_handle, *inmem);
     }
 
-    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
-    {
-        panache_setcmatrix(*df_handle, cmo, *nmo, *cmo_is_trans);
-    }
 
+
+
+    /*!
+     * \brief Sets the buffer used for storing batches of Qso or Qmo
+     *
+     * Batches are read in multiples of either nso2 (panache_getbatch_qso(), see panache_qsodimensions()) or
+     * nmo*nmo (panache_getbatch_qmo()). How many can fit in the buffer is determined automatically
+     * from the matsize parameter. Any 'left over' buffer space is not used.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] buffer A pointer to memory for a buffer (of \p matsize size)
+     * \param [in] bufsize Number of elements in \p matout (not number of bytes)
+     */ 
     void panachef_setoutputbuffer_(int_t * df_handle, double * buffer, int_t * bufsize)
     {
         panache_setoutputbuffer(*df_handle, buffer, *bufsize);
     }
 
+
+
+    /*!
+     * \brief Retrieves a batch of Qso
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nso2 elements (see panache_qsodimensions()).
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [out] nq The number of batches actually stored in the buffer.
+     */
     void panachef_getbatch_qso_(int_t * df_handle, int_t * nq)
     {
         *nq = panache_getbatch_qso(*df_handle);
     }
 
+
+
+    /*!
+     * \brief Retrieves a batch of Qmo
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo*nmo elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [out] nq The number of batches actually stored in the buffer.
+     */
     void panachef_getbatch_qmo_(int_t * df_handle, int_t * nq)
     {
         *nq = panache_getbatch_qmo(*df_handle);
     }
 
+
+
+    /*!
+     * \brief Clean up a particular density-fitting calculation and free memory
+     *
+     * You should not attempt to use the handle afterwards
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF
+     *                       calculation to be cleaned up
+     */
     void panachef_cleanup_(int_t * df_handle)
     {
         panache_cleanup(*df_handle);
     }
 
+
+
+
+    /*!
+     * \brief Cleans up all density fitting calculations
+     *
+     * All handles are invalid after this point
+     */
     void panachef_cleanup_all_(void)
     {
         panache_cleanup_all();
+    }
+
+
+    /*!
+     * \brief Sets the text output of PANACHE to stout
+     */ 
+    void panachef_stdout_(void)
+    {
+        panache::output::SetOutput(&std::cout);
     }
 
 /*
@@ -336,10 +548,6 @@ extern "C" {
     }
 */
 
-    void panachef_stdout_(void)
-    {
-        panache::output::SetOutput(&std::cout);
-    }
 
 }
 

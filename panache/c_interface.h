@@ -135,7 +135,7 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [out] naux Number of auxiliary basis functions
      * \param [out] nso2 Number of primary basis functions squared (nso*nso)
-     * \return Total size of an unpacked Qso (ie naux * nso2)
+     * \return Total size of an unpacked Qso tensor (ie naux * nso2)
      */
     int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2);
 
@@ -150,9 +150,7 @@ extern "C" {
      * about memory. 
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] inmem Store the Qso matrix in memoryof auxiliary basis functions
-     * \param [out] nso2 Number of primary basis functions squared (nso*nso)
-     * \return Total size of an unpacked Qso (ie naux * nso2)
+     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
      */
     void panache_genqso(int_t df_handle, int_t inmem);
 
@@ -166,8 +164,8 @@ extern "C" {
      * from the matsize parameter. Any 'left over' buffer space is not used.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] matout A pointer to memory for a buffer (of \p matsize size)
-     * \param [in] matsize Number of elements in \p matout (not number of bytes)
+     * \param [in] buffer A pointer to memory for a buffer (of \p bufsize size)
+     * \param [in] bufsize Number of elements in \p buffer (not number of bytes)
      */ 
     void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize);
 
@@ -229,6 +227,19 @@ extern "C" {
      * All handles are invalid after this point
      */
     void panache_cleanup_all(void);
+
+
+
+    /*!
+     * \brief Sets the text output of PANACHE to the specified file pointer
+     *
+     * No automatic handling, closing, etc, is done by PANACHE.
+     *
+     * \param [in] out Output file pointer to use. 
+     *
+     */ 
+    void panache_output(FILE * out);
+
 
 
 

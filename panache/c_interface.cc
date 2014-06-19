@@ -3,7 +3,7 @@
 #include "c_interface.h"
 #include "c_convert.h"
 #include "DFTensor.h"
-
+#include "Output.h"
 #include "Exception.h"
 #include "BasisSetParser.h"
 
@@ -102,12 +102,12 @@ extern "C" {
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
     }
 
-    void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize)
+    void panache_setoutputbuffer(int_t df_handle, double * buffer, int_t bufsize)
     {
         if(dftensors_.count(df_handle) == 0)
             throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        dftensors_[df_handle]->SetOutputBuffer(matout, matsize);
+        dftensors_[df_handle]->SetOutputBuffer(buffer, bufsize);
     
     }
 
@@ -151,6 +151,12 @@ extern "C" {
         *nso2 = t2;
         return tot;
     }
+
+    void panache_output(FILE * out)
+    {
+       panache::output::SetOutput(out); 
+    }
+
 
 /*
     int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
