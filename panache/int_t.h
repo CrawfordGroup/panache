@@ -1,5 +1,5 @@
 /*! \file
- * \brief Defines int_t to 32- or 64-bit
+ * \brief Defines some integer types to 32- or 64-bit
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -10,8 +10,7 @@
 
 /*! \def int_t
  *
- *  \brief Set to either int64_t or int32_t, depending on the USE_64PANACHE option
- *
+ *  \brief Set to either int64_t or int32_t, depending on the USE_64PANACHE option. See \ref USE_64PANACHE_sec
  */
 
 #ifdef USE_64PANACHE
@@ -19,5 +18,18 @@
 #else
     #define int_t int32_t
 #endif
+
+
+/*! \def lapack_int_t
+ *
+ *  \brief Set to either int64_t or int32_t, depending on the USE_64LAPACK option. See \ref USE_64LAPACK_sec
+ */
+#ifdef USE_64LAPACK
+  #define lapack_int_t int64_t
+#else
+  #define lapack_int_t int32_t
+#endif
+
+
 
 #endif
