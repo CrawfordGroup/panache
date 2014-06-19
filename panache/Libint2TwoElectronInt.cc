@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstring> // memset, etc
 #include "Libint2TwoElectronInt.h"
 #include "BasisSet.h"
@@ -5,6 +6,7 @@
 #include "AOShellCombinationsIterator.h"
 #include "Fjt.h"
 #include "Lapack.h"
+#include "PhysConst.h"
 
 namespace panache
 {

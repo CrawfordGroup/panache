@@ -26,6 +26,7 @@
 #include "ShellInfo.h"
 #include "BasisFunctionMacros.h" // for INT_NCART and INT_NFUNC
 #include "Math.h"
+#include "PhysConst.h"
 #include "Output.h"
 
 namespace panache {

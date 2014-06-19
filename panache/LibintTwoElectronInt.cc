@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cmath>
 #include <cstring> // memset, etc
 #include "LibintTwoElectronInt.h"
 #include "BasisSet.h"
@@ -6,6 +6,7 @@
 #include "AOShellCombinationsIterator.h"
 #include "Fjt.h"
 #include "Lapack.h"
+#include "PhysConst.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
