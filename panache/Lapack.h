@@ -1,12 +1,8 @@
 #ifndef PANACHE_LAPACK_H
 #define PANACHE_LAPACK_H
 
-#include <cstdint>
-#ifdef USE_64LAPACK
-  #define int_t int64_t
-#else
-  #define int_t int32_t
-#endif
+#include "int_t.h"
+
 
 namespace panache {
 
