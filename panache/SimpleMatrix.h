@@ -58,7 +58,7 @@ public:
      *
      */
     SimpleMatrix(unsigned int nrow, unsigned int ncol)
-        : data_(nullptr),nrow_(nrow),ncol_(ncol)
+        : data_(nullptr),nrow_(0),ncol_(0)
     {
         allocate(nrow,ncol);
     }
