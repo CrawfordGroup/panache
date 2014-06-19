@@ -73,7 +73,7 @@ protected:
     std::unique_ptr<std::fstream> matfile_;
 
     /// C matrix from the caller
-    double * Cmo_;
+    std::unique_ptr<double[]> Cmo_;
 
     /// Whether the matrix is the transpose or not (think calling from FORTRAN)
     bool Cmo_trans_;

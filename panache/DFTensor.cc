@@ -118,10 +118,12 @@ int DFTensor::QsoDimensions(int & naux, int & nso2)
 
 void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 {
-    Cmo_ = cmo;
     Cmo_trans_ = cmo_is_trans;
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
+
+    Cmo_ = std::unique_ptr<double[]>(new double[nmo_*nso_]);
+    std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get()); 
 }
 
 void DFTensor::GenQso(bool inmem)
@@ -514,7 +516,7 @@ int DFTensor::GetBatch_Qmo(void)
     timer_getbatch_qmo.Start();
 #endif
 
-    if(Cmo_ == nullptr)
+    if(!Cmo_)
         throw RuntimeError("Error - I don't have a C matrix!");
 
     int nq = (outbuffersize_ / nmo2_ );
@@ -564,18 +566,18 @@ int DFTensor::GetBatch_Qmo(void)
             if(Cmo_trans_)
             {
                 // matrix multiply w/ triangular matrix
-                C_DSYMM('R','L',nmo_,nso_,1.0, my_q_single, nso_, Cmo_, nso_, 0.0, my_qc, nso_);
+                C_DSYMM('R','L',nmo_,nso_,1.0, my_q_single, nso_, Cmo_.get(), nso_, 0.0, my_qc, nso_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_, nso_, 0.0, outbuffer_ + i*nmo2_, nmo_);
+                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_.get(), nso_, 0.0, outbuffer_ + i*nmo2_, nmo_);
             }
             else
             {
                 // matrix multiply w/ symmetric matrix
-                C_DSYMM('L','L',nso_,nmo_,1.0, my_q_single, nso_, Cmo_, nmo_, 0.0, my_qc, nmo_);
+                C_DSYMM('L','L',nso_,nmo_,1.0, my_q_single, nso_, Cmo_.get(), nmo_, 0.0, my_qc, nmo_);
 
                 // Then regular matrix multiplication
-                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_, nmo_, my_qc, nmo_, 0.0, outbuffer_ + i*nmo2_, nmo_);
+                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_.get(), nmo_, my_qc, nmo_, 0.0, outbuffer_ + i*nmo2_, nmo_);
             }
         }
     }
