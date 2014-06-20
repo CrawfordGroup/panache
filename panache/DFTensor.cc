@@ -1,29 +1,11 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Density fitting tensor generation and manipulation (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
-#include <sstream>
+
+
 #include <fstream>
 #include <algorithm>
-#include <utility>
-#include <cctype>
 
 #include "DFTensor.h"
 #include "FittingMetric.h"
@@ -53,7 +35,18 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
                    const std::string & filename)
     : primary_(primary), auxiliary_(auxiliary), filename_(filename)
 {
-    common_init();
+    output::printf("  ==> DF Tensor (by Rob Parrish) <==\n\n");
+
+    output::printf(" => Primary Basis Set <= \n\n");
+    primary_->print_detail();
+
+    output::printf(" => Auxiliary Basis Set <= \n\n");
+    auxiliary_->print_detail();
+
+    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_));
+    fittingmetric_->form_eig_inverse();
+
+
     curq_ = 0;
     Cmo_ = nullptr;
     Cmo_trans_ = false;
@@ -78,36 +71,6 @@ DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
 DFTensor::~DFTensor()
 {
     CloseFile();
-}
-
-void DFTensor::common_init()
-{
-    //! \todo remote print?
-    print_ = 0;
-    debug_ = 0;
-
-    print_header();
-
-    molecule_ = primary_->molecule();
-
-    build_metric();
-}
-
-void DFTensor::print_header()
-{
-    output::printf("  ==> DF Tensor (by Rob Parrish) <==\n\n");
-
-    output::printf(" => Primary Basis Set <= \n\n");
-    primary_->print_detail();
-
-    output::printf(" => Auxiliary Basis Set <= \n\n");
-    auxiliary_->print_detail();
-}
-
-void DFTensor::build_metric()
-{
-    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_));
-    fittingmetric_->form_eig_inverse();
 }
 
 int DFTensor::QsoDimensions(int & naux, int & nso2)
