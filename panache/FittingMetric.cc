@@ -62,7 +62,7 @@ void FittingMetric::form_fitting_metric()
     // Build the full DF/Poisson matrix in the AO basis first
 
     // Default constructor = zero basis set
-    SharedBasisSet zero;
+    SharedBasisSet zero(new BasisSet);
 
     // Only thread if not already in parallel (handy for local fitting)
     int nthread = 1;

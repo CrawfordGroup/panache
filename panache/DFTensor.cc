@@ -104,7 +104,7 @@ void DFTensor::GenQso(bool inmem)
     double * J = fittingmetric_->get_metric();
 
     // default constructor = zero basis
-    SharedBasisSet zero;
+    SharedBasisSet zero(new BasisSet);
 
     std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
     std::vector<const double *> eribuffers;
