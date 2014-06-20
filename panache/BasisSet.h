@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief A class to hold basis set information (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_BASISSET_H
@@ -36,190 +19,305 @@ typedef shared_ptr<Molecule> SharedMolecule;
 
 class BasisSetParser;
 
-/*! \ingroup MINTS */
-
-//! Basis set container class
-/*! Reads the basis set from a checkpoint file object. Also reads the molecule
-    from the checkpoint file storing the information in an internal Molecule class
-    which can be accessed using molecule().
+/*! 
+ * \brief Basis set container class
+ *
+ * Can be constructed by passing it raw ShellInfo objects
+ * or by specifying a molecule, file, and parser and a file
+ *
 */
 class BasisSet
 {
-    //! Array of gaussian shells
-    GaussianShell *shells_;
-
-    //! vector of shells numbers sorted in acending AM order.
-    std::vector<int> sorted_ao_shell_list_;
+private:
+    GaussianShell *shells_;  //!< Holds most of the shell information
 
     //! Molecule object.
-    shared_ptr<Molecule> molecule_;
+    SharedMolecule molecule_;
 
-    // Has static information been initialized?
-    static bool initialized_shared_;
+    int nao_;            //!< Number of atomic orbitals (Cartesian)
+    int nbf_;            //!< Number of basis functions (either cartesian or spherical)
+    int n_uprimitive_;   //!< The number of unique primitives
+    int n_shells_;       //!< Number of shells
+    int nprimitive_;     //!< Total number of primitives
+    int max_am_;         //!< Maximum angular momentum
+    int max_nprimitive_; //!< Maximum number of primitives in all shells
+    bool puream_;        //!< True if the basis set uses spherical basis functions
 
-    /*
-     * Scalars
-     */
-    /// Number of atomic orbitals (Cartesian)
-    int nao_;
-    /// Number of basis functions (either cartesian or spherical)
-    int nbf_;
-    /// The number of unique primitives
-    int n_uprimitive_;
-    /// The number of shells
-    int n_shells_;
-    /// The number of primitives
-    int nprimitive_;
-    /// The maximum angular momentum
-    int max_am_;
-    /// The maximum number of primitives in a shell
-    int max_nprimitive_;
-    /// Whether the basis set is uses spherical basis functions or not
-    bool puream_;
+    
+    int *n_prim_per_shell_;     //!< The number of primitives (and exponents) in each shell
+    int *shell_first_ao_;       //!< The first (Cartesian) atomic orbital in each shell
+    int *shell_first_basis_function_; //!< The first (Cartesian / spherical) basis function in each shell
+    int *shell_center_;         //!< Shell number to atomic center.
+    int *function_to_shell_;    //!< Which shell does a given (Cartesian / spherical) function belong to?
+    int *ao_to_shell_;          //!< Which shell does a given Cartesian function belong to?
+    int *function_center_;      //!< Which center is a given function on?
+    int *center_to_nshell_;     //!< How many shells are there on each center?
+    int *center_to_shell_;      //!< What's the first shell on each center?
 
-    /*
-     * Arrays
-     */
-    /// The number of primitives (and exponents) in each shell
-    int *n_prim_per_shell_;
-    /// The first (Cartesian) atomic orbital in each shell
-    int *shell_first_ao_;
-    /// The first (Cartesian / spherical) basis function in each shell
-    int *shell_first_basis_function_;
-    /// Shell number to atomic center.
-    int *shell_center_;
-    /// Which shell does a given (Cartesian / spherical) function belong to?
-    int *function_to_shell_;
-    /// Which shell does a given Cartesian function belong to?
-    int *ao_to_shell_;
-    /// Which center is a given function on?
-    int *function_center_;
-    /// How many shells are there on each center?
-    int *center_to_nshell_;
-    /// What's the first shell on each center?
-    int *center_to_shell_;
+    
+    double *uexponents_;                //!< The flattened lists of unique exponents
+    double *ucoefficients_;             //!< The flattened lists of unique contraction coefficients (normalized)
+    double *uoriginal_coefficients_;    //!< The flattened lists of unique contraction coefficients (as provided by the user)
+    double *uerd_coefficients_;         //!< The flattened lists of ERD normalized contraction coefficients
+    double *xyz_;                       //!< The flattened list of Cartesian coordinates for each atom
 
-    /// The flattened lists of unique exponents
-    double *uexponents_;
-    /// The flattened lists of unique contraction coefficients (normalized)
-    double *ucoefficients_;
-    /// The flattened lists of unique contraction coefficients (as provided by the user)
-    double *uoriginal_coefficients_;
-    /// The flattened lists of ERD normalized contraction coefficients
-    double *uerd_coefficients_;
-    /// The flattened list of Cartesian coordinates for each atom
-    double *xyz_;
 
-    void delete_arrays(void);
+    /*!
+     * \brief Constructs the basis set object from ShellInfo objects
+     *
+     * \warning molecule_ is expected to be set already!
+     *
+     * \param [in] shellmap A map of centers to vector of shells. That is,
+     *                      shellmap[0] contains a vector of all shells for the first center,
+     *                      shellmap[1] contains a vector of all shells for the second center, etc.
+     */ 
+    void construct_(const std::vector<std::vector<ShellInfo>> & shellmap);
 
 
 public:
+    /*!
+     * \brief Constructs an empty (zero) basis set
+     *
+     *  A zero BasisSet object that actually has a single s-function
+     *  at the origin with an exponent of 0.0 and contraction of 1.0.
+     */
     BasisSet();
 
+
+    /*!
+     * Frees all memory
+     */ 
     ~BasisSet();
 
+
+
+    /*!
+     * \brief Constructs a BasisSet with the given shells and molecule
+     *
+     * \param [in] mol A molecule (information about the centers for this basis set)
+     * \param [in] shellmap A map of centers to vector of shells. That is,
+     *                      shellmap[0] contains a vector of all shells for the first center,
+     *                      shellmap[1] contains a vector of all shells for the second center, etc.
+     */
     BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap);
 
-    /** Number of primitives.
-     *  @return The total number of primitives in all contractions.
+
+
+    /*!
+     * \brief Constructs a BasisSet from a file
+     *
+     * \param [in] parser An object that is used to parse the basis set file
+     * \param [in] mol A molecule (information about the centers for this basis set)
+     * \param [in] path Full path to a file containing the basis set in a format that \p parser can read. 
+     */
+    BasisSet(const std::shared_ptr<BasisSetParser> & parser,
+             const SharedMolecule & mol,
+             const std::string & path);
+
+
+    /*!
+     *  \brief Number of primitives.
+     *
+     *  \return The total number of primitives in all contractions.
      */
     int nprimitive() const             { return nprimitive_; }
-    /** Maximum number of primitives in a shell.
+
+
+    /*!
+     *  \brief Maximum number of primitives in a shell.
+     *
      *  Examines each shell and find the shell with the maximum number of primitives returns that
      *  number of primitives.
-     *  @return Maximum number of primitives.
+     *
+     *  \return Maximum number of primitives.
      */
     int max_nprimitive() const         { return max_nprimitive_; }
-    /** Number of shells.
-     *  @return Number of shells.
+
+
+    /*!
+     * \brief Number of shells.
+     *
+     * \return Number of shells in the basis set
      */
     int nshell() const                 { return n_shells_;  }
-    /** Number of atomic orbitals (Cartesian).
-     * @return The number of atomic orbitals (Cartesian orbitals, always).
+
+
+    /*!
+     * \brief Number of atomic orbitals (Cartesian).
+     *
+     * \return The number of atomic orbitals (Cartesian orbitals, always).
      */
     int nao() const                    { return nao_;         }
-    /** Number of basis functions (Spherical).
-     *  @return The number of basis functions (Spherical, if has_puream() == true).
+
+
+
+    /*!
+     *  \brief Number of basis functions (Spherical or cartesian)
+     *
+     *  \return The number of basis functions (Spherical, if has_puream() == true).
      */
     int nbf() const                    { return nbf_;         }
-    /** Maximum angular momentum used in the basis set.
-     *  @return Maximum angular momentum.
+
+
+
+    /*!
+     *  \brief Maximum angular momentum used in the basis set.
+     *
+     *  \return Maximum angular momentum.
      */
     int max_am() const                 { return max_am_;      }
-    /** Spherical harmonics?
-     *  @return true if using spherical harmonics
+
+
+
+    /*!
+     *  \brief Spherical harmonics?
+     *
+     *  \return true if using spherical harmonics
      */
     bool has_puream() const            { return puream_;      }
-    /** Compute the maximum number of basis functions contained in a shell.
-     *  @return The max number of basis functions in a shell.
+
+
+
+    /*!
+     *  \brief Compute the maximum number of basis functions contained in a shell.
+     *
+     *  \return The max number of basis functions in a shell.
      */
     int max_function_per_shell() const { return (puream_) ? 2*max_am_+1 : (max_am_+1)*(max_am_+2)/2; }
-    /** Molecule this basis is for.
-     *  @return Shared pointer to the molecule for this basis set.
+
+
+
+    /*!
+     * \brief Molecule this basis is for.
+     *
+     *  \return Shared pointer to the molecule for this basis set.
      */
-    shared_ptr<Molecule> molecule() const;
-    /** Given a shell what is its first AO function
-     *  @param i Shell number
-     *  @return The function number for the first function for the i'th shell.
+    SharedMolecule molecule() const { return molecule_; }
+
+
+
+    /*!
+     *  \brief Given a shell what is its first AO function
+     *
+     *  \param [in] i Shell number
+     *  \return The function number for the first function for the i'th shell.
      */
     int shell_to_ao_function(int i) const { return shell_first_ao_[i]; }
-    /** Given a shell what is its atomic center
-     *  @param i Shell number
-     *  @return The atomic center for the i'th shell.
+
+
+    /*!
+     *  \brief Given a shell what is its atomic center
+     *
+     *  \param [in] i Shell number
+     *  \return The atomic center for the i'th shell.
      */
     int shell_to_center(int i) const { return shell_center_[i]; }
-    /** Given a shell what is its first basis function (spherical) function
-     *  @param i Shell number
-     *  @return The function number for the first function for the i'th shell.
+
+
+
+    /*!
+     *  \brief Given a shell what is its first basis function (spherical) function
+     *
+     *  \param [in] i Shell number
+     *  \return The function number for the first function for the i'th shell.
      */
     int shell_to_basis_function(int i) const { return shell_first_basis_function_[i]; }
 
-    /** Given a function number what shell does it correspond to. */
+
+
+    /*!
+     *  \brief Shell corresponding to a given basis function
+     *
+     *  \param [in] i Number of a basis function
+     *  \return Number of the shell which contains function \p i
+     */
     int function_to_shell(int i) const { return function_to_shell_[i]; }
-    /** Given a function what is its atomic center
-     *  @param i Function number
-     *  @return The atomic center for the i'th function.
+
+
+
+    /*!
+     *  \brief Given a function what is its atomic center
+     *
+     *  \param [in] i Number of a basis function
+     *  \return Number of the atomic center for function \p i.
      */
     int function_to_center(int i) const { return function_center_[i]; }
 
-    /** Given a Cartesian function (AO) number what shell does it correspond to. */
+
+
+
+    /*!
+     *  \brief Given a Cartesian function (AO) number what shell does it correspond to.
+     *
+     *  \param [in] i Number of a cartesian AO
+     *  \return Number of the shell which contains cartesian AO function \p i
+     */
+
     int ao_to_shell(int i) const { return ao_to_shell_[i]; }
 
-    /** Return the si'th Gaussian shell
-     *  @param i Shell number
-     *  @return A shared pointer to the GaussianShell object for the i'th shell.
+
+    /*!
+     *  \brief Get a Gaussian shell
+     *
+     *  \param [in] si Number of the shell
+     *  \return A const reference GaussianShell object for shell \p si
      */
     const GaussianShell& shell(int si) const;
 
-    /** Return the i'th Gaussian shell on center
-     *  @param i Shell number
-     *  @return A shared pointer to the GaussianShell object for the i'th shell.
+
+
+    /*!
+     *  \brief Get a Gaussian shell on a given center
+     *
+     *  \param [in] si Shell number for center \p center
+     *  \param [in] center The number of the center
+     *  \return A const reference to the GaussianShell object for shell \p i on center \p center
      */
     const GaussianShell& shell(int center, int si) const;
 
-    /// Return the number of shells on a given center.
+
+    /*!
+     * \brief Get the number of shells on a given center.
+     *
+     * \param [in] i Number of the center
+     * \return Number of shells on center \p i
+     */
     int nshell_on_center(int i) const { return center_to_nshell_[i]; }
-    /// Return the overall shell number
+
+
+    /*!
+     * \brief Get the overall shell number for a shell on a given a center
+     *
+     * \param [in] center Center that the shell is on
+     * \param [in] shell Number of the shell on that center
+     * \return Absolute number for that shell
+     */
     int shell_on_center(int center, int shell) const { return center_to_shell_[center] + shell; }
 
-    /** Returns an empty basis set object.
+
+    /*!
+     * \brief Print a quick summary about this basis set
      *
-     *  Returns a BasisSet object that actually has a single s-function
-     *  at the origin with an exponent of 0.0 and contraction of 1.0.
-     *  @return A new empty BasisSet object.
+     * Information is printed through the global Output interface (see Output.h)
      */
-    static shared_ptr<BasisSet> zero_ao_basis_set();
-
-    static
-    std::shared_ptr<BasisSet> construct(const std::shared_ptr<BasisSetParser>& parser,
-                                        const SharedMolecule& mol,
-                                        const std::string& path);
+    void print_summary(void) const;
 
 
-    void print(FILE *out = stdout) const;
-    void print_summary(FILE *out = stdout) const;
-    void print_detail(FILE *out = stdout) const;
+    /*!
+     * \brief Print details about this basis set
+     *
+     * Details include all exponents and coefficients, etc.
+     *
+     * Information is printed through the global Output interface (see Output.h)
+     */
+    void print_detail(void) const;
 };
+
+
+/*!
+ * \brief A shared pointer to a BasisSet object
+ */
+typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 } // close namespace panache
 

@@ -159,7 +159,7 @@ public:
     /// Normalize the angular momentum component
     static double normalize(int l, int m, int n);
 
-    void print(FILE * out) const;
+    void print(void) const;
 };
 
 } // end namespace panache

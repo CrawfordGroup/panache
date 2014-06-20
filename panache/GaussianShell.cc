@@ -59,7 +59,7 @@ const double* GaussianShell::center() const
     return center_;
 }
 
-void GaussianShell::print(FILE *out) const
+void GaussianShell::print(void) const
 {
     output::printf("    %c %3d 1.00\n", AMCHAR(), nprimitive());
     for (int K = 0; K < nprimitive(); K++)

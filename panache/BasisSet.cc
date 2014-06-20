@@ -1,29 +1,8 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief A class to hold basis set information (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-/*!
-    \defgroup MINTS libmints: Integral library
-    \ingroup MINTS
-*/
 #include <cstdlib>
 #include <cstring> // memset
 
@@ -38,13 +17,9 @@ using namespace std;
 namespace panache
 {
 
-bool BasisSet::initialized_shared_ = false;
-
 // Constructs a zero AO basis set
 BasisSet::BasisSet()
 {
-    initialized_shared_ = true;
-
     // Add a dummy atom at the origin, to hold this basis function
     molecule_ = SharedMolecule(new Molecule);
     molecule_->add_atom(0.0, 0.0, 0.0, "");
@@ -91,12 +66,35 @@ BasisSet::BasisSet()
                                uexponents_, ShellInfo::GaussianType(0), 0, xyz_, 0);
 }
 
-BasisSet::~BasisSet()
+
+BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap)
+    : molecule_(mol)
 {
-    delete_arrays();
+    construct_(shellmap);
 }
 
-void BasisSet::delete_arrays(void)
+
+
+BasisSet::BasisSet(const std::shared_ptr<BasisSetParser>& parser,
+        const SharedMolecule& mol,
+        const std::string& path) : molecule_(mol)
+{
+    std::vector<std::vector<ShellInfo>> basis_atom_shell;
+
+    for(int i = 0; i < mol->natom(); i++)
+    {
+        std::vector<std::string> filecontents;
+
+        filecontents = parser->load_file(path);
+        basis_atom_shell.push_back(parser->parse(mol->symbol(i), filecontents));
+    }
+
+    construct_(basis_atom_shell);
+}
+
+
+
+BasisSet::~BasisSet()
 {
     delete [] n_prim_per_shell_;
     delete [] uexponents_;
@@ -116,22 +114,8 @@ void BasisSet::delete_arrays(void)
 }
 
 
-SharedMolecule BasisSet::molecule() const
-{
-    return molecule_;
-}
 
-void BasisSet::print(FILE * out) const
-{
-    output::printf("  Basis Set\n");
-    output::printf("    Number of shells: %d\n", nshell());
-    output::printf("    Number of basis function: %d\n", nbf());
-    output::printf("    Number of Cartesian functions: %d\n", nao());
-    output::printf("    Spherical Harmonics?: %s\n", has_puream() ? "true" : "false");
-    output::printf("    Max angular momentum: %d\n\n", max_am());
-}
-
-void BasisSet::print_summary(FILE* out) const
+void BasisSet::print_summary(void) const
 {
     output::printf("  -AO BASIS SET INFORMATION:\n");
     output::printf("    Total number of shells = %d\n", nshell());
@@ -198,9 +182,9 @@ void BasisSet::print_summary(FILE* out) const
     delete[] amtypes;
 }
 
-void BasisSet::print_detail(FILE * out) const
+void BasisSet::print_detail(void) const
 {
-    print_summary(out);
+    print_summary();
 
     output::printf("  ==> AO Basis Functions <==\n");
     output::printf("\n");
@@ -218,7 +202,7 @@ void BasisSet::print_detail(FILE * out) const
         int n_shell = center_to_nshell_[A];
 
         for (int Q = 0; Q < n_shell; Q++)
-            shells_[Q + first_shell].print(out);
+            shells_[Q + first_shell].print();
 
         output::printf("    ****\n");
     }
@@ -237,26 +221,10 @@ const GaussianShell& BasisSet::shell(int center, int si) const
     return shell(center_to_shell_[center] + si);
 }
 
-shared_ptr<BasisSet> BasisSet::zero_ao_basis_set()
+
+
+void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
 {
-    // In the new implementation, we simply call the default constructor
-    shared_ptr<BasisSet> new_basis(new BasisSet());
-    return new_basis;
-}
-
-//shared_ptr<SOBasisSet> BasisSet::zero_so_basis_set(const shared_ptr<IntegralFactory>& factory)
-//{
-//    shared_ptr<BasisSet> zero = BasisSet::zero_ao_basis_set();
-//    shared_ptr<SOBasisSet> sozero(new SOBasisSet(zero, factory));
-//    return sozero;
-//}
-
-
-BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>> & shellmap)
-    : molecule_(mol)
-{
-    initialized_shared_ = true;
-
     int natom = molecule_->natom();
 
     /// These will tell us where the primitives are for a given center
@@ -402,28 +370,10 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
             throw RuntimeError("Problem with nprimitive in basis set construction!");
         }
     }
-
 }
 
 
-std::shared_ptr<BasisSet> BasisSet::construct(const std::shared_ptr<BasisSetParser>& parser,
-        const SharedMolecule& mol,
-        const std::string& path)
-{
-    std::vector<std::vector<ShellInfo>> basis_atom_shell;
 
-    for(int i = 0; i < mol->natom(); i++)
-    {
-        std::vector<std::string> filecontents;
-
-        filecontents = parser->load_file(path);
-        basis_atom_shell.push_back(parser->parse(mol->symbol(i), filecontents));
-    }
-
-    std::shared_ptr<BasisSet> basisset(new BasisSet(mol, basis_atom_shell));
-
-    return basisset;
-}
 
 } // close namespace panache
 

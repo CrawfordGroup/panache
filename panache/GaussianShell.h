@@ -149,7 +149,7 @@ public:
     void set_function_index(int i)  { start_ = i; }
 
     /// Print
-    void print(FILE *out) const;
+    void print(void) const;
 };
 
 }

@@ -159,7 +159,7 @@ const Vector3& ShellInfo::center() const
     return center_;
 }
 
-void ShellInfo::print(FILE *out) const
+void ShellInfo::print(void) const
 {
     output::printf("    %c %3d 1.00\n", AMCHAR(), nprimitive());
     for (int K = 0; K < nprimitive(); K++)
