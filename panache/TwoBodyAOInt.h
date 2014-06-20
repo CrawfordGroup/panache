@@ -31,21 +31,21 @@ namespace panache {
 class IntegralFactory;
 class AOShellCombinationsIterator;
 class BasisSet;
+typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class GaussianShell;
-//template <class T> class PyBuffer;
 
 class TwoBodyAOInt
 {
 protected:
-    std::shared_ptr<BasisSet> bs1_;
-    std::shared_ptr<BasisSet> bs2_;
-    std::shared_ptr<BasisSet> bs3_;
-    std::shared_ptr<BasisSet> bs4_;
+    SharedBasisSet bs1_;
+    SharedBasisSet bs2_;
+    SharedBasisSet bs3_;
+    SharedBasisSet bs4_;
 
-    const std::shared_ptr<BasisSet> original_bs1_;
-    const std::shared_ptr<BasisSet> original_bs2_;
-    const std::shared_ptr<BasisSet> original_bs3_;
-    const std::shared_ptr<BasisSet> original_bs4_;
+    const SharedBasisSet original_bs1_;
+    const SharedBasisSet original_bs2_;
+    const SharedBasisSet original_bs3_;
+    const SharedBasisSet original_bs4_;
 
     /// Buffer to hold the final integrals.
     double *target_;
@@ -73,24 +73,24 @@ protected:
     void permute_1234_to_3421(double *s, double *t, int nbf1, int nbf2, int nbf3, int nbf4);
     void permute_1234_to_4321(double *s, double *t, int nbf1, int nbf2, int nbf3, int nbf4);
 
-    TwoBodyAOInt(const std::shared_ptr<BasisSet> original_bs1, 
-                 const std::shared_ptr<BasisSet> original_bs2,
-                 const std::shared_ptr<BasisSet> original_bs3,
-                 const std::shared_ptr<BasisSet> original_bs4);
+    TwoBodyAOInt(const SharedBasisSet original_bs1, 
+                 const SharedBasisSet original_bs2,
+                 const SharedBasisSet original_bs3,
+                 const SharedBasisSet original_bs4);
 
 public:
     virtual ~TwoBodyAOInt();
 
     /// Basis set on center one
-    std::shared_ptr<BasisSet> basis();
+    SharedBasisSet basis();
     /// Basis set on center one
-    std::shared_ptr<BasisSet> basis1();
+    SharedBasisSet basis1();
     /// Basis set on center two
-    std::shared_ptr<BasisSet> basis2();
+    SharedBasisSet basis2();
     /// Basis set on center three
-    std::shared_ptr<BasisSet> basis3();
+    SharedBasisSet basis3();
     /// Basis set on center four
-    std::shared_ptr<BasisSet> basis4();
+    SharedBasisSet basis4();
 
     /// Sets whether we're forcing this object to always generate Cartesian integrals
     void set_force_cartesian(bool t_f) { force_cartesian_ = t_f; }

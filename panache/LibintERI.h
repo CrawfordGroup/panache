@@ -40,10 +40,10 @@ class CorrelationFactor;
 class LibintERI : public LibintTwoElectronInt
 {
 public:
-    LibintERI(const std::shared_ptr<BasisSet> bs1,
-        const std::shared_ptr<BasisSet> bs2,
-        const std::shared_ptr<BasisSet> bs3,
-        const std::shared_ptr<BasisSet> bs4);
+    LibintERI(const SharedBasisSet bs1,
+        const SharedBasisSet bs2,
+        const SharedBasisSet bs3,
+        const SharedBasisSet bs4);
 
     virtual ~LibintERI();
 };
@@ -52,10 +52,10 @@ class LibintErfERI : public LibintTwoElectronInt
 {
 public:
     LibintErfERI(double omega,
-           const std::shared_ptr<BasisSet> bs1,
-           const std::shared_ptr<BasisSet> bs2,
-           const std::shared_ptr<BasisSet> bs3,
-           const std::shared_ptr<BasisSet> bs4);
+           const SharedBasisSet bs1,
+           const SharedBasisSet bs2,
+           const SharedBasisSet bs3,
+           const SharedBasisSet bs4);
 
     virtual ~LibintErfERI();
 

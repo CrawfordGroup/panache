@@ -28,17 +28,17 @@ private:
 
     bool done;
 
-    std::shared_ptr<BasisSet> bs1_;
-    std::shared_ptr<BasisSet> bs2_;
-    std::shared_ptr<BasisSet> bs3_;
-    std::shared_ptr<BasisSet> bs4_;
+    SharedBasisSet bs1_;
+    SharedBasisSet bs2_;
+    SharedBasisSet bs3_;
+    SharedBasisSet bs4_;
 
 public:
-    AOShellCombinationsIterator(std::shared_ptr<BasisSet>bs1, std::shared_ptr<BasisSet>bs2,
-                              std::shared_ptr<BasisSet>bs3, std::shared_ptr<BasisSet>bs4);
+    AOShellCombinationsIterator(SharedBasisSet bs1, SharedBasisSet bs2,
+                              SharedBasisSet bs3, SharedBasisSet bs4);
     AOShellCombinationsIterator();
-    void init(std::shared_ptr<BasisSet>bs1, std::shared_ptr<BasisSet>bs2,
-            std::shared_ptr<BasisSet>bs3, std::shared_ptr<BasisSet>bs4);
+    void init(SharedBasisSet bs1, SharedBasisSet bs2,
+            SharedBasisSet bs3, SharedBasisSet bs4);
 
     void first();
     void next();

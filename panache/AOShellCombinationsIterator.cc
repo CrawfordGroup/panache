@@ -7,8 +7,8 @@ namespace panache {
 // ===========================================================================
 //  AOShellCombinationsIterator
 // ===========================================================================
-AOShellCombinationsIterator::AOShellCombinationsIterator(std::shared_ptr<BasisSet>bs1, std::shared_ptr<BasisSet>bs2,
-                                                         std::shared_ptr<BasisSet>bs3, std::shared_ptr<BasisSet>bs4) :
+AOShellCombinationsIterator::AOShellCombinationsIterator(SharedBasisSet bs1, SharedBasisSet bs2,
+                                                         SharedBasisSet bs3, SharedBasisSet bs4) :
     bs1_(bs1), bs2_(bs2), bs3_(bs3), bs4_(bs4)
 {
 
@@ -24,8 +24,8 @@ AOIntegralsIterator AOShellCombinationsIterator::integrals_iterator()
     return AOIntegralsIterator(bs1_->shell(p()), bs2_->shell(q()), bs3_->shell(r()), bs4_->shell(s()));
 }
 
-void AOShellCombinationsIterator::init(std::shared_ptr<BasisSet>bs1, std::shared_ptr<BasisSet>bs2,
-                                     std::shared_ptr<BasisSet>bs3, std::shared_ptr<BasisSet>bs4)
+void AOShellCombinationsIterator::init(SharedBasisSet bs1, SharedBasisSet bs2,
+                                     SharedBasisSet bs3, SharedBasisSet bs4)
 {
     bs1_=bs1;
     bs2_=bs2;

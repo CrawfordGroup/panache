@@ -36,10 +36,10 @@ protected:
 
 public:
     //! Constructor
-    Libint2TwoElectronInt(const std::shared_ptr<BasisSet> bs1,
-                   const std::shared_ptr<BasisSet> bs2,
-                   const std::shared_ptr<BasisSet> bs3,
-                   const std::shared_ptr<BasisSet> bs4);
+    Libint2TwoElectronInt(const SharedBasisSet bs1,
+                   const SharedBasisSet bs2,
+                   const SharedBasisSet bs3,
+                   const SharedBasisSet bs4);
 
     virtual ~Libint2TwoElectronInt();
 

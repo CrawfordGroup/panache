@@ -28,19 +28,20 @@
 namespace panache {
 
 class BasisSet;
+typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class Molecule;
 
 class FittingMetric {
 
 protected:
     /// Pointer to the auxiliary basis set
-    std::shared_ptr<BasisSet> aux_;
+    SharedBasisSet aux_;
 
     /// Number of auxiliary basis functions
     int naux_;
 
     /// Pointer to the poisson basis set
-    std::shared_ptr<BasisSet> pois_;
+    SharedBasisSet pois_;
     /// Is the metric poisson?
     bool is_poisson_;
     /// Range separation omega (0.0 if not used)
@@ -65,11 +66,11 @@ protected:
 public:
 
     /// DF Fitting Metric
-    FittingMetric(std::shared_ptr<BasisSet> aux);
+    FittingMetric(SharedBasisSet aux);
     // DF Fitting Metric
-    FittingMetric(std::shared_ptr<BasisSet> aux, double omega);
+    FittingMetric(SharedBasisSet aux, double omega);
     /// Poisson Fitting Metric
-    //FittingMetric(std::shared_ptr<BasisSet> aux, std::shared_ptr<BasisSet> pois, bool force_C1 = false);
+    //FittingMetric(SharedBasisSet aux, SharedBasisSet pois, bool force_C1 = false);
 
     /// Destructor
     ~FittingMetric();
@@ -91,9 +92,9 @@ public:
     std::vector<int> get_reverse_pivots() const {return rev_pivots_; }
 
     /// The gaussian fitting basis
-    std::shared_ptr<BasisSet> get_auxiliary_basis() const {return aux_; }
+    SharedBasisSet get_auxiliary_basis() const {return aux_; }
     /// The poisson fitting basis
-    std::shared_ptr<BasisSet> get_poisson_basis() const {return pois_; }
+    SharedBasisSet get_poisson_basis() const {return pois_; }
 
     /// Build the raw fitting metric (sets up indices to canonical)
     void form_fitting_metric();

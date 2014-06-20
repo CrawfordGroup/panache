@@ -31,10 +31,10 @@ namespace panache
 // Normal two-electron repulsion integrals
 /////////
 
-Libint2ERI::Libint2ERI(const std::shared_ptr<BasisSet> bs1,
-         const std::shared_ptr<BasisSet> bs2,
-         const std::shared_ptr<BasisSet> bs3,
-         const std::shared_ptr<BasisSet> bs4)
+Libint2ERI::Libint2ERI(const SharedBasisSet bs1,
+         const SharedBasisSet bs2,
+         const SharedBasisSet bs3,
+         const SharedBasisSet bs4)
     : Libint2TwoElectronInt(bs1, bs2, bs3, bs4)
 {
     fjt_ = new Taylor_Fjt(basis1()->max_am() +
@@ -54,10 +54,10 @@ Libint2ERI::~Libint2ERI()
 /////////
 
 Libint2ErfERI::Libint2ErfERI(double omega,
-               const std::shared_ptr<BasisSet> bs1,
-               const std::shared_ptr<BasisSet> bs2,
-               const std::shared_ptr<BasisSet> bs3,
-               const std::shared_ptr<BasisSet> bs4)
+               const SharedBasisSet bs1,
+               const SharedBasisSet bs2,
+               const SharedBasisSet bs3,
+               const SharedBasisSet bs4)
     : Libint2TwoElectronInt(bs1, bs2, bs3, bs4)
 {
     fjt_ = new ErfFundamental(omega,

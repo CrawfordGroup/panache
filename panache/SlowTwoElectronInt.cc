@@ -10,10 +10,10 @@ namespace panache
 {
 
 
-SlowTwoElectronInt::SlowTwoElectronInt(const std::shared_ptr<BasisSet> bs1,
-                                       const std::shared_ptr<BasisSet> bs2,
-                                       const std::shared_ptr<BasisSet> bs3,
-                                       const std::shared_ptr<BasisSet> bs4)
+SlowTwoElectronInt::SlowTwoElectronInt(const SharedBasisSet bs1,
+                                       const SharedBasisSet bs2,
+                                       const SharedBasisSet bs3,
+                                       const SharedBasisSet bs4)
     : TwoBodyAOInt(bs1,bs2,bs3,bs4)
 {
     // Note - there is no permutation, etc, so the bs#_ is the same as original_bs#_

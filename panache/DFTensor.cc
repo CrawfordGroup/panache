@@ -30,8 +30,8 @@
 namespace panache
 {
 
-DFTensor::DFTensor(std::shared_ptr<BasisSet> primary,
-                   std::shared_ptr<BasisSet> auxiliary,
+DFTensor::DFTensor(SharedBasisSet primary,
+                   SharedBasisSet auxiliary,
                    const std::string & filename)
     : primary_(primary), auxiliary_(auxiliary), filename_(filename)
 {
@@ -104,7 +104,7 @@ void DFTensor::GenQso(bool inmem)
     double * J = fittingmetric_->get_metric();
 
     // default constructor = zero basis
-    std::shared_ptr<BasisSet> zero;
+    SharedBasisSet zero;
 
     std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
     std::vector<const double *> eribuffers;

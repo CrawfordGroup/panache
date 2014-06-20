@@ -38,10 +38,10 @@ static void transform2e_3(int, const SphericalTransform&, double*, double*, int,
 static void transform2e_4(int, const SphericalTransform&, double*, double*, int, int);
 
 
-TwoBodyAOInt::TwoBodyAOInt(const std::shared_ptr<BasisSet> original_bs1,
-                           const std::shared_ptr<BasisSet> original_bs2,
-                           const std::shared_ptr<BasisSet> original_bs3,
-                           const std::shared_ptr<BasisSet> original_bs4)
+TwoBodyAOInt::TwoBodyAOInt(const SharedBasisSet original_bs1,
+                           const SharedBasisSet original_bs2,
+                           const SharedBasisSet original_bs3,
+                           const SharedBasisSet original_bs4)
     : original_bs1_(original_bs1),
       original_bs2_(original_bs2),
       original_bs3_(original_bs3),
@@ -59,27 +59,27 @@ TwoBodyAOInt::~TwoBodyAOInt()
 {
 }
 
-std::shared_ptr<BasisSet> TwoBodyAOInt::basis()
+SharedBasisSet TwoBodyAOInt::basis()
 {
     return original_bs1_;
 }
 
-std::shared_ptr<BasisSet> TwoBodyAOInt::basis1()
+SharedBasisSet TwoBodyAOInt::basis1()
 {
     return original_bs1_;
 }
 
-std::shared_ptr<BasisSet> TwoBodyAOInt::basis2()
+SharedBasisSet TwoBodyAOInt::basis2()
 {
     return original_bs2_;
 }
 
-std::shared_ptr<BasisSet> TwoBodyAOInt::basis3()
+SharedBasisSet TwoBodyAOInt::basis3()
 {
     return original_bs3_;
 }
 
-std::shared_ptr<BasisSet> TwoBodyAOInt::basis4()
+SharedBasisSet TwoBodyAOInt::basis4()
 {
     return original_bs4_;
 }

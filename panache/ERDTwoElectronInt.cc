@@ -55,10 +55,10 @@ void C_ERD__MEMORY_ERI_BATCH(const F_INT &nalpha, const F_INT &ncoeff,
 namespace panache {
 
 // note - use_shell_pairs is ignored
-ERDTwoElectronInt::ERDTwoElectronInt(const std::shared_ptr<BasisSet> bs1,
-               const std::shared_ptr<BasisSet> bs2,
-               const std::shared_ptr<BasisSet> bs3,
-               const std::shared_ptr<BasisSet> bs4,
+ERDTwoElectronInt::ERDTwoElectronInt(const SharedBasisSet bs1,
+               const SharedBasisSet bs2,
+               const SharedBasisSet bs3,
+               const SharedBasisSet bs4,
                bool use_shell_pairs)
     : TwoBodyAOInt(bs1, bs2, bs3, bs4), 
       d_buffer_size_(0L),

@@ -21,10 +21,10 @@ private:
 
 public:
     //! Constructor
-    SlowTwoElectronInt(const std::shared_ptr<BasisSet> bs1,
-                       const std::shared_ptr<BasisSet> bs2,
-                       const std::shared_ptr<BasisSet> bs3,
-                       const std::shared_ptr<BasisSet> bs4);
+    SlowTwoElectronInt(const SharedBasisSet bs1,
+                       const SharedBasisSet bs2,
+                       const SharedBasisSet bs3,
+                       const SharedBasisSet bs4);
 
     virtual ~SlowTwoElectronInt();
 

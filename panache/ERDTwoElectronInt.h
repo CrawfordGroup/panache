@@ -92,10 +92,10 @@ protected:
     bool same_bs_;
 
 public:
-    ERDTwoElectronInt(const std::shared_ptr<BasisSet> bs1,
-               const std::shared_ptr<BasisSet> bs2,
-               const std::shared_ptr<BasisSet> bs3,
-               const std::shared_ptr<BasisSet> bs4,
+    ERDTwoElectronInt(const SharedBasisSet bs1,
+               const SharedBasisSet bs2,
+               const SharedBasisSet bs3,
+               const SharedBasisSet bs4,
                bool use_shell_pairs=false);
 
     virtual ~ERDTwoElectronInt();

@@ -2,10 +2,10 @@
 
 namespace panache {
 
-SlowERI::SlowERI(const std::shared_ptr<BasisSet> bs1,
-         const std::shared_ptr<BasisSet> bs2,
-         const std::shared_ptr<BasisSet> bs3,
-         const std::shared_ptr<BasisSet> bs4)
+SlowERI::SlowERI(const SharedBasisSet bs1,
+         const SharedBasisSet bs2,
+         const SharedBasisSet bs3,
+         const SharedBasisSet bs4)
     : SlowTwoElectronInt(bs1, bs2, bs3, bs4)
 {
 }

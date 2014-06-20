@@ -18,6 +18,8 @@ namespace panache
 
 class Molecule;
 class BasisSet;
+typedef std::shared_ptr<BasisSet> SharedBasisSet;
+
 class FittingMetric;
 
 namespace reorder
@@ -33,8 +35,8 @@ private:
     /*! \name Basis set and matrix dimensions */
     ///@{  
 
-    std::shared_ptr<BasisSet> primary_;   //!< Primary basis set
-    std::shared_ptr<BasisSet> auxiliary_; //!< Auxiliary (DF) basis set
+    SharedBasisSet primary_;   //!< Primary basis set
+    SharedBasisSet auxiliary_; //!< Auxiliary (DF) basis set
 
     int nso_;    //!< Number of SO (rows of Cmo_, number of primary basis functions)
     int naux_;   //!< Number of auxiliary basis functions
@@ -167,8 +169,8 @@ public:
      * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] filename Full path to a file for disk storage (may not be used)
      */ 
-    DFTensor(std::shared_ptr<BasisSet> primary,
-             std::shared_ptr<BasisSet> auxiliary,
+    DFTensor(SharedBasisSet primary,
+             SharedBasisSet auxiliary,
              const std::string & filename);
 
     /*!

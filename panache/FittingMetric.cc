@@ -38,13 +38,13 @@
 namespace panache
 {
 
-FittingMetric::FittingMetric(std::shared_ptr<BasisSet> aux) :
+FittingMetric::FittingMetric(SharedBasisSet aux) :
     aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(0.0),
     metric_(new double[naux_*naux_])
 {
 }
 
-FittingMetric::FittingMetric(std::shared_ptr<BasisSet> aux, double omega) :
+FittingMetric::FittingMetric(SharedBasisSet aux, double omega) :
     aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(omega)
 {
 }
@@ -62,7 +62,7 @@ void FittingMetric::form_fitting_metric()
     // Build the full DF/Poisson matrix in the AO basis first
 
     // Default constructor = zero basis set
-    std::shared_ptr<BasisSet> zero;
+    SharedBasisSet zero;
 
     // Only thread if not already in parallel (handy for local fitting)
     int nthread = 1;
