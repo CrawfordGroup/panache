@@ -15,6 +15,12 @@
 #include "SlowERI.h"
 #endif
 
+#ifdef PANACHE_USE_LIBERD
+#include "ERDERI.h"
+#endif
+
+
+
 using std::shared_ptr;
 
 namespace panache {
@@ -31,6 +37,9 @@ inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<Ba
             #ifdef PANACHE_USE_SLOWERI
               return std::shared_ptr<TwoBodyAOInt>(new SlowERI(bs1, bs2, bs3, bs4));
             #endif
+            #ifdef PANACHE_USE_LIBERD
+              return std::shared_ptr<TwoBodyAOInt>(new ERDERI(bs1, bs2, bs3, bs4));
+            #endif
 }
 
 inline shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
@@ -45,6 +54,9 @@ inline shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
             #endif
             #ifdef PANACHE_USE_SLOWERI
               throw RuntimeError("ErfERI for SlowERI not implemented!");
+            #endif
+            #ifdef PANACHE_USE_LIBERD
+              throw RuntimeError("ErfERI for libERD not implemented!");
             #endif
 }
 

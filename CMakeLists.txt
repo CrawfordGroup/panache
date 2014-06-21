@@ -34,6 +34,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 # Compiler flags
 #####################################
 # PANACHE_CXX_FLAGS - flags for main library
+# LIBERD_F90_FLAGS - flags for libERD
 # RUNTEST_CXX_FLAGS - flags for the C++ test program
 # FRUNTEST_F90_FLAGS - flags for the Fortran90 test program
 
@@ -50,8 +51,10 @@ list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
 # Todo - other compiler types?
 if(CMAKE_COMPILER_IS_GNUG77)
   list(APPEND FRUNTEST_F90_FLAGS "-Wall")
+  list(APPEND LIBERD_F90_FLAGS "-Wall")
 else(CMAKE_COMPILER_IS_GNUG77)
   list(APPEND FRUNTEST_F90_FLAGS "-warn all")
+  list(APPEND LIBERD_F90_FLAGS "-warn all")
 endif(CMAKE_COMPILER_IS_GNUG77)
 
 
@@ -68,6 +71,7 @@ if(PANACHE_OPENMP)
     list(APPEND RUNTEST_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
     # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
     list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
+    #list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else(OPENMP_FOUND)
     message(WARNING "OpenMP was not found! Disabling...")
   endif(OPENMP_FOUND)
@@ -166,12 +170,21 @@ if(PANACHE_USE_LIBINT AND PANACHE_USE_LIBINT2)
   message(FATAL_ERROR "Cannot use both Libint and Libint2!")
 endif(PANACHE_USE_LIBINT AND PANACHE_USE_LIBINT2)
 
+# Or libint + liberd
+if(PANACHE_USE_LIBINT AND PANACHE_USE_LIBERD)
+  message(FATAL_ERROR "Cannot use both Libint and LibERD!")
+endif(PANACHE_USE_LIBINT AND PANACHE_USE_LIBERD)
+
+if(PANACHE_USE_LIBINT2 AND PANACHE_USE_LIBERD)
+  message(FATAL_ERROR "Cannot use both Libint2 and LibERD!")
+endif(PANACHE_USE_LIBINT2 AND PANACHE_USE_LIBERD)
+
 
 # Warn if not using something faster
-if(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2))
+if(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2 OR PANACHE_USE_LIBERD))
   message(WARNING "Using very slow ERI code. You probably want to use something else...")
   set(PANACHE_USE_SLOWERI True)
-endif(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2))
+endif(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2 OR PANACHE_USE_LIBERD))
 
 
 
@@ -183,6 +196,7 @@ endif(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2))
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
+
 if(PANACHE_USE_LIBINT)
   set(LIBINT_LIBRARY "${LIBINT_LIBRARYDIR}/libint.a")
   set(LIBINT_FILES "${LIBINT_FILES}" LibintTwoElectronInt.cc LibintERI.cc)
@@ -191,6 +205,7 @@ if(PANACHE_USE_LIBINT)
   message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT")
 endif(PANACHE_USE_LIBINT)
+
 
 if(PANACHE_USE_LIBINT2)
   # Note - must add directory with header files. libint2.h includes
@@ -205,6 +220,14 @@ if(PANACHE_USE_LIBINT2)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT2")
 endif(PANACHE_USE_LIBINT2)
 
+
+if(PANACHE_USE_LIBERD)
+  message(STATUS "Using internal LibERD")
+  set(LIBINT_FILES "${LIBINT_FILES}" ERDTwoElectronInt.cc ERDERI.cc)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBERD")
+endif(PANACHE_USE_LIBERD)
+
+
 if(PANACHE_USE_SLOWERI)
   message(STATUS "Using internal SlowERI")
   set(LIBINT_FILES "${LIBINT_FILES}" SlowTwoElectronInt.cc SlowERI.cc SlowERIBase.cc)
@@ -218,6 +241,11 @@ endif(PANACHE_USE_SLOWERI)
 # Add subdirectories
 ######################
 add_subdirectory(panache)
+
+if(PANACHE_USE_LIBERD)
+add_subdirectory(liberd)
+endif(PANACHE_USE_LIBERD)
+
 add_subdirectory(runtest)
 
 

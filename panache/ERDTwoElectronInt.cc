@@ -268,10 +268,10 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     ::memcpy(&(alpha_[offset_j]), gs3.exps(), sizeof(double)*npgto3);
     ::memcpy(&(alpha_[offset_k]), gs2.exps(), sizeof(double)*npgto2);
     ::memcpy(&(alpha_[offset_l]), gs1.exps(), sizeof(double)*npgto1);
-    ::memcpy(&(cc_[offset_i]), gs4.erd_coefs(), sizeof(double)*npgto4);
-    ::memcpy(&(cc_[offset_j]), gs3.erd_coefs(), sizeof(double)*npgto3);
-    ::memcpy(&(cc_[offset_k]), gs2.erd_coefs(), sizeof(double)*npgto2);
-    ::memcpy(&(cc_[offset_l]), gs1.erd_coefs(), sizeof(double)*npgto1);
+    ::memcpy(&(cc_[offset_i]), gs4.coefs(), sizeof(double)*npgto4);
+    ::memcpy(&(cc_[offset_j]), gs3.coefs(), sizeof(double)*npgto3);
+    ::memcpy(&(cc_[offset_k]), gs2.coefs(), sizeof(double)*npgto2);
+    ::memcpy(&(cc_[offset_l]), gs1.coefs(), sizeof(double)*npgto1);
 
 //#if DEBUG
     output::printf("\n\nShell (%2d %2d | %2d %2d) - center (%2d %2d | %2d %2d) - angular momentum (%d %d | %d %d)\n",
