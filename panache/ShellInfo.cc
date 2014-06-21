@@ -44,13 +44,9 @@ ShellInfo::ShellInfo(int am, const std::vector<double> &c,
     // Compute the normalization constants
     if (pt == Unnormalized){
         normalize_shell();
-        erd_normalize_shell();
     }
     else
-    {
         coef_ = original_coef_;
-        erd_coef_ = original_coef_;
-    }
 }
 
 ShellInfo ShellInfo::copy()
@@ -76,32 +72,6 @@ double ShellInfo::primitive_normalization(int p)
     return normg;
 }
 
-void ShellInfo::erd_normalize_shell()
-{
-    erd_coef_.clear();
-    double sum = 0.0;
-    for(int j = 0; j < nprimitive(); j++){
-        for(int k = 0; k <= j; k++){
-            double a1 = exp_[j];
-            double a2 = exp_[k];
-            double temp = (original_coef(j) * original_coef(k));
-            double temp2 = ((double) l_ + 1.5);
-            double temp3 = (2.0 * sqrt(a1 * a2) / (a1 + a2));
-            temp3 = pow(temp3, temp2);
-            temp = temp * temp3;
-            sum = sum + temp;
-            if(j != k)
-                sum = sum + temp;
-        }
-    }
-    double prefac = 1.0;
-    if(l_ > 1)
-        prefac = pow(2.0, 2*l_) / math::double_factorial_nminus1(2*l_);
-    double norm = sqrt(prefac / sum);
-    for(int j = 0; j < nprimitive(); j++){
-        erd_coef_.push_back(original_coef_[j] * norm);
-    }
-}
 
 void ShellInfo::contraction_normalization()
 {
@@ -130,6 +100,30 @@ void ShellInfo::contraction_normalization()
 
 void ShellInfo::normalize_shell()
 {
+#if PANACHE_USE_LIBERD
+    double sum = 0.0;
+    for(int j = 0; j < nprimitive(); j++){
+        for(int k = 0; k <= j; k++){
+            double a1 = exp_[j];
+            double a2 = exp_[k];
+            double temp = (original_coef(j) * original_coef(k));
+            double temp2 = ((double) l_ + 1.5);
+            double temp3 = (2.0 * sqrt(a1 * a2) / (a1 + a2));
+            temp3 = pow(temp3, temp2);
+            temp = temp * temp3;
+            sum = sum + temp;
+            if(j != k)
+                sum = sum + temp;
+        }
+    }
+    double prefac = 1.0;
+    if(l_ > 1)
+        prefac = pow(2.0, 2*l_) / math::double_factorial_nminus1(2*l_);
+    double norm = sqrt(prefac / sum);
+    for(int j = 0; j < nprimitive(); j++){
+        coef_[j] *= norm;
+    }
+#else
     int i;
 
     for (i = 0; i < nprimitive(); ++i) {
@@ -137,6 +131,7 @@ void ShellInfo::normalize_shell()
         coef_[i] *= normalization;
     }
     contraction_normalization();
+#endif
 }
 
 int ShellInfo::nfunction() const

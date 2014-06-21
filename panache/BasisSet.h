@@ -58,7 +58,6 @@ private:
     double *uexponents_;                //!< The flattened lists of unique exponents
     double *ucoefficients_;             //!< The flattened lists of unique contraction coefficients (normalized)
     double *uoriginal_coefficients_;    //!< The flattened lists of unique contraction coefficients (as provided by the user)
-    double *uerd_coefficients_;         //!< The flattened lists of ERD normalized contraction coefficients
     double *xyz_;                       //!< The flattened list of Cartesian coordinates for each atom
 
 

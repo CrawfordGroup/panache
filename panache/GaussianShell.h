@@ -44,8 +44,6 @@ private:
     const double* original_coef_;
     /// Contraction coefficients (of length nprimitives_)
     const double* coef_;
-    /// Contraction coefficients normalized for the ERD integral package (of length nprimitives_)
-    const double* erd_coef_;
 
     /// Atom number this shell goes to. Needed when indexing integral derivatives.
     int nc_;
@@ -84,7 +82,6 @@ public:
      *  @param pure Pure spherical harmonics, or Cartesian.
      *  @param oc An array of contraction coefficients.
      *  @param c An array of normalized contraction coefficients.
-     *  @param ec An array of ERD normalized contraction coefficients.
      *  @param e An array of exponent values.
      *  @param pure an enum describing whether this shell uses pure or Cartesian functions.
      *  @param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
@@ -95,7 +92,7 @@ public:
     GaussianShell(int am,
                   int nprimitive,
                   const double *oc,
-                  const double *c, const double *ec,
+                  const double *c,
                   const double *e,
                   ShellInfo::GaussianType pure,
                   int nc,
@@ -133,16 +130,12 @@ public:
     double coef(int pi) const       { return coef_[pi]; }
     /// Return unnormalized coefficient of pi'th primitive
     double original_coef(int pi) const { return original_coef_[pi]; }
-    /// Return unnormalized coefficient of pi'th primitive
-    double erd_coef(int pi) const { return erd_coef_[pi]; }
     /// Returns the exponents
     const double* exps() const { return exp_; }
     /// Return coefficients
     const double* coefs() const { return coef_; }
     /// Return unnormalized coefficients
     const double* original_coefs() const { return original_coef_; }
-    /// Return ERD normalized coefficients
-    const double* erd_coefs() const { return erd_coef_; }
 
     /// Basis function index where this shell starts.
     int function_index() const      { return start_; }

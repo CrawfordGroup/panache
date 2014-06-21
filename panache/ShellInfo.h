@@ -46,8 +46,7 @@ private:
     std::vector<double> exp_;
     /// Contraction coefficients (of length nprimitives_)
     std::vector<double> coef_;
-    /// ERD normalized contraction coefficients (of length nprimitives_)
-    std::vector<double> erd_coef_;
+
     /// Original (un-normalized) contraction coefficients (of length nprimitives)
     /// Only used in printing.
     std::vector<double> original_coef_;
@@ -111,7 +110,6 @@ public:
 
     /** Handles calling primitive_normalization and contraction_normalization for you. */
     void normalize_shell();
-    void erd_normalize_shell();
 
     /// Make a copy of the ShellInfo.
     ShellInfo copy();
@@ -145,8 +143,6 @@ public:
     double exp(int prim) const      { return exp_[prim]; }
     /// Return coefficient of pi'th primitive
     double coef(int pi) const       { return coef_[pi]; }
-    /// Return ERD normalized coefficient of pi'th primitive
-    double erd_coef(int pi) const       { return erd_coef_[pi]; }
     /// Return unnormalized coefficient of pi'th primitive
     double original_coef(int pi) const { return original_coef_[pi]; }
     /// Returns the exponent of the given primitive

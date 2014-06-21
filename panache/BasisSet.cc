@@ -32,7 +32,6 @@ BasisSet::BasisSet()
     n_prim_per_shell_ = new int[1];
     uexponents_ = new double[1];
     ucoefficients_ = new double[1];
-    uerd_coefficients_ = new double[1];
     uoriginal_coefficients_ = new double[1];
     shell_first_ao_ = new int[1];
     shell_first_basis_function_ = new int[1];
@@ -62,7 +61,7 @@ BasisSet::BasisSet()
     xyz_[0] = 0.0;
     xyz_[1] = 0.0;
     xyz_[2] = 0.0;
-    shells_[0] = GaussianShell(0, nprimitive_, uoriginal_coefficients_, ucoefficients_, uerd_coefficients_,
+    shells_[0] = GaussianShell(0, nprimitive_, uoriginal_coefficients_, ucoefficients_, 
                                uexponents_, ShellInfo::GaussianType(0), 0, xyz_, 0);
 }
 
@@ -99,7 +98,6 @@ BasisSet::~BasisSet()
     delete [] n_prim_per_shell_;
     delete [] uexponents_;
     delete [] ucoefficients_;
-    delete [] uerd_coefficients_;
     delete [] uoriginal_coefficients_;
     delete [] shell_first_ao_;
     delete [] shell_first_basis_function_;
@@ -236,7 +234,6 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
     std::vector<double> uexps;
     std::vector<double> ucoefs;
     std::vector<double> uoriginal_coefs;
-    std::vector<double> uerd_coefs;
     n_uprimitive_ = 0;
     for(auto & centerit : shellmap)
     {
@@ -249,7 +246,6 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
                 uexps.push_back(shell.exp(prim));
                 ucoefs.push_back(shell.coef(prim));
                 uoriginal_coefs.push_back(shell.original_coef(prim));
-                uerd_coefs.push_back(shell.erd_coef(prim));
                 n_uprimitive_++;
             }
 
@@ -293,13 +289,11 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
     uexponents_ = new double[n_uprimitive_];
     ucoefficients_ = new double[n_uprimitive_];
     uoriginal_coefficients_ = new double[n_uprimitive_];
-    uerd_coefficients_ = new double[n_uprimitive_];
     for(int i = 0; i < n_uprimitive_; ++i)
     {
         uexponents_[i] = uexps[i];
         ucoefficients_[i] = ucoefs[i];
         uoriginal_coefficients_[i] = uoriginal_coefs[i];
-        uerd_coefficients_[i] = uerd_coefs[i];
     }
 
     shell_first_ao_ = new int[n_shells_];
@@ -347,7 +341,7 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
                 puream_ = true;
 //            output::printf("atom %d basis %s shell %d nprim %d atom_nprim %d\n", n, basis.c_str(), i, shell_nprim, atom_nprim);
             shells_[shell_count] = GaussianShell(am, shell_nprim, &uoriginal_coefficients_[ustart+atom_nprim],
-                                                 &ucoefficients_[ustart+atom_nprim], &uerd_coefficients_[ustart+atom_nprim], &uexponents_[ustart+atom_nprim], puream, n, xyz_ptr, bf_count);
+                                                 &ucoefficients_[ustart+atom_nprim], &uexponents_[ustart+atom_nprim], puream, n, xyz_ptr, bf_count);
             for(int thisbf = 0; thisbf < thisshell.nfunction(); ++thisbf)
             {
                 function_to_shell_[bf_count] = shell_count;
