@@ -20,6 +20,8 @@ namespace panache
 // Constructs a zero AO basis set
 BasisSet::BasisSet()
 {
+    iszero_ = true;
+
     // Add a dummy atom at the origin, to hold this basis function
     molecule_ = SharedMolecule(new Molecule);
     molecule_->add_atom(0.0, 0.0, 0.0, "");
@@ -223,6 +225,9 @@ const GaussianShell& BasisSet::shell(int center, int si) const
 
 void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
 {
+
+    iszero_ = false;
+
     int natom = molecule_->natom();
 
     /// These will tell us where the primitives are for a given center

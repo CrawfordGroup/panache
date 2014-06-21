@@ -29,6 +29,9 @@ class BasisSetParser;
 class BasisSet
 {
 private:
+    bool iszero_;  //!< True if this is a zero basis set
+
+
     GaussianShell *shells_;  //!< Holds most of the shell information
 
     //! Molecule object.
@@ -112,6 +115,17 @@ public:
     BasisSet(const std::shared_ptr<BasisSetParser> & parser,
              const SharedMolecule & mol,
              const std::string & path);
+
+
+
+    /*!
+     *  Is this a zero basis set
+     *
+     *  \return True if this is a zero basis set, false if it is not
+     */
+    bool iszero(void) const { return iszero_; } 
+
+
 
 
     /*!
