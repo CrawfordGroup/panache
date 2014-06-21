@@ -3,7 +3,7 @@
 #############################
 add_executable(runtest runtest.cc)
 
-target_link_libraries(runtest panache ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES})
+target_link_libraries(runtest panache ${RUNTEST_LINK_LIBRARIES} ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES})
 
 string(REPLACE ";" " " RUNTEST_CXX_FLAGS "${RUNTEST_CXX_FLAGS}")
 set_target_properties(runtest PROPERTIES COMPILE_FLAGS ${RUNTEST_CXX_FLAGS})
@@ -22,7 +22,7 @@ endif(OPENMP_FOUND)
 add_executable(fruntest fruntest.f90)
 
 set_target_properties(fruntest PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(fruntest panache ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES} stdc++)
+target_link_libraries(fruntest panache ${FRUNTEST_LINK_LIBRARIES} ${LIBINT_LIBRARY} ${LAPACK_LIBRARIES} stdc++)
 
 string(REPLACE ";" " " FRUNTEST_F90_FLAGS "${FRUNTEST_F90_FLAGS}")
 set_target_properties(fruntest PROPERTIES COMPILE_FLAGS ${FRUNTEST_F90_FLAGS})

@@ -1,5 +1,5 @@
 file(GLOB LIBERD_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/*.f")
-add_library(liberd 
+add_library(panache_erd 
             ${LIBERD_SOURCE}
             )
 
@@ -8,8 +8,8 @@ add_library(liberd
 ##############################################
 # Compiler definitions list need to be split
 string(REPLACE ";" " " LIBERD_F90_FLAGS "${LIBERD_F90_FLAGS}")
-set_target_properties(liberd PROPERTIES COMPILE_FLAGS ${LIBERD_F90_FLAGS})
+set_target_properties(panache_erd PROPERTIES COMPILE_FLAGS ${LIBERD_F90_FLAGS})
 
 
 # For now, install all header files
-install(TARGETS liberd ARCHIVE DESTINATION lib)
+install(TARGETS panache_erd ARCHIVE DESTINATION lib)
