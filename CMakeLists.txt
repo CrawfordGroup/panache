@@ -102,14 +102,14 @@ endif(NOT LAPACK_FOUND)
 # Use the 64-bit or 32-bit integer interface to LAPACK/BLAS/MKL/etc
 # If unset, 32-bit interface is used
 #####################################
-set(USE_64LAPACK FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
+set(PANACHE_LAPACK64 FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
 
-if(USE_64LAPACK)
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_64LAPACK")
+if(PANACHE_LAPACK64)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_LAPACK64")
   message(STATUS "Using 64-bit lapack interface")
-else(USE_64LAPACK)
+else(PANACHE_LAPACK64)
   message(STATUS "Using 32-bit lapack interface")
-endif(USE_64LAPACK)
+endif(PANACHE_LAPACK64)
 
 
 
@@ -128,14 +128,14 @@ endif(PANACHE_DISKPREFETCH)
 #####################################
 # Whether the C and Fortran interfaces should be 64-bit
 #####################################
-set(USE_64PANACHE FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
+set(PANACHE_INTERFACE64 FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
 
-if(USE_64PANACHE)
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_64PANACHE")
+if(PANACHE_INTERFACE64)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_INTERFACE64")
   message(STATUS "Building 64-bit C/Fortran interface")
-else(USE_64PANACHE)
+else(PANACHE_INTERFACE64)
   message(STATUS "Building 32-bit C/Fortran interface")
-endif(USE_64PANACHE)
+endif(PANACHE_INTERFACE64)
 
 
 
@@ -158,20 +158,20 @@ set(LIBINT_PATH "" CACHE FILEPATH "Path to libint directory")
 set(LIBINT2_PATH "" CACHE FILEPATH "Path to libint2 directory")
 
 # Parse these using the macro
-PATH_TO_BOOL(LIBINT_PATH USE_LIBINT)
-PATH_TO_BOOL(LIBINT2_PATH USE_LIBINT2)
+PATH_TO_BOOL(LIBINT_PATH PANACHE_USE_LIBINT)
+PATH_TO_BOOL(LIBINT2_PATH PANACHE_USE_LIBINT2)
 
 # You can't use both versions of libint...
-if(USE_LIBINT AND USE_LIBINT2)
+if(PANACHE_USE_LIBINT AND PANACHE_USE_LIBINT2)
   message(FATAL_ERROR "Cannot use both Libint and Libint2!")
-endif(USE_LIBINT AND USE_LIBINT2)
+endif(PANACHE_USE_LIBINT AND PANACHE_USE_LIBINT2)
 
 
 # Warn if not using something faster
-if(NOT(USE_LIBINT OR USE_LIBINT2))
+if(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2))
   message(WARNING "Using very slow ERI code. You probably want to use something else...")
-  set(USE_SLOWERI True)
-endif(NOT(USE_LIBINT OR USE_LIBINT2))
+  set(PANACHE_USE_SLOWERI True)
+endif(NOT(PANACHE_USE_LIBINT OR PANACHE_USE_LIBINT2))
 
 
 
@@ -183,16 +183,16 @@ endif(NOT(USE_LIBINT OR USE_LIBINT2))
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
-if(USE_LIBINT)
+if(PANACHE_USE_LIBINT)
   set(LIBINT_LIBRARY "${LIBINT_LIBRARYDIR}/libint.a")
   set(LIBINT_FILES "${LIBINT_FILES}" LibintTwoElectronInt.cc LibintERI.cc)
   message(STATUS "Using Libint headers from ${LIBINT_INCLUDEDIR}")
   message(STATUS "Using Libint library from ${LIBINT_LIBRARYDIR}")
   message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT")
-endif(USE_LIBINT)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT")
+endif(PANACHE_USE_LIBINT)
 
-if(USE_LIBINT2)
+if(PANACHE_USE_LIBINT2)
   # Note - must add directory with header files. libint2.h includes
   # other files via #include <somefile.h>. Therefore, just adding
   # .../include and then using #include <libint2/libint2.h> will not work!
@@ -202,14 +202,14 @@ if(USE_LIBINT2)
   message(STATUS "Using Libint2 headers from ${LIBINT_INCLUDEDIR}")
   message(STATUS "Using Libint2 library from ${LIBINT_LIBRARYDIR}")
   message(STATUS "Using Libint2 library ${LIBINT_LIBRARY}")
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_LIBINT2")
-endif(USE_LIBINT2)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT2")
+endif(PANACHE_USE_LIBINT2)
 
-if(USE_SLOWERI)
+if(PANACHE_USE_SLOWERI)
   message(STATUS "Using internal SlowERI")
   set(LIBINT_FILES "${LIBINT_FILES}" SlowTwoElectronInt.cc SlowERI.cc SlowERIBase.cc)
-  list(APPEND PANACHE_CXX_FLAGS "-DUSE_SLOWERI")
-endif(USE_SLOWERI)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_SLOWERI")
+endif(PANACHE_USE_SLOWERI)
 
 
 
