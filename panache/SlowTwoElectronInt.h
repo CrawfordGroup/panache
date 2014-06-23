@@ -8,10 +8,6 @@ namespace panache
 {
 
 
-/*! \ingroup MINTS
- *  \class ERI
- *  \brief Capable of computing two-electron repulsion integrals.
- */
 class SlowTwoElectronInt : public TwoBodyAOInt
 {
 private:

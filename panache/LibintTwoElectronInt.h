@@ -10,10 +10,6 @@ namespace panache {
 class Fjt;
 class AOShellCombinationsIterator;
 
-/*! \ingroup MINTS
- *  \class ERI
- *  \brief Capable of computing two-electron repulsion integrals.
- */
 class LibintTwoElectronInt : public TwoBodyAOInt
 {
 protected:
