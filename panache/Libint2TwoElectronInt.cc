@@ -97,7 +97,7 @@ size_t Libint2TwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
     timer_on("reorder");
 #endif
 
-    int s1, s2, s3, s4, c1, c2, c3, c4;
+    int s1, s2, s3, s4;
     int am1, am2, am3, am4, temp;
     shared_ptr<BasisSet> bs_temp;
 
@@ -111,11 +111,6 @@ size_t Libint2TwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
     am3 = original_bs3_->shell(sh3).am();
     am4 = original_bs4_->shell(sh4).am();
     temp = am1+am2+am3+am4;
-
-    c1 = original_bs1_->shell(sh1).ncenter();
-    c2 = original_bs1_->shell(sh2).ncenter();
-    c3 = original_bs1_->shell(sh3).ncenter();
-    c4 = original_bs1_->shell(sh4).ncenter();
 
     // TODO: Check this!
 //	if (c1 == c2 && c1 == c3 && c1 && c4 && temp % 2 != 0) {
@@ -309,7 +304,6 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
 #endif
 
     // Prepare all the data needed by libint
-    int max_p2, max_p4, m, n;
     size_t nprim = 0;
     nprim1 = s1.nprimitive();
     nprim2 = s2.nprimitive();
@@ -341,7 +335,7 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
             double ooz = 1.0/zeta;
             double oo2z = 1.0/(2.0 * zeta);
 
-            double PA[3], PB[3];
+            double PA[3];
             double P[3];
 
             P[0] = (a1*A[0] + a2*B[0])*ooz;
@@ -350,9 +344,6 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
             PA[0] = P[0] - A[0];
             PA[1] = P[1] - A[1];
             PA[2] = P[2] - A[2];
-            PB[0] = P[0] - B[0];
-            PB[1] = P[1] - B[1];
-            PB[2] = P[2] - B[2];
 
 
             double Sab = pow(M_PI*ooz, 3.0/2.0) * exp(-a1*a2*ooz*AB2) * c1 * c2;
@@ -370,9 +361,8 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
                     double oo2n = 1.0/(2.0*nu);
                     double oo2zn = 1.0/(2.0*(zeta+nu));
                     double rho = (zeta*nu)/(zeta+nu);
-                    double oo2rho = 1.0 / (2.0*rho);
 
-                    double QC[3], QD[3], WP[3], WQ[3], PQ[3];
+                    double QC[3], WP[3], WQ[3];
                     double Q[3], W[3], a3C[3], a4D[3];
 
                     a3C[0] = a3*C[0];
@@ -390,12 +380,6 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
                     QC[0] = Q[0] - C[0];
                     QC[1] = Q[1] - C[1];
                     QC[2] = Q[2] - C[2];
-                    QD[0] = Q[0] - D[0];
-                    QD[1] = Q[1] - D[1];
-                    QD[2] = Q[2] - D[2];
-                    PQ[0] = P[0] - Q[0];
-                    PQ[1] = P[1] - Q[1];
-                    PQ[2] = P[2] - Q[2];
 
                     double PQ2 = 0.0;
                     PQ2 += (P[0] - Q[0]) * (P[0] - Q[0]);
@@ -422,8 +406,6 @@ size_t Libint2TwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4
                     erival_[nprim].PA_x[0] = PA[0];
                     erival_[nprim].PA_y[0] = PA[1];
                     erival_[nprim].PA_z[0] = PA[2];
-                    //erival_[nprim].PB_x[0] = PB[0];
-                    //erival_[nprim].PB_y[0] = PB[1];
 
                     erival_[nprim].QC_x[0] = QC[0];
                     erival_[nprim].QC_y[0] = QC[1];
