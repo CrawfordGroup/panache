@@ -1,30 +1,64 @@
+/*! \file
+ * \brief Defines some macros for basis functions
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
+
 #ifndef PANACHE_BASISFUNCTIONMACROS_H
 #define PANACHE_BASISFUNCTIONMACROS_H
 
 
-/*! \def INT_NCART(am)
-    Gives the number of cartesian functions for an angular momentum.
-*/
+/*! 
+ * \def INT_NCART(am)
+ * \brief Gives the number of cartesian functions for an angular momentum.
+ * 
+ * \param am Angular momentum of the shell
+ */
 #define INT_NCART(am) ((am>=0)?((((am)+2)*((am)+1))>>1):0)
-/*! \def INT_PURE(am)
-    Gives the number of spherical functions for an angular momentum.
-*/
+
+
+/*!
+ * \def INT_PURE(am)
+ * \brief Gives the number of spherical functions for an angular momentum.
+ * 
+ * \param am Angular momentum of the shell
+ */
 #define INT_NPURE(am) (2*(am)+1)
-/*! \def INT_NFUNC(pu,am)
-    Gives the number of functions for an angular momentum based on pu.
-*/
+
+
+/*!
+ * \def INT_NFUNC(pu,am)
+ * \brief Gives the number of functions for an angular momentum
+ *
+ * \param pu Is the shell pure (spherical) or ont
+ * \param am Angular momentum of the shell
+ */
 #define INT_NFUNC(pu,am) ((pu)?INT_NPURE(am):INT_NCART(am))
-/*! \def INT_CARTINDEX(am,i,j)
-    Computes offset index for cartesian function.
-*/
+
+
+/*! 
+ * \def INT_CARTINDEX(am,i,j)
+ * \brief Computes offset index for cartesian function with a shell.
+ *
+ * The exponent on z in the basis function is inferred.
+ * For example, for a d shell (\p am = 2)
+ *
+ * |Function| i | j | k | INT_CARTINDEX |
+ * |--------|---|---|---|---------------|
+ * | XX     | 2 | 0 | 0 | 0             |
+ * | XY     | 1 | 1 | 0 | 1             |
+ * | XZ     | 1 | 0 | 1 | 2             |
+ * | YY     | 0 | 2 | 0 | 3             |
+ * | YZ     | 0 | 1 | 1 | 4             |
+ * | ZZ     | 0 | 0 | 2 | 5             |
+ *
+ * \param am Angular momentum of the shell
+ * \param i The exponent on x in the basis function
+ * \param j The exponent on y in the basis function
+ */
 #define INT_CARTINDEX(am,i,j) (((i) == (am))? 0 : (((((am) - (i) + 1)*((am) - (i)))>>1) + (am) - (i) - (j)))
-/*! \def INT_ICART(a, b, c)
-    Given a, b, and c compute a cartesian offset.
-*/
-#define INT_ICART(a, b, c) (((((((a)+(b)+(c)+1)<<1)-(a))*((a)+1))>>1)-(b)-1)
-/*! \def INT_IPURE(l, m)
-    Given l and m compute a pure function offset.
-*/
-#define INT_IPURE(l, m) ((l)+(m))
+
+
+
 
 #endif //PANACHE_BASISFUNCTIONMACROS_H
