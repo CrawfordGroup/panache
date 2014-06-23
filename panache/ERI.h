@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Contnrols where PANACHE gets its two-electron integrals from
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #ifndef PANACHE_ERI_H
 #define PANACHE_ERI_H
 
@@ -25,6 +30,19 @@ using std::shared_ptr;
 
 namespace panache {
 
+
+/*!
+ * \brief Obtains an ERI generator
+ *
+ * The generator obtained (libint1, libint2, erd, etc) depends on the options used
+ * when the library was compiled.
+ *
+ * \param [in] bs1 Basis set on the first center
+ * \param [in] bs2 Basis set on the second center
+ * \param [in] bs3 Basis set on the third center
+ * \param [in] bs4 Basis set on the fourth center
+ * \return A generator of ERI
+ */
 inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
                                        shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
 {
@@ -42,6 +60,20 @@ inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<Ba
             #endif
 }
 
+
+
+/*!
+ * \brief Obtains an ErfERI generator
+ *
+ * The generator obtained (libint1, libint2, erd, etc) depends on the options used
+ * when the library was compiled.
+ *
+ * \param [in] bs1 Basis set on the first center
+ * \param [in] bs2 Basis set on the second center
+ * \param [in] bs3 Basis set on the third center
+ * \param [in] bs4 Basis set on the fourth center
+ * \return A generator of ErfERI
+ */
 inline shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
                                           shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
                                           shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
