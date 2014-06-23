@@ -11,8 +11,8 @@
 
 By default, the Fortran interface is compiled using 32-bit integers. If
 you are compiling with "-i8" or are otherwise using 64-bit integers,
-you should enable the \ref USE_64PANACHE_sec option. You will likely have
-to enable \ref USE_64LAPACK_sec option (see below) Using the C interface
+you should enable the \ref PANACHE_INTERFACE64_sec option. You will likely have
+to enable \ref PANACHE_LAPACK64_sec option (see below) Using the C interface
 with the wrong bit-ness may result in compiler warning, but may be safe.
 
 
@@ -20,7 +20,7 @@ with the wrong bit-ness may result in compiler warning, but may be safe.
 
 If you are linking to 64-bit BLAS/Lapack libraries (for example,
 Intel MKL libraries with the -ilp64 suffix rather than the -lp64
-suffix), you must enable the \ref USE_64LAPACK_sec option.
+suffix), you must enable the \ref PANACHE_LAPACK64_sec option.
 
 
 \subsection compiling_backend_sec Integral Backends
@@ -31,6 +31,12 @@ libraries, it is likely far too slow for any production purposes.
 Therefore, a backend should be selected by giving the appropriate path
 to either the \ref LIBINT_PATH_sec or the \ref LIBINT2_PATH_sec cmake options.
 
+As an alternative, libERD can also be used by specifying
+PANACHE_USE_LIBERD. This code is also internal, but is much
+faster than the default. It requires a Fortran compiler.
+
+Only one integral backend can be specified. If none is specified, SlowERI
+is used.
 
 
 \section requirements_sec Requirements
@@ -45,11 +51,27 @@ to either the \ref LIBINT_PATH_sec or the \ref LIBINT2_PATH_sec cmake options.
  
  
 
-\section compiling_sec Compiling
+\section compileroverview_sec Overview
+
+libPANACHE uses the CMake build system. Typically, compilations are done
+out-of-source. The usual steps are:
+
+\code{.sh}
+mkdir build; cd build;
+
+CC=<c compiler> CXX=<c++ compiler> FC=<fortran compiler> \
+cmake ../ <options>
+make install
+\endcode
+
+see \ref compileexamples_sec for some examples, and
+\ref cmake_sec for many of the common CMake options.
+
+Afterwards, make sure to look at the output of cmake to ensure all the paths are
+correct, especially the libraries detected for BLAS/LAPACK.
 
 
-
-\subsection compilersel_sec Compiler Selection
+\section compilersel_sec Compiler Selection
 To change the compilers you are going to use, set the CXX, CC, and FC
 environment variables for the C++, C, and Fortran compilers, respectively.
 
@@ -67,8 +89,70 @@ CC=icc CXX=icpc FC=ifort cmake ...
 \endcode
 
 
-\subsection cmake_sec CMake options
-These options are typically passed to the cmake command. For example,
+
+
+\section compileexamples_sec Compilation Examples
+
+These examples assume your build directory is directly below the directory
+containing CMakeLists.txt.
+
+ - Autodetect everything, install to default directory (usually /usr/local)
+    \code{.sh}
+    cmake ../
+    \endcode
+
+ - Debug configuration, with timing, changing the install path. The library will be
+   located in /my/install/path/lib, the test binaries in /my/install/path/bin, etc.
+    \code{.sh}
+    cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
+          -DPANACHE_TIMING:Bool=On \
+          -DCMAKE_BUILD_TYPE="Debug" ../
+    make install
+    \endcode
+
+ - Intel compilers (v14 or 15, likely work with earlier), with MKL. Release configuration, with timing
+    \code{.sh}
+    CC=icc CXX=icpc FC=ifort \
+    cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
+          -DBLA_VENDOR:STRING=Intel10_64lp \
+          -DPANACHE_TIMING:Bool=On ../
+    make install
+    \endcode
+
+ - Same as previously, but using libint1 (rather than SlowERI). See \ref LIBINT_PATH_sec.
+    \code{.sh}
+    CC=icc CXX=icpc FC=ifort \
+    cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
+          -DLIBINT_PATH:FILEPATH=/some/directory/libint \
+          -DBLA_VENDOR:STRING=Intel10_64lp \
+          -DPANACHE_TIMING:Bool=On ../
+    make install
+    \endcode
+
+ - Same as previously, but using libint2. See \ref LIBINT2_PATH_sec.
+    \code{.sh}
+    CC=icc CXX=icpc FC=ifort \
+    cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
+          -DLIBINT2_PATH:FILEPATH=/some/directory/libint2 \
+          -DBLA_VENDOR:STRING=Intel10_64lp \
+          -DPANACHE_TIMING:Bool=On ../
+    make install
+    \endcode
+
+ - Same as previously, but using libERD.
+    \code{.sh}
+    CC=icc CXX=icpc FC=ifort \
+    cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
+          -DPANACHE_USE_LIBERD:BOOL=On \
+          -DBLA_VENDOR:STRING=Intel10_64lp \
+          -DPANACHE_TIMING:Bool=On ../
+    make install
+    \endcode
+
+
+
+\section cmake_sec CMake options
+These options are typically passed to the cmake command by prefixing them with "-D". For example,
 
 \code{.sh}
 cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
@@ -77,14 +161,26 @@ cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
 \endcode
 
 
-\subsubsection CMAKE_INSTALL_PREFIX_sec CMAKE_INSTALL_PREFIX
+\subsection CMAKE_CXX_FLAGS_sec CMAKE_CXX_FLAGS
+Additional flags to pass to the C++ compiler
+
+\subsection CMAKE_C_FLAGS_sec CMAKE_C_FLAGS
+Additional flags to pass to the C compiler
+
+\note Not really used - there is no C code!
+
+\subsection CMAKE_Fortran_FLAGS_sec CMAKE_Fortran_FLAGS
+Additional flags to pass to the Fortran compiler
+
+\subsection CMAKE_INSTALL_PREFIX_sec CMAKE_INSTALL_PREFIX
 Top level directory to install the library and related files. Default: /usr/local
 
-\subsubsection CMAKE_BUILD_TYPE_sec CMAKE_BUILD_TYPE
+\subsection CMAKE_BUILD_TYPE_sec CMAKE_BUILD_TYPE
 The type of build. Can be "Release", "Debug", "RelWithDebInfo", or "MinSizeRel".
+Default is "Release".
 
 
-\subsubsection LIBINT_PATH_sec          LIBINT_PATH
+\subsection LIBINT_PATH_sec          LIBINT_PATH
 Path to top level of libint (version 1). The directory structure should be:
 
  - LIBINT_PATH
@@ -97,7 +193,7 @@ Path to top level of libint (version 1). The directory structure should be:
 
 
 
-\subsubsection LIBINT2_PATH_sec         LIBINT2_PATH
+\subsection LIBINT2_PATH_sec         LIBINT2_PATH
 Path to top level of libint (version 1). The directory structure should be:
 
  - LIBINT2_PATH
@@ -109,35 +205,58 @@ Path to top level of libint (version 1). The directory structure should be:
         - libint2.a
 
 
-\subsubsection BLA_VENDOR_sec BLA_VENDOR
-Which vendor to use for BLAS/Lapack.
 
-\subsubsection USE_64LAPACK_sec         USE_64LAPACK
+\subsection PANACHE_USE_LIBERD_sec         PANACHE_USE_LIBERD
+Use internal libERD
+
+
+\subsection BLA_VENDOR_sec BLA_VENDOR
+Which vendor to use for BLAS/Lapack. See FindBLAS.cmake in your
+CMake installation. Default value is autodetect, which tends to be
+whatever is in /usr/lib. Other possibilities:
+
+
+| BLA_VENDOR        | Description                                    |
+|-------------------|------------------------------------------------|
+| Intel10_32        | Intel MKL v10, 32-bit                          |
+| Intel10_64lp      | Intel MKL v10, 64-bit, lp thread, lp64 model   |
+| Intel10_64lp_seq  | Intel MKL v10, 64-bit, sequential, lp64 model  |
+
+
+\todo I have not found an easy way to specify the 64-bit interface (ie ilp64).
+      The workaround is to specify Intel10_64lp, and then manually change the
+      library names.
+
+
+
+\subsection PANACHE_LAPACK64_sec         PANACHE_LAPACK64
 Enable if you plan on linking to 64-bit lapack or MKL (ie mkl ilp64
 libraries)
 
 
-\subsubsection PANACHE_OPENMP_sec       PANACHE_OPENMP
-Enable OpenMP. Whether or not OpenMP is used depends on if your
+
+\subsection PANACHE_OPENMP_sec       PANACHE_OPENMP
+Enable OpenMP. Whether or not OpenMP is actually used depends on if your
 compiler supports it.
 
 
 
-\subsubsection PANACHE_TIMING_sec       PANACHE_TIMING
+
+\subsection PANACHE_TIMING_sec       PANACHE_TIMING
 Enable timing of some functions. Timings will be printed to the
-usual output
+usual output (see Output.h)
 
 
-
-\subsubsection PANACHE_DISKPREFETCH_sec PANACHE_DISKPREFETCH
-Prefetching of the next batch from disk. Highly experimental, and
-requires a very new compiler (GCC 4.8 or Intel 15 [beta]).
-
-
-
-\subsubsection USE_64PANACHE_sec        USE_64PANACHE
+\subsection PANACHE_INTERFACE64_sec        PANACHE_INTERFACE64
 Use 64-bit C/Fortran interfaces to libpanache. May be required if
 compiling the Fortran code with 64-bit integers.
+
+
+\subsection PANACHE_DISKPREFETCH_sec PANACHE_DISKPREFETCH
+Prefetching of the next batch from disk.
+
+\warning Highly experimental, and requires a very new compiler (GCC 4.8 or Intel 15 [beta]).
+
 
 
  */
