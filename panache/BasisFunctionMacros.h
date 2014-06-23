@@ -18,7 +18,7 @@
 
 
 /*!
- * \def INT_PURE(am)
+ * \def INT_NPURE(am)
  * \brief Gives the number of spherical functions for an angular momentum.
  * 
  * \param am Angular momentum of the shell

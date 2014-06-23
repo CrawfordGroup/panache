@@ -79,7 +79,6 @@ private:
 public:
     /** Constructor.
      *  @param am Angular momentum.
-     *  @param pure Pure spherical harmonics, or Cartesian.
      *  @param oc An array of contraction coefficients.
      *  @param c An array of normalized contraction coefficients.
      *  @param e An array of exponent values.
@@ -87,7 +86,6 @@ public:
      *  @param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
      *  @param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
      *  @param start The starting index of the first function this shell provides. Used to provide starting positions in matrices.
-     *  @param pt Is the shell already normalized?
      */
     GaussianShell(int am,
                   int nprimitive,

@@ -167,7 +167,7 @@ extern "C" {
      * \param [in] buffer A pointer to memory for a buffer (of \p bufsize size)
      * \param [in] bufsize Number of elements in \p buffer (not number of bytes)
      */
-    void panache_setoutputbuffer(int_t df_handle, double * matout, int_t matsize);
+    void panache_setoutputbuffer(int_t df_handle, double * buffer, int_t bufsize);
 
 
 
@@ -206,7 +206,7 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getbatch_qmo(int_t dfhandle);
+    int_t panache_getbatch_qmo(int_t df_handle);
 
 
     /*!

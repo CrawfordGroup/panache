@@ -395,7 +395,7 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [out] naux Number of auxiliary basis functions
      * \param [out] nso2 Number of primary basis functions squared (nso*nso)
-     * \param [out] Total size of an unpacked Qso tensor (ie naux * nso2)
+     * \param [out] matsize size of an unpacked Qso tensor (ie naux * nso2)
      */
     void panachef_qsodimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
     {

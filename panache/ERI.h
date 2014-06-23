@@ -68,6 +68,7 @@ inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<Ba
  * The generator obtained (libint1, libint2, erd, etc) depends on the options used
  * when the library was compiled.
  *
+ * \param [in] omega Erf \f$ \omega \f$ value
  * \param [in] bs1 Basis set on the first center
  * \param [in] bs2 Basis set on the second center
  * \param [in] bs3 Basis set on the third center

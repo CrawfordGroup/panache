@@ -1,3 +1,7 @@
+/*! \file
+ * \brief Some basis math functions (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
 
 namespace panache {
 namespace math {
@@ -9,7 +13,7 @@ double factorial(int n)
     double r = 1.0;
     while(n > 1)
     {
-        r *= n;
+        r *= static_cast<double>(n);
         n--;
     }
     return r;
@@ -20,7 +24,7 @@ double double_factorial(int n)
     double r = 1.0;
     while(n > 1)
     {
-        r *= n;
+        r *= static_cast<double>(n);
         n -= 2;
     }
     return r;
@@ -32,7 +36,7 @@ double double_factorial_nminus1(int n)
     n--;
     while(n > 1)
     {
-        r *= n;
+        r *= static_cast<double>(n);
         n -= 2;
     }
     return r;

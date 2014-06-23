@@ -13,6 +13,11 @@
 
 namespace panache
 {
+
+
+/*!
+ * \brief Functions for timing
+ */
 namespace timing
 {
 

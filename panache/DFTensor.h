@@ -273,7 +273,6 @@ public:
      *
      * Call this and process the batches until this function returns zero.
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \return The number of batches actually stored in the buffer.
      */
     int GetBatch_Qmo(void);

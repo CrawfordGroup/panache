@@ -13,6 +13,10 @@
 
 namespace panache
 {
+
+/*!
+ * \brief Functions for output to the terminal 
+ */
 namespace output
 {
 
