@@ -260,7 +260,7 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
     }
 
 
-    if(primitive_end.size() != natom)
+    if(static_cast<long int>(primitive_end.size()) != natom)
         throw RuntimeError("SIZE MISMATCH");
 
     /*

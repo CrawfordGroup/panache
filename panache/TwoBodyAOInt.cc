@@ -438,10 +438,12 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
     {
         // Compute the offset in source_, and target
         size_t sourcechunkoffset = ichunk * (nao1 * nao2 * nao3 * nao4);
-        double *source1, *target1;
-        double *source2, *target2;
-        double *source3, *target3;
-        double *source4, *target4;
+
+        // assignments to make compilers happy
+        double *source1 = nullptr, *target1 = nullptr;
+        double *source2 = nullptr, *target2 = nullptr;
+        double *source3 = nullptr, *target3 = nullptr;
+        double *source4 = nullptr, *target4 = nullptr;
         double *source = source_+sourcechunkoffset;
         double *target = target_+sourcechunkoffset;
         double *tmpbuf = tformbuf_;
@@ -560,6 +562,8 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
             source1 = tmpbuf;
             target1 = target;
             break;
+        default:
+            throw RuntimeError("Invalid transform_index");  // mostly to make compilers happy
         }
 
         size_t size = nbf1 * nbf2 * nbf3 * nbf4;

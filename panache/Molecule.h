@@ -69,7 +69,7 @@ public:
     /*!
      *  \brief Returns the number of atoms
      */
-    unsigned int natom() const { return atoms_.size(); }
+    int natom() const { return atoms_.size(); }
 
 
     /*!

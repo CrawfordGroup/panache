@@ -16,8 +16,8 @@ private:
 
     struct Component_ {
         int a, b, c;
-        int cartindex, pureindex;
         double coef;
+        int cartindex, pureindex;
 
         Component_(int a, int b, int c, double coef, int cartindex, int pureindex)
            : a(a),b(b),c(c),coef(coef),cartindex(cartindex),pureindex(pureindex)

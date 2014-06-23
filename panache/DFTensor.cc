@@ -309,12 +309,10 @@ void DFTensor::GenQso(bool inmem)
 
 
 
-void DFTensor::SetOutputBuffer(double * buf, size_t size)
+void DFTensor::SetOutputBuffer(double * buf, long int size)
 {
     outbuffer_ = buf;
     outbuffersize_ = size;
-
-
 }
 
 
@@ -428,7 +426,7 @@ int DFTensor::GetBatch_Qso(void)
 
     // get a batch    
     int gotten;
-    if(gotten = GetBatch_Base(nq))
+    if((gotten = GetBatch_Base(nq)))
     {
         // expand into mat
         #ifdef _OPENMP
@@ -507,7 +505,7 @@ int DFTensor::GetBatch_Qmo(void)
 
 
     int gotten;
-    if(gotten = GetBatch_Base(nq))
+    if((gotten = GetBatch_Base(nq)))
     {
         #ifdef _OPENMP
         #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
@@ -694,18 +692,18 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
 static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
                     reorder::MemorySwapper & sf)
 {
-    size_t size = order.size();
+    long int size = order.size();
 
     // original order is 1 2 3 4 5 6....
     std::vector<unsigned short> currentorder(size);
 
-    for(int i = 0; i < size; i++)
+    for(long int i = 0; i < size; i++)
         currentorder[i] = i+1;
 
-    for(int i = 0; i < size; i++)
+    for(long int i = 0; i < size; i++)
     {
         // find the index in the current order
-        size_t cindex = 0;
+        long int cindex = 0;
         bool found = false;
 
         for(int j = 0; j < size; j++)
@@ -734,7 +732,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 
     // double check
-    for(int i = 0; i < size; i++)
+    for(long int i = 0; i < size; i++)
     {
         if(currentorder[i] != order[i])
             throw RuntimeError("Reordering failed!");

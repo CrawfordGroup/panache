@@ -138,7 +138,7 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
     bool found = false;
     bool newentry = true;
 
-    while (lineno < lines.size())
+    while (lineno < static_cast<long int>(lines.size()))
     {
         string line = trim(lines[lineno++]);
         std::vector<std::string> splitline = string_to_vector(line);

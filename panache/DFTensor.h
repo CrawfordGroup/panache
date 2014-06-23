@@ -107,7 +107,7 @@ private:
     std::unique_ptr<double[]> q_single_;   // Holds a batch of Q (expanded storage)
 
     double * outbuffer_;  //!< Where to output batches (see DFTensor::SetOutputBuffer)
-    size_t outbuffersize_; //!< Total size of the buffer (number of elements)
+    long int outbuffersize_; //!< Total size of the buffer (number of elements)
 
     bool isinmem_; //!< Is Q completely in memory?
 
@@ -236,7 +236,7 @@ public:
      * \param [in] buf A pointer to memory for a buffer (of \p bufsize size)
      * \param [in] size Number of elements in \p buffer (not number of bytes)
      */
-    void SetOutputBuffer(double * buf, size_t size);
+    void SetOutputBuffer(double * buf, long int size);
 
 
 

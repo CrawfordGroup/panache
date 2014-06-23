@@ -44,6 +44,10 @@ protected:
     SharedBasisSet pois_;
     /// Is the metric poisson?
     bool is_poisson_;
+
+    /// Is the metric inverted or just a J matrix?
+    bool is_inverted_;
+
     /// Range separation omega (0.0 if not used)
     double omega_;
 
@@ -57,8 +61,6 @@ protected:
 
     /// The fitting algorithm selected
     std::string algorithm_;
-    /// Is the metric inverted or just a J matrix?
-    bool is_inverted_;
 
     /// Fully pivot the fitting metric
     void pivot();
