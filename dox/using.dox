@@ -7,7 +7,59 @@
 
 \section memory_sec Memory Considerations
 
-stuff
+\todo Double check these
 
+The page uses the following definitions:
+
+ | Term    | Description                                                             |
+ |---------|-------------------------------------------------------------------------|
+ | nso     | Number of \b primary basis functions (spherical or cartesian)           |
+ | nmo     | Number of molecular orbitals                                            |
+ | naux    | Number of \b auxiliary basis functions (spherical or cartesian)         |
+ | nsotri  | Packed storage of a symmetric nso*nso matrix (nso*(nso+1))/2            |
+ | nq      | Number of nso*nso or nmo*nmo matrices that can fit in the given output buffer (depending on if DFTensor::GetBatch_Qso or DFTensor::GetBatch_Qmo() is called)                                     |
+
+
+
+\subsection dftensor_memory_Sec Storage
+
+
+\subsubsection memory_metric_sec Storage of the metric
+
+   | Size             | Use                                       |
+   |------------------|-------------------------------------------|
+   | nso * nso        | Stores metric                             |
+
+
+
+
+\subsubsection memory_memory_sec If using storage in memory
+
+(see DFTensor::GenQso())
+
+   | Size             | Use                                       |
+   |------------------|-------------------------------------------|
+   | naux * nsotri    | Stores entire (Q\|ab) tensor              |
+   | nq * nsotri      | Stores part of (Q\|ab) for unpacking      |
+
+  
+
+\subsubsection memory_disk_sec If using disk storage
+
+   | Size             | Use                                                |
+   |------------------|----------------------------------------------------|
+   | nq  * nsotri     | Stores part of (Q\|ab) for unpacking               |
+   | nq  * nso * nso  | Unpacked version of part of (Q\|ab)                |
+   | nq  * nmo * nso  | Holds result of matrix multiplication QC or C(T)Q  |
+
+
+
+\subsubsection memory_disk_sec If using disk storage with prefetching
+
+(see \ref PANACHE_DISKPREFETCH_sec). Same as above, plus
+  
+   | Size             | Use                                   |
+   |------------------|---------------------------------------|
+   | nq  * nsotri     | Prefetched part of (Q\|ab)            |
 
  */
