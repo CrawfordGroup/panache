@@ -14,7 +14,7 @@ double SlowERIBase::norm_const(unsigned int l1, unsigned int m1, unsigned int n1
 double* SlowERIBase::init_array(unsigned long int size)
 {
     double* result = new double[size];
-    for (int i = 0; i < size; i++)
+    for (unsigned long int i = 0; i < size; i++)
         result[i] = 0.0;
     return result;
 }
@@ -127,11 +127,11 @@ void SlowERIBase::calc_f(double *F, int n, double t)
 
 
 
-double SlowERIBase::eri(unsigned int l1, unsigned int m1, unsigned int n1, double alpha1,
-                        const double* A, unsigned int l2, unsigned int m2, unsigned int n2,
-                        double alpha2, const double* B, unsigned int l3, unsigned int m3,
-                        unsigned int n3, double alpha3, const double* C, unsigned int l4,
-                        unsigned int m4, unsigned int n4, double alpha4, const double* D,
+double SlowERIBase::eri(int l1, int m1, int n1, double alpha1,
+                        const double* A, int l2, int m2, int n2,
+                        double alpha2, const double* B, int l3, int m3,
+                        int n3, double alpha3, const double* C, int l4,
+                        int m4, int n4, double alpha4, const double* D,
                         int norm_flag)
 {
 
@@ -168,7 +168,7 @@ double SlowERIBase::eri(unsigned int l1, unsigned int m1, unsigned int n1, doubl
     const double PQ2 = PQx * PQx + PQy * PQy + PQz * PQz;
 
     int u1, u2, v1, v2, w1, w2, tx, ty, tz, txmax, tymax, tzmax;
-    unsigned int i, j, k;
+    int i, j, k;
     int lp, lq, mp, mq, np, nq;
     int zeta;
     double *flp, *flq, *fmp, *fmq, *fnp, *fnq;
