@@ -54,7 +54,7 @@ The page uses the following definitions:
 
 
 
-\subsubsection memory_disk_sec If using disk storage with prefetching
+\subsubsection memory_diskprefetch_sec If using disk storage with prefetching
 
 (see \ref PANACHE_DISKPREFETCH_sec). Same as above, plus
   
