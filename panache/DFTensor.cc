@@ -689,6 +689,7 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
 
 
 // note - passing by value for the vector
+/*
 static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
                     reorder::MemorySwapper & sf)
 {
@@ -741,7 +742,6 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
 
 
 
-/*
 void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & order)
 {
     using namespace reorder;
