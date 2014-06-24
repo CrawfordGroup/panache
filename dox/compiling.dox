@@ -237,7 +237,7 @@ libraries)
 
 \subsection PANACHE_OPENMP_sec       PANACHE_OPENMP
 Enable OpenMP. Whether or not OpenMP is actually used depends on if your
-compiler supports it.
+compiler supports it. PANACHE_OPENMP is set to true by default.
 
 
 

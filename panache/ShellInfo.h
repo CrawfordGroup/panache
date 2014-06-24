@@ -15,8 +15,12 @@ namespace panache {
 /*!
  *  \brief Holds information about a Gaussian orbital shell.
  *
- *  This class has the same behavior as GaussianShell, but implements everything using
- *  slower data structures, which are easier to construct. These are used to build the
+ *  The main difference between ShellInfo and GaussianShell is that a ShellInfo
+ *  object is self-contained. That is, all exponents, coefficients, etc, are
+ *  stored within the object itself. On the other hand, a GaussianShell contains
+ *  pointers to exponents, etc, held elsewhere (usually in a BasisSet object).
+ *
+ *  These are used to build the
  *  basis set, which builds more efficient pointer-based GaussianShell objects.
  */
 class ShellInfo
