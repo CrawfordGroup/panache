@@ -120,28 +120,28 @@ size_t ERDTwoElectronInt::compute_shell(const AOShellCombinationsIterator& shell
 
 void ERDTwoElectronInt::compute_scratch_size()
 {
-    int shell1;
+    int shell1 = 0;
     int npgto1 = 0;
     for(int shell = 0; shell < original_bs1_->nshell(); ++shell)
         if(original_bs1_->shell(shell).nprimitive() > npgto1){
             npgto1 = original_bs1_->shell(shell).nprimitive();
             shell1 = shell;
         }
-    int shell2;
+    int shell2 = 0;
     int npgto2 = 0;
     for(int shell = 0; shell < original_bs2_->nshell(); ++shell)
         if(original_bs2_->shell(shell).nprimitive() > npgto2){
             npgto2 = original_bs2_->shell(shell).nprimitive();
             shell2 = shell;
         }
-    int shell3;
+    int shell3 = 0;
     int npgto3 = 0;
     for(int shell = 0; shell < original_bs3_->nshell(); ++shell)
         if(original_bs3_->shell(shell).nprimitive() > npgto3){
             npgto3 = original_bs3_->shell(shell).nprimitive();
             shell3 = shell;
         }
-    int shell4;
+    int shell4 = 0;
     int npgto4 = 0;
     for(int shell = 0; shell < original_bs4_->nshell(); ++shell)
         if(original_bs4_->shell(shell).nprimitive() > npgto4){
@@ -168,7 +168,6 @@ void ERDTwoElectronInt::compute_scratch_size()
     F_INT ncgto2 = 1;
     F_INT ncgto3 = 1;
     F_INT ncgto4 = 1;
-    F_INT ncgto = 4;
     F_INT npgto = npgto1 + npgto2 + npgto3 + npgto4;
     F_INT am1 = original_bs1_->max_am();
     F_INT am2 = original_bs2_->max_am();
@@ -199,7 +198,6 @@ void ERDTwoElectronInt::compute_scratch_size()
         alpha_[last_pgto] = gs4.exp(pgto4);
         ++last_pgto;
     }
-    long int nbatch = 0;
     // Compute the amount of memory needed for the largest quartet
     C_ERD__MEMORY_ERI_BATCH(npgto, npgto, ncgto1, ncgto2, ncgto3, ncgto4,
                             npgto1, npgto2, npgto3, npgto4, am1, am2, am3, am4,
@@ -264,14 +262,15 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     int offset_l = offset_k + npgto2;
 
     // Copy exponents and coefficients over
-    ::memcpy(&(alpha_[offset_i]), gs4.exps(), sizeof(double)*npgto4);
-    ::memcpy(&(alpha_[offset_j]), gs3.exps(), sizeof(double)*npgto3);
-    ::memcpy(&(alpha_[offset_k]), gs2.exps(), sizeof(double)*npgto2);
-    ::memcpy(&(alpha_[offset_l]), gs1.exps(), sizeof(double)*npgto1);
-    ::memcpy(&(cc_[offset_i]), gs4.coefs(), sizeof(double)*npgto4);
-    ::memcpy(&(cc_[offset_j]), gs3.coefs(), sizeof(double)*npgto3);
-    ::memcpy(&(cc_[offset_k]), gs2.coefs(), sizeof(double)*npgto2);
-    ::memcpy(&(cc_[offset_l]), gs1.coefs(), sizeof(double)*npgto1);
+    std::copy(gs4.exps(), gs4.exps()+npgto4, alpha_ + offset_i);
+    std::copy(gs3.exps(), gs3.exps()+npgto3, alpha_ + offset_j);
+    std::copy(gs2.exps(), gs2.exps()+npgto2, alpha_ + offset_k);
+    std::copy(gs1.exps(), gs1.exps()+npgto1, alpha_ + offset_l);
+    std::copy(gs4.coefs(), gs4.coefs()+npgto4, cc_ + offset_i);
+    std::copy(gs3.coefs(), gs3.coefs()+npgto3, cc_ + offset_j);
+    std::copy(gs2.coefs(), gs2.coefs()+npgto2, cc_ + offset_k);
+    std::copy(gs1.coefs(), gs1.coefs()+npgto1, cc_ + offset_l);
+
 
 //#if DEBUG
     output::printf("\n\nShell (%2d %2d | %2d %2d) - center (%2d %2d | %2d %2d) - angular momentum (%d %d | %d %d)\n",
@@ -295,7 +294,7 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     output::printf("\n");
 //#endif
 
-    F_INT nbatch;
+    F_INT nbatch = 0;
     // Call ERD.  N.B. We reverse the shell ordering, because the first index is
     // the fastest running index in the buffer, which should be l for us.
     C_ERD__GENER_ERI_BATCH(i_buffer_size_, d_buffer_size_, npgto, npgto, ncgto,
@@ -321,7 +320,9 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
         source_ = &(dscratch_[buffer_offset_-1]);
         pure_transform(shell_i, shell_j, shell_k, shell_l, 1);
     }else{
-        ::memcpy(target_, &(dscratch_[buffer_offset_-1]), sizeof(double)*nbatch);
+        std::copy(dscratch_ + buffer_offset_ - 1, 
+                  dscratch_ + buffer_offset_ - 1 + nbatch,
+                  target_);
     }
     return nbatch;
 
