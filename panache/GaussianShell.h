@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Holds information about a basis set shell (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_GAUSSIANSHELL_H
@@ -34,112 +17,191 @@ namespace panache {
 class GaussianShell
 {
 private:
-    /// Angular momentum
-    int l_;
-    /// Flag for pure angular momentum
-    int puream_;
-    /// Exponents (of length nprimitives_)
-    const double* exp_;
-    /// Original (un-normalized) contraction coefficients (of length nprimitives)
-    const double* original_coef_;
-    /// Contraction coefficients (of length nprimitives_)
-    const double* coef_;
+    
+    int l_;              //!< Angular momentum
+    int puream_;         //!< Flag for pure angular momentum
+    const double* exp_;  //!< Exponents (of length nprimitives_)
+    const double* original_coef_;  //!< Original (un-normalized) contraction coefficients (of length nprimitives)
+    const double* coef_; //!< Contraction coefficients (of length nprimitives_)
 
-    /// Atom number this shell goes to. Needed when indexing integral derivatives.
-    int nc_;
-    /// Atomic coordinates of this center
-    const double *center_;
-    /// First basis function in this shell
-    int start_;
+    
+    int nc_;  //!< Atom number this shell goes to. Needed when indexing integral derivatives.
+    const double *center_;  //!< Atomic coordinates of this center
+    int start_;  //!< First basis function in this shell
 
-    /// How many cartesian functions? (1=s, 3=p, 6=d, ...)
-    int ncartesian_;
-    /// The number of primitives in this shell
-    int nprimitive_;
-    /** How many functions? (1=s, 3=p, 5/6=d, ...)
-     * Dependent on the value of puream_
-     */
-    int nfunction_;
+    int ncartesian_;  //!< How many cartesian functions? (1=s, 3=p, 6=d, ...)
+    int nprimitive_;  //!< The number of primitives in this shell
+    int nfunction_; //!< Number of basis functions (dependent on puream_, 1=s, 3=p, 5/6=d, ...)
 
-    /** Normalizes a single primitive.
-     *  @param p The primitive index to normalize.
-     *  @return Normalization constant to be applied to the primitive.
-     */
-    double primitive_normalization(int p);
-    /** Normalizes an entire contraction set. Applies the normalization to the coefficients
-     *  @param gs The contraction set to normalize.
-     */
-    void contraction_normalization();
-
-    /** Lookup array that when you index the angular momentum it returns the lowercase letter corresponding to it. */
-    static const char *amtypes;
-    /** Lookup array that when you index the angular momentum it returns the uppercase letter corresponding to it. */
-    static const char *AMTYPES;
+    
+    static const char *amtypes;  //!< Lookup array for lowercase letter symbolizing the angular momentup (0=s, 1=p, etc)
+    static const char *AMTYPES;  //!< Lookup array for uppercase letter symbolizing the angular momentup (0=S, 1=P, etc)
 
 public:
-    /** Constructor.
-     *  @param am Angular momentum.
-     *  @param oc An array of contraction coefficients.
-     *  @param c An array of normalized contraction coefficients.
-     *  @param e An array of exponent values.
-     *  @param pure an enum describing whether this shell uses pure or Cartesian functions.
-     *  @param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
-     *  @param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
-     *  @param start The starting index of the first function this shell provides. Used to provide starting positions in matrices.
-     */
-    GaussianShell(int am,
-                  int nprimitive,
-                  const double *oc,
-                  const double *c,
-                  const double *e,
-                  ShellInfo::GaussianType pure,
-                  int nc,
-                  const double* center,
-                  int start);
+    // This class is ok to be copy constructed or assigned
+    //GaussianShell(const GaussianShell & other) = delete;
+    //GaussianShell & operator=(const GaussianShell & other) = delete;
+    
 
-    ///Builds and empty GShell
+    /*!
+     * \brief Builds and empty GShell
+     */
     GaussianShell() {}
 
-    /// The number of primitive Gaussians
+
+    /*!
+     *  \brief Constructor
+     * 
+     *  \param am Angular momentum.
+     *  \param nprimitive Number of primitives in the shell
+     *  \param oc An array of contraction coefficients (length \p nprimitive)
+     *  \param c An array of normalized contraction coefficients (length \p nprimitive)
+     *  \param e An array of exponent values (length \p nprimitive)
+     *  \param pure an enum describing whether this shell uses pure or Cartesian functions.
+     *  \param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
+     *  \param center The x, y, z position of the shell.
+     *  \param start The starting index of the first function this shell provides. Used to provide starting positions in matrices.
+     */
+    GaussianShell(int am, int nprimitive,
+                  const double *oc, const double *c,
+                  const double *e,
+                  ShellInfo::GaussianType pure,
+                  int nc, const double* center,
+                  int start);
+
+
+    /*!
+     * \brief The number of primitive Gaussians
+     */
     int nprimitive() const;
-    /// Total number of basis functions
+
+
+    /*!
+     * \brief Total number of basis functions
+     */
     int nfunction() const;
-    /// Total number of functions if this shell was Cartesian
+
+
+    /*!
+     * \brief Total number of functions if this shell was Cartesian
+     */
     int ncartesian() const          { return ncartesian_; }
-    /// The angular momentum of the given contraction
+
+
+    /*!
+     * \brief The angular momentum of the given contraction
+     */
     int am() const                  { return l_; }
-    /// The character symbol for the angular momentum of the given contraction
+
+
+    /*!
+     * \brief The character symbol for the angular momentum of the given contraction
+     */
     char amchar() const             { return amtypes[l_]; }
-    /// The character symbol for the angular momentum of the given contraction (upper case)
+
+
+    /*!
+     * \brief The character symbol for the angular momentum of the given contraction (upper case)
+     */
     char AMCHAR() const             { return AMTYPES[l_]; }
-    /// Returns true if contraction is Cartesian
+
+
+    /*!
+     * \brief Returns true if contraction is Cartesian
+     */
     bool is_cartesian() const       { return !puream_; }
-    /// Returns true if contraction is pure
+
+
+    /*!
+     * \brief Returns true if contraction is pure
+     */
     bool is_pure() const            { return puream_; }
 
-    /// Returns the center of the Molecule this shell is on
+
+    /*!
+     * \brief Returns the center of the Molecule this shell is on
+     */
     const double* center() const;
-    /// Returns the atom number this shell is on. Used by integral derivatives for indexing.
+
+
+    /*!
+     * \brief Returns the atom number this shell is on. Used by integral derivatives for indexing.
+     */
     int ncenter() const             { return nc_; }
 
-    /// Returns the exponent of the given primitive
+
+    /*!
+     * \brief Returns the exponent of the given primitive
+     *
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Exponent on primitive \p prim
+     */
     double exp(int prim) const      { return exp_[prim]; }
-    /// Return coefficient of pi'th primitive
+
+
+    /*!
+     * \brief Return coefficient of pi'th primitive
+     */
     double coef(int pi) const       { return coef_[pi]; }
-    /// Return unnormalized coefficient of pi'th primitive
-    double original_coef(int pi) const { return original_coef_[pi]; }
-    /// Returns the exponents
+
+
+    /*!
+     * \brief Return unnormalized coefficient of a primitive
+     *
+     * \note Depending on the how the corresponding ShellInfo
+     *       was created, this may still be the normalized coefficient
+     *       (ie if the basis function is normalized already, this code does
+     *       not 'unnormalize' it. 
+     * 
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Unnormalized coefficient on primitive \p prim
+     */
+    double original_coef(int prim) const { return original_coef_[prim]; }
+
+
+    /*!
+     * \brief Returns all exponents in this shell
+     *
+     * \return Exponents for all primitives in this shell (of length nprimitive())
+     */
     const double* exps() const { return exp_; }
-    /// Return coefficients
+
+
+    /*!
+     * \brief Return all coefficients in this shell
+     *
+     * \return Exponents for all coefficients in this shell (of length nprimitive())
+     */
     const double* coefs() const { return coef_; }
-    /// Return unnormalized coefficients
+
+
+    /*!
+     * \brief Return all unnormalized coefficients in this shell
+     *
+     * \note Depending on the how the corresponding ShellInfo
+     *       was created, this may still be the normalized coefficient
+     *       (ie if the basis function is normalized already, this code does
+     *       not 'unnormalize' it. 
+     *
+     * \return Unnormalized coefficients for all primitives in this shell (of length nprimitive())
+     */
     const double* original_coefs() const { return original_coef_; }
 
-    /// Basis function index where this shell starts.
-    int function_index() const      { return start_; }
-    void set_function_index(int i)  { start_ = i; }
 
-    /// Print
+
+    /*!
+     * \brief Basis function index where this shell starts.
+     * \return Basis function index where this shell starts.
+     */
+    int function_index() const      { return start_; }
+
+
+
+    /*!
+     * \brief Print information about this shell
+     *
+     * Destination of the printing is controlled by SetOutput(). See Output.h
+     */
     void print(void) const;
 };
 
