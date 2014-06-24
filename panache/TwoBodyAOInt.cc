@@ -590,7 +590,7 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
 
         // The permute indices routines depend on the integrals being in source_
         if (is_pure1 || is_pure2 || is_pure3 || is_pure4)
-            memcpy(source, target, size * sizeof(double));
+            std::copy(target, target + size, source);
     }
 #ifdef MINTS_TIMER
     timer_off("Pure transformation");

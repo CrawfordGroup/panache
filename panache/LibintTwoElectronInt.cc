@@ -234,7 +234,7 @@ size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
             timer_on("memcpy - no resort");
 #endif
             // copy the integrals to the target_
-            memcpy(target_, source_, n1 * n2 * n3 * n4 *sizeof(double));
+            std::copy(source_, source_ + n1 * n2 * n3 * n4, target_);
 #ifdef MINTS_TIMER
             timer_off("memcpy - no resort");
 #endif
@@ -445,7 +445,7 @@ size_t LibintTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
 
         target_ints = build_eri[am1][am2][am3][am4](&libint_, nprim);
 
-        memcpy(source_, target_ints, sizeof(double)*size);
+        std::copy(target_ints, target_ints + size, source_);
     }
     else
     {

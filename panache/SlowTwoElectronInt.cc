@@ -74,7 +74,7 @@ size_t SlowTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
     {
         // Only do the following if we did any work.
         // copy the integrals to the target_
-        memcpy(target_, source_, n1 * n2 * n3 * n4 *sizeof(double));
+        std::copy(source_, source_ + curr_buff_size_, target_);
     }
 
     return ncomputed;
