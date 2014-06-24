@@ -137,9 +137,9 @@ private:
 
     /*! \name Timing */
     ///@{
-    timing::Timer timer_genqso;        //!< Total time spent in GenQso()
-    timing::Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
-    timing::Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
+    Timer timer_genqso;        //!< Total time spent in GenQso()
+    Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
+    Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
 
     ///@}
 

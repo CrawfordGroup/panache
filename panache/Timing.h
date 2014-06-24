@@ -15,12 +15,6 @@ namespace panache
 {
 
 
-/*!
- * \brief Functions for timing
- */
-namespace timing
-{
-
 using panacheclock = std::chrono::high_resolution_clock;
 
 
@@ -132,8 +126,7 @@ public:
 };
 
 
-}
-} // close namespace panache::timing
+} // close namespace panache
 
 #endif // PANACHE_TIMING_H
 
