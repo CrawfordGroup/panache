@@ -8,7 +8,6 @@ namespace panache {
 
 class BasisSet;
 
-/*! \ingroup MINTS */
 class AOShellCombinationsIterator
 {
 private:

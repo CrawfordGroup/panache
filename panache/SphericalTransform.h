@@ -7,7 +7,6 @@
 namespace panache {
 
 
-/*! \ingroup MINTS */
 /** This is a base class for a container for a sparse Cartesian to solid
     harmonic basis function transformation. */
 class SphericalTransform

@@ -86,15 +86,9 @@ size_t LibintTwoElectronInt::compute_shell(const AOShellCombinationsIterator& sh
 
 size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
 {
-#ifdef MINTS_TIMER
-    timer_on("ERI::compute_shell");
-#endif
     // Need to ensure the ordering asked by the user is valid for libint
     // compute_quartet does NOT check this. SEGFAULTS should occur if order
     // is not guaranteed.
-#ifdef MINTS_TIMER
-    timer_on("reorder");
-#endif
 
     int s1, s2, s3, s4;
     int am1, am2, am3, am4, temp;
@@ -113,10 +107,6 @@ size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
 
     // TODO: Check this!
 //	if (c1 == c2 && c1 == c3 && c1 && c4 && temp % 2 != 0) {
-//#ifdef MINTS_TIMER
-//		timer_off("reorder");
-//		timer_off("ERI::compute_shell");
-//#endif
 //		return 0;
 //	}
 
@@ -206,9 +196,6 @@ size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
 
         p13p24_ = true;
     }
-#ifdef MINTS_TIMER
-    timer_off("reorder");
-#endif
 
     // s1, s2, s3, s4 contain the shells to do in libint order
     size_t ncomputed = compute_quartet(s1, s2, s3, s4);
@@ -219,38 +206,20 @@ size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
         // Permute integrals back, if needed
         if (p12_ || p34_ || p13p24_)
         {
-#ifdef MINTS_TIMER
-            timer_on("permute_target");
-#endif
             permute_target(source_, target_, s1, s2, s3, s4, p12_, p34_, p13p24_);
-#ifdef MINTS_TIMER
-            timer_off("permute_target");
-#endif
         }
         else
         {
-#ifdef MINTS_TIMER
-            timer_on("memcpy - no resort");
-#endif
             // copy the integrals to the target_
             std::copy(source_, source_ + n1 * n2 * n3 * n4, target_);
-#ifdef MINTS_TIMER
-            timer_off("memcpy - no resort");
-#endif
         }
     }
 
-#ifdef MINTS_TIMER
-    timer_off("ERI::compute_shell");
-#endif
     return ncomputed;
 }
 
 size_t LibintTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
 {
-#ifdef MINTS_TIMER
-    timer_on("setup");
-#endif
 
     const GaussianShell& s1 = bs1_->shell(sh1);
     const GaussianShell& s2 = bs2_->shell(sh2);
@@ -298,13 +267,7 @@ size_t LibintTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
     libint_.CD[1] = C[1] - D[1];
     libint_.CD[2] = C[2] - D[2];
 
-#ifdef MINTS_TIMER
-    timer_off("setup");
-#endif
 
-#ifdef MINTS_TIMER
-    timer_on("Primitive setup");
-#endif
 
     // Prepare all the data needed by libint
     size_t nprim = 0;
@@ -426,16 +389,10 @@ size_t LibintTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
             }
         }
     }
-#ifdef MINTS_TIMER
-    timer_off("Primitive setup");
-#endif
 
     // How many are there?
     size_t size = INT_NCART(am1) * INT_NCART(am2) * INT_NCART(am3) * INT_NCART(am4);
 
-#ifdef MINTS_TIMER
-    timer_on("libint overhead");
-#endif
 
     // Compute the integral
     if (am)
@@ -456,9 +413,6 @@ size_t LibintTwoElectronInt::compute_quartet(int sh1, int sh2, int sh3, int sh4)
 //        output::printf("s-functions = %8.5f\n", temp);
     }
 
-#ifdef MINTS_TIMER
-    timer_off("libint overhead");
-#endif
 
     // The following two functions time themselves.
 

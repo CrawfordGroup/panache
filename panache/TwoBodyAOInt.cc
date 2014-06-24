@@ -97,9 +97,6 @@ void TwoBodyAOInt::normalize_am(std::shared_ptr<GaussianShell> s1, std::shared_p
     // Integrals assume this normalization is 1.0.
     return;
 #if 0
-#ifdef MINTS_TIMER
-    timer_on("Angular momentum normalization");
-#endif
     int am1 = s1->am();
     int am2 = s2->am();
     int am3 = s3->am();
@@ -159,17 +156,11 @@ void TwoBodyAOInt::normalize_am(std::shared_ptr<GaussianShell> s1, std::shared_p
             }
         }
     }
-#ifdef MINTS_TIMER
-    timer_off("Angular momentum normalization");
-#endif
 #endif
 }
 
 void TwoBodyAOInt::permute_target(double *s, double *t, int sh1, int sh2, int sh3, int sh4, bool p12, bool p34, bool p13p24)
 {
-#ifdef MINTS_TIMER
-    timer_on("Permute target");
-#endif
     const GaussianShell& s1 = bs1_->shell(sh1);
     const GaussianShell& s2 = bs2_->shell(sh2);
     const GaussianShell& s3 = bs3_->shell(sh3);
@@ -234,9 +225,6 @@ void TwoBodyAOInt::permute_target(double *s, double *t, int sh1, int sh2, int sh
             }
         }
     }
-#ifdef MINTS_TIMER
-    timer_off("Permute target");
-#endif
 }
 
 void TwoBodyAOInt::permute_1234_to_1243(double *s, double *t, int nbf1, int nbf2, int nbf3, int nbf4)
@@ -395,9 +383,6 @@ void TwoBodyAOInt::permute_1234_to_4321(double *s, double *t, int nbf1, int nbf2
 
 void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk)
 {
-#ifdef MINTS_TIMER
-    timer_on("Pure transformation");
-#endif
     const GaussianShell& s1 = bs1_->shell(sh1);
     const GaussianShell& s2 = bs2_->shell(sh2);
     const GaussianShell& s3 = bs3_->shell(sh3);
@@ -590,9 +575,6 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
         if (is_pure1 || is_pure2 || is_pure3 || is_pure4)
             std::copy(target, target + size, source);
     }
-#ifdef MINTS_TIMER
-    timer_off("Pure transformation");
-#endif
 }
 
 static void transform2e_1(int am, const SphericalTransform& sti, double *s, double *t, int njkl)

@@ -5,7 +5,6 @@ namespace panache {
 
 class GaussianShell;
 
-/*! \ingroup MINTS */
 class AOIntegralsIterator
 {
 private:
