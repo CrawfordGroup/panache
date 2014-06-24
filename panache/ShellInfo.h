@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Holds information about a basis set shell (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_SHELLINFO_H
@@ -29,76 +12,81 @@
 namespace panache {
 
 
-/*! \ingroup MINTS
- *  \class ShellInfo
- *  \brief This class has the same behavior as GaussianShell, but implements everything using
- *         slower data structures, which are easier to construct. These are used to build the
- *         basis set, which builds more efficient pointer-based GaussianShell objects.
+/*!
+ *  \brief Holds information about a Gaussian orbital shell.
+ *
+ *  This class has the same behavior as GaussianShell, but implements everything using
+ *  slower data structures, which are easier to construct. These are used to build the
+ *  basis set, which builds more efficient pointer-based GaussianShell objects.
  */
 class ShellInfo
 {
 private:
-    /// Angular momentum
-    int l_;
-    /// Flag for pure angular momentum
-    int puream_;
-    /// Exponents (of length nprimitives_)
-    std::vector<double> exp_;
-    /// Contraction coefficients (of length nprimitives_)
-    std::vector<double> coef_;
+    
+    int l_;  //!< Angular momentum
+    int puream_;  //!< Flag for pure angular momentum
+    std::vector<double> exp_;  //!< Exponents (of length nprimitives_)
+    std::vector<double> coef_;  //!< Contraction coefficients (of length nprimitives_)
+    std::vector<double> original_coef_;  //!< Original (un-normalized) contraction coefficients (of length nprimitives)
 
-    /// Original (un-normalized) contraction coefficients (of length nprimitives)
-    /// Only used in printing.
-    std::vector<double> original_coef_;
+    int nc_;  //!< Atom number this shell goes to. Needed when indexing integral derivatives.
+    Vector3 center_;  //!< Atomic center number in the Molecule
+    int ncartesian_;  //!< How many cartesian functions? (1=s, 3=p, 6=d, ...)
+    int nfunction_; //!< Number of basis functions (dependent on puream_, 1=s, 3=p, 5/6=d, ...)
 
-    /// Atom number this shell goes to. Needed when indexing integral derivatives.
-    int nc_;
-    /// Atomic center number in the Molecule
-    Vector3 center_;
-
-    /// How many cartesian functions? (1=s, 3=p, 6=d, ...)
-    int ncartesian_;
-    /** How many functions? (1=s, 3=p, 5/6=d, ...)
-     * Dependent on the value of puream_
-     */
-    int nfunction_;
-
-    /** Normalizes a single primitive.
-     *  @param p The primitive index to normalize.
-     *  @return Normalization constant to be applied to the primitive.
+    /*!
+     *  \brief Normalizes a single primitive.
+     *
+     *  \param p The primitive index to normalize.
+     *  \return Normalization constant to be applied to the primitive.
      */
     double primitive_normalization(int p);
-    /** Normalizes an entire contraction set. Applies the normalization to the coefficients
-     *  @param gs The contraction set to normalize.
+
+
+    /*!
+     *  \brief Normalizes the entire contraction set. Applies the normalization to the coefficients
      */
     void contraction_normalization();
 
-    /** Lookup array that when you index the angular momentum it returns the lowercase letter corresponding to it. */
-    static const char *amtypes;
-    /** Lookup array that when you index the angular momentum it returns the uppercase letter corresponding to it. */
-    static const char *AMTYPES;
+
+    static const char *amtypes;  //!< Lookup array for lowercase letter symbolizing the angular momentup (0=s, 1=p, etc)
+    static const char *AMTYPES;  //!< Lookup array for uppercase letter symbolizing the angular momentup (0=S, 1=P, etc)
+
 
 public:
+    // This class is ok to be copy constructed or assigned
+    //ShellInfo(const ShellInfo & other) = delete;
+    //ShellInfo & operator=(const ShellInfo & other) = delete;
 
+   
+    /*!
+     * \brief Are the primitives normalized or not
+     */
     enum PrimitiveType {
-        Normalized,
-        Unnormalized
+        Normalized, //!< Is normalized
+        Unnormalized //!< Is NOT normalized
     };
+
     
+    /*!
+     * \brief Are the primitives pure spherical or cartesian basis funtions
+     */
     enum GaussianType {
-        Cartesian = 0,
-        Pure = 1
+        Cartesian = 0, //!< Cartesian (6d, 10f, etc)
+        Pure = 1  //!< Spherical (5d, 7f, etc)
     };
 
 
-    /** Constructor.
-     *  @param e An array of exponent values.
-     *  @param am Angular momentum.
-     *  @param pure Pure spherical harmonics, or Cartesian.
-     *  @param c An array of contraction coefficients.
-     *  @param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
-     *  @param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
-     *  @param pt Is the shell already normalized?
+    /*!
+     *  Constructor.
+     *
+     *  \param am Angular momentum.
+     *  \param c An array of contraction coefficients.
+     *  \param e An array of exponent values.
+     *  \param pure Pure spherical harmonics, or Cartesian.
+     *  \param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
+     *  \param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
+     *  \param pt Is the shell already normalized?
      */
     ShellInfo(int am,
                   const std::vector<double>& c,
@@ -108,53 +96,159 @@ public:
                   const Vector3& center,
                   PrimitiveType pt = Normalized);
 
-    /** Handles calling primitive_normalization and contraction_normalization for you. */
+    /*!
+     * \brief Normalizes the entire shell
+     */
     void normalize_shell();
 
-    /// Make a copy of the ShellInfo.
+    /*!
+     * \brief Make a copy of the ShellInfo.
+     */
     ShellInfo copy();
 
-    /// Make a copy of the ShellInfo.
+    /*!
+     * \brief Make a copy of the ShellInfo.
+     */
     ShellInfo copy(int nc, const Vector3& c);
 
-    /// The number of primitive Gaussians
+
+    /*!
+     * \brief The number of primitive Gaussians
+     */
     int nprimitive() const;
-    /// Total number of basis functions
+
+
+    /*!
+     * \brief Total number of basis functions
+     */
     int nfunction() const;
-    /// Total number of functions if this shell was Cartesian
+
+
+
+    /*!
+     * \brief Total number of functions if this shell was Cartesian
+     */
     int ncartesian() const          { return ncartesian_; }
-    /// The angular momentum of the given contraction
+
+
+
+    /*!
+     * \brief The angular momentum of the given contraction
+     */
     int am() const                  { return l_; }
-    /// The character symbol for the angular momentum of the given contraction
+
+
+
+    /*!
+     * \brief The character symbol for the angular momentum of the given contraction
+     */
     char amchar() const             { return amtypes[l_]; }
-    /// The character symbol for the angular momentum of the given contraction (upper case)
+
+
+
+    /*!
+     * \brief The character symbol for the angular momentum of the given contraction (upper case)
+     */
     char AMCHAR() const             { return AMTYPES[l_]; }
-    /// Returns true if contraction is Cartesian
+
+
+
+    /*!
+     * \brief Returns true if contraction is Cartesian
+     */
     bool is_cartesian() const       { return !puream_; }
-    /// Returns true if contraction is pure
+
+
+
+    /*!
+     * \brief Returns true if contraction is pure
+     */
     bool is_pure() const            { return puream_; }
 
-    /// Returns the center of the Molecule this shell is on
+    /*!
+     * \brief Returns the center of the Molecule this shell is on
+     */
     const Vector3& center() const;
-    /// Returns the atom number this shell is on. Used by integral derivatives for indexing.
+
+
+
+    /*!
+     * \brief Returns the atom number this shell is on. Used by integral derivatives for indexing.
+     */
     int ncenter() const             { return nc_; }
 
-    /// Returns the exponent of the given primitive
+
+
+
+    /*!
+     * \brief Returns the exponent of the given primitive
+     *
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Exponent on primitive \p prim
+     */
     double exp(int prim) const      { return exp_[prim]; }
-    /// Return coefficient of pi'th primitive
-    double coef(int pi) const       { return coef_[pi]; }
-    /// Return unnormalized coefficient of pi'th primitive
-    double original_coef(int pi) const { return original_coef_[pi]; }
-    /// Returns the exponent of the given primitive
+
+
+
+    /*!
+     * \brief Return coefficient of a primitive
+     *
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Coefficient on primitive \p prim
+     */
+    double coef(int prim) const       { return coef_[prim]; }
+
+
+    /*!
+     * \brief Return unnormalized coefficient of a primitive
+     *
+     * \note Depending on the how this object
+     *       was created, this may still be the normalized coefficient
+     *       (ie if the basis function is normalized already, this code does
+     *       not 'unnormalize' it. 
+     * 
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Unnormalized coefficient on primitive \p prim
+     */
+    double original_coef(int prim) const { return original_coef_[prim]; }
+
+
+    /*!
+     * \brief Returns all exponents in this shell
+     *
+     * \return Exponents for all primitives in this shell (of length nprimitive())
+     */
     const std::vector<double>& exps() const { return exp_; }
-    /// Return coefficient of pi'th primitive and ci'th contraction
+
+
+    /*!
+     * \brief Return all coefficients in this shell
+     *
+     * \return Exponents for all coefficients in this shell (of length nprimitive())
+     */
     const std::vector<double>& coefs() const { return coef_; }
-    /// Return unnormalized coefficient of pi'th primitive and ci'th contraction
+
+
+
+    /*!
+     * \brief Return all unnormalized coefficients in this shell
+     *
+     * \note Depending on the how the corresponding ShellInfo
+     *       was created, this may still be the normalized coefficient
+     *       (ie if the basis function is normalized already, this code does
+     *       not 'unnormalize' it. 
+     *
+     * \return Unnormalized coefficients for all primitives in this shell (of length nprimitive())
+     */
     const std::vector<double>& original_coefs() const { return original_coef_; }
 
-    /// Normalize the angular momentum component
-    static double normalize(int l, int m, int n);
 
+
+    /*!
+     * \brief Print information about this shell
+     *
+     * Destination of the printing is controlled by SetOutput(). See Output.h
+     */
     void print(void) const;
 };
 

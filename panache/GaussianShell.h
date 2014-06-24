@@ -10,9 +10,8 @@
 
 namespace panache {
 
-/*! \ingroup MINTS
- *  \class GaussianShell
- *  \brief Gaussian orbital shell.
+/*!
+ *  \brief Holds information about a Gaussian orbital shell.
  */
 class GaussianShell
 {
@@ -140,9 +139,12 @@ public:
 
 
     /*!
-     * \brief Return coefficient of pi'th primitive
+     * \brief Return coefficient of a primitive
+     *
+     * \param [in] prim Number of the primitive (zero-based)
+     * \return Coefficient on primitive \p prim
      */
-    double coef(int pi) const       { return coef_[pi]; }
+    double coef(int prim) const       { return coef_[prim]; }
 
 
     /*!
