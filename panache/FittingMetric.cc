@@ -22,7 +22,6 @@
 
 #include <algorithm>
 #include <utility>
-#include <cstring> // memset
 
 #include "ERI.h"
 
@@ -284,6 +283,7 @@ void FittingMetric::form_QR_inverse(double tol)
         C_DTRSM('L','U','N','N',nsig,n,1.0,J[0],nsig,Qp[0],n);
 
         // Zero out the metric
+        // REPLACE WITH STD::FILL
         memset(static_cast<void*>(J[0]), '\0', n*(unsigned long int)n);
 
         // Copy the top bit in

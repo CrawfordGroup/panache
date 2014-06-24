@@ -4,11 +4,9 @@
  */
 
 
-#include <cstdio>
 #include <fstream>
 #include <algorithm>
 #include <sstream>
-#include <cctype>
 
 #include "ShellInfo.h"
 #include "GaussianShell.h"

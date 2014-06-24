@@ -20,8 +20,6 @@
  *@END LICENSE
  */
 
-#include <cstring> // memcpy, memset
-
 #include "Lapack.h"
 #include "SphericalTransform.h"
 #include "Molecule.h"
@@ -599,7 +597,7 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
 
 static void transform2e_1(int am, const SphericalTransform& sti, double *s, double *t, int njkl)
 {
-    memset(t,0,INT_NPURE(am)*njkl*sizeof(double));
+    std::fill(t, t + INT_NPURE(am)*njkl, 0);
 
     for (auto it = sti.cbegin(); it != sti.cend(); ++it)
     {
@@ -620,7 +618,7 @@ static void transform2e_2(int am, const SphericalTransform& sti, double *s, doub
     const int sjkl = nj*nkl;
     const int tjkl = sj*nkl;
 
-    memset(t,0,ni*tjkl*sizeof(double));
+    std::fill(t, t+ni*tjkl, 0);
 
     for (auto it = sti.cbegin(); it != sti.cend(); ++it)
     {
@@ -644,7 +642,7 @@ static void transform2e_3(int am, const SphericalTransform& sti, double *s, doub
     const int skl = nk*nl;
     const int tkl = sk*nl;
 
-    memset(t,0,nij*tkl*sizeof(double));
+    std::fill(t, t+nij*tkl, 0);
 
     for (auto it = sti.cbegin(); it != sti.cend(); ++it)
     {
@@ -676,7 +674,7 @@ static void transform2e_4(int am, const SphericalTransform& sti, double *s, doub
     const int tl = INT_NPURE(am);
 
     // Clear out target memory
-    memset(t, 0, nijk*tl*sizeof(double));
+    std::fill(t, t+nijk*tl, 0);
 
     for (auto it = sti.cbegin(); it != sti.cend(); ++it)
     {

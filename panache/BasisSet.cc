@@ -4,7 +4,6 @@
  */
 
 #include <cstdlib>
-#include <cstring> // memset
 
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
@@ -131,16 +130,14 @@ void BasisSet::print_summary(void) const
     output::printf("   ------ ------ --------------------------\n");
 
     int *nprims = new int[max_am_ + 1];
-    int *nunique = new int[max_am_ + 1];
     int *nshells = new int[max_am_ + 1];
     char *amtypes = new char[max_am_ + 1];
 
     for (int A = 0; A < molecule_->natom(); A++)
     {
 
-        memset((void*) nprims , '\0', (max_am_ + 1) * sizeof(int));
-        memset((void*) nunique, '\0', (max_am_ + 1) * sizeof(int));
-        memset((void*) nshells, '\0', (max_am_ + 1) * sizeof(int));
+        std::fill(nprims, nprims + (max_am_ + 1), 0);
+        std::fill(nshells, nshells + (max_am_ + 1), 0);
 
         output::printf("    %4d    ", A+1);
         output::printf("%2s     ", molecule_->symbol(A).c_str());
@@ -152,7 +149,6 @@ void BasisSet::print_summary(void) const
         {
             const GaussianShell& shell = shells_[Q + first_shell];
             nshells[shell.am()]++;
-            nunique[shell.am()]+= shell.nprimitive();
             nprims [shell.am()]+= shell.nprimitive();
             amtypes[shell.am()] = shell.amchar();
         }
@@ -177,7 +173,6 @@ void BasisSet::print_summary(void) const
     output::printf("\n");
 
     delete[] nprims;
-    delete[] nunique;
     delete[] nshells;
     delete[] amtypes;
 }

@@ -1,4 +1,3 @@
-#include <cstring> // memset, etc
 #include "ERDTwoElectronInt.h"
 #include "BasisSet.h"
 #include "BasisFunctionMacros.h"
@@ -75,11 +74,11 @@ ERDTwoElectronInt::ERDTwoElectronInt(const SharedBasisSet bs1,
                       INT_NCART(basis3()->max_am()) * INT_NCART(basis4()->max_am());
 
     tformbuf_ = new double[max_cart];
-    memset(tformbuf_, 0, sizeof(double)*max_cart);
+    std::fill(tformbuf_, tformbuf_+max_cart, 0);
 
 
     target_ = new double[max_cart];
-    memset(target_, 0, sizeof(double)*max_cart);
+    std::fill(target_, target_ + max_cart, 0);
 
     size_t max_nprim = basis1()->max_nprimitive() +
                        basis2()->max_nprimitive() +
@@ -95,7 +94,7 @@ ERDTwoElectronInt::ERDTwoElectronInt(const SharedBasisSet bs1,
     compute_scratch_size();
 
     dscratch_ = new double[d_buffer_size_];
-    memset(dscratch_, 0, sizeof(double)*d_buffer_size_);
+    std::fill(dscratch_, dscratch_+d_buffer_size_, 0);
 
     iscratch_ = new F_INT[i_buffer_size_];
 }

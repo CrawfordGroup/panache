@@ -1,4 +1,3 @@
-#include <cstring> // memset, etc
 #include "SlowERIBase.h"
 #include "SlowTwoElectronInt.h"
 #include "BasisSet.h"
@@ -27,13 +26,13 @@ SlowTwoElectronInt::SlowTwoElectronInt(const SharedBasisSet bs1,
 
     // Used in pure_transform
     tformbuf_ = new double[size];
-    memset(tformbuf_, 0, sizeof(double)*size);
+    std::fill(tformbuf_, tformbuf_+size, 0);
 
     target_ = new double[size];
-    memset(target_, 0, sizeof(double)*size);
+    std::fill(target_, target_+size, 0);
 
     source_ = new double[size];
-    memset(source_, 0, sizeof(double)*size);
+    std::fill(source_, source_+size, 0);
 }
 
 SlowTwoElectronInt::~SlowTwoElectronInt()
