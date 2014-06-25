@@ -45,6 +45,7 @@ list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 
+
 # Ditto for test programs
 list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
 
@@ -56,6 +57,10 @@ else(CMAKE_COMPILER_IS_GNUG77)
   list(APPEND FRUNTEST_F90_FLAGS "-warn all")
   list(APPEND LIBERD_F90_FLAGS "-warn all")
 endif(CMAKE_COMPILER_IS_GNUG77)
+
+# Standard link libraries
+list(APPEND RUNTEST_LINK_LIBRARIES "stdc++" "m")
+list(APPEND FRUNTEST_LINK_LIBRARIES "stdc++" "m")
 
 
 #####################################

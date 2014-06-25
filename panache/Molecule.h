@@ -31,7 +31,7 @@ private:
         Vector3 coord; //!< coordinates
 
         Atom(const std::string & symbol, double x, double y, double z)
-            : symbol(symbol),coord({x,y,z})
+            : symbol(symbol),coord({{x,y,z}})
         {   }
 
     };
