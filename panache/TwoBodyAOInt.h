@@ -59,7 +59,7 @@ protected:
      * \param [in] sh4 Shell 4 whose integrals are in \p s
      * \param [in] p12 If shells 1 and 2 should be permuted
      * \param [in] p34 If shells 3 and 4 should be permuted
-     * \param [in] p1324 If shells 1 & 3 as well as 2 & 4 should be permuted
+     * \param [in] p13p24 If shells 1 & 3 as well as 2 & 4 should be permuted
      */
     void permute_target(double *s, double *t, int sh1, int sh2, int sh3, int sh4, bool p12, bool p34, bool p13p24);
 
@@ -248,7 +248,7 @@ public:
     /*!
      * \brief Compute integrals between 4 shells. Result are obtained via buffer()
      *
-     * \param [in] aosci Iterator representing the shells to compute
+     * \param [in] shellIter Iterator representing the shells to compute
      */
     virtual size_t compute_shell(const AOShellCombinationsIterator & shellIter) = 0;
 
