@@ -43,7 +43,12 @@ is used.
 
   - Required
       - CMake v2.8 or greater
-      - C++ compiler with C++11 support
+      - C++ compiler with C++11 support. Compilers tested so far:
+          - GCC 4.9.0
+          - GCC 4.8.3
+          - Intel 2013 SP1  (Intel 14)
+          - Intel 2015 beta (Intel 15)
+          - Clang  3.4.2
 
   - Recommended
       - libint integral package (version 1.X or 2.X)
