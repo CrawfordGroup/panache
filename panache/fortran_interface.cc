@@ -511,6 +511,21 @@ extern "C" {
 
 
     /*!
+     * \brief Sets the number of OpenMP threads used in DF routines
+     *
+     * Set to zero to use the maximum number of threads for this machine.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] nthread Max number of threads to use
+     * \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
+     */ 
+    void panachef_setnthread(int_t * df_handle, int_t * nthread, int_t * actual)
+    {
+        *actual = panache_setnthread(*df_handle, *nthread);
+    }
+
+
+    /*!
      * \brief Sets the text output of PANACHE to stout
      */ 
     void panachef_stdout_(void)

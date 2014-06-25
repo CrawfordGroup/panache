@@ -68,6 +68,23 @@ DFTensor::DFTensor(SharedBasisSet primary,
     #endif
 }
 
+
+int DFTensor::SetNThread(int nthread)
+{
+    nthreads_ = 1;
+
+    #ifdef _OPENMP
+      if(nthread <= 0) 
+          nthreads_ = omp_get_max_threads();
+      else
+         nthreads_ = nthread;
+    #endif
+
+    return nthreads_;
+}
+
+
+
 DFTensor::~DFTensor()
 {
     CloseFile();

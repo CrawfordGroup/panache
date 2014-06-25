@@ -287,6 +287,18 @@ public:
     void ResetBatches(void);
 
 
+
+
+    /*!
+     * \brief Sets the maximum number of (OpenMP) threads used
+     *
+     * Set to zero to use the maximum number of threads for this machine.
+     *
+     * \param [in] nthread Max number of threads to use
+     * \return The max number of threads that will actually be used (ie if \p nthread is zero).
+     */
+    int SetNThread(int nthread);
+
 /*
     int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
 

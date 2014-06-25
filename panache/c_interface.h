@@ -171,6 +171,18 @@ extern "C" {
 
 
 
+    /*!
+     * \brief Sets the number of OpenMP threads used in DF routines
+     *
+     * Set to zero to use the maximum number of threads for this machine.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] nthread Max number of threads to use
+     * \return The max number of threads that will actually be used (ie if \p nthread is zero).
+     */ 
+    int panache_setnthread(int_t df_handle, int_t nthread);
+
+
 
     /*!
      * \brief Retrieves a batch of Qso
