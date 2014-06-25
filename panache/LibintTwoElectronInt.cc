@@ -6,8 +6,7 @@
 #include "Fjt.h"
 #include "Lapack.h"
 #include "PhysConst.h"
-
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#include "Exception.h"
 
 namespace panache
 {
@@ -35,7 +34,7 @@ LibintTwoElectronInt::LibintTwoElectronInt(const SharedBasisSet bs1,
 
     // Figure out some information to initialize libint with
     // 1. Maximum angular momentum
-    int max_am = MAX(MAX(basis1()->max_am(), basis2()->max_am()), MAX(basis3()->max_am(), basis4()->max_am()));
+    int max_am = std::max(std::max(basis1()->max_am(), basis2()->max_am()), std::max(basis3()->max_am(), basis4()->max_am()));
     // 2. Maximum number of primitive combinations
     int max_nprim = basis1()->max_nprimitive() * basis2()->max_nprimitive() * basis3()->max_nprimitive() * basis4()->max_nprimitive();
     // 3. Maximum Cartesian class size

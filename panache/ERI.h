@@ -8,6 +8,8 @@
 
 #include <memory>
 
+#include "Exception.h"
+
 #ifdef PANACHE_USE_LIBINT
 #include "LibintERI.h"
 #endif

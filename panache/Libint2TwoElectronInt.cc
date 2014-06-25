@@ -6,6 +6,7 @@
 #include "Fjt.h"
 #include "Lapack.h"
 #include "PhysConst.h"
+#include "Exception.h"
 
 namespace panache
 {

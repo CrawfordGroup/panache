@@ -1,31 +1,14 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Base class for two-body AO integrals (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "Lapack.h"
 #include "SphericalTransform.h"
 #include "Molecule.h"
 #include "TwoBodyAOInt.h"
 #include "BasisFunctionMacros.h"
 #include "BasisSet.h"
+#include "Exception.h"
 
 namespace panache
 {
@@ -55,108 +38,6 @@ TwoBodyAOInt::TwoBodyAOInt(const SharedBasisSet original_bs1,
 
 TwoBodyAOInt::~TwoBodyAOInt()
 {
-}
-
-SharedBasisSet TwoBodyAOInt::basis()
-{
-    return original_bs1_;
-}
-
-SharedBasisSet TwoBodyAOInt::basis1()
-{
-    return original_bs1_;
-}
-
-SharedBasisSet TwoBodyAOInt::basis2()
-{
-    return original_bs2_;
-}
-
-SharedBasisSet TwoBodyAOInt::basis3()
-{
-    return original_bs3_;
-}
-
-SharedBasisSet TwoBodyAOInt::basis4()
-{
-    return original_bs4_;
-}
-
-bool TwoBodyAOInt::cloneable()
-{
-    return false;
-}
-
-TwoBodyAOInt* TwoBodyAOInt::clone()
-{
-    throw RuntimeError("libmints: TwoBodyInt::clone() not implemented");
-}
-
-void TwoBodyAOInt::normalize_am(std::shared_ptr<GaussianShell> s1, std::shared_ptr<GaussianShell> s2, std::shared_ptr<GaussianShell> s3, std::shared_ptr<GaussianShell> s4, int nchunk)
-{
-    // Integrals assume this normalization is 1.0.
-    return;
-#if 0
-    int am1 = s1->am();
-    int am2 = s2->am();
-    int am3 = s3->am();
-    int am4 = s4->am();
-    int length = INT_NCART(am1) * INT_NCART(am2) * INT_NCART(am3) * INT_NCART(am4);
-
-    // Need to go through and grab all the integrals for this given shell and add them
-    // to the running totals.
-    int nprim = 0;
-    for (int i = 0; i <= am1; i++)
-    {
-        int l1 = am1 - i;
-        for (int j = 0; j <= i; j++)
-        {
-            int m1 = i - j;
-            int n1 = j;
-            double norm_a = s1->normalize(l1, m1, n1);
-
-            for (int k = 0; k <= am2; k++)
-            {
-                int l2 = am2 - k;
-                for (int l = 0; l <= k; l++)
-                {
-                    int m2 = k - l;
-                    int n2 = l;
-                    double norm_b = s2->normalize(l2, m2, n2);
-
-                    for (int m = 0; m <= am3; m++)
-                    {
-                        int l3 = am3 - m;
-                        for (int n = 0; n <= m; n++)
-                        {
-                            int m3 = m - n;
-                            int n3 = n;
-                            double norm_c = s3->normalize(l3, m3, n3);
-
-                            for (int o = 0; o <= am4; o++)
-                            {
-                                int l4 = am4 - o;
-                                for (int p = 0; p <= o; p++)
-                                {
-                                    int m4 = o - p;
-                                    int n4 = p;
-                                    double norm_d = s4->normalize(l4, m4, n4);
-
-                                    //output::printf("normalization %f %f %f %f\n", norm_a, norm_b, norm_c, norm_d);
-                                    for (int chunk=0; chunk < nchunk; ++chunk)
-                                    {
-                                        source_[nprim+(chunk*length)] *= norm_a * norm_b * norm_c * norm_d;
-                                    }
-                                    nprim++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-#endif
 }
 
 void TwoBodyAOInt::permute_target(double *s, double *t, int sh1, int sh2, int sh3, int sh4, bool p12, bool p34, bool p13p24)
@@ -553,22 +434,18 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
         if (is_pure4)
         {
             transform2e_4(am4, trans4, source4, target4, nao1*nao2*nao3,nao4);
-//            size *= nbf4;
         }
         if (is_pure3)
         {
             transform2e_3(am3, trans3, source3, target3, nao1*nao2,nao3,nbf4);
-//            size *= nbf3;
         }
         if (is_pure2)
         {
             transform2e_2(am2, trans2, source2, target2, nao1,nao2,nbf3*nbf4);
-//            size *= nbf2;
         }
         if (is_pure1)
         {
             transform2e_1(am1, trans1, source1, target1, nbf2*nbf3*nbf4);
-//            size *= nbf1;
         }
 
         // The permute indices routines depend on the integrals being in source_
