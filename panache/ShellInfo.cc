@@ -28,8 +28,9 @@ ShellInfo::ShellInfo(int am, const std::vector<double> &c,
     if (pt == Unnormalized){
         normalize_shell();
     }
-    else
-        coef_ = original_coef_;
+
+    // by default, coef_ = original_coef_ = c
+
 }
 
 
@@ -62,10 +63,6 @@ void ShellInfo::contraction_normalization()
     // Set the normalization
     for (i=0; i<nprimitive(); ++i)
         coef_[i] *= norm;
-
-    if (norm != norm)
-        for (i=0; i<nprimitive(); ++i)
-            coef_[i] = 1.0;
 }
 
 void ShellInfo::normalize_shell()
@@ -94,9 +91,7 @@ void ShellInfo::normalize_shell()
         coef_[j] *= norm;
     }
 #else
-    int i;
-
-    for (i = 0; i < nprimitive(); ++i) {
+    for (int i = 0; i < nprimitive(); ++i) {
         double normalization = primitive_normalization(i);
         coef_[i] *= normalization;
     }
