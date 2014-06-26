@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Class for libint1-based ERI (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include <cmath>
 #include "LibintTwoElectronInt.h"
 #include "BasisSet.h"

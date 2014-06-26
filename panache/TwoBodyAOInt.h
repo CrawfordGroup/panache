@@ -249,6 +249,7 @@ public:
      * \brief Compute integrals between 4 shells. Result are obtained via buffer()
      *
      * \param [in] shellIter Iterator representing the shells to compute
+     * \return Number of computed integrals
      */
     virtual size_t compute_shell(const AOShellCombinationsIterator & shellIter) = 0;
 
@@ -262,6 +263,7 @@ public:
      * \param [in] sh2 Second shell
      * \param [in] sh3 Third shell
      * \param [in] sh4 Fourth shell
+     * \return Number of computed integrals
      */
     virtual size_t compute_shell(int sh1, int sh2, int sh3, int sh4) = 0;
 
@@ -277,7 +279,7 @@ public:
      * \param [in] sh4 Fourth shell
      * \param [in] nchunk Chunk size (???)
      */
-    void pure_transform(int sh1, int, int, int, int nchunk);
+    void pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk);
 };
 
 
