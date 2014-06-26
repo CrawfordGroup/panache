@@ -1,5 +1,5 @@
 /*! \file
- * \brief Class for claculating libint1-based ERI (header)
+ * \brief Class for calculating libint1-based ERI (header)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -13,7 +13,7 @@ namespace panache
 
 
 /*!
- * \brief Calculates standard two-electron ERI
+ * \brief Calculates standard two-electron ERI using libint
  */
 class LibintERI : public LibintTwoElectronInt
 {
@@ -44,7 +44,7 @@ public:
 
 
 /*!
- * \brief Calculates attenuated two-electron ERI
+ * \brief Calculates attenuated two-electron ERI using libint
  */
 class LibintErfERI : public LibintTwoElectronInt
 {
@@ -66,6 +66,7 @@ public:
                  const SharedBasisSet bs2,
                  const SharedBasisSet bs3,
                  const SharedBasisSet bs4);
+
 
     /*!
      * \brief Destructor

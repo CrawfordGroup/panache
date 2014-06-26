@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Class for calculating libint2-based ERI (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_LIBINT2ERI_H
@@ -28,37 +11,76 @@
 namespace panache
 {
 
-class BasisSet;
-class GaussianShell;
-class TwoBodyAOInt;
-class IntegralFactory;
-class SphericalTransform;
-class Fjt;
-class AOShellCombinationsIterator;
-class CorrelationFactor;
 
+/*!
+ * \brief Calculates standard two-electron ERI using libint2
+ */
 class Libint2ERI : public Libint2TwoElectronInt
 {
 public:
+    /*!
+     * \brief Constructor 
+     *
+     * Also initializes the libint2 library and allocates memory
+     *
+     * \param [in] bs1 The basis set on the 1st center
+     * \param [in] bs2 The basis set on the 2nd center
+     * \param [in] bs3 The basis set on the 3rd center
+     * \param [in] bs4 The basis set on the 4th center
+     */
     Libint2ERI(const SharedBasisSet bs1,
-        const SharedBasisSet bs2,
-        const SharedBasisSet bs3,
-        const SharedBasisSet bs4);
+               const SharedBasisSet bs2,
+               const SharedBasisSet bs3,
+               const SharedBasisSet bs4);
 
+    /*!
+     * \brief Destructor
+     * 
+     * Frees memory and closes the libint2 library
+     */
     virtual ~Libint2ERI();
 };
 
+
+
+/*!
+ * \brief Calculates attenuated two-electron ERI using libint
+ */
 class Libint2ErfERI : public Libint2TwoElectronInt
 {
 public:
+
+    /*!
+     * \brief Constructor 
+     *
+     * Also initializes the libint2 library and allocates memory
+     *
+     * \param [in] omega Attenuation parameter
+     * \param [in] bs1 The basis set on the 1st center
+     * \param [in] bs2 The basis set on the 2nd center
+     * \param [in] bs3 The basis set on the 3rd center
+     * \param [in] bs4 The basis set on the 4th center
+     */
     Libint2ErfERI(double omega,
            const SharedBasisSet bs1,
            const SharedBasisSet bs2,
            const SharedBasisSet bs3,
            const SharedBasisSet bs4);
 
+
+    /*!
+     * \brief Destructor
+     * 
+     * Frees memory and destroys the libint object
+     */
     virtual ~Libint2ErfERI();
 
+
+    /*!
+     * \brief Changes the attenuation parameter omega
+     *
+     * \param [in] omega The new omega to change to
+     */ 
     void setOmega(double omega);
 };
 

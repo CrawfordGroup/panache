@@ -26,14 +26,11 @@ protected:
     
     Libint_t libint_;  //!< Libint object.
 
-    
     int max_cart_;  //!< Maximum cartesian class size.
-
     
     Fjt *fjt_;  //!< Computes the fundamental
 
 
-    
     int osh1_,  //!< Original shell 1 index requested
         osh2_,  //!< Original shell 2 index requested
         osh3_,  //!< Original shell 3 index requested

@@ -1,5 +1,5 @@
 /*! \file
- * \brief Class for claculating libint1-based ERI (source)
+ * \brief Class for calculating libint1-based ERI (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
