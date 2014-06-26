@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Base class for SlowERI-based ERI (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "SlowERIBase.h"
 #include "SlowTwoElectronInt.h"
 #include "BasisSet.h"

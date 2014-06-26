@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Class for the calculation of slow but accurate ERI (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include <cmath>
 #include <algorithm>
 
@@ -221,7 +226,7 @@ double SlowERIBase::eri(int l1, int m1, int n1, double alpha1,
                 continue;
             tmp = bc[m1][i] * bc[m2][j];
             if (m1 - i > 0)
-                tmp *= pow(PAy, m1 - i);
+                mp *= pow(PAy, m1 - i);
             if (m2 - j > 0)
                 tmp *= pow(PBy, m2 - j);
             fmp[k] += tmp;
