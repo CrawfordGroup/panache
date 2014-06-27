@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Class for calculating libERD-based ERI (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "ERDERI.h"
 
 namespace panache {

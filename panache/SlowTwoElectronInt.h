@@ -52,7 +52,7 @@ public:
     virtual ~SlowTwoElectronInt();
 
     // See TwoBodyAOInt::compute_shell
-    size_t compute_shell(const AOShellCombinationsIterator&);
+    virtual size_t compute_shell(const AOShellCombinationsIterator&);
 
     // See TwoBodyAOInt::compute_shell
     virtual size_t compute_shell(int, int, int, int);

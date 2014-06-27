@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Base class for libERD-based ERI (source)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "ERDTwoElectronInt.h"
 #include "BasisSet.h"
 #include "BasisFunctionMacros.h"
