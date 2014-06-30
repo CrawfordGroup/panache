@@ -55,7 +55,7 @@ panache_setnthread(dfhandle, <some_number>);
 \endcode
 
 
-Next is to calculate the main Qso matrix, string it in memory or on disk
+Next is to calculate the main Qso matrix, storing it in memory or on disk
 
 \code{.cpp}
 panache_genqso(dfhandle, 1); // store in memory
