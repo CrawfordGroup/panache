@@ -9,7 +9,7 @@
 #include "AOShellCombinationsIterator.h"
 #include "Output.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 // Name mangling
 #define FC_SYMBOL 2
@@ -260,6 +260,8 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     ccend_[1] = npgto3;
     ccend_[2] = npgto2;
     ccend_[3] = npgto1;
+
+    // note that these are switched. shell order is reversed
     int offset_i = 0;
     int offset_j = offset_i + npgto4;
     int offset_k = offset_j + npgto3;
