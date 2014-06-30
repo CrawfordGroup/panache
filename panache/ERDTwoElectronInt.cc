@@ -9,7 +9,7 @@
 #include "AOShellCombinationsIterator.h"
 #include "Output.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 // Name mangling
 #define FC_SYMBOL 2
@@ -58,12 +58,10 @@ void C_ERD__MEMORY_ERI_BATCH(const F_INT &nalpha, const F_INT &ncoeff,
 
 namespace panache {
 
-// note - use_shell_pairs is ignored
 ERDTwoElectronInt::ERDTwoElectronInt(const SharedBasisSet bs1,
                const SharedBasisSet bs2,
                const SharedBasisSet bs3,
-               const SharedBasisSet bs4,
-               bool use_shell_pairs)
+               const SharedBasisSet bs4)
     : TwoBodyAOInt(bs1, bs2, bs3, bs4), 
       d_buffer_size_(0L),
       i_buffer_size_(0L),

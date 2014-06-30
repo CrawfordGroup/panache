@@ -91,8 +91,7 @@ public:
     ERDTwoElectronInt(const SharedBasisSet bs1,
                const SharedBasisSet bs2,
                const SharedBasisSet bs3,
-               const SharedBasisSet bs4,
-               bool use_shell_pairs=false);
+               const SharedBasisSet bs4);
 
     virtual ~ERDTwoElectronInt();
 
