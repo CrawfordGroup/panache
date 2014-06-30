@@ -3,7 +3,146 @@
 /////////////////////////
 /*! \page usage_page Usage 
 
-\section usage_sec Usage
+\section usage_sec Typical Workflow
+
+\subsection usage_c_sec C Interface
+
+Typically, the first (although optional) thing would be to set where
+libPANACHE will print its output.
+
+\code{.cpp}
+panache_outout(stdout);  // can be any FILE *, though
+\endcode
+
+
+The library (actually a DFTensor object) then must be intialized with
+the basis information (using either panache_init() or panache_init2()).
+
+\code{.cpp}
+int ncenters;                   // Number of centers
+C_AtomCenter * atoms;           // Atom information (length = ncenters)
+int normalized;                 // Are these bases normalized or not
+int * primary_nshellspercenter; // Number of primary shells on each center (length = ncenters)
+C_ShellInfo * primary_shells;   // Primary shell info (length = sum of primary_nshellspercenter)
+int * aux_nshellspercenter;     // Number of aux shells on each center (length = ncenters)
+C_ShellInfo * aux_shells;       // Aux shell info (length = sum of aux_nshellspercenter)
+
+char * df_filename;             // Where to store matrices if disk is used. Can be empty (""),
+                                // but not NULL. Will be overwritten if used and file exists
+
+
+/*.... fill in the above information ...*/
+
+
+int dfhandle = panache_init(ncenters, atoms, normalized,
+                            primary_nshellspercenter, primary_shells,
+                            aux_nshellspercenter, aux_shells,
+                            filename);
+
+// panache makes copies of all this information, so it can be safely deleted
+delete [] atoms;
+delete [] primary_nshellspercenter;
+delete [] primary_shells;
+delete [] aux_nshellspercenter;
+delete [] aux_shells;
+\endcode
+
+Optionally, set the number of threads used by the this instance of the library. Default
+is to use as many threads as there are cores.
+
+\code{.cpp}
+panache_setnthread(dfhandle, <some_number>);
+\endcode
+
+
+Next is to calculate the main Qso matrix, string it in memory or on disk
+
+\code{.cpp}
+panache_genqso(dfhandle, 1); // store in memory
+
+/*or*/
+
+panache_genqso(dfhandle, 0); // store on disk
+\endcode
+
+To read Qso or Qmo, we need to set a buffer where the library will place the data.
+We can query for nso (although the calling code should know this).
+
+\code{.cpp}
+int nso2, naux;    // number of primary basis functions squared, number of auxiliary basis functions
+
+panache_qsodimensions(dfhandle, &naux, &nso2);
+
+double outbuffer[4*nso2];  // usually best to be some multiple of nso2,
+                           // but can be anything greater than nso2.
+
+
+panache_setoutputbuffer(dfhandle, outbuffer, 4*nso2);
+
+\endcode
+
+
+If Qso is desired, we use repeated calls to panache_getbatch_qso(). This functions
+returns the number of (nso*nso) sized blocks, and is called until it returns zero.
+
+\code{.cpp}
+int nbatch = 0;
+while((nbatch = panache_getbatch_qso(dfhandle))
+{
+    // output will be nbatch blocks of size nso2 in outbuffer
+    // ... do something with it!
+}
+\endcode
+
+For Qmo, a similar procedure is used, except the MO coefficient matrix must be set first
+
+\code{.cpp}
+double * cmat;
+int nmo;
+
+/*... get cmat & number of MOs ...*/
+
+panache_setcmatrix(dfhandle, cmat, nmo, 0);  // last argument: 0 = normal, 1 = this is C-transpose
+
+// PANACHE makes a copy, so it can be deleted here if needed
+delete [] cmat;
+\endcode
+
+Afterwards, do the same thing as above, but call panache_getbatch_qmo(). The only
+difference is the size of the blocks will be nmo*nmo, of course.
+
+\code{.cpp}
+int nbatch = 0;
+while((nbatch = panache_getbatch_qmo(dfhandle))
+{
+    // output will be nbatch blocks of size nmo2 in outbuffer
+    // ... do something with it!
+}
+\endcode
+
+When all done, cleanup this handle
+
+
+\code{.cpp}
+panache_cleanup(dfhandle);
+
+/*... or ...*/
+
+panache_cleanup_all(); // if you have multiple handles and are done with all of them
+\endcode
+
+That's it!
+
+
+\subsection usage_f_sec Fortran Interface
+\subsection usage_cpp_sec C++ Interface
+
+
+
+
+
+
+
 
 \section memory_sec Memory Considerations
 
@@ -29,6 +168,7 @@ The page uses the following definitions:
    | Size             | Use                                       |
    |------------------|-------------------------------------------|
    | nso * nso        | Stores metric                             |
+   | nso * nmo        | Stores C matrix                           |
 
 
 

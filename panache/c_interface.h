@@ -92,7 +92,8 @@ extern "C" {
      * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
      * \param [in] filename A full path to a file to be used if storing matrices to disk.
      *                      Not referenced if the disk is not used. Should not be set to "NULL", but
-     *                      may be set to an empty string if disk is not to be used.
+     *                      may be set to an empty string if disk is not to be used. If used, any existing
+     *                      file will be overwritten.
      *
      * \return A handle representing this particular density-fitting calculation.
      */
