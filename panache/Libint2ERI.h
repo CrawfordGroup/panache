@@ -6,7 +6,7 @@
 #ifndef PANACHE_LIBINT2ERI_H
 #define PANACHE_LIBINT2ERI_H
 
-#include "Libint2TwoElectronInt.h"
+#include "panache/Libint2TwoElectronInt.h"
 
 namespace panache
 {

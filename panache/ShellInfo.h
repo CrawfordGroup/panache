@@ -7,7 +7,7 @@
 #define PANACHE_SHELLINFO_H
 
 #include <vector>
-#include "Vector3.h"
+#include "panache/Vector3.h"
 
 namespace panache {
 

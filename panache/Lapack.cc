@@ -1,5 +1,5 @@
 #include <stdexcept> // for std::invalid_argument
-#include "Lapack.h" // for definition of int_t
+#include "panache/Lapack.h" // for definition of int_t
 
 #if FC_SYMBOL==1
 #define F_DCOPY  dcopy

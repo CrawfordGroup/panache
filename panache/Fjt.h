@@ -51,7 +51,7 @@
 #define PANACHE_FJT_H
 
 #include <memory>
-#include "SimpleMatrix.h"
+#include "panache/SimpleMatrix.h"
 
 namespace panache {
 

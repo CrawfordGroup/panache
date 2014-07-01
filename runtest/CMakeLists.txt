@@ -7,7 +7,7 @@ target_link_libraries(runtest panache ${RUNTEST_LINK_LIBRARIES} ${LIBINT_LIBRARY
 
 string(REPLACE ";" " " RUNTEST_CXX_FLAGS "${RUNTEST_CXX_FLAGS}")
 set_target_properties(runtest PROPERTIES COMPILE_FLAGS ${RUNTEST_CXX_FLAGS})
-set_target_properties(runtest PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/panache")
+set_target_properties(runtest PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}")
 
 if(OPENMP_FOUND)
   set_target_properties(runtest PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})

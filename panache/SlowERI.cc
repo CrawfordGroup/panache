@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "SlowERI.h"
+#include "panache/SlowERI.h"
 
 namespace panache {
 

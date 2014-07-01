@@ -7,7 +7,7 @@
 #ifndef PANACHE_C_INTERFACE_H
 #define PANACHE_C_INTERFACE_H
 
-#include "int_t.h"
+#include "panache/int_t.h"
 
 
 extern "C" {

@@ -6,8 +6,8 @@
 #ifndef PANACHE_SLOWTWOELECTRONINT_H
 #define PANACHE_SLOWTWOELECTRONINT_H
 
-#include "TwoBodyAOInt.h"
-#include "SlowERIBase.h"
+#include "panache/TwoBodyAOInt.h"
+#include "panache/SlowERIBase.h"
 
 namespace panache
 {

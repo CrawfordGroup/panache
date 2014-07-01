@@ -3,12 +3,12 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "SphericalTransform.h"
-#include "Molecule.h"
-#include "TwoBodyAOInt.h"
-#include "BasisFunctionMacros.h"
-#include "BasisSet.h"
-#include "Exception.h"
+#include "panache/SphericalTransform.h"
+#include "panache/Molecule.h"
+#include "panache/TwoBodyAOInt.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/BasisSet.h"
+#include "panache/Exception.h"
 
 namespace panache
 {

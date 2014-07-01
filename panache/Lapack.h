@@ -1,7 +1,7 @@
 #ifndef PANACHE_LAPACK_H
 #define PANACHE_LAPACK_H
 
-#include "int_t.h"
+#include "panache/int_t.h"
 
 
 namespace panache {

@@ -6,8 +6,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "SlowERIBase.h"
-#include "PhysConst.h"
+#include "panache/SlowERIBase.h"
+#include "panache/PhysConst.h"
 
 double SlowERIBase::norm_const(unsigned int l1, unsigned int m1, unsigned int n1,
                                double alpha1, const double* A)

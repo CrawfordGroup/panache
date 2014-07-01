@@ -6,7 +6,7 @@
 #ifndef PANACHE_GAUSSIANSHELL_H
 #define PANACHE_GAUSSIANSHELL_H
 
-#include "ShellInfo.h"
+#include "panache/ShellInfo.h"
 
 namespace panache {
 

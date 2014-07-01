@@ -7,10 +7,17 @@
 
 \subsection usage_c_sec C Interface
 
+Include file:
+
+\code{.c}
+#include <panache/c_interface.h>
+\endcode
+
+
 Typically, the first (although optional) thing would be to set where
 libPANACHE will print its output.
 
-\code{.cpp}
+\code{.c}
 panache_output(stdout);  // can be any FILE *, though
 \endcode
 
@@ -50,14 +57,14 @@ delete [] aux_shells;
 Optionally, set the number of threads used by the this instance of the library. Default
 is to use as many threads as there are cores.
 
-\code{.cpp}
+\code{.c}
 panache_setnthread(dfhandle, <some_number>);
 \endcode
 
 
 Next is to calculate the main Qso matrix, storing it in memory or on disk
 
-\code{.cpp}
+\code{.c}
 panache_genqso(dfhandle, 1); // store in memory
 
 /*or*/
@@ -68,7 +75,7 @@ panache_genqso(dfhandle, 0); // store on disk
 To read Qso or Qmo, we need to set a buffer where the library will place the data.
 We can query for nso (although the calling code should know this).
 
-\code{.cpp}
+\code{.c}
 int nso2, naux;    // number of primary basis functions squared, number of auxiliary basis functions
 
 panache_qsodimensions(dfhandle, &naux, &nso2);
@@ -85,7 +92,7 @@ panache_setoutputbuffer(dfhandle, outbuffer, 4*nso2);
 If Qso is desired, we use repeated calls to panache_getbatch_qso(). This functions
 returns the number of (nso*nso) sized blocks, and is called until it returns zero.
 
-\code{.cpp}
+\code{.c}
 int nbatch = 0;
 while((nbatch = panache_getbatch_qso(dfhandle))
 {
@@ -96,7 +103,7 @@ while((nbatch = panache_getbatch_qso(dfhandle))
 
 For Qmo, a similar procedure is used, except the MO coefficient matrix must be set first
 
-\code{.cpp}
+\code{.c}
 double * cmat;
 int nmo;
 

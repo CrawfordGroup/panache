@@ -7,10 +7,10 @@
 #include <utility>
 #include <cmath>
 
-#include "DFTensor.h"
-#include "SimpleMatrix.h"
-#include "Output.h"
-#include "c_convert.h" // int_t comes in through here
+#include "panache/DFTensor.h"
+#include "panache/SimpleMatrix.h"
+#include "panache/Output.h"
+#include "panache/c_convert.h" // int_t comes in through here
 
 #define QSO_ELEMENT_THRESHOLD 1e-12
 #define QSO_SUM_THRESHOLD 1e-8

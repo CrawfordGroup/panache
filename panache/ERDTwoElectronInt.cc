@@ -3,11 +3,11 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "ERDTwoElectronInt.h"
-#include "BasisSet.h"
-#include "BasisFunctionMacros.h"
-#include "AOShellCombinationsIterator.h"
-#include "Output.h"
+#include "panache/ERDTwoElectronInt.h"
+#include "panache/BasisSet.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/AOShellCombinationsIterator.h"
+#include "panache/Output.h"
 
 #define DEBUG 0
 

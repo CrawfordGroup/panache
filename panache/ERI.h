@@ -8,22 +8,22 @@
 
 #include <memory>
 
-#include "Exception.h"
+#include "panache/Exception.h"
 
 #ifdef PANACHE_USE_LIBINT
-#include "LibintERI.h"
+#include "panache/LibintERI.h"
 #endif
 
 #ifdef PANACHE_USE_LIBINT2
-#include "Libint2ERI.h"
+#include "panache/Libint2ERI.h"
 #endif
 
 #ifdef PANACHE_USE_SLOWERI
-#include "SlowERI.h"
+#include "panache/SlowERI.h"
 #endif
 
 #ifdef PANACHE_USE_LIBERD
-#include "ERDERI.h"
+#include "panache/ERDERI.h"
 #endif
 
 

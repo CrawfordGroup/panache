@@ -8,7 +8,7 @@
 
 #include <fstream>
 
-#include "Timing.h"
+#include "panache/Timing.h"
 
 #include <future>
 

@@ -5,11 +5,11 @@
 
 #include <cstdlib>
 
-#include "BasisFunctionMacros.h"
-#include "BasisSet.h"
-#include "Molecule.h"
-#include "Output.h"
-#include "BasisSetParser.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/BasisSet.h"
+#include "panache/Molecule.h"
+#include "panache/Output.h"
+#include "panache/BasisSetParser.h"
 
 using namespace std;
 

@@ -20,7 +20,7 @@
  *@END LICENSE
  */
 
-#include "IntegralParameters.h"
+#include "panache/IntegralParameters.h"
 
 namespace panache {
 

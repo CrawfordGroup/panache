@@ -3,7 +3,7 @@
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "c_convert.h"
+#include "panache/c_convert.h"
 
 namespace panache
 {

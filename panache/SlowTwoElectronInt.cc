@@ -3,12 +3,12 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "SlowERIBase.h"
-#include "SlowTwoElectronInt.h"
-#include "BasisSet.h"
-#include "BasisFunctionMacros.h"
-#include "AOShellCombinationsIterator.h"
-#include "CartesianIter.h"
+#include "panache/SlowERIBase.h"
+#include "panache/SlowTwoElectronInt.h"
+#include "panache/BasisSet.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/AOShellCombinationsIterator.h"
+#include "panache/CartesianIter.h"
 
 namespace panache
 {

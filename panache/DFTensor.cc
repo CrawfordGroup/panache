@@ -7,21 +7,21 @@
 #include <fstream>
 #include <algorithm>
 
-#include "DFTensor.h"
-#include "FittingMetric.h"
-#include "Molecule.h"
-#include "BasisSet.h"
-#include "Lapack.h"
-#include "Exception.h"
+#include "panache/DFTensor.h"
+#include "panache/FittingMetric.h"
+#include "panache/Molecule.h"
+#include "panache/BasisSet.h"
+#include "panache/Lapack.h"
+#include "panache/Exception.h"
 
 // for reordering
-#include "Orderings.h"
-#include "MemorySwapper.h"
+#include "panache/Orderings.h"
+#include "panache/MemorySwapper.h"
 
-#include "ERI.h"
+#include "panache/ERI.h"
 
-#include "ERDERI.h"
-#include "Output.h"
+#include "panache/ERDERI.h"
+#include "panache/Output.h"
 
 #ifdef _OPENMP
 #include <omp.h>

@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "ERDERI.h"
+#include "panache/ERDERI.h"
 
 namespace panache {
 

@@ -7,8 +7,8 @@
 #include <iostream>
 #include <cstring> // strncpy
 
-#include "c_interface.h"
-#include "Output.h"
+#include "panache/c_interface.h"
+#include "panache/Output.h"
 
 
 extern "C" {

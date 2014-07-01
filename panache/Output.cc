@@ -3,7 +3,7 @@
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "Output.h"
+#include "panache/Output.h"
 
 namespace
 {

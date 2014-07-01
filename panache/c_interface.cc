@@ -5,12 +5,12 @@
 
 #include <map>
 
-#include "c_interface.h"
-#include "c_convert.h"
-#include "DFTensor.h"
-#include "Output.h"
-#include "Exception.h"
-#include "BasisSetParser.h"
+#include "panache/c_interface.h"
+#include "panache/c_convert.h"
+#include "panache/DFTensor.h"
+#include "panache/Output.h"
+#include "panache/Exception.h"
+#include "panache/BasisSetParser.h"
 
 using panache::RuntimeError;
 using panache::BasisSet;

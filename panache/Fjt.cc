@@ -48,10 +48,10 @@
 //
 
 #include <cmath>
-#include "Math.h"
-#include "Fjt.h"
-#include "IntegralParameters.h"
-#include "Output.h"
+#include "panache/Math.h"
+#include "panache/Fjt.h"
+#include "panache/IntegralParameters.h"
+#include "panache/Output.h"
 
 namespace panache {
 

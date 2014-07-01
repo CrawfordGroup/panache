@@ -6,11 +6,11 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "ShellInfo.h"
-#include "BasisFunctionMacros.h" // for INT_NCART and INT_NFUNC
-#include "Math.h"
-#include "PhysConst.h"
-#include "Output.h"
+#include "panache/ShellInfo.h"
+#include "panache/BasisFunctionMacros.h" // for INT_NCART and INT_NFUNC
+#include "panache/Math.h"
+#include "panache/PhysConst.h"
+#include "panache/Output.h"
 
 namespace panache {
 

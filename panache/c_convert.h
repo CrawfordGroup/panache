@@ -6,9 +6,9 @@
 #ifndef PANACHE_C_CONVERT_H
 #define PANACHE_C_CONVERT_H
 
-#include "BasisSet.h"
-#include "Molecule.h"
-#include "c_interface.h"
+#include "panache/BasisSet.h"
+#include "panache/Molecule.h"
+#include "panache/c_interface.h"
 
 namespace panache
 {

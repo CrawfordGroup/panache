@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <string>
-#include "Exception.h"
-#include "GaussianShell.h"
+#include "panache/Exception.h"
+#include "panache/GaussianShell.h"
 
 namespace panache {
 

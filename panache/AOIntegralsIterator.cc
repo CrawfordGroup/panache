@@ -1,7 +1,7 @@
 
 #include <utility> // for std::swap
-#include "AOIntegralsIterator.h"
-#include "GaussianShell.h"
+#include "panache/AOIntegralsIterator.h"
+#include "panache/GaussianShell.h"
 
 namespace panache {
 

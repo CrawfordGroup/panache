@@ -1,6 +1,6 @@
 
-#include "BasisSet.h"
-#include "AOShellCombinationsIterator.h"
+#include "panache/BasisSet.h"
+#include "panache/AOShellCombinationsIterator.h"
 
 namespace panache {
 

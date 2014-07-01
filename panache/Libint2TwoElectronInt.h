@@ -7,7 +7,7 @@
 #define PANACHE_LIBINT2TWOELECTRONINT_H
 
 #include <libint2.h>
-#include "TwoBodyAOInt.h"
+#include "panache/TwoBodyAOInt.h"
 
 namespace panache {
 

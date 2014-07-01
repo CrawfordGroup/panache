@@ -8,7 +8,7 @@
 
 #include <map>
 #include <memory>
-#include "GaussianShell.h"
+#include "panache/GaussianShell.h"
 
 using std::shared_ptr;
 

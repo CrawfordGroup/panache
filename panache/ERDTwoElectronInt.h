@@ -6,7 +6,7 @@
 #ifndef PANACHE_ERDTWOELECTRONINT_H
 #define PANACHE_ERDTWOELECTRONINT_H
 
-#include "TwoBodyAOInt.h"
+#include "panache/TwoBodyAOInt.h"
 
 typedef int F_INT;
 typedef int F_BOOL;

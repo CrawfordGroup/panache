@@ -20,8 +20,8 @@
  *@END LICENSE
  */
 
-#include "CartesianIter.h"
-#include "Exception.h"
+#include "panache/CartesianIter.h"
+#include "panache/Exception.h"
 
 namespace panache {
 

@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <sstream>
 
-#include "ShellInfo.h"
-#include "GaussianShell.h"
-#include "BasisSet.h"
-#include "BasisSetParser.h"
+#include "panache/ShellInfo.h"
+#include "panache/GaussianShell.h"
+#include "panache/BasisSet.h"
+#include "panache/BasisSetParser.h"
 
 // the third parameter of from_string() should be
 // one of std::hex, std::dec or std::oct

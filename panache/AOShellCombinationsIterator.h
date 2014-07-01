@@ -2,7 +2,7 @@
 #define PANACHE_AOSHELLCOMBINATIONSITERATOR_H
 
 #include <memory>
-#include "AOIntegralsIterator.h"
+#include "panache/AOIntegralsIterator.h"
 
 namespace panache {
 

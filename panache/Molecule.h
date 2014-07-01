@@ -10,7 +10,7 @@
 #include <string>
 #include <memory>
 
-#include "Vector3.h"
+#include "panache/Vector3.h"
 
 namespace panache {
 

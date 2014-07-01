@@ -6,7 +6,7 @@
 #ifndef PANACHE_SLOWERI_H
 #define PANACHE_SLOWERI_H
 
-#include "SlowTwoElectronInt.h"
+#include "panache/SlowTwoElectronInt.h"
 
 namespace panache
 {

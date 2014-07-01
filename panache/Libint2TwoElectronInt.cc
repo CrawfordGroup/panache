@@ -4,14 +4,14 @@
  */
 
 #include <cmath>
-#include "Libint2TwoElectronInt.h"
-#include "BasisSet.h"
-#include "BasisFunctionMacros.h"
-#include "AOShellCombinationsIterator.h"
-#include "Fjt.h"
-#include "Lapack.h"
-#include "PhysConst.h"
-#include "Exception.h"
+#include "panache/Libint2TwoElectronInt.h"
+#include "panache/BasisSet.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/AOShellCombinationsIterator.h"
+#include "panache/Fjt.h"
+#include "panache/Lapack.h"
+#include "panache/PhysConst.h"
+#include "panache/Exception.h"
 
 namespace panache
 {

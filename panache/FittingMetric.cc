@@ -23,11 +23,11 @@
 #include <algorithm>
 #include <utility>
 
-#include "ERI.h"
+#include "panache/ERI.h"
 
-#include "FittingMetric.h"
-#include "BasisSet.h"
-#include "Lapack.h"
+#include "panache/FittingMetric.h"
+#include "panache/BasisSet.h"
+#include "panache/Lapack.h"
 
 #ifdef _OPENMP
 #include <omp.h>

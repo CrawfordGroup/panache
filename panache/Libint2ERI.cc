@@ -3,9 +3,9 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "Libint2ERI.h"
-#include "Fjt.h"
-#include "BasisSet.h"
+#include "panache/Libint2ERI.h"
+#include "panache/Fjt.h"
+#include "panache/BasisSet.h"
 
 namespace panache
 {

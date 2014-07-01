@@ -21,8 +21,8 @@
  */
 
 #include <cmath>
-#include "SolidHarmonic.h" // includes matrix
-#include "SimpleMatrix.h"
+#include "panache/SolidHarmonic.h" // includes matrix
+#include "panache/SimpleMatrix.h"
 
 using namespace std;
 

@@ -1,8 +1,8 @@
 #include <cmath>
-#include "SimpleMatrix.h"
-#include "SphericalTransform.h"
-#include "SolidHarmonic.h"
-#include "BasisFunctionMacros.h" // INT_**
+#include "panache/SimpleMatrix.h"
+#include "panache/SphericalTransform.h"
+#include "panache/SolidHarmonic.h"
+#include "panache/BasisFunctionMacros.h" // INT_**
 
 using panache::SimpleMatrix;
 

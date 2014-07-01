@@ -5,9 +5,9 @@
 
 #include <cstdlib>
 
-#include "GaussianShell.h"
-#include "BasisFunctionMacros.h"
-#include "Output.h"
+#include "panache/GaussianShell.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/Output.h"
 
 namespace panache
 {

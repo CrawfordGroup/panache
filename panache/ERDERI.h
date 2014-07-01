@@ -6,7 +6,7 @@
 #ifndef PANACHE_ERDERI_H
 #define PANACHE_ERDERI_H
 
-#include "ERDTwoElectronInt.h"
+#include "panache/ERDTwoElectronInt.h"
 
 namespace panache
 {
