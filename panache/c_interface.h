@@ -254,6 +254,15 @@ extern "C" {
     void panache_output(FILE * out);
 
 
+    /*!
+     * \brief Resets the internal information for a handle regarding batches
+     *
+     * Needed if switching between Qso and Qmo
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     */
+     void panache_resetbatches(int_t df_handle);
+
 
 
     /*

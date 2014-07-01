@@ -533,6 +533,21 @@ extern "C" {
         panache::output::SetOutput(&std::cout);
     }
 
+
+
+    /*!
+     * \brief Resets the internal information for a handle regarding batches
+     *
+     * Needed if switching between Qso and Qmo
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     */
+    void panachef_resetbatches_(int_t * df_handle)
+    {
+        panache_resetbatches(*df_handle);
+    }
+
+
 /*
     void panachef_eri_(int_t * df_handle, double * qso, int_t * qsosize,
                int_t * shell1, int_t * shell2, int_t * shell3, int_t * shell4,

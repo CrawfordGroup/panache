@@ -176,6 +176,12 @@ extern "C" {
         return dftensors_[df_handle]->SetNThread(nthread); 
     }
 
+    void panache_resetbatches(int_t df_handle)
+    {
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+        dftensors_[df_handle]->ResetBatches(); 
+    }
 
 /*
     int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize)
