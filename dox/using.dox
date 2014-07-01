@@ -3,6 +3,8 @@
 /////////////////////////
 /*! \page usage_page Usage 
 
+\tableofcontents
+
 \section usage_sec Typical Workflow
 
 \subsection usage_c_sec C Interface
@@ -118,7 +120,10 @@ delete [] cmat;
 Afterwards, do the same thing as above, but call panache_getbatch_qmo(). The only
 difference is the size of the blocks will be nmo*nmo, of course.
 
-\code{.cpp}
+\code{.c}
+//If switching between Qso and Qmo
+panache_resetbatches(dfhandle);
+
 int nbatch = 0;
 while((nbatch = panache_getbatch_qmo(dfhandle))
 {
@@ -130,7 +135,7 @@ while((nbatch = panache_getbatch_qmo(dfhandle))
 When all done, cleanup this handle
 
 
-\code{.cpp}
+\code{.c}
 panache_cleanup(dfhandle);
 
 /*... or ...*/
@@ -213,6 +218,9 @@ end do
 ! INTEGER :: nmo
 ! DOUBLE PRECISION :: cmat(nmo,nmo)
 
+! If switching between Qso and Qmo
+call panachef_resetbatches(dfhandle)
+
 call panachef_setcmatrix(dfhandle, cmat, nmo, 0);  ! last argument: 0 = normal, 1 = this is C-transpose
 
 nbatch = 0
@@ -240,14 +248,30 @@ deallocate(outbuffer)
 
 \subsection usage_cpp_sec C++ Interface
 
+Typical include files:
+
+\code{.cpp}
+#include <panache/DFTensor.h>
+#include <panache/Molecule.h>
+#include <panache/BasisSet.h>
+#include <panache/Output.h>
+
+using namespace panache;
+\endcode
+
 Using the C++ interface involves building BasisSet, Molecule, and DFTensor
 objects, but should be quite simple.
 
-First, build the molecule
+First, set the output (if desired)
 
 \code{.cpp}
-using namespace panache;
+SetOutput(&cout); // or give it address of ofsream object, etc
+\endcode
 
+
+Then, build the molecule
+
+\code{.cpp}
 Molecule mol;
 
 mol.add_atom( x1_cord, y1_cord, z1_cord, symbol1 );
