@@ -11,7 +11,7 @@ Typically, the first (although optional) thing would be to set where
 libPANACHE will print its output.
 
 \code{.cpp}
-panache_outout(stdout);  // can be any FILE *, though
+panache_output(stdout);  // can be any FILE *, though
 \endcode
 
 
@@ -135,6 +135,98 @@ That's it!
 
 
 \subsection usage_f_sec Fortran Interface
+
+The Fortran interface is similar to the C interface, except functions
+are prefixed with panachef_ rather than panache_, and functions return
+information through the last parameter. The init functions are a bit more
+complex, however.
+
+
+\code{.f90}
+
+! At the moment, the fortran interface allows only no printing or printing to stdout
+
+call panachef_stdout
+
+
+
+! see documention for panachef_init_ for definitions of the variables,
+! although many should be self explanatory
+
+! INTEGER :: dfhandle
+
+
+call panachef_init(ncenters,
+                   xyz, symbols, symbollen, normalized,
+                   primary_nshellspercenter, primary_am, primary_is_pure,
+                   primary_nprimpershell, primary_exp, primary_coef,
+                   aux_nshellspercenter, aux_am, aux_is_pure,
+                   aux_nprimpershell, aux_exp, aux_coef,
+                   filename, filenamelen, dfhandle)
+
+
+! panache makes copies of all this information, so it can be safely deallocated
+
+
+! Setting number of threads
+call panachef_setnthread(dfhandle, <some_number>)
+
+
+
+! Calcuate Qso
+call panachef_genqso(dfhandle, 1); // store in memory
+! or
+call panachef_genqso(dfhandle, 0); // store on disk
+
+
+! Get dimensions, allocate buffer, give buffer to panache
+! INTEGER :: nso2, naux;    ! number of primary basis functions squared, number of auxiliary basis functions
+! DOUBLE PRECISION, ALLOCATABLE :: outbuffer(:)
+
+call panachef_qsodimensions(dfhandle, naux, nso2)
+call allocate(outbuffer(1:4*nso2), stat=s)
+call panachef_setoutputbuffer(dfhandle, outbuffer, 4*nso2)
+
+! Getting QSO
+! INTEGER :: nbatch
+
+nbatch = 0
+
+call panachef_getbatch_qso(dfhandle, nbatch)
+do while(nbatch > 0)
+    ! output will be nbatch blocks of size nso2 in outbuffer
+    ! ... do something with it!
+
+    call panachef_getbatch_qso(dfhandle, nbatch)
+end do
+
+
+! Getting Qmo
+! INTEGER :: nmo
+! DOUBLE PRECISION :: cmat(nmo,nmo)
+
+call panachef_setcmatrix(dfhandle, cmat, nmo, 0);  ! last argument: 0 = normal, 1 = this is C-transpose
+
+nbatch = 0
+
+call panachef_getbatch_qmo(dfhandle, nbatch)
+do while(nbatch > 0)
+    ! output will be nbatch blocks of size nso2 in outbuffer
+    ! ... do something with it!
+
+    call panachef_getbatch_qmo(dfhandle, nbatch)
+end do
+
+
+! cleanup time
+call panachef_cleanup(dfhandle)
+! or
+call panachef_cleanup_all
+
+\endcode
+
+
+
 \subsection usage_cpp_sec C++ Interface
 
 
