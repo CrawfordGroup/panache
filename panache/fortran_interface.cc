@@ -519,7 +519,7 @@ extern "C" {
      * \param [in] nthread Max number of threads to use
      * \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
      */ 
-    void panachef_setnthread(int_t * df_handle, int_t * nthread, int_t * actual)
+    void panachef_setnthread_(int_t * df_handle, int_t * nthread, int_t * actual)
     {
         *actual = panache_setnthread(*df_handle, *nthread);
     }
