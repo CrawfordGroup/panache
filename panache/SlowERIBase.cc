@@ -226,7 +226,7 @@ double SlowERIBase::eri(int l1, int m1, int n1, double alpha1,
                 continue;
             tmp = bc[m1][i] * bc[m2][j];
             if (m1 - i > 0)
-                mp *= pow(PAy, m1 - i);
+                tmp *= pow(PAy, m1 - i);
             if (m2 - j > 0)
                 tmp *= pow(PBy, m2 - j);
             fmp[k] += tmp;
