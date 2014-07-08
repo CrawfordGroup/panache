@@ -12,7 +12,7 @@
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
 
-#define QSO_ELEMENT_THRESHOLD 1e-12
+#define QSO_ELEMENT_THRESHOLD 1e-11
 #define QSO_SUM_THRESHOLD 1e-8
 #define QSO_CHECKSUM_THRESHOLD 1.0
 
