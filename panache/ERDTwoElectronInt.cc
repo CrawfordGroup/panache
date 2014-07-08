@@ -276,7 +276,7 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     std::copy(gs1.coefs(), gs1.coefs()+npgto1, cc_ + offset_l);
 
 
-//#if DEBUG
+#if DEBUG
     output::printf("\n\nShell (%2d %2d | %2d %2d) - center (%2d %2d | %2d %2d) - angular momentum (%d %d | %d %d)\n",
                     shell_i, shell_j, shell_k, shell_l,
                     bs1_->shell(shell_i).ncenter(), bs2_->shell(shell_j).ncenter(), bs3_->shell(shell_k).ncenter(), bs4_->shell(shell_l).ncenter(), 
@@ -296,7 +296,7 @@ size_t ERDTwoElectronInt::compute_shell(int shell_i, int shell_j, int shell_k, i
     for(int n = 0; n < npgto; ++n)
         output::printf("%14.10f ", alpha_[n]);
     output::printf("\n");
-//#endif
+#endif
 
     F_INT nbatch = 0;
     // Call ERD.  N.B. We reverse the shell ordering, because the first index is
