@@ -47,11 +47,6 @@ private:
     double primitive_normalization(int p);
 
 
-    /*!
-     *  \brief Normalizes the entire contraction set. Applies the normalization to the coefficients
-     */
-    void contraction_normalization();
-
 
     static const char *amtypes;  //!< Lookup array for lowercase letter symbolizing the angular momentup (0=s, 1=p, etc)
     static const char *AMTYPES;  //!< Lookup array for uppercase letter symbolizing the angular momentup (0=S, 1=P, etc)

@@ -44,58 +44,37 @@ double ShellInfo::primitive_normalization(int p)
 }
 
 
-void ShellInfo::contraction_normalization()
-{
-    int i, j;
-    double e_sum = 0.0, g, z;
-
-    for (i=0; i<nprimitive(); ++i) {
-        for (j=0; j<nprimitive(); ++j) {
-            g = exp_[i] + exp_[j];
-            z = pow(g, l_+1.5);
-            e_sum += coef_[i] * coef_[j] / z;
-        }
-    }
-
-    double tmp = ((2.0*M_PI/M_2_SQRTPI) * math::double_factorial_nminus1(2*l_))/pow(2.0, l_);
-    double norm = sqrt(1.0 / (tmp*e_sum));
-
-    // Set the normalization
-    for (i=0; i<nprimitive(); ++i)
-        coef_[i] *= norm;
-}
-
 void ShellInfo::normalize_shell()
 {
-#if PANACHE_USE_LIBERD
+    double m = (double)l_+1.5;
     double sum = 0.0;
     for(int j = 0; j < nprimitive(); j++){
         for(int k = 0; k <= j; k++){
             double a1 = exp_[j];
             double a2 = exp_[k];
             double temp = (original_coef(j) * original_coef(k));
-            double temp2 = ((double) l_ + 1.5);
-            double temp3 = (2.0 * sqrt(a1 * a2) / (a1 + a2));
-            temp3 = pow(temp3, temp2);
-            temp = temp * temp3;
+            double temp2 = (2.0 * sqrt(a1 * a2) / (a1 + a2));
+            temp2 = pow(temp2, m);
+            temp = temp * temp2;
             sum = sum + temp;
             if(j != k)
                 sum = sum + temp;
         }
     }
+
+#if PANACHE_USE_LIBERD
     double prefac = 1.0;
     if(l_ > 1)
         prefac = pow(2.0, 2*l_) / math::double_factorial_nminus1(2*l_);
     double norm = sqrt(prefac / sum);
-    for(int j = 0; j < nprimitive(); j++){
-        coef_[j] *= norm;
+    for(int i = 0; i < nprimitive(); i++){
+        coef_[i] *= norm;
     }
 #else
     for (int i = 0; i < nprimitive(); ++i) {
-        double normalization = primitive_normalization(i);
-        coef_[i] *= normalization;
+        double norm = sqrt(1.0 / sum);
+        coef_[i] *= norm * primitive_normalization(i);
     }
-    contraction_normalization();
 #endif
 }
 
