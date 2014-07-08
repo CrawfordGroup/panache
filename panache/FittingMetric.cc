@@ -100,19 +100,22 @@ void FittingMetric::form_fitting_metric()
         {
             int numnu = aux_->shell(NU).nfunction();
 
-            Jint[thread]->compute_shell(MU, 0, NU, 0);
+            int ncalc = Jint[thread]->compute_shell(MU, 0, NU, 0);
 
-            int index = 0;
-            for (int mu=0; mu < nummu; ++mu)
+            if(ncalc)
             {
-                int omu = aux_->shell(MU).function_index() + mu;
-
-                for (int nu=0; nu < numnu; ++nu, ++index)
+                int index = 0;
+                for (int mu=0; mu < nummu; ++mu)
                 {
-                    int onu = aux_->shell(NU).function_index() + nu;
-
-                    //! \todo packed storage?
-                    metric_[omu*naux_+onu] = metric_[onu*naux_+omu] = Jbuffer[thread][index];
+                    int omu = aux_->shell(MU).function_index() + mu;
+    
+                    for (int nu=0; nu < numnu; ++nu, ++index)
+                    {
+                        int onu = aux_->shell(NU).function_index() + nu;
+    
+                        //! \todo packed storage?
+                        metric_[omu*naux_+onu] = metric_[onu*naux_+omu] = Jbuffer[thread][index];
+                    }
                 }
             }
         }

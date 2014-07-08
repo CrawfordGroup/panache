@@ -153,7 +153,7 @@ void DFTensor::GenQso(bool inmem)
         qso_ = std::unique_ptr<double[]>(new double[nsotri_ * naux_]);
 
 
-    
+
 
     #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
@@ -181,15 +181,18 @@ void DFTensor::GenQso(bool inmem)
                 int pstart = auxiliary_->shell(P).function_index();
                 int pend = pstart + np;
 
-                eris[threadnum]->compute_shell(P,0,M,N);
+                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
 
-                for (int p = pstart, index = 0; p < pend; p++)
+                if(ncalc)
                 {
-                    for (int m = 0; m < nm; m++)
+                    for (int p = pstart, index = 0; p < pend; p++)
                     {
-                        for (int n = 0; n < nn; n++, index++)
+                        for (int m = 0; m < nm; m++)
                         {
-                            B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
+                            }
                         }
                     }
                 }
