@@ -68,7 +68,7 @@ void ShellInfo::normalize_shell()
         prefac = pow(2.0, 2*l_) / math::double_factorial_nminus1(2*l_);
     double norm = sqrt(prefac / sum);
     for(int i = 0; i < nprimitive(); i++){
-        coef_[i] *= norm;
+        coef_[i] *= norm * pow(exp_[i], 0.5*m);
     }
 #else
     for (int i = 0; i < nprimitive(); ++i) {
