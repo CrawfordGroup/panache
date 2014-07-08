@@ -4,6 +4,7 @@
  */
 
 #include <cstdlib>
+#include <cmath>
 
 #include "panache/BasisFunctionMacros.h"
 #include "panache/BasisSet.h"
@@ -20,6 +21,15 @@ namespace panache
 BasisSet::BasisSet()
 {
     iszero_ = true;
+
+#ifdef PANACHE_USE_LIBERD
+    // coef = sqrt( pi^0.75 * (2l-1)!! / (2^(2l+1.5))
+    //      = sqrt( pi^0.75 / 2^1.5 )
+    //      = (pi /2)^0.75
+    const double coef = pow(0.5 * M_PI, 0.75);
+#else
+    const double coef = 1.0;
+#endif
 
     // Add a dummy atom at the origin, to hold this basis function
     molecule_ = SharedMolecule(new Molecule);
@@ -46,8 +56,8 @@ BasisSet::BasisSet()
     xyz_ = new double[3];
     n_prim_per_shell_[0] = 1;
     uexponents_[0] = 0.0;
-    ucoefficients_[0] = 1.0;
-    uoriginal_coefficients_[0] = 1.0;
+    ucoefficients_[0] = coef;
+    uoriginal_coefficients_[0] = coef;
     shell_first_ao_[0] = 0;
     shell_first_basis_function_[0] = 0;
     ao_to_shell_[0] = 0;
