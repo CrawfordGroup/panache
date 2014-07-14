@@ -168,10 +168,12 @@ public:
      * \param [in] primary The primary basis set
      * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] filename Full path to a file for disk storage (may not be used)
+     * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor(SharedBasisSet primary,
              SharedBasisSet auxiliary,
-             const std::string & filename);
+             const std::string & filename,
+             int nthreads);
 
     /*!
      * \brief Destructor

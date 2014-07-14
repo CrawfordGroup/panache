@@ -100,6 +100,8 @@ ERDTwoElectronInt::ERDTwoElectronInt(const SharedBasisSet bs1,
     std::fill(dscratch_, dscratch_+d_buffer_size_, 0);
 
     iscratch_ = new F_INT[i_buffer_size_];
+    std::fill(iscratch_, iscratch_+i_buffer_size_, 0);
+
 }
 
 

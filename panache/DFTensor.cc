@@ -32,8 +32,9 @@ namespace panache
 
 DFTensor::DFTensor(SharedBasisSet primary,
                    SharedBasisSet auxiliary,
-                   const std::string & filename)
-    : primary_(primary), auxiliary_(auxiliary), filename_(filename)
+                   const std::string & filename,
+                   int nthreads)
+    : primary_(primary), auxiliary_(auxiliary), filename_(filename), nthreads_(nthreads) 
 {
     output::printf("  ==> DF Tensor (by Rob Parrish) <==\n\n");
 
@@ -43,7 +44,12 @@ DFTensor::DFTensor(SharedBasisSet primary,
     output::printf(" => Auxiliary Basis Set <= \n\n");
     auxiliary_->print_detail();
 
-    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_));
+    #ifdef _OPENMP
+      if(nthreads_ <= 0)
+          nthreads_ = omp_get_max_threads();
+    #endif
+
+    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_, nthreads_));
     fittingmetric_->form_eig_inverse();
 
 
@@ -62,10 +68,6 @@ DFTensor::DFTensor(SharedBasisSet primary,
 
 
 
-    nthreads_ = 1;
-    #ifdef _OPENMP
-      nthreads_ = omp_get_max_threads();
-    #endif
 }
 
 

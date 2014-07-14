@@ -54,6 +54,8 @@ protected:
     /// The fitting metric or symmetric inverse
     double * metric_;
 
+    int nthreads_;  //!< Number of threads to use
+
     /// The indices (per irrep) of pivots
     std::vector<int> pivots_;
     /// The indices (per irrep) of reverse pivots
@@ -68,9 +70,9 @@ protected:
 public:
 
     /// DF Fitting Metric
-    FittingMetric(SharedBasisSet aux);
+    FittingMetric(SharedBasisSet aux, int nthreads);
     // DF Fitting Metric
-    FittingMetric(SharedBasisSet aux, double omega);
+    FittingMetric(SharedBasisSet aux, double omega, int nthreads);
     /// Poisson Fitting Metric
     //FittingMetric(SharedBasisSet aux, SharedBasisSet pois, bool force_C1 = false);
 

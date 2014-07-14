@@ -37,15 +37,24 @@
 namespace panache
 {
 
-FittingMetric::FittingMetric(SharedBasisSet aux) :
+FittingMetric::FittingMetric(SharedBasisSet aux, int nthreads) :
     aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(0.0),
-    metric_(new double[naux_*naux_])
+    metric_(new double[naux_*naux_]), nthreads_(nthreads)
 {
+    #ifdef _OPENMP
+      if(nthreads_ <= 0)
+          nthreads_ = omp_get_max_threads();
+    #endif
 }
 
-FittingMetric::FittingMetric(SharedBasisSet aux, double omega) :
-    aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(omega)
+FittingMetric::FittingMetric(SharedBasisSet aux, double omega, int nthreads) :
+    aux_(aux), naux_(aux->nbf()),is_poisson_(false), is_inverted_(false), omega_(omega),
+    metric_(new double[naux_*naux_]), nthreads_(nthreads)
 {
+    #ifdef _OPENMP
+      if(nthreads_ <= 0)
+          nthreads_ = omp_get_max_threads();
+    #endif
 }
 
 FittingMetric::~FittingMetric()
@@ -63,18 +72,12 @@ void FittingMetric::form_fitting_metric()
     // Default constructor = zero basis set
     SharedBasisSet zero(new BasisSet);
 
-    // Only thread if not already in parallel (handy for local fitting)
-    int nthread = 1;
-
-    #ifdef _OPENMP
-    nthread = omp_get_max_threads();
-    #endif
 
     // == (A|B) Block == //
-    const double **Jbuffer = new const double*[nthread];
-    std::shared_ptr<TwoBodyAOInt> *Jint = new std::shared_ptr<TwoBodyAOInt>[nthread];
+    const double **Jbuffer = new const double*[nthreads_];
+    std::shared_ptr<TwoBodyAOInt> *Jint = new std::shared_ptr<TwoBodyAOInt>[nthreads_];
 
-    for (int Q = 0; Q<nthread; Q++)
+    for (int Q = 0; Q<nthreads_; Q++)
     {
         if (omega_ > 0.0)
         {

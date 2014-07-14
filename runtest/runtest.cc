@@ -471,7 +471,7 @@ int main(int argc, char ** argv)
 
         int naux, nso2, nso;
 
-        DFTensor dft(primary, aux, "Test.mat");
+        DFTensor dft(primary, aux, "Test.mat", 0);
         size_t matsize = dft.QsoDimensions(naux, nso2);
         nso = primary->nbf();
 

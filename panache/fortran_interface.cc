@@ -62,6 +62,7 @@ extern "C" {
      *                      Not referenced if the disk is not used. Should not be set to "NULL", but
      *                      may be set to an empty string if disk is not to be used.
      * \param [in] filenamelen Actual length of \p filename
+     * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
      */
@@ -71,7 +72,7 @@ extern "C" {
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
                        int_t * aux_nprimpershell, double * aux_exp, double * aux_coef,
-                       const char * filename, int_t * filenamelen, int_t * dfhandle)
+                       const char * filename, int_t * filenamelen, int_t * nthreads, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -148,7 +149,7 @@ extern "C" {
 
         *dfhandle = panache_init(*ncenters, atoms, *normalized,
                                  primary_nshellspercenter, primary_shells,
-                                 aux_nshellspercenter, aux_shells, filename);
+                                 aux_nshellspercenter, aux_shells, filename, *nthreads);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -212,6 +213,7 @@ extern "C" {
      *                      Not referenced if the disk is not used. Should not be set to "NULL", but
      *                      may be set to an empty string if disk is not to be used.
      * \param [in] matfilenamelen Actual length of \p filename
+     * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
      */
@@ -220,7 +222,7 @@ extern "C" {
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         const char * auxfilename, int_t * auxfilenamelen, const char * matfilename,
-                        int_t * matfilenamelen, int_t * dfhandle)
+                        int_t * matfilenamelen, int_t * nthreads, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -332,7 +334,7 @@ extern "C" {
 
         *dfhandle = panache_init2(*ncenters, atoms, *normalized,
                                   primary_nshellspercenter, primary_shells,
-                                  cfname, mfname);
+                                  cfname, mfname, *nthreads);
 
         // Free memory
         delete [] cfname;
