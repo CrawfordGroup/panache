@@ -64,6 +64,8 @@ private:
 
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
+    int nocc_; //!< Number of occupied orbitals
+    int nvir_; //!< Number of virtual orbitals
 
     ///@}
 
@@ -132,6 +134,30 @@ private:
      */
     int GetBatch_Base(int ntoget);
 
+    /*!
+     * \brief Obtains batches with a tranformation applied
+     *
+     * Transformation is the standard \f$ U_l^\dagger Q U_r \f$
+     * where \f$ U_l \f$ and \f$ U_r \f$ are left and right transformation
+     * matrices.
+     *
+     * Results are stored in outbuffer_
+     *
+     * \param [in] left   Left matrix
+     * \param [in] lncols Number of columns in \p left
+     * \param [in] right  Right matrix
+     * \param [in] rncols Number of columns in \p right
+     * \param [in] istrans Set to true if both \p left and \p right are in column-major order or are
+     *                     otherwise transposed
+     * \param [in] timer  A timer for this functionality
+     * \param [in] timername  Some descriptive name for the timer
+     * \return Number of Q stored in outbuffer_
+     */
+    int GetBatch_transform(double * left, int lncols, 
+                           double * right, int rncols,
+                           bool istrans,
+                           Timer & timer, const char * timername);          
+
     ///@}
 
 
@@ -140,6 +166,7 @@ private:
     Timer timer_genqso;        //!< Total time spent in GenQso()
     Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
     Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
+    Timer timer_getbatch_qia;  //!< Total time spent in GetBatch_Qia()
 
     ///@}
 
@@ -211,7 +238,7 @@ public:
 
 
     /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo and Qia
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
      * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
@@ -229,10 +256,26 @@ public:
 
 
     /*!
-     * \brief Sets the buffer used for storing batches of Qso or Qmo
+     * \brief Sets the number of occupied and virtual orbitals.
      *
-     * Batches are read in multiples of either nso2 (GetBatch_Qso(), see QsoDimensions()) or
-     * nmo*nmo (GetBatch_Qmo()). How many can fit in the buffer is determined automatically
+     * Number of virtual orbitals is taken to be the remainder after the occupied.
+     * Used by Qia, etc
+     *
+     * \note You must set the C Matrix first before calling (see SetCMatrix())
+     *
+     * \param [in] nocc Number of occupied orbitals
+     */
+    void SetNOcc(int nocc);
+
+
+
+
+    /*!
+     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qia
+     *
+     * Batches are read in multiples of nso2 (GetBatch_Qso(), see QsoDimensions()),
+     * nmo*nmo (GetBatch_Qmo()), or nocc*nvir (GetBatch_Qia).
+     * How many can fit in the buffer is determined automatically
      * from the matsize parameter. Any 'left over' buffer space is not used.
      *
      * \param [in] buf A pointer to memory for a buffer (of \p bufsize size)
@@ -278,6 +321,25 @@ public:
      * \return The number of batches actually stored in the buffer.
      */
     int GetBatch_Qmo(void);
+
+
+
+    /*!
+     * \brief Retrieves a batch of Qia (occupied-virtual)
+     *
+     * The batches are stored in the matrix set by SetOutputBuffer().
+     * See \ref theory_page for what Qia actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nocc*nvir elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qia(void);
+
 
 
 

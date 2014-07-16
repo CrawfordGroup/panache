@@ -325,6 +325,7 @@ void DFTensor::GenQso(bool inmem)
     // reset the other timers
     timer_getbatch_qso.Reset();
     timer_getbatch_qmo.Reset();
+    timer_getbatch_qia.Reset();
 #endif
 
 }
@@ -494,11 +495,130 @@ int DFTensor::GetBatch_Qso(void)
 
 
 
+int DFTensor::GetBatch_transform(double * left, int lncols, 
+                                 double * right, int rncols,
+                                 bool istrans,
+                                 Timer & timer, const char * timername)
+{
+#ifdef PANACHE_TIMING
+    timer.Start();
+#endif
+
+    int batchsize = lncols * rncols;
+    int nq = (outbuffersize_ / batchsize );
+
+
+    // first batch?
+    if(curq_ == 0)
+    {
+        if(outbuffersize_ < batchsize)
+            throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+        // allocate buffers for some q
+        q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
+        #endif
+
+
+        q_single_ = std::unique_ptr<double[]>(new double[nq * batchsize]);
+        qc_ = std::unique_ptr<double[]>(new double[nq * lncols * nso_]);
+    }
+
+
+    int gotten;
+    if((gotten = GetBatch_Base(nq)))
+    {
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+        #endif
+        for(int i = 0; i < gotten; i++)
+        {
+            double * my_q = q_.get() + i*nsotri_;
+            double * my_q_single = q_single_.get() + i*nso2_;
+            double * my_qc = qc_.get() + i*nso_*lncols;
+
+            // Apply the matrices
+            // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
+            // so first expand into a buffer. But we only need to fill half and we can use DSYMM.
+            // We will fill the lower triangle.
+            int index = 0;
+            for(int j = 0; j < nso_; j++)
+                for(int k = 0; k <= j; k++)
+                    my_q_single[j*nso_ + k] = my_q[index++];
+
+
+            if(istrans)
+            {
+                // matrix multiply w/ triangular matrix
+                C_DSYMM('R','L',lncols,nso_,1.0, my_q_single, nso_, left, nso_, 0.0, my_qc, nso_);
+
+                // Then regular matrix multiplication
+                C_DGEMM('N','T',lncols, rncols, nso_, 1.0, my_qc, nso_, right, nso_, 0.0, outbuffer_ + i*lncols*rncols, rncols);
+            }
+            else
+            {
+                // matrix multiply w/ symmetric matrix
+                C_DSYMM('L','L',nso_,rncols,1.0, my_q_single, nso_, right, rncols, 0.0, my_qc, rncols);
+
+                // Then regular matrix multiplication
+                C_DGEMM('T','N',lncols, rncols, nso_, 1.0, left, lncols, my_qc, rncols, 0.0, outbuffer_ + i*lncols*rncols, rncols);
+            }
+        }
+    }
+
+    if(gotten == 0)
+    {
+        // free memory
+        q_.reset();
+        q_single_.reset();
+        qc_.reset();
+
+        #ifdef PANACHE_DISKPREFETCH
+        q2_.reset();
+        #endif
+
+    }
+
+#ifdef PANACHE_TIMING
+    timer.Stop();
+    if(gotten == 0)
+    {
+        output::printf("  **TIMER: DFTensor Total %s (%s): %lu (%lu calls)\n",
+                       timername,
+                       (isinmem_ ? "CORE" : "DISK"),
+                       timer_getbatch_qmo.Microseconds(),
+                       timer_getbatch_qmo.TimesCalled());
+    }
+#endif
+
+    return gotten;
+}
+
+
+
 
 int DFTensor::GetBatch_Qmo(void)
 {
+
+    if(!Cmo_)
+        throw RuntimeError("Error - I don't have a C matrix!");
+
+
+    int gotten = GetBatch_transform(Cmo_.get(), nmo_, Cmo_.get(), nmo_, Cmo_trans_, timer_getbatch_qmo, "GetBatch_Qmo");
+
+
+
+    return gotten;
+}
+
+
+
+int DFTensor::GetBatch_Qia(void)
+{
 #ifdef PANACHE_TIMING
-    timer_getbatch_qmo.Start();
+    timer_getbatch_qia.Start();
 #endif
 
     if(!Cmo_)
@@ -568,13 +688,13 @@ int DFTensor::GetBatch_Qmo(void)
     }
 
 #ifdef PANACHE_TIMING
-    timer_getbatch_qmo.Stop();
+    timer_getbatch_qia.Stop();
     if(gotten == 0)
     {
         output::printf("  **TIMER: DFTensor Total GetBatch_Qmo (%s): %lu (%lu calls)\n",
                        (isinmem_ ? "CORE" : "DISK"),
-                       timer_getbatch_qmo.Microseconds(),
-                       timer_getbatch_qmo.TimesCalled());
+                       timer_getbatch_qia.Microseconds(),
+                       timer_getbatch_qia.TimesCalled());
     }
 #endif
 
@@ -593,7 +713,6 @@ int DFTensor::GetBatch_Qmo(void)
 
     return gotten;
 }
-
 
 /*
 int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
@@ -883,16 +1002,18 @@ void DFTensor::ResetBatches(void)
         ResetFile();
 }
 
+
+
+void DFTensor::SetNOcc(int nocc)
+{
+    if(nocc <= 0)
+        throw RuntimeError("Error - nocc <= 0!");
+
+    if(Cmo_ == nullptr)
+        throw RuntimeError("Error - C Matrix not set!");
+
+    nocc_ = nocc;
+    nvir_ = nmo_ - nocc;
 }
 
-
-
-
-
-
-
-
-
-
-
-
+} // close namespace panache
