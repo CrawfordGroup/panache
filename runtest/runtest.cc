@@ -34,6 +34,7 @@ void PrintUsage(void)
          << "-v           Verbose printing\n"
          << "-d           Write Qso to disk (rather than in core)\n"
          << "-b           Get Qso/Qmo in batches\n"
+         << "-t           Use transpose of C matrix\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
          << "\n\n";
@@ -404,6 +405,7 @@ int main(int argc, char ** argv)
 
         bool verbose = false;
         bool inmem = true;
+        bool transpose = false;
         int batchsize = 0;
 
         for(int i = 1; i < argc; i++)
@@ -420,6 +422,8 @@ int main(int argc, char ** argv)
                 inmem = false;
             else if(starg == "-v")
                 verbose = true;
+            else if(starg == "-t")
+                transpose = true;
             else
             {
                 // add trailing slash if needed
@@ -468,6 +472,17 @@ int main(int argc, char ** argv)
         auto primary = ReadBasisFile(mol, primary_basis_filename);
         auto aux = ReadBasisFile(mol, aux_basis_filename);
         auto cmat = ReadCMatrixFile(cmo_filename);
+
+        if(transpose)
+        {
+            std::shared_ptr<SimpleMatrix> cmatt(new SimpleMatrix(cmat->ncol(), cmat->nrow()));
+            for(size_t i = 0; i < cmat->nrow(); i++)
+            for(size_t j = 0; j < cmat->ncol(); j++)
+                (*cmatt)(j,i) = (*cmat)(i,j);
+
+            std::swap(cmatt, cmat);
+            // original cmat (now in cmatt), will be destructed here
+        }
 
         int naux, nso2, nso;
 
@@ -520,7 +535,7 @@ int main(int argc, char ** argv)
         //mat = unique_ptr<double[]>(new double[naux*nmo2]);
         //dft.SetOutputBuffer(outbuf.get(), buffsize);
  
-        dft.SetCMatrix(cmat->pointer(), nmo, false);
+        dft.SetCMatrix(cmat->pointer(), nmo, transpose);
 
         while((n = dft.GetBatch_Qmo()))
         {
