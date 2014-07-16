@@ -76,7 +76,7 @@ if(PANACHE_OPENMP)
     list(APPEND RUNTEST_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
     # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
     list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
-    #list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
+    list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else(OPENMP_FOUND)
     message(WARNING "OpenMP was not found! Disabling...")
   endif(OPENMP_FOUND)
