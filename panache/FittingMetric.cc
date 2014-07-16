@@ -44,6 +44,8 @@ FittingMetric::FittingMetric(SharedBasisSet aux, int nthreads) :
     #ifdef _OPENMP
       if(nthreads_ <= 0)
           nthreads_ = omp_get_max_threads();
+    #else
+      nthreads_ = 1;
     #endif
 }
 
@@ -54,6 +56,8 @@ FittingMetric::FittingMetric(SharedBasisSet aux, double omega, int nthreads) :
     #ifdef _OPENMP
       if(nthreads_ <= 0)
           nthreads_ = omp_get_max_threads();
+    #else
+      nthreads_ = 1;
     #endif
 }
 
