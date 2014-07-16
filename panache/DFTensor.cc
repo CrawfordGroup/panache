@@ -605,10 +605,7 @@ int DFTensor::GetBatch_Qmo(void)
     if(!Cmo_)
         throw RuntimeError("Error - I don't have a C matrix!");
 
-
     int gotten = GetBatch_transform(Cmo_.get(), nmo_, Cmo_.get(), nmo_, Cmo_trans_, timer_getbatch_qmo, "GetBatch_Qmo");
-
-
 
     return gotten;
 }
@@ -617,99 +614,14 @@ int DFTensor::GetBatch_Qmo(void)
 
 int DFTensor::GetBatch_Qia(void)
 {
-#ifdef PANACHE_TIMING
-    timer_getbatch_qia.Start();
-#endif
-
     if(!Cmo_)
         throw RuntimeError("Error - I don't have a C matrix!");
+    if(!Cmo_occ_ || !Cmo_vir_)
+        throw RuntimeError("Error - Set occupied and virtual orbitals first!");
 
-    int nq = (outbuffersize_ / nmo2_ );
-
-
-    // first batch?
-    if(curq_ == 0)
-    {
-        if(outbuffersize_ < nmo2_)
-            throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-        // allocate buffers for some q
-        q_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
-
-        #ifdef PANACHE_DISKPREFETCH
-        q2_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
-        #endif
-
-
-        q_single_ = std::unique_ptr<double[]>(new double[nq * nmo2_]);
-        qc_ = std::unique_ptr<double[]>(new double[nq * nmo_ * nso_]);
-    }
-
-
-    int gotten;
-    if((gotten = GetBatch_Base(nq)))
-    {
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
-        #endif
-        for(int i = 0; i < gotten; i++)
-        {
-            double * my_q = q_.get() + i*nsotri_;
-            double * my_q_single = q_single_.get() + i*nso2_;
-            double * my_qc = qc_.get() + i*nso_*nmo_;
-
-            // Apply the C matrices
-            // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
-            // so first expand into a buffer. But we only need to fill half and we can use DSYMM
-            // (we fill the lower triangle)
-            int index = 0;
-            for(int j = 0; j < nso_; j++)
-                for(int k = 0; k <= j; k++)
-                    my_q_single[j*nso_ + k] = my_q[index++];
-
-
-            if(Cmo_trans_)
-            {
-                // matrix multiply w/ triangular matrix
-                C_DSYMM('R','L',nmo_,nso_,1.0, my_q_single, nso_, Cmo_.get(), nso_, 0.0, my_qc, nso_);
-
-                // Then regular matrix multiplication
-                C_DGEMM('N','T',nmo_, nmo_, nso_, 1.0, my_qc, nso_, Cmo_.get(), nso_, 0.0, outbuffer_ + i*nmo2_, nmo_);
-            }
-            else
-            {
-                // matrix multiply w/ symmetric matrix
-                C_DSYMM('L','L',nso_,nmo_,1.0, my_q_single, nso_, Cmo_.get(), nmo_, 0.0, my_qc, nmo_);
-
-                // Then regular matrix multiplication
-                C_DGEMM('T','N',nmo_, nmo_, nso_, 1.0, Cmo_.get(), nmo_, my_qc, nmo_, 0.0, outbuffer_ + i*nmo2_, nmo_);
-            }
-        }
-    }
-
-#ifdef PANACHE_TIMING
-    timer_getbatch_qia.Stop();
-    if(gotten == 0)
-    {
-        output::printf("  **TIMER: DFTensor Total GetBatch_Qmo (%s): %lu (%lu calls)\n",
-                       (isinmem_ ? "CORE" : "DISK"),
-                       timer_getbatch_qia.Microseconds(),
-                       timer_getbatch_qia.TimesCalled());
-    }
-#endif
-
-    if(gotten == 0)
-    {
-        // free memory
-        q_.reset();
-        q_single_.reset();
-        qc_.reset();
-
-        #ifdef PANACHE_DISKPREFETCH
-        q2_.reset();
-        #endif
-
-    }
+    int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
+                                    Cmo_vir_.get(), nvir_, false,
+                                    timer_getbatch_qia, "GetBatch_Qia");
 
     return gotten;
 }
@@ -1003,6 +915,42 @@ void DFTensor::ResetBatches(void)
 }
 
 
+void DFTensor::SplitCMat(void)
+{
+    Cmo_occ_ = std::unique_ptr<double[]>(new double[nso_*nocc_]);
+    Cmo_vir_ = std::unique_ptr<double[]>(new double[nso_*nvir_]);
+
+    std::fill(Cmo_occ_.get(), Cmo_occ_.get() + nso_*nocc_, 0.0);
+    std::fill(Cmo_vir_.get(), Cmo_vir_.get() + nso_*nvir_, 0.0);
+
+    // note - Cmo_occ_ and Cmo_vir_ will always be in column major order!
+    if(Cmo_trans_)
+    {
+        // Cmo_ is nmo * nso
+        //! \todo BLAS call?
+        for(int i = 0; i < nso_; i++)
+        {
+            for(int j = 0; j < nocc_; j++)
+                Cmo_occ_[i*nocc_ + j] = Cmo_[j*nso_+i];
+            for(int j = 0; j < nocc_; j++)
+                Cmo_vir_[i*nvir_ + j] = Cmo_[(j+nocc_)*nso_+i];
+        }
+    }
+    else
+    {
+        // Cmo_ is nso * nmo
+        //! \todo BLAS call?
+        for(int i = 0; i < nso_; i++)
+        {
+            for(int j = 0; j < nocc_; j++)
+                Cmo_occ_[i*nocc_ + j] = Cmo_[i*nmo_+j];
+            for(int j = 0; j < nvir_; j++)
+                Cmo_vir_[i*nvir_ + j] = Cmo_[i*nmo_+(j+nocc_)];
+        }
+                
+    }
+
+}
 
 void DFTensor::SetNOcc(int nocc)
 {
@@ -1014,6 +962,8 @@ void DFTensor::SetNOcc(int nocc)
 
     nocc_ = nocc;
     nvir_ = nmo_ - nocc;
+
+    SplitCMat();
 }
 
 } // close namespace panache

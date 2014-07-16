@@ -60,12 +60,23 @@ private:
     ///@{  
 
     std::unique_ptr<double[]> Cmo_;  //!< C matrix (nso x nmo)
+    std::unique_ptr<double[]> Cmo_occ_;  //!< C matrix (occupied part, nso*nocc)
+    std::unique_ptr<double[]> Cmo_vir_;  //!< C matrix (virtual part, nso*nvir)
     bool Cmo_trans_; //!< Whether the matrix is the transpose or not (think calling from FORTRAN)
 
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
     int nocc_; //!< Number of occupied orbitals
     int nvir_; //!< Number of virtual orbitals
+
+    /*!
+     * \brief Splits the C matrix into occupied and virtual matrices
+     *
+     * Fills in Cmo_occ_ and Cmo_vir_
+     *
+     * nocc_, nvir_ nmo_, and nso_ must be set first!
+     */
+    void SplitCMat(void);
 
     ///@}
 
@@ -259,7 +270,7 @@ public:
      * \brief Sets the number of occupied and virtual orbitals.
      *
      * Number of virtual orbitals is taken to be the remainder after the occupied.
-     * Used by Qia, etc
+     * Used by Qia, etc.
      *
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
