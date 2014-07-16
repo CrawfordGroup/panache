@@ -156,8 +156,7 @@ public:
      */
     void zero(void)
     {
-        for(size_t i = 0; i < nrow_*ncol_; i++)
-            data_[i] = 0.0;
+        std::fill(data_, data_ + nrow_*ncol_, 0.0);
     }
 
 
