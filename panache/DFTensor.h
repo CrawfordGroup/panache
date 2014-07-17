@@ -177,6 +177,8 @@ private:
     Timer timer_genqso;        //!< Total time spent in GenQso()
     Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
     Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
+    Timer timer_getbatch_qoo;  //!< Total time spent in GetBatch_Qoo()
+    Timer timer_getbatch_qvv;  //!< Total time spent in GetBatch_Qvv()
     Timer timer_getbatch_qov;  //!< Total time spent in GetBatch_Qov()
 
     ///@}
@@ -249,7 +251,7 @@ public:
 
 
     /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo and Qov
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, Qov, Qoo, and Qvv
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
      * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
@@ -282,10 +284,16 @@ public:
 
 
     /*!
-     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qov
+     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qov, Qoo, Qvv
      *
-     * Batches are read in multiples of nso2 (GetBatch_Qso(), see QsoDimensions()),
-     * nmo*nmo (GetBatch_Qmo()), or nocc*nvir (GetBatch_Qov).
+     * Batches are read in multiples of:
+     *
+     * - nso2 (GetBatch_Qso(), see QsoDimensions()),
+     * - nmo*nmo (GetBatch_Qmo())
+     * - nocc*nvir (GetBatch_Qov())
+     * - nocc*nocc (GetBatch_Qoo())
+     * - nvir*nvir (GetBatch_Qvv())
+     *
      * How many can fit in the buffer is determined automatically
      * from the matsize parameter. Any 'left over' buffer space is not used.
      *
@@ -351,6 +359,39 @@ public:
      */
     int GetBatch_Qov(void);
 
+
+    /*!
+     * \brief Retrieves a batch of Qoo (occupied-occupied)
+     *
+     * The batches are stored in the matrix set by SetOutputBuffer().
+     * See \ref theory_page for what Qov actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nocc*nocc elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qoo(void);
+
+
+    /*!
+     * \brief Retrieves a batch of Qvv (occupied-virtual)
+     *
+     * The batches are stored in the matrix set by SetOutputBuffer().
+     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nvir*nvir elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qvv(void);
 
 
 

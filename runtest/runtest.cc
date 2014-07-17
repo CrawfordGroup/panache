@@ -483,6 +483,8 @@ int main(int argc, char ** argv)
         string nocc_filename(dir);
         string qso_filename(dir);
         string qov_filename(dir);
+        string qoo_filename(dir);
+        string qvv_filename(dir);
         string qmo_filename(dir);
         string cmo_filename(dir);
 
@@ -493,6 +495,8 @@ int main(int argc, char ** argv)
         qso_filename.append("qso");
         qmo_filename.append("qmo");
         qov_filename.append("qov");
+        qoo_filename.append("qoo");
+        qvv_filename.append("qvv");
         cmo_filename.append("cmat");
 
         auto mol = ReadMoleculeFile(molecule_filename);
@@ -590,7 +594,7 @@ int main(int argc, char ** argv)
             buffsize = batchsize * nocc*nvir;
 
         outbuf = unique_ptr<double[]>(new double[buffsize]);
-        mat = unique_ptr<double[]>(new double[naux*nocc*nvir]);
+        mat = unique_ptr<double[]>(new double[matsize]);
         dft.SetOutputBuffer(outbuf.get(), buffsize);
 
         dft.SetNOcc(nocc); 
@@ -608,6 +612,65 @@ int main(int argc, char ** argv)
 
         dft.ResetBatches();
         curq = 0;
+
+
+
+
+        ///////////
+        // Test Qoo
+        ///////////
+        matsize = nocc*nocc*naux;
+
+        if(batchsize)
+            buffsize = batchsize * nocc*nocc;
+
+        outbuf = unique_ptr<double[]>(new double[buffsize]);
+        mat = unique_ptr<double[]>(new double[matsize]);
+        dft.SetOutputBuffer(outbuf.get(), buffsize);
+
+        while((n = dft.GetBatch_Qoo()))
+        {
+            std::copy(outbuf.get(), outbuf.get() + n*nocc*nocc, mat.get() + curq*nocc*nocc);
+            curq += n;
+        }
+
+        ret += TestMatrix("QOO", qoo_filename,
+                          mat.get(), matsize,
+                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                          verbose);
+
+        dft.ResetBatches();
+        curq = 0;
+
+
+
+        ///////////
+        // Test Qvv
+        ///////////
+        matsize = nvir*nvir*naux;
+
+        if(batchsize)
+            buffsize = batchsize * nvir*nvir;
+
+        outbuf = unique_ptr<double[]>(new double[buffsize]);
+        mat = unique_ptr<double[]>(new double[matsize]);
+        dft.SetOutputBuffer(outbuf.get(), buffsize);
+
+        while((n = dft.GetBatch_Qvv()))
+        {
+            std::copy(outbuf.get(), outbuf.get() + n*nvir*nvir, mat.get() + curq*nvir*nvir);
+            curq += n;
+        }
+
+        ret += TestMatrix("QVV", qvv_filename,
+                          mat.get(), matsize,
+                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                          verbose);
+
+        dft.ResetBatches();
+        curq = 0;
+
+
 
 
 

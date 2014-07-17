@@ -639,6 +639,33 @@ int DFTensor::GetBatch_Qov(void)
     return gotten;
 }
 
+int DFTensor::GetBatch_Qoo(void)
+{
+    if(!Cmo_)
+        throw RuntimeError("Error - I don't have a C matrix!");
+    if(!Cmo_occ_ || !Cmo_vir_)
+        throw RuntimeError("Error - Set occupied and virtual orbitals first!");
+
+    int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
+                                    Cmo_occ_.get(), nocc_, false,
+                                    timer_getbatch_qoo, "GetBatch_Qoo");
+
+    return gotten;
+}
+
+int DFTensor::GetBatch_Qvv(void)
+{
+    if(!Cmo_)
+        throw RuntimeError("Error - I don't have a C matrix!");
+    if(!Cmo_occ_ || !Cmo_vir_)
+        throw RuntimeError("Error - Set occupied and virtual orbitals first!");
+
+    int gotten = GetBatch_transform(Cmo_vir_.get(), nvir_,
+                                    Cmo_vir_.get(), nvir_, false,
+                                    timer_getbatch_qvv, "GetBatch_Qvv");
+
+    return gotten;
+}
 /*
 int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
 {
