@@ -584,6 +584,7 @@ int main(int argc, char ** argv)
         ///////////
         int nocc = ReadNocc(nocc_filename);
         int nvir = nmo - nocc;
+        matsize = nocc*nvir*naux;
 
         if(batchsize)
             buffsize = batchsize * nocc*nvir;
@@ -596,7 +597,7 @@ int main(int argc, char ** argv)
 
         while((n = dft.GetBatch_Qov()))
         {
-            std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
+            std::copy(outbuf.get(), outbuf.get() + n*nocc*nvir, mat.get() + curq*nocc*nvir);
             curq += n;
         }
 
