@@ -327,7 +327,7 @@ void DFTensor::GenQso(bool inmem)
     // reset the other timers
     timer_getbatch_qso.Reset();
     timer_getbatch_qmo.Reset();
-    timer_getbatch_qia.Reset();
+    timer_getbatch_qov.Reset();
 #endif
 
 }
@@ -614,7 +614,7 @@ int DFTensor::GetBatch_Qmo(void)
 
 
 
-int DFTensor::GetBatch_Qia(void)
+int DFTensor::GetBatch_Qov(void)
 {
     if(!Cmo_)
         throw RuntimeError("Error - I don't have a C matrix!");
@@ -623,7 +623,7 @@ int DFTensor::GetBatch_Qia(void)
 
     int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
                                     Cmo_vir_.get(), nvir_, false,
-                                    timer_getbatch_qia, "GetBatch_Qia");
+                                    timer_getbatch_qov, "GetBatch_Qov");
 
     return gotten;
 }

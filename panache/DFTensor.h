@@ -177,7 +177,7 @@ private:
     Timer timer_genqso;        //!< Total time spent in GenQso()
     Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
     Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
-    Timer timer_getbatch_qia;  //!< Total time spent in GetBatch_Qia()
+    Timer timer_getbatch_qov;  //!< Total time spent in GetBatch_Qov()
 
     ///@}
 
@@ -249,7 +249,7 @@ public:
 
 
     /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo and Qia
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo and Qov
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
      * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
@@ -270,7 +270,7 @@ public:
      * \brief Sets the number of occupied and virtual orbitals.
      *
      * Number of virtual orbitals is taken to be the remainder after the occupied.
-     * Used by Qia, etc.
+     * Used by Qov, etc.
      *
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
@@ -282,10 +282,10 @@ public:
 
 
     /*!
-     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qia
+     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qov
      *
      * Batches are read in multiples of nso2 (GetBatch_Qso(), see QsoDimensions()),
-     * nmo*nmo (GetBatch_Qmo()), or nocc*nvir (GetBatch_Qia).
+     * nmo*nmo (GetBatch_Qmo()), or nocc*nvir (GetBatch_Qov).
      * How many can fit in the buffer is determined automatically
      * from the matsize parameter. Any 'left over' buffer space is not used.
      *
@@ -336,10 +336,10 @@ public:
 
 
     /*!
-     * \brief Retrieves a batch of Qia (occupied-virtual)
+     * \brief Retrieves a batch of Qov (occupied-virtual)
      *
      * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qia actually is, and memory_sec for more information
+     * See \ref theory_page for what Qov actually is, and memory_sec for more information
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
@@ -349,7 +349,7 @@ public:
      *
      * \return The number of batches actually stored in the buffer.
      */
-    int GetBatch_Qia(void);
+    int GetBatch_Qov(void);
 
 
 
