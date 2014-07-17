@@ -383,6 +383,29 @@ std::shared_ptr<SimpleMatrix> ReadCMatrixFile(const string & filename)
 }
 
 
+int ReadNocc(const string & filename)
+{
+    ifstream f(filename.c_str());
+
+    if(!f.is_open())
+        throw runtime_error("Cannot open nocc file!");
+
+    f.exceptions(std::ifstream::failbit |
+                 std::ifstream::badbit  |
+                 std::ifstream::eofbit);
+    try
+    {
+        int nocc;
+
+        f >> nocc;
+
+        return nocc;
+    }
+    catch(...)
+    {
+        throw runtime_error("Error parsing nocc file");
+    }
+}
 
 
 
@@ -457,15 +480,19 @@ int main(int argc, char ** argv)
         string primary_basis_filename(dir);
         string aux_basis_filename(dir);
         string molecule_filename(dir);
+        string nocc_filename(dir);
         string qso_filename(dir);
+        string qov_filename(dir);
         string qmo_filename(dir);
         string cmo_filename(dir);
 
         primary_basis_filename.append("basis.primary");
         aux_basis_filename.append("basis.aux");
         molecule_filename.append("geometry");
+        nocc_filename.append("nocc");
         qso_filename.append("qso");
         qmo_filename.append("qmo");
+        qov_filename.append("qov");
         cmo_filename.append("cmat");
 
         auto mol = ReadMoleculeFile(molecule_filename);
@@ -552,6 +579,34 @@ int main(int argc, char ** argv)
         curq = 0;
 
 
+        ///////////
+        // Test Qov
+        ///////////
+        int nocc = ReadNocc(nocc_filename);
+        int nvir = nmo - nocc;
+
+        if(batchsize)
+            buffsize = batchsize * nocc*nvir;
+
+        outbuf = unique_ptr<double[]>(new double[buffsize]);
+        mat = unique_ptr<double[]>(new double[naux*nocc*nvir]);
+        dft.SetOutputBuffer(outbuf.get(), buffsize);
+
+        dft.SetNOcc(nocc); 
+
+        while((n = dft.GetBatch_Qov()))
+        {
+            std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
+            curq += n;
+        }
+
+        ret += TestMatrix("QOV", qov_filename,
+                          mat.get(), matsize,
+                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                          verbose);
+
+        dft.ResetBatches();
+        curq = 0;
 
 
 
