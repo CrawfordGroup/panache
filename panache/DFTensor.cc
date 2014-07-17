@@ -525,6 +525,8 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
 
         q_single_ = std::unique_ptr<double[]>(new double[nq * nso2_]);
 
+        // If istrans, we do C Q, then (C Q) CT, with the left part stored in qc_
+        // Opposite if !istrans
         if(istrans)
             qc_ = std::unique_ptr<double[]>(new double[nq * lncols * nso_]);
         else
@@ -542,7 +544,13 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
         {
             double * my_q = q_.get() + i*nsotri_;
             double * my_q_single = q_single_.get() + i*nso2_;
-            double * my_qc = qc_.get() + i*nso_*lncols;
+
+            double * my_qc;
+
+            if(istrans)
+                my_qc = qc_.get() + i*nso_*lncols;
+            else    
+                my_qc = qc_.get() + i*nso_*rncols;
 
             // Apply the matrices
             // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
@@ -937,7 +945,7 @@ void DFTensor::SplitCMat(void)
         {
             for(int j = 0; j < nocc_; j++)
                 Cmo_occ_[i*nocc_ + j] = Cmo_[j*nso_+i];
-            for(int j = 0; j < nocc_; j++)
+            for(int j = 0; j < nvir_; j++)
                 Cmo_vir_[i*nvir_ + j] = Cmo_[(j+nocc_)*nso_+i];
         }
     }
