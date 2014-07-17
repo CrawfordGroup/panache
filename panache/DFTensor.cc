@@ -523,9 +523,12 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
         q2_ = std::unique_ptr<double[]>(new double[nq * nsotri_]);
         #endif
 
+        q_single_ = std::unique_ptr<double[]>(new double[nq * nso2_]);
 
-        q_single_ = std::unique_ptr<double[]>(new double[nq * batchsize]);
-        qc_ = std::unique_ptr<double[]>(new double[nq * lncols * nso_]);
+        if(istrans)
+            qc_ = std::unique_ptr<double[]>(new double[nq * lncols * nso_]);
+        else
+            qc_ = std::unique_ptr<double[]>(new double[nq * rncols * nso_]);
     }
 
 

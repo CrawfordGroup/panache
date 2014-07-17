@@ -115,7 +115,7 @@ private:
     ///@{
 
     std::unique_ptr<double[]> qso_; //!< Holds the entire Q matrix (if it is to be kept in memory
-    std::unique_ptr<double[]> qc_;  //!< Holds C(T) Q intermediate
+    std::unique_ptr<double[]> qc_;  //!< Holds C(T) Q or QC intermediate
     std::unique_ptr<double[]> q_;   //!< Holds a batch of Q (packed storage)
     std::unique_ptr<double[]> q_single_;   // Holds a batch of Q (expanded storage)
 
