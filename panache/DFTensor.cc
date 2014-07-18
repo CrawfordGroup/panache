@@ -500,7 +500,8 @@ int DFTensor::GetBatch_Qso(void)
 int DFTensor::GetBatch_transform(double * left, int lncols, 
                                  double * right, int rncols,
                                  bool istrans,
-                                 Timer & timer, const char * timername)
+                                 Timer & timer, const char * timername,
+                                 int nthreads)
 {
 #ifdef PANACHE_TIMING
     timer.Start();
@@ -538,7 +539,7 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
     if((gotten = GetBatch_Base(nq)))
     {
         #ifdef _OPENMP
-        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+        #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
         #endif
         for(int i = 0; i < gotten; i++)
         {
@@ -618,7 +619,10 @@ int DFTensor::GetBatch_Qmo(void)
     if(!Cmo_)
         throw RuntimeError("Error - I don't have a C matrix!");
 
-    int gotten = GetBatch_transform(Cmo_.get(), nmo_, Cmo_.get(), nmo_, Cmo_trans_, timer_getbatch_qmo, "GetBatch_Qmo");
+    int gotten = GetBatch_transform(Cmo_.get(), nmo_,
+                                    Cmo_.get(), nmo_,
+                                    Cmo_trans_, timer_getbatch_qmo, "GetBatch_Qmo",
+                                    nthreads_);
 
     return gotten;
 }
@@ -634,7 +638,8 @@ int DFTensor::GetBatch_Qov(void)
 
     int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
                                     Cmo_vir_.get(), nvir_, false,
-                                    timer_getbatch_qov, "GetBatch_Qov");
+                                    timer_getbatch_qov, "GetBatch_Qov",
+                                    nthreads_);
 
     return gotten;
 }
@@ -648,7 +653,8 @@ int DFTensor::GetBatch_Qoo(void)
 
     int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
                                     Cmo_occ_.get(), nocc_, false,
-                                    timer_getbatch_qoo, "GetBatch_Qoo");
+                                    timer_getbatch_qoo, "GetBatch_Qoo",
+                                    nthreads_);
 
     return gotten;
 }
@@ -662,7 +668,8 @@ int DFTensor::GetBatch_Qvv(void)
 
     int gotten = GetBatch_transform(Cmo_vir_.get(), nvir_,
                                     Cmo_vir_.get(), nvir_, false,
-                                    timer_getbatch_qvv, "GetBatch_Qvv");
+                                    timer_getbatch_qvv, "GetBatch_Qvv",
+                                    nthreads_);
 
     return gotten;
 }

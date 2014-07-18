@@ -162,12 +162,14 @@ private:
      *                     otherwise transposed
      * \param [in] timer  A timer for this functionality
      * \param [in] timername  Some descriptive name for the timer
+     * \param [in] nthreads Number of threads to use for the transformation
      * \return Number of Q stored in outbuffer_
      */
     int GetBatch_transform(double * left, int lncols, 
                            double * right, int rncols,
                            bool istrans,
-                           Timer & timer, const char * timername);          
+                           Timer & timer, const char * timername,
+                           int nthreads);
 
     ///@}
 
