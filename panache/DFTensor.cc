@@ -601,8 +601,8 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
         output::printf("  **TIMER: DFTensor Total %s (%s): %lu (%lu calls)\n",
                        timername,
                        (isinmem_ ? "CORE" : "DISK"),
-                       timer_getbatch_qmo.Microseconds(),
-                       timer_getbatch_qmo.TimesCalled());
+                       timer.Microseconds(),
+                       timer.TimesCalled());
     }
 #endif
 
