@@ -225,6 +225,58 @@ extern "C" {
 
 
     /*!
+     * \brief Retrieves a batch of Qoo
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qoo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo*nmo elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \return The number of batches actually stored in the buffer.
+     */
+    int_t panache_getbatch_qoo(int_t df_handle);
+
+    /*!
+     * \brief Retrieves a batch of Qov
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qov actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo*nmo elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \return The number of batches actually stored in the buffer.
+     */
+    int_t panache_getbatch_qov(int_t df_handle);
+
+    /*!
+     * \brief Retrieves a batch of Qvv
+     *
+     * The batches are stored in the matrix set by panache_setoutputbuffer().
+     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo*nmo elements.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \return The number of batches actually stored in the buffer.
+     */
+    int_t panache_getbatch_qvv(int_t df_handle);
+
+
+    /*!
      * \brief Clean up a particular density-fitting calculation and free memory
      *
      * You should not attempt to use the handle afterwards
