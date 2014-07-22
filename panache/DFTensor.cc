@@ -126,7 +126,13 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
         else
             throw RuntimeError("Unknown ordering!");
 
+        std::cout << "BEFORE REORDERING:\n";
+        for(int i = 0; i < nmo_*nso_; i++)
+            std::cout << Cmo_[i] << "\n";
         ReorderCMat(*ord);
+        std::cout << "AFTER REORDERING:\n";
+        for(int i = 0; i < nmo_*nso_; i++)
+            std::cout << Cmo_[i] << "\n";
         delete ord;
     }    
 }
@@ -744,13 +750,13 @@ void DFTensor::ReorderCMat(reorder::Orderings & order)
         const GaussianShell & s = primary_->shell(i);
         if(s.is_pure())
         {
-            if(order.NeedsSphReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order.GetSphOrder(s.am())));
+            if(order.NeedsInvSphReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetInvSphOrder(s.am())));
         }
         else
         {
-            if(order.NeedsCartReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order.GetCartOrder(s.am())));
+            if(order.NeedsInvCartReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetInvCartOrder(s.am())));
         }
     }
 
@@ -764,7 +770,7 @@ void DFTensor::ReorderCMat(reorder::Orderings & order)
         size_t ntoswap = it.order.size();
 
         for(size_t n = 0; n < ntoswap; n++)
-            pointers[n] = &(Cmo_[n*nmo_]);
+            pointers[n] = &(Cmo_[(it.start+n)*nmo_]);
 
         Reorder(it.order, pointers, sf1);
     }

@@ -37,6 +37,8 @@ private:
     // we keep a vector so we can have a homogeneous container
     array<vector<unsigned short>, MAX_REORDER_AM > cart_orderings_;
     array<vector<unsigned short>, MAX_REORDER_AM > sph_orderings_;
+    array<vector<unsigned short>, MAX_REORDER_AM > inv_cart_orderings_;
+    array<vector<unsigned short>, MAX_REORDER_AM > inv_sph_orderings_;
 
 public:
     void SetCartOrder(int am, vector<unsigned short> order)
@@ -45,13 +47,22 @@ public:
             throw RuntimeError("Cannot set reordering for this AM - set MAX_REORDER_AM to a larger value");
 
         cart_orderings_[am].assign(order.begin(), order.end());
+
+        inv_cart_orderings_[am].resize(order.size());
+        for(size_t i = 0; i < order.size(); i++)
+            inv_cart_orderings_[am][order[i]-1] = i+1;
     }
+
     void SetSphOrder(int am, vector<unsigned short> order)
     {
         if(am > MAX_REORDER_AM)
             throw RuntimeError("Cannot set reordering for this AM - set MAX_REORDER_AM to a larger value");
 
         sph_orderings_[am].assign(order.begin(), order.end());
+
+        inv_sph_orderings_[am].resize(order.size());
+        for(size_t i = 0; i < order.size(); i++)
+            inv_sph_orderings_[am][order[i]-1] = i+1;
     }
 
 
@@ -71,6 +82,22 @@ public:
         return sph_orderings_[am];
     }
 
+    vector<unsigned short> GetInvCartOrder(int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return inv_cart_orderings_[am];
+    }
+
+    vector<unsigned short> GetInvSphOrder(int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return inv_sph_orderings_[am];
+    }
+
 
     bool NeedsCartReordering(int am) const
     {
@@ -88,6 +115,21 @@ public:
         return sph_orderings_[am].size();
     }
 
+    bool NeedsInvCartReordering(int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return inv_cart_orderings_[am].size();
+    }
+
+    bool NeedsInvSphReordering(int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return inv_sph_orderings_[am].size();
+    }
 
 };
 
