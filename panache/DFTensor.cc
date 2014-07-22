@@ -57,7 +57,6 @@ DFTensor::DFTensor(SharedBasisSet primary,
 
     curq_ = 0;
     Cmo_ = nullptr;
-    Cmo_trans_ = false;
     nmo_ = 0;
     nmo2_ = 0;
     nso_ = primary_->nbf();
@@ -101,15 +100,37 @@ int DFTensor::QsoDimensions(int & naux, int & nso2)
     return nso2*naux;
 }
 
-void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
+void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans, 
+                          BSOrder order)
 {
-    Cmo_trans_ = cmo_is_trans;
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
 
     Cmo_ = std::unique_ptr<double[]>(new double[nmo_*nso_]);
-    std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get()); 
+
+    if(cmo_is_trans)
+    {
+        for(int i = 0; i < nso_; i++)
+        for(int j = 0; j < nmo_; j++)
+            Cmo_[i*nmo_+j] = cmo[j*nso_+i];
+    }
+    else
+        std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get());
+
+    if(order != BSOrder::Psi4)
+    {
+        reorder::Orderings * ord;
+
+        if (order == BSOrder::GAMESS)
+            ord = new reorder::GAMESS_Ordering();
+        else
+            throw RuntimeError("Unknown ordering!");
+
+        ReorderCMat(*ord);
+        delete ord;
+    }    
 }
+
 
 void DFTensor::GenQso(bool inmem)
 {
@@ -499,7 +520,6 @@ int DFTensor::GetBatch_Qso(void)
 
 int DFTensor::GetBatch_transform(double * left, int lncols, 
                                  double * right, int rncols,
-                                 bool istrans,
                                  Timer & timer, const char * timername,
                                  int nthreads)
 {
@@ -526,12 +546,8 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
 
         q_single_ = std::unique_ptr<double[]>(new double[nq * nso2_]);
 
-        // If istrans, we do C Q, then (C Q) CT, with the left part stored in qc_
-        // Opposite if !istrans
-        if(istrans)
-            qc_ = std::unique_ptr<double[]>(new double[nq * lncols * nso_]);
-        else
-            qc_ = std::unique_ptr<double[]>(new double[nq * rncols * nso_]);
+        //  QC, then (Ct) QC, with the right part stored in qc_
+        qc_ = std::unique_ptr<double[]>(new double[nq * rncols * nso_]);
     }
 
 
@@ -548,10 +564,7 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
 
             double * my_qc;
 
-            if(istrans)
-                my_qc = qc_.get() + i*nso_*lncols;
-            else    
-                my_qc = qc_.get() + i*nso_*rncols;
+            my_qc = qc_.get() + i*nso_*rncols;
 
             // Apply the matrices
             // Keep in mind that for the first step q_ is a (lower) part of a symmetric matrix
@@ -563,22 +576,11 @@ int DFTensor::GetBatch_transform(double * left, int lncols,
                     my_q_single[j*nso_ + k] = my_q[index++];
 
 
-            if(istrans)
-            {
-                // matrix multiply w/ triangular matrix
-                C_DSYMM('R','L',lncols,nso_,1.0, my_q_single, nso_, left, nso_, 0.0, my_qc, nso_);
+            // matrix multiply w/ symmetric matrix
+            C_DSYMM('L','L',nso_,rncols,1.0, my_q_single, nso_, right, rncols, 0.0, my_qc, rncols);
 
-                // Then regular matrix multiplication
-                C_DGEMM('N','T',lncols, rncols, nso_, 1.0, my_qc, nso_, right, nso_, 0.0, outbuffer_ + i*lncols*rncols, rncols);
-            }
-            else
-            {
-                // matrix multiply w/ symmetric matrix
-                C_DSYMM('L','L',nso_,rncols,1.0, my_q_single, nso_, right, rncols, 0.0, my_qc, rncols);
-
-                // Then regular matrix multiplication
-                C_DGEMM('T','N',lncols, rncols, nso_, 1.0, left, lncols, my_qc, rncols, 0.0, outbuffer_ + i*lncols*rncols, rncols);
-            }
+            // Then regular matrix multiplication
+            C_DGEMM('T','N',lncols, rncols, nso_, 1.0, left, lncols, my_qc, rncols, 0.0, outbuffer_ + i*lncols*rncols, rncols);
         }
     }
 
@@ -621,7 +623,7 @@ int DFTensor::GetBatch_Qmo(void)
 
     int gotten = GetBatch_transform(Cmo_.get(), nmo_,
                                     Cmo_.get(), nmo_,
-                                    Cmo_trans_, timer_getbatch_qmo, "GetBatch_Qmo",
+                                    timer_getbatch_qmo, "GetBatch_Qmo",
                                     nthreads_);
 
     return gotten;
@@ -637,7 +639,7 @@ int DFTensor::GetBatch_Qov(void)
         throw RuntimeError("Error - Set occupied and virtual orbitals first!");
 
     int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
-                                    Cmo_vir_.get(), nvir_, false,
+                                    Cmo_vir_.get(), nvir_,
                                     timer_getbatch_qov, "GetBatch_Qov",
                                     nthreads_);
 
@@ -652,7 +654,7 @@ int DFTensor::GetBatch_Qoo(void)
         throw RuntimeError("Error - Set occupied and virtual orbitals first!");
 
     int gotten = GetBatch_transform(Cmo_occ_.get(), nocc_,
-                                    Cmo_occ_.get(), nocc_, false,
+                                    Cmo_occ_.get(), nocc_,
                                     timer_getbatch_qoo, "GetBatch_Qoo",
                                     nthreads_);
 
@@ -667,12 +669,107 @@ int DFTensor::GetBatch_Qvv(void)
         throw RuntimeError("Error - Set occupied and virtual orbitals first!");
 
     int gotten = GetBatch_transform(Cmo_vir_.get(), nvir_,
-                                    Cmo_vir_.get(), nvir_, false,
+                                    Cmo_vir_.get(), nvir_,
                                     timer_getbatch_qvv, "GetBatch_Qvv",
                                     nthreads_);
 
     return gotten;
 }
+
+
+// note - passing by value for the vector
+static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
+                    reorder::MemorySwapper & sf)
+{
+    long int size = order.size();
+
+    // original order is 1 2 3 4 5 6....
+    std::vector<unsigned short> currentorder(size);
+
+    for(long int i = 0; i < size; i++)
+        currentorder[i] = i+1;
+
+    for(long int i = 0; i < size; i++)
+    {
+        // find the index in the current order
+        long int cindex = 0;
+        bool found = false;
+
+        for(int j = 0; j < size; j++)
+        {
+            if(currentorder[j] == order[i])
+            {
+                found = true;
+                cindex = j;
+                break;
+            }
+        }
+        if(!found)
+            throw RuntimeError("Error in reordering - index not found?");
+
+
+        // we shouldn't swap anything that was previously put in place...
+        if(cindex < i)
+            throw RuntimeError("Error in reordering - going to swap something I shouldn't");
+
+        //swap
+        if(cindex != i)
+        {
+            sf.swap(pointers[i], pointers[cindex]);
+            std::swap(currentorder[i], currentorder[cindex]);
+        }
+    }
+
+    // double check
+    for(long int i = 0; i < size; i++)
+    {
+        if(currentorder[i] != order[i])
+            throw RuntimeError("Reordering failed!");
+    }
+}
+
+void DFTensor::ReorderCMat(reorder::Orderings & order)
+{
+    using namespace reorder;
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+
+    TotalMemorySwapper sf1(nmo_);  // swaps rows
+
+    std::vector<PointerMap> vpm;
+
+    //go through what would need to be changed in the primary basis
+    for(int i = 0; i < primary_->nshell(); i++)
+    {
+        const GaussianShell & s = primary_->shell(i);
+        if(s.is_pure())
+        {
+            if(order.NeedsSphReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetSphOrder(s.am())));
+        }
+        else
+        {
+            if(order.NeedsCartReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetCartOrder(s.am())));
+        }
+    }
+
+
+    std::vector<double *> pointers(primary_->max_function_per_shell());
+
+
+    // Swap rows
+    for(auto & it : vpm)
+    {
+        size_t ntoswap = it.order.size();
+
+        for(size_t n = 0; n < ntoswap; n++)
+            pointers[n] = &(Cmo_[n*nmo_]);
+
+        Reorder(it.order, pointers, sf1);
+    }
+}
+
 /*
 int DFTensor::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
 {
@@ -788,60 +885,9 @@ int DFTensor::CalculateERIMulti(double * qso, int qsosize,
 */
 
 
-// note - passing by value for the vector
+
+
 /*
-static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
-                    reorder::MemorySwapper & sf)
-{
-    long int size = order.size();
-
-    // original order is 1 2 3 4 5 6....
-    std::vector<unsigned short> currentorder(size);
-
-    for(long int i = 0; i < size; i++)
-        currentorder[i] = i+1;
-
-    for(long int i = 0; i < size; i++)
-    {
-        // find the index in the current order
-        long int cindex = 0;
-        bool found = false;
-
-        for(int j = 0; j < size; j++)
-        {
-            if(currentorder[j] == order[i])
-            {
-                found = true;
-                cindex = j;
-                break;
-            }
-        }
-        if(!found)
-            throw RuntimeError("Error in reordering - index not found?");
-
-
-        // we shouldn't swap anything that was previously put in place...
-        if(cindex < i)
-            throw RuntimeError("Error in reordering - going to swap something I shouldn't");
-
-        //swap
-        if(cindex != i)
-        {
-            sf.swap(pointers[i], pointers[cindex]);
-            std::swap(currentorder[i], currentorder[cindex]);
-        }
-    }
-
-    // double check
-    for(long int i = 0; i < size; i++)
-    {
-        if(currentorder[i] != order[i])
-            throw RuntimeError("Reordering failed!");
-    }
-}
-
-
-
 void DFTensor::ReorderQ(double * qso, int qsosize, const reorder::Orderings & order)
 {
     using namespace reorder;
@@ -971,32 +1017,15 @@ void DFTensor::SplitCMat(void)
     std::fill(Cmo_vir_.get(), Cmo_vir_.get() + nso_*nvir_, 0.0);
 
     // note - Cmo_occ_ and Cmo_vir_ will always be in column major order!
-    if(Cmo_trans_)
+    // Cmo_ is nso * nmo
+    //! \todo BLAS call?
+    for(int i = 0; i < nso_; i++)
     {
-        // Cmo_ is nmo * nso
-        //! \todo BLAS call?
-        for(int i = 0; i < nso_; i++)
-        {
-            for(int j = 0; j < nocc_; j++)
-                Cmo_occ_[i*nocc_ + j] = Cmo_[j*nso_+i];
-            for(int j = 0; j < nvir_; j++)
-                Cmo_vir_[i*nvir_ + j] = Cmo_[(j+nocc_)*nso_+i];
-        }
+        for(int j = 0; j < nocc_; j++)
+            Cmo_occ_[i*nocc_ + j] = Cmo_[i*nmo_+j];
+        for(int j = 0; j < nvir_; j++)
+            Cmo_vir_[i*nvir_ + j] = Cmo_[i*nmo_+(j+nocc_)];
     }
-    else
-    {
-        // Cmo_ is nso * nmo
-        //! \todo BLAS call?
-        for(int i = 0; i < nso_; i++)
-        {
-            for(int j = 0; j < nocc_; j++)
-                Cmo_occ_[i*nocc_ + j] = Cmo_[i*nmo_+j];
-            for(int j = 0; j < nvir_; j++)
-                Cmo_vir_[i*nvir_ + j] = Cmo_[i*nmo_+(j+nocc_)];
-        }
-                
-    }
-
 }
 
 void DFTensor::SetNOcc(int nocc)

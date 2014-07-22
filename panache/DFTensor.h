@@ -62,7 +62,6 @@ private:
     std::unique_ptr<double[]> Cmo_;  //!< C matrix (nso x nmo)
     std::unique_ptr<double[]> Cmo_occ_;  //!< C matrix (occupied part, nso*nocc)
     std::unique_ptr<double[]> Cmo_vir_;  //!< C matrix (virtual part, nso*nvir)
-    bool Cmo_trans_; //!< Whether the matrix is the transpose or not (think calling from FORTRAN)
 
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
@@ -78,6 +77,12 @@ private:
      */
     void SplitCMat(void);
 
+    /*!
+     * \brief Reorders the whole C matrix into the specified ordering
+     * 
+     * \param [in] order The order to use
+     */
+    void ReorderCMat(reorder::Orderings & order);
     ///@}
 
 
@@ -158,8 +163,6 @@ private:
      * \param [in] lncols Number of columns in \p left
      * \param [in] right  Right matrix
      * \param [in] rncols Number of columns in \p right
-     * \param [in] istrans Set to true if both \p left and \p right are in column-major order or are
-     *                     otherwise transposed
      * \param [in] timer  A timer for this functionality
      * \param [in] timername  Some descriptive name for the timer
      * \param [in] nthreads Number of threads to use for the transformation
@@ -167,7 +170,6 @@ private:
      */
     int GetBatch_transform(double * left, int lncols, 
                            double * right, int rncols,
-                           bool istrans,
                            Timer & timer, const char * timername,
                            int nthreads);
 
@@ -201,6 +203,13 @@ private:
 
 
 public:
+    enum class BSOrder
+    {
+        Psi4,
+        GAMESS
+    };
+
+
     DFTensor & operator=(const DFTensor & other) = delete;
     DFTensor(const DFTensor & other) = delete;
 
@@ -265,8 +274,9 @@ public:
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in column-major order.
+     * \param [in] order Ordering of the basis functions
      */
-    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans);
+    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans, BSOrder order = BSOrder::Psi4);
 
 
 
