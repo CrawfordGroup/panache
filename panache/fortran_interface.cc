@@ -330,7 +330,7 @@ extern "C" {
         strncpy(cfname, auxfilename, *auxfilenamelen);
         strncpy(mfname, matfilename, *matfilenamelen);
         cfname[*auxfilenamelen] = '\0';
-        cfname[*matfilenamelen] = '\0';
+        mfname[*matfilenamelen] = '\0';
 
         *dfhandle = panache_init2(*ncenters, atoms, *normalized,
                                   primary_nshellspercenter, primary_shells,
