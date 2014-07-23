@@ -439,7 +439,7 @@ extern "C" {
      * about memory. 
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
+     * \param [in] inmem If nonzero, store the Qso matrix in memory
      */
     void panachef_genqso_(int_t * df_handle, int_t * inmem)
     {
