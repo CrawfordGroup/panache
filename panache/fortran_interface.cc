@@ -379,7 +379,7 @@ extern "C" {
      */
     void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
     {
-        if(cmo_is_trans)
+        if(*cmo_is_trans)
           panache_setcmatrix(*df_handle, cmo, *nmo, 0);
         else
           panache_setcmatrix(*df_handle, cmo, *nmo, 1);
@@ -405,7 +405,7 @@ extern "C" {
      */
     void panachef_setcmatrix_gamess_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
     {
-        if(cmo_is_trans)
+        if(*cmo_is_trans)
           panache_setcmatrix_gamess(*df_handle, cmo, *nmo, 0);
         else
           panache_setcmatrix_gamess(*df_handle, cmo, *nmo, 1);
