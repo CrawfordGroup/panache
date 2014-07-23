@@ -114,6 +114,15 @@ extern "C" {
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
     }
 
+    void panache_setcmatrix_gamess(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans)
+    {
+        // matsize is checked in here
+        if(dftensors_.count(df_handle) == 0)
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+
+        dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans, DFTensor::BSOrder::GAMESS);
+    }
+
     void panache_setoutputbuffer(int_t df_handle, double * buffer, int_t bufsize)
     {
         if(dftensors_.count(df_handle) == 0)

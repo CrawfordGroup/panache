@@ -109,7 +109,7 @@ extern "C" {
 
 
     /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, etc 
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
      * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
@@ -124,6 +124,24 @@ extern "C" {
      *                          is in column-major order.
      */
     void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans);
+
+
+    /*!
+     * \brief Sets the C matrix (so-ao matrix) in GAMESS order
+     *
+     * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
+     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
+     *
+     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+     * changed after calling this function.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
+     * \param [in] nmo Number of MOs in this C matrix
+     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
+     *                          is in column-major order.
+     */
+    void panache_setcmatrix_gamess(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans);
 
 
 
