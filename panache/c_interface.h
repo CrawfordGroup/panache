@@ -337,6 +337,19 @@ extern "C" {
 
 
 
+    /*!
+     * \brief Sets the number of occupied and virtual orbitals.
+     *
+     * Number of virtual orbitals is taken to be the remainder after the occupied.
+     * Used by Qov, etc.
+     *
+     * \note You must set the C Matrix first before calling (see SetCMatrix())
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] nocc Number of occupied orbitals
+     */
+     void panache_setnocc(int_t df_handle, int_t nocc);
+
     /*
         int_t panache_CalculateERI(int_t df_handle, double * qso, int_t qsosize, int_t shell1, int_t shell2, int_t shell3, int_t shell4, double * outbuffer, int_t buffersize);
 
