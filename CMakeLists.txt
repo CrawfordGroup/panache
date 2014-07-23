@@ -115,6 +115,7 @@ set(PANACHE_LAPACK64 FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. 
 
 if(PANACHE_LAPACK64)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_LAPACK64")
+  list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_LAPACK64") 
   message(STATUS "Using 64-bit lapack interface")
 else(PANACHE_LAPACK64)
   message(STATUS "Using 32-bit lapack interface")
@@ -141,6 +142,7 @@ set(PANACHE_INTERFACE64 FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
 
 if(PANACHE_INTERFACE64)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_INTERFACE64")
+  list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_INTERFACE64")
   message(STATUS "Building 64-bit C/Fortran interface")
 else(PANACHE_INTERFACE64)
   message(STATUS "Building 32-bit C/Fortran interface")
