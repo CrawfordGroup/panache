@@ -133,7 +133,7 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        //delete ord;
+        delete ord;
     }    
 }
 
