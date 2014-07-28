@@ -126,13 +126,13 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
         else
             throw RuntimeError("Unknown ordering!");
 
-        std::cout << "BEFORE REORDERING:\n";
-        for(int i = 0; i < nmo_*nso_; i++)
-            std::cout << Cmo_[i] << "\n";
+        //std::cout << "BEFORE REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
         ReorderCMat(*ord);
-        std::cout << "AFTER REORDERING:\n";
-        for(int i = 0; i < nmo_*nso_; i++)
-            std::cout << Cmo_[i] << "\n";
+        //std::cout << "AFTER REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
         delete ord;
     }    
 }
