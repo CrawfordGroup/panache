@@ -191,6 +191,19 @@ void BasisSet::print_detail(void) const
 {
     print_summary();
 
+    output::printf("\n  - Molecule:\n");
+    output::printf("            Cartesian coordinates, in bohr\n");
+    output::printf("------------------------------------------\n");
+    for(int A = 0; A < molecule_->natom(); A++)
+    {
+        output::printf(" %3d %3s %10.5f %10.5f %10.5f\n", A+1,
+                                                        molecule_->symbol(A).c_str(),
+                                                        molecule_->x(A),
+                                                        molecule_->y(A),
+                                                        molecule_->z(A));
+    }
+
+    output::printf("\n\n");
     output::printf("  ==> AO Basis Functions <==\n");
     output::printf("\n");
     if (has_puream())

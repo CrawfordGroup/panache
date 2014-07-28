@@ -16,7 +16,6 @@
 namespace panache
 {
 
-class Molecule;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 

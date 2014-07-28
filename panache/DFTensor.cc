@@ -36,7 +36,7 @@ DFTensor::DFTensor(SharedBasisSet primary,
                    int nthreads)
     : primary_(primary), auxiliary_(auxiliary), filename_(filename), nthreads_(nthreads) 
 {
-    output::printf("  ==> DF Tensor (by Rob Parrish) <==\n\n");
+    output::printf("  ==> LibPANACHE DF Tensor <==\n\n");
 
     output::printf(" => Primary Basis Set <= \n\n");
     primary_->print_detail();

@@ -24,7 +24,7 @@ extern "C" {
      *
      * \param [in] ncenters    The number of basis function centers
      * \param [in] xyz         Coordinates of the basis function centers. In order:
-     *                         (x1, x2, ..., xN, y1, y2, ..., yN, z1, z2, ..., zN)
+     *                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
      * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
      * \param [in] symbollen   Length of each symbol in \p symbols
      * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
@@ -101,9 +101,9 @@ extern "C" {
 
             atoms[i].symbol = csymbols[i]; 
 
-            atoms[i].center[0] = xyz[i];
-            atoms[i].center[1] = xyz[i+(*ncenters)];
-            atoms[i].center[2] = xyz[i+2*(*ncenters)];
+            atoms[i].center[0] = xyz[i*(*ncenters)];
+            atoms[i].center[1] = xyz[i*(*ncenters)+1];
+            atoms[i].center[2] = xyz[i*(*ncenters)+2];
         }
 
         int_t p_nshell = 0;
@@ -187,7 +187,7 @@ extern "C" {
      *
      * \param [in] ncenters    The number of basis function centers
      * \param [in] xyz         Coordinates of the basis function centers. In order:
-     *                         (x1, x2, ..., xN, y1, y2, ..., yN, z1, z2, ..., zN)
+     *                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
      * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
      * \param [in] symbollen   Length of each symbol in \p symbols
      * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
@@ -275,9 +275,9 @@ extern "C" {
 
             atoms[i].symbol = csymbols[i]; 
 
-            atoms[i].center[0] = xyz[i];
-            atoms[i].center[1] = xyz[i+(*ncenters)];
-            atoms[i].center[2] = xyz[i+2*(*ncenters)];
+            atoms[i].center[0] = xyz[i*(*ncenters)];
+            atoms[i].center[1] = xyz[i*(*ncenters)+1];
+            atoms[i].center[2] = xyz[i*(*ncenters)+2];
             //std::cout << "Adding atom " << i << "(" << atoms[i].symbol << ") with center:\n";
             //std::cout << atoms[i].center[0] << "  " << atoms[i].center[1] << "  " << atoms[i].center[2] << "\n";
         }
