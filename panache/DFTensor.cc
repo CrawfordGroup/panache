@@ -355,6 +355,8 @@ void DFTensor::GenQso(bool inmem)
     timer_getbatch_qso.Reset();
     timer_getbatch_qmo.Reset();
     timer_getbatch_qov.Reset();
+    timer_getbatch_qoo.Reset();
+    timer_getbatch_qvv.Reset();
 #endif
 
 }
