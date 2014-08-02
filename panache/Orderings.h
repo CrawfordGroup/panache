@@ -82,6 +82,14 @@ public:
         return sph_orderings_[am];
     }
 
+    vector<unsigned short> GetOrder(bool ispure, int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return ispure ? sph_orderings_[am] : cart_orderings_[am];
+    }
+
     vector<unsigned short> GetInvCartOrder(int am) const
     {
         if(am > MAX_REORDER_AM)
@@ -96,6 +104,14 @@ public:
             throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
 
         return inv_sph_orderings_[am];
+    }
+
+    vector<unsigned short> GetInvOrder(bool ispure, int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return ispure ? inv_sph_orderings_[am] : inv_cart_orderings_[am];
     }
 
 
@@ -115,6 +131,14 @@ public:
         return sph_orderings_[am].size();
     }
 
+    bool NeedsReordering(bool ispure, int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return ispure ? sph_orderings_[am].size() : cart_orderings_[am].size();
+    }
+
     bool NeedsInvCartReordering(int am) const
     {
         if(am > MAX_REORDER_AM)
@@ -129,6 +153,14 @@ public:
             throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
 
         return inv_sph_orderings_[am].size();
+    }
+
+    bool NeedsInvReordering(bool ispure, int am) const
+    {
+        if(am > MAX_REORDER_AM)
+            throw RuntimeError("Cannot get reordering for this AM - set MAX_REORDER_AM to a larger value");
+
+        return ispure ? inv_sph_orderings_[am].size() : inv_cart_orderings_[am].size();
     }
 
 };
