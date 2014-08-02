@@ -10,8 +10,6 @@
 
 #include "panache/Timing.h"
 
-#include "Exception.h"
-
 #include <future>
 
 
@@ -105,6 +103,7 @@ private:
         int ndim2_;
         int ndim12_;
         bool packed_;
+        bool byq_;
         QStorage storetype_;
 
 
@@ -116,79 +115,25 @@ private:
         virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
         virtual void Clear_() = 0;
 
-        int naux(void) const { return naux_; }
-        int ndim1(void) const { return ndim1_; }
-        int ndim2(void) const { return ndim2_; }
-        int ndim12(void) const { return ndim12_; }
-        int storesize(void) const { return ndim12_*naux_; }
-        int packed(void) const { return packed_; }
-        int calcindex(int i, int j)
-        {
-            if(!packed_)
-                return (i*ndim2_+j);
-            else if(i >= j)
-                return ((i*(i+1))>>1) + j;
-            else
-                return ((j*(j+1))>>1) + i;
-        }
+        int naux(void) const;
+        int ndim1(void) const;
+        int ndim2(void) const;
+        int ndim12(void) const;
+        int storesize(void) const;
+        int packed(void) const;
+        int byq(void) const;
+        int calcindex(int i, int j) const;
 
     public:
-        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, QStorage storetype)
-        {
-            naux_ = naux;
-            ndim1_ = ndim1;
-            ndim2_ = ndim2;
-            storetype_ = storetype;
-            packed_ = packed;
-
-            if(packed && ndim1 != ndim2)
-                throw RuntimeError("non square packed matrices?");
-
-            ndim12_ = (packed ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
-        }
-
-        virtual ~StoredQTensor()
-        {
-        }
-
-        QStorage StoreType(void) const
-        {
-            return storetype_;
-        }
-
-        virtual void Write(double * data, int i, int j)
-        {
-            Write_(data, calcindex(i,j));
-        }
-
-        virtual void Read(double * data, int i, int j)
-        {
-            Read_(data, calcindex(i,j));
-        }
-
-        virtual int ReadByQ(double * data, int nq, int qstart)
-        {
-            if(qstart + nq >= naux_)
-                nq = naux_-qstart;
-
-            ReadByQ_(data, nq, qstart);
-            return nq;
-        }
-
-        virtual void Reset(void)
-        {
-            Reset_();
-        }
-
-        virtual void Clear(void)
-        {
-            Clear_();
-        }
-
-        virtual void Init(void)
-        {
-            Init_();
-        }
+        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
+        virtual ~StoredQTensor();
+        QStorage StoreType(void) const;
+        void Write(double * data, int i, int j);
+        void Read(double * data, int i, int j);
+        int ReadByQ(double * data, int nq, int qstart);
+        void Reset(void);
+        void Clear(void);
+        void Init(void);
 
     };
 
@@ -266,64 +211,20 @@ private:
         std::unique_ptr<double[]> data_;
 
     protected:
-        virtual void Reset_(void)
-        {
-            // nothing needed
-        }
-
-        virtual void Write_(double * data, int ij)
-        {
-            double * start = data_.get() + ij * naux();
-            std::copy(data, data+naux(), start);
-        }
-
-        virtual void Read_(double * data, int ij)
-        {
-            double * start = data_.get() + ij * naux();
-            std::copy(start, start+naux(), data);
-        }
-
-        virtual void ReadByQ_(double * data, int nq, int qstart)
-        {
-            // ugly. Can't really use std::copy
-            if(packed())
-            {
-                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                for(int n = 0; n < ndim2(); n++)
-                    data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                        = data[q0*ndim1()*ndim2() + n*ndim1() + m]
-                        = data_[calcindex(m,n)*naux() + q];
-            }
-            else
-            {
-                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                for(int n = 0; n < ndim2(); n++)
-                    data[q0 * ndim12() + calcindex(m,n)]
-                        = data_[calcindex(m,n)*naux() + q];
-            }
-        }
-
-        virtual void Clear_(void)
-        {
-            data_.reset();
-        }
-
-        virtual void Init_(void)
-        {
-            if(!data_)
-                data_ = std::unique_ptr<double []>(new double[storesize()]);
-        }
+        virtual void Reset_(void);
+        virtual void Write_(double * data, int ij);
+        virtual void Read_(double * data, int ij);
+        virtual void ReadByQ_(double * data, int nq, int qstart);
+        virtual void Clear_(void);
+        virtual void Init_(void);
 
     public:
-        MemoryQTensor(int naux, int ndim1, int ndim2, bool packed)
-            : StoredQTensor(naux, ndim1, ndim2, packed, QStorage::INMEM)
-        {
-        }
+        MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq);
 
     };
 
+
+    StoredQTensor* StoredQTensorFactory(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
     std::unique_ptr<StoredQTensor> qso_;
     std::unique_ptr<StoredQTensor> qmo_;
     std::unique_ptr<StoredQTensor> qoo_;

@@ -96,7 +96,7 @@ void DFTensor2::GenQso(QStorage storetype)
 #endif
 
     //! \todo Maybe a factory for StoredQTensor based on storetype?
-    qso_ = std::unique_ptr<StoredQTensor>(new MemoryQTensor(naux_, nso_, nso_, true));
+    qso_ = std::unique_ptr<StoredQTensor>(StoredQTensorFactory(naux_, nso_, nso_, true, true, storetype));
     qso_->Init();
 
     int maxpershell = primary_->max_function_per_shell();

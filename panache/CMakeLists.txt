@@ -6,6 +6,7 @@ add_library(panache
             CartesianIter.cc
             DFTensor.cc
             DFTensor2.cc
+            DFTensor2_StoredQTensor.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc
