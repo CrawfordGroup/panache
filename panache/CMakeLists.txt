@@ -5,6 +5,7 @@ add_library(panache
             BasisSetParser.cc
             CartesianIter.cc
             DFTensor.cc
+            DFTensor2.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc

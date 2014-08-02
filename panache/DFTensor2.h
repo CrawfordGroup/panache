@@ -10,6 +10,8 @@
 
 #include "panache/Timing.h"
 
+#include "Exception.h"
+
 #include <future>
 
 
@@ -64,6 +66,7 @@ private:
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
     int nocc_; //!< Number of occupied orbitals
+    int nfroz_; //!< Number of frozen orbitals
     int nvir_; //!< Number of virtual orbitals
 
     /*!
@@ -85,7 +88,7 @@ private:
 
 
 
-    class enum QStorage
+    enum class QStorage
     {
         INMEM,
         ONDISK,
@@ -94,19 +97,135 @@ private:
 
 
 
-    struct StoredQTensor
+    class StoredQTensor
     {
+    private:
+        int naux_;
         int ndim1_;
         int ndim2_;
+        int ndim12_;
+        bool packed_;
         QStorage storetype_;
 
-        // for ONDISK
+
+    protected:
+        virtual void Init_(void) = 0;
+        virtual void Reset_(void) = 0;
+        virtual void Write_(double * data, int ij) = 0;
+        virtual void Read_(double * data, int ij) = 0;
+        virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
+        virtual void Clear_() = 0;
+
+        int naux(void) const { return naux_; }
+        int ndim1(void) const { return ndim1_; }
+        int ndim2(void) const { return ndim2_; }
+        int ndim12(void) const { return ndim12_; }
+        int storesize(void) const { return ndim12_*naux_; }
+        int packed(void) const { return packed_; }
+        int calcindex(int i, int j)
+        {
+            if(!packed_)
+                return (i*ndim2_+j);
+            else if(i >= j)
+                return ((i*(i+1))>>1) + j;
+            else
+                return ((j*(j+1))>>1) + i;
+        }
+
+    public:
+        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, QStorage storetype)
+        {
+            naux_ = naux;
+            ndim1_ = ndim1;
+            ndim2_ = ndim2;
+            storetype_ = storetype;
+            packed_ = packed;
+
+            if(packed && ndim1 != ndim2)
+                throw RuntimeError("non square packed matrices?");
+
+            ndim12_ = (packed ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
+        }
+
+        virtual ~StoredQTensor()
+        {
+        }
+
+        QStorage StoreType(void) const
+        {
+            return storetype_;
+        }
+
+        virtual void Write(double * data, int i, int j)
+        {
+            Write_(data, calcindex(i,j));
+        }
+
+        virtual void Read(double * data, int i, int j)
+        {
+            Read_(data, calcindex(i,j));
+        }
+
+        virtual int ReadByQ(double * data, int nq, int qstart)
+        {
+            if(qstart + nq >= naux_)
+                nq = naux_-qstart;
+
+            ReadByQ_(data, nq, qstart);
+            return nq;
+        }
+
+        virtual void Reset(void)
+        {
+            Reset_();
+        }
+
+        virtual void Clear(void)
+        {
+            Clear_();
+        }
+
+        virtual void Init(void)
+        {
+            Init_();
+        }
+
+    };
+
+
+/*
+    class DiskQTensor : public StoredQTensor
+    {
+    private:
         string filename_;
         std::unique_ptr<std::fstream> file_;
-        int curij_;
 
-        // for INMEM
-        unique_ptr<double *> data_;
+    protected:
+        virtual void Reset_(void)
+        {
+            if(file_)
+            {
+                file_->seekg(0);
+                file_->seekp(0);
+            }
+        }
+
+        virtual void Write_(double * data, size_t nq, int ij)
+        {
+               // \todo write to file 
+        }
+
+        virtual void Read_(double * data, size_t nq, int ij)
+        {
+               // \todo write to file 
+        }
+
+    public:
+        DiskQTensor(int naux, int ndim1, int ndim2, bool packed, const string & filename)
+            : StoredQTensor(naux, ndim1, ndim2, packed, QStorage::ONDISK)
+        {
+            filename_ = filename;
+        }
 
         void OpenFile(void)
         {
@@ -137,30 +256,79 @@ private:
         }
 
 
-        void ResetFile(void)
+    };
+*/
+
+    
+    class MemoryQTensor : public StoredQTensor
+    {
+    private:
+        std::unique_ptr<double[]> data_;
+
+    protected:
+        virtual void Reset_(void)
         {
-            if(file_)
+            // nothing needed
+        }
+
+        virtual void Write_(double * data, int ij)
+        {
+            double * start = data_.get() + ij * naux();
+            std::copy(data, data+naux(), start);
+        }
+
+        virtual void Read_(double * data, int ij)
+        {
+            double * start = data_.get() + ij * naux();
+            std::copy(start, start+naux(), data);
+        }
+
+        virtual void ReadByQ_(double * data, int nq, int qstart)
+        {
+            // ugly. Can't really use std::copy
+            if(packed())
             {
-                file_->seekg(0);
-                file_->seekp(0);
-                curij_ = 0;
+                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+                for(int m = 0; m < ndim1(); m++)
+                for(int n = 0; n < ndim2(); n++)
+                    data[q0*ndim1()*ndim2() + m*ndim2() + n]
+                        = data[q0*ndim1()*ndim2() + n*ndim1() + m]
+                        = data_[calcindex(m,n)*naux() + q];
+            }
+            else
+            {
+                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+                for(int m = 0; m < ndim1(); m++)
+                for(int n = 0; n < ndim2(); n++)
+                    data[q0 * ndim12() + calcindex(m,n)]
+                        = data_[calcindex(m,n)*naux() + q];
             }
         }
 
-        void Reset(void)
+        virtual void Clear_(void)
         {
-            curij_ = 0;
-            if(storetype_ == QStorage::ONDISK)
-                ResetFile();
+            data_.reset();
         }
+
+        virtual void Init_(void)
+        {
+            if(!data_)
+                data_ = std::unique_ptr<double []>(new double[storesize()]);
+        }
+
+    public:
+        MemoryQTensor(int naux, int ndim1, int ndim2, bool packed)
+            : StoredQTensor(naux, ndim1, ndim2, packed, QStorage::INMEM)
+        {
+        }
+
     };
 
-
-    StoredQTensor qso_;
-    StoredQTensor qmo_;
-    StoredQTensor qoo_;
-    StoredQTensor qsv_;
-    StoredQTensor qvv_;
+    std::unique_ptr<StoredQTensor> qso_;
+    std::unique_ptr<StoredQTensor> qmo_;
+    std::unique_ptr<StoredQTensor> qoo_;
+    std::unique_ptr<StoredQTensor> qsv_;
+    std::unique_ptr<StoredQTensor> qvv_;
 
     ///@}
 
@@ -175,64 +343,22 @@ private:
     ///@{
 
     std::unique_ptr<double[]> qc_;  //!< Holds C(T) Q or QC intermediate
-    std::unique_ptr<double[]> q_;   //!< Holds a batch of Q (packed storage)
+    std::unique_ptr<double[]> q_;   //!< Holds a batch of Qso (packed storage)
 
     ///@}
 
-
-
-    /*! \name Batch retreival and processing */
-    ///@{
-
-    int curq_;  //!< next Q to be (batch) read
-
-
-    /*!
-     * \brief Retrieves batches and stores then in DFTensor2::q_
-     *
-     * The number of Q returned may be less than \p ntoget (ie there are no more
-     * Q left)
-     *
-     * \param [in] ntoget Number of Q in the batch (max to get)
-     * \return Actual number of Q stored in DFTensor2::q_
-     */
-    int GetBatch_Base(int ntoget);
-
-    /*!
-     * \brief Obtains batches with a tranformation applied
-     *
-     * Transformation is the standard \f$ U_l^\dagger Q U_r \f$
-     * where \f$ U_l \f$ and \f$ U_r \f$ are left and right transformation
-     * matrices.
-     *
-     * Results are stored in outbuffer_
-     *
-     * \param [in] left   Left matrix
-     * \param [in] lncols Number of columns in \p left
-     * \param [in] right  Right matrix
-     * \param [in] rncols Number of columns in \p right
-     * \param [in] timer  A timer for this functionality
-     * \param [in] timername  Some descriptive name for the timer
-     * \param [in] nthreads Number of threads to use for the transformation
-     * \return Number of Q stored in outbuffer_
-     */
-    int GetBatch_transform(double * left, int lncols, 
-                           double * right, int rncols,
-                           Timer & timer, const char * timername,
-                           int nthreads);
-
-    ///@}
 
 
     /*! \name Timing */
     ///@{
     Timer timer_genqso;        //!< Total time spent in GenQso()
+    /*
     Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
     Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
     Timer timer_getbatch_qoo;  //!< Total time spent in GetBatch_Qoo()
     Timer timer_getbatch_qvv;  //!< Total time spent in GetBatch_Qvv()
     Timer timer_getbatch_qov;  //!< Total time spent in GetBatch_Qov()
-
+    */
     ///@}
 
 
@@ -242,12 +368,19 @@ private:
 
     int nthreads_;  //!< Number of threads to use
 
-    std::unique_ptr<double[]> q2_;  //!< Buffer for prefetching from disk
-    std::future<int> fill_future_;  //!< Asynchronous future object
-
     ///@}
 
 
+
+    /*!
+     * \brief Generates the basic Qso matrix
+     *
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory.
+     *
+     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
+     */
+    void GenQso(QStorage storetype);
 
 
 public:
@@ -266,12 +399,12 @@ public:
      *
      * \param [in] primary The primary basis set
      * \param [in] auxiliary The auxiliary (DF) basis set
-     * \param [in] filename Full path to a file for disk storage (may not be used)
+     * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor2(SharedBasisSet primary,
              SharedBasisSet auxiliary,
-             const std::string & filename,
+             const std::string & directory,
              int nthreads);
 
     /*!
@@ -297,15 +430,6 @@ public:
 
 
 
-    /*!
-     * \brief Generates the basic Qso matrix
-     *
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory.
-     *
-     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
-     */
-    void GenQso(bool inmem);
 
 
 
@@ -337,130 +461,9 @@ public:
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
      * \param [in] nocc Number of occupied orbitals
+     * \param [in] nfroz Number of frozen orbitals
      */
-    void SetNOcc(int nocc);
-
-
-
-
-    /*!
-     * \brief Sets the buffer used for storing batches of Qso, Qmo, Qov, Qoo, Qvv
-     *
-     * Batches are read in multiples of:
-     *
-     * - nso2 (GetBatch_Qso(), see QsoDimensions()),
-     * - nmo*nmo (GetBatch_Qmo())
-     * - nocc*nvir (GetBatch_Qov())
-     * - nocc*nocc (GetBatch_Qoo())
-     * - nvir*nvir (GetBatch_Qvv())
-     *
-     * How many can fit in the buffer is determined automatically
-     * from the matsize parameter. Any 'left over' buffer space is not used.
-     *
-     * \param [in] buf A pointer to memory for a buffer (of \p bufsize size)
-     * \param [in] size Number of elements in \p buffer (not number of bytes)
-     */
-    void SetOutputBuffer(double * buf, long int size);
-
-
-
-
-
-    /*!
-     * \brief Retrieves a batch of Qso
-     *
-     * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nso2 elements (see QsoDimensions()).
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetBatch_Qso(void);
-
-
-
-
-    /*!
-     * \brief Retrieves a batch of Qmo
-     *
-     * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nmo*nmo elements.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetBatch_Qmo(void);
-
-
-
-    /*!
-     * \brief Retrieves a batch of Qov (occupied-virtual)
-     *
-     * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qov actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nocc*nvir elements.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetBatch_Qov(void);
-
-
-    /*!
-     * \brief Retrieves a batch of Qoo (occupied-occupied)
-     *
-     * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qov actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nocc*nocc elements.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetBatch_Qoo(void);
-
-
-    /*!
-     * \brief Retrieves a batch of Qvv (occupied-virtual)
-     *
-     * The batches are stored in the matrix set by SetOutputBuffer().
-     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nvir*nvir elements.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetBatch_Qvv(void);
-
-
-
-    /*!
-     * \brief Resets information about batches
-     *
-     * Once called, the various GetBatch functions will start from the beginning of Qso
-     */
-    void ResetBatches(void);
+    void SetNOcc(int nocc, int nfroz = 0);
 
 
 
@@ -475,19 +478,9 @@ public:
      */
     int SetNThread(int nthread);
 
-/*
-    int CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize);
 
-    int CalculateERIMulti(double * qso, int qsosize,
-                          int shell1, int nshell1,
-                          int shell2, int nshell2,
-                          int shell3, int nshell3,
-                          int shell4, int nshell4,
-                          double * outbuffer, int buffersize);
-
-    void ReorderQ(double * qso, int qsosize, const reorder::Orderings & order);
-    void ReorderQ_GAMESS(double * qso, int qsosize);
-*/
+    void GenQTensors(int qflags);
+    int GetBatch_Qso(double * outbuf, int bufsize, int qstart);
 };
 
 }
