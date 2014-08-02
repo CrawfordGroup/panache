@@ -119,18 +119,21 @@ void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
 
     if(order != BSOrder::Psi4)
     {
+        reorder::Orderings * ord;
+
         if (order == BSOrder::GAMESS)
-            order_ = std::unique_ptr<reorder::Orderings>(new reorder::GAMESS_Ordering);
+            ord = new reorder::GAMESS_Ordering();
         else
             throw RuntimeError("Unknown ordering!");
 
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        //ReorderCMat();
+        ReorderCMat(*ord);
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
+        delete ord;
     }    
 }
 
@@ -188,12 +191,6 @@ void DFTensor2::GenQso(bool inmem)
     #endif
     for (int M = 0; M < primary_->nshell(); M++)
     {
-        vector<unsigned short> morder;
-        bool bmorder = order_ && 
-                       (order_->NeedsReordering(primary_->shell(M).is_pure(), primary_->shell(M).am()));
-        if(bmorder)
-            morder = order_->GetOrder(primary_->shell(M).is_pure(), primary_->shell(M).am());
-
         int threadnum = 0;
         #ifdef _OPENMP
             threadnum = omp_get_thread_num();
@@ -205,12 +202,6 @@ void DFTensor2::GenQso(bool inmem)
 
         for (int N = 0; N < M; N++)
         {
-            vector<unsigned short> norder;
-            bool bnorder = order_ && 
-                           (order_->NeedsReordering(primary_->shell(N).is_pure(), primary_->shell(N).am()));
-            if(bnorder)
-                norder = order_->GetOrder(primary_->shell(N).is_pure(), primary_->shell(N).am());
- 
             int nn = primary_->shell(N).nfunction();
             int nstart = primary_->shell(N).function_index();
             //int nend = nstart + nn;
@@ -225,20 +216,13 @@ void DFTensor2::GenQso(bool inmem)
 
                 if(ncalc)
                 {
-                    for (int p = pstart, pi = 0; p < pend; p++, pi++)
+                    for (int p = pstart, index = 0; p < pend; p++)
                     {
                         for (int m = 0; m < nm; m++)
                         {
-                            int mi = m;
-                            if(bmorder)
-                                mi = morder[m]-1;
-                            for (int n = 0; n < nn; n++)
+                            for (int n = 0; n < nn; n++, index++)
                             {
-                                int ni = n;
-                                if(bnorder)
-                                    ni = norder[n]-1;
-                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][pi*nm*nn+mi*nn+ni];
-
+                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
                             }
                         }
                     }
@@ -294,19 +278,13 @@ void DFTensor2::GenQso(bool inmem)
 
             eris[threadnum]->compute_shell(P,0,M,M);
 
-            for (int p = pstart, pi = 0; p < pend; p++, pi++)
+            for (int p = pstart, index = 0; p < pend; p++)
             {
                 for (int m = 0; m < nm; m++)
                 {
-                    int mi = m;
-                    if(bmorder)
-                        mi = morder[m]-1;
-                    for (int n = 0; n < nm; n++)
+                    for (int n = 0; n < nm; n++, index++)
                     {
-                        int ni = n;
-                        if(bmorder)
-                            ni = morder[n]-1;
-                        B[threadnum][p*nm*nm + m*nm + n] = eribuffers[threadnum][pi*nm*nm+mi*nm+ni];
+                        B[threadnum][p*nm*nm + m*nm + n] = eribuffers[threadnum][index];
                     }
                 }
             }
@@ -758,8 +736,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-/*
-void DFTensor2::ReorderCMat(void)
+void DFTensor2::ReorderCMat(reorder::Orderings & order)
 {
     using namespace reorder;
     using std::placeholders::_1;
@@ -775,13 +752,13 @@ void DFTensor2::ReorderCMat(void)
         const GaussianShell & s = primary_->shell(i);
         if(s.is_pure())
         {
-            if(order_->NeedsInvSphReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order_->GetInvSphOrder(s.am())));
+            if(order.NeedsInvSphReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetInvSphOrder(s.am())));
         }
         else
         {
-            if(order_->NeedsInvCartReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order_->GetInvCartOrder(s.am())));
+            if(order.NeedsInvCartReordering(s.am()))
+                vpm.push_back(PointerMap(s.function_index(), order.GetInvCartOrder(s.am())));
         }
     }
 
@@ -800,244 +777,6 @@ void DFTensor2::ReorderCMat(void)
         Reorder(it.order, pointers, sf1);
     }
 }
-*/
-/*
-int DFTensor2::CalculateERI(double * qso, int qsosize, int shell1, int shell2, int shell3, int shell4, double * outbuffer, int buffersize)
-{
-    NOTE - MUST CHANGE THIS FUNCTION TO PROPER ORIENTATION OF THE
-    QSO MATRIX - IT CAN'T BE A PLAIN DDOT ANYMORE!
-
-    //! \todo do something with qsosize
-
-    int nfa = primary_->shell(shell1).nfunction();
-    int astart = primary_->shell(shell1).function_index();
-
-    int nfb = primary_->shell(shell2).nfunction();
-    int bstart = primary_->shell(shell2).function_index();
-
-    int nfc = primary_->shell(shell3).nfunction();
-    int cstart = primary_->shell(shell3).function_index();
-
-    int nfd = primary_->shell(shell4).nfunction();
-    int dstart = primary_->shell(shell4).function_index();
-
-    int nint = nfa * nfb * nfc * nfd;
-
-    int nbf = primary_->nbf();
-    int naux = auxiliary_->nbf();
-
-
-    if(nint > buffersize)
-        throw RuntimeError("Error - ERI buffer not large enough!");
-
-    int bufindex = 0;
-
-    //!\todo replace with DGEMM?
-    for(int a = 0; a < nfa; a++)
-        for(int b = 0; b < nfb; b++)
-            for(int c = 0; c < nfc; c++)
-                for(int d = 0; d < nfd; d++)
-                {
-                    outbuffer[bufindex] = C_DDOT(naux,
-                                                 qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
-                                                 qso + (cstart+c)*nbf*naux+(dstart+d)*naux, 1);
-                    bufindex++;
-                }
-
-    return nint;
-}
-
-
-int DFTensor2::CalculateERIMulti(double * qso, int qsosize,
-                                int shell1, int nshell1,
-                                int shell2, int nshell2,
-                                int shell3, int nshell3,
-                                int shell4, int nshell4,
-                                double * outbuffer, int buffersize)
-{
-    NOTE - MUST CHANGE THIS FUNCTION TO PROPER ORIENTATION OF THE
-    QSO MATRIX - IT CAN'T BE A PLAIN DDOT ANYMORE!
-
-    //! \todo do something with qsosize
-    int nint = 0;
-
-    int nbf = primary_->nbf();
-    int naux = auxiliary_->nbf();
-
-    int bufindex = 0;
-
-    for(int i = 0; i < nshell1; i++)
-    {
-        int nfa = primary_->shell(shell1+i).nfunction();
-        int astart = primary_->shell(shell1+i).function_index();
-
-        for(int a = 0; a < nfa; a++)
-        {
-            for(int j = 0; j < nshell2; j++)
-            {
-                int nfb = primary_->shell(shell2+j).nfunction();
-                int bstart = primary_->shell(shell2+j).function_index();
-
-                for(int b = 0; b < nfb; b++)
-                {
-                    for(int k = 0; k < nshell3; k++)
-                    {
-                        int nfc = primary_->shell(shell3+k).nfunction();
-                        int cstart = primary_->shell(shell3+k).function_index();
-
-                        for(int c = 0; c < nfc; c++)
-                        {
-                            for(int l = 0; l < nshell4; l++)
-                            {
-                                int nfd = primary_->shell(shell4+l).nfunction();
-                                int dstart = primary_->shell(shell4+l).function_index();
-
-                                nint += nfd;
-
-                                if(nint > buffersize)
-                                    throw RuntimeError("Error - ERI buffer not large enough!");
-
-                                for(int d = 0; d < nfd; d++)
-                                {
-                                    outbuffer[bufindex] = C_DDOT(naux,
-                                                                 qso + (astart+a)*nbf*naux+(bstart+b)*naux, 1,
-                                                                 qso + (cstart+c)*nbf*naux+(dstart+d)*naux, 1);
-                                    bufindex++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return nint;
-}
-*/
-
-
-
-
-/*
-void DFTensor2::ReorderQ(double * qso, int qsosize, const reorder::Orderings & order)
-{
-    using namespace reorder;
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-
-    int nso = primary_->nbf();
-    int nq = auxiliary_->nbf();
-
-    if((nq * nso * nso) != qsosize)
-        throw RuntimeError("Incompatible Qso matrix in ReorderQ");
-
-    // Dimensions on Q:
-    // nso * nso * nq
-
-
-    TotalMemorySwapper sf1(nq);  // swaps rows
-    LimitedMemorySwapper sf2(nso*nq, 1e7); // swaps 'tables' (limited to ~80MB extra memory)
-
-    std::vector<PointerMap> vpm;
-
-    //go through what would need to be changed in the primary basis
-    for(int i = 0; i < primary_->nshell(); i++)
-    {
-        const GaussianShell & s = primary_->shell(i);
-        if(order.NeedsReordering(s.am()))
-            vpm.push_back(PointerMap(s.function_index(), order.GetOrder(s.am())));
-    }
-
-
-    std::vector<double *> pointers(primary_->max_function_per_shell());
-
-
-    // for each i
-    for(size_t i = 0; i < nso; i++)
-    {
-        // Swap rows
-        for(auto & it : vpm)
-        {
-            size_t ntoswap = it.order.size();
-            size_t start = i*nso*nq;
-
-            for(size_t n = 0; n < ntoswap; n++)
-                pointers[n] = qso + start + (it.start+n)*nq;
-
-            Reorder(it.order, pointers, sf1);
-
-        }
-
-    }
-
-
-    // swap 'tables'
-    for(auto & it : vpm)
-    {
-        size_t ntoswap = it.order.size();
-
-        for(size_t n = 0; n < ntoswap; n++)
-            pointers[n] = qso + (it.start+n)*nso*nq;
-
-        Reorder(it.order, pointers, sf2);
-
-    }
-
-}
-
-void DFTensor2::ReorderQ_GAMESS(double * qso, int qsosize)
-{
-    reorder::GAMESS_Ordering go;
-    ReorderQ(qso, qsosize, go);
-}
-*/
-
-
-void DFTensor2::OpenFile(void)
-{
-    if(filename_ == "")
-        throw RuntimeError("Error - no file specified!");
-
-    // ok to call if it hasn't been opened yet
-    CloseFile();
-
-    matfile_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(), std::fstream::in |
-               std::fstream::out |
-               std::fstream::binary |
-               std::fstream::trunc));
-
-    if(!matfile_->is_open())
-        throw RuntimeError(filename_);
-
-    // enable exceptions
-    matfile_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
-}
-
-void DFTensor2::CloseFile(void)
-{
-    if(matfile_)
-    {
-        if(matfile_->is_open())
-            matfile_->close();
-        matfile_.reset();
-    }
-}
-
-
-void DFTensor2::ResetFile(void)
-{
-    matfile_->seekg(0);
-    matfile_->seekp(0);
-    curq_ = 0;
-}
-
-void DFTensor2::ResetBatches(void)
-{
-    curq_ = 0;
-    if(!isinmem_)
-        ResetFile();
-}
-
 
 void DFTensor2::SplitCMat(void)
 {

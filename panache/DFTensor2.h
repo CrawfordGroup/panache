@@ -40,7 +40,6 @@ private:
     int nso_;    //!< Number of SO (rows of Cmo_, number of primary basis functions)
     int naux_;   //!< Number of auxiliary basis functions
     int nso2_;   //!< Number of SO squared
-    int nsotri_; //!< Length of nso^2 matrix in packed storage
 
     ///@}
  
@@ -78,55 +77,105 @@ private:
 
     /*!
      * \brief Reorders the whole C matrix into the specified ordering
+     * 
+     * \param [in] order The order to use
      */
-    //void ReorderCMat(void);
-
-    std::unique_ptr<reorder::Orderings> order_;
+    void ReorderCMat(reorder::Orderings & order);
     ///@}
 
 
-    
 
-    /*! \name Disk storage of Qso */
-    ///@{  
-
-    std::string filename_; //!< Filename for storing the matrix on disk
-    std::unique_ptr<std::fstream> matfile_; //!< fstream object for reading/writing the matrix to disk
-
-    /*!
-     * \brief Opens a file on disk for storage
-     *
-     * Filename is fiven by the DFTensor2::filename_ member
-     */ 
-    void OpenFile(void);
+    class enum QStorage
+    {
+        INMEM,
+        ONDISK,
+        ONFLY
+    };
 
 
-    /*!
-     * \brief Closes a file on disk used for storage
-     */
-    void CloseFile(void);
+
+    struct StoredQTensor
+    {
+        int ndim1_;
+        int ndim2_;
+        QStorage storetype_;
+
+        // for ONDISK
+        string filename_;
+        std::unique_ptr<std::fstream> file_;
+        int curij_;
+
+        // for INMEM
+        unique_ptr<double *> data_;
+
+        void OpenFile(void)
+        {
+            if(file_is_open())
+                return;
+   
+
+            if(filename.length() == 0)
+                throw RuntimeError("Error - no file specified!");
+ 
+            file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str()),
+                                                  std::fstream::in | std::fstream::out |
+                                                  std::fstream::binary | std::fstream::trunc );
+            if(!file_->is_open())
+                throw RuntimeError(filename_);
+
+            file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+            curij_ = 0;
+        }
+
+        void CloseFile(void)
+        {
+            if(file_ && file_->is_open())
+            {
+                file_->close();
+                matfile_.reset();
+            }
+        }
 
 
-    /*!
-     * \brief Resets read/write pointers for disk storage
-     */
-    void ResetFile(void);
+        void ResetFile(void)
+        {
+            if(file_)
+            {
+                file_->seekg(0);
+                file_->seekp(0);
+                curij_ = 0;
+            }
+        }
+
+        void Reset(void)
+        {
+            curij_ = 0;
+            if(storetype_ == QStorage::ONDISK)
+                ResetFile();
+        }
+    };
+
+
+    StoredQTensor qso_;
+    StoredQTensor qmo_;
+    StoredQTensor qoo_;
+    StoredQTensor qsv_;
+    StoredQTensor qvv_;
 
     ///@}
+
+
+
+
+
+
 
 
     /*! \name Memory, Buffers and placeholders for transformations */
     ///@{
 
-    std::unique_ptr<double[]> qso_; //!< Holds the entire Q matrix (if it is to be kept in memory
     std::unique_ptr<double[]> qc_;  //!< Holds C(T) Q or QC intermediate
     std::unique_ptr<double[]> q_;   //!< Holds a batch of Q (packed storage)
-    std::unique_ptr<double[]> q_single_;   // Holds a batch of Q (expanded storage)
-
-    double * outbuffer_;  //!< Where to output batches (see DFTensor2::SetOutputBuffer)
-    long int outbuffersize_; //!< Total size of the buffer (number of elements)
-
-    bool isinmem_; //!< Is Q completely in memory?
 
     ///@}
 
