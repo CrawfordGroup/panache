@@ -78,6 +78,11 @@ void DFTensor2::StoredQTensor::Write(double * data, int i, int j)
     Write_(data, calcindex(i,j));
 }
 
+void DFTensor2::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
+{
+    WriteByQ_(data, nq, qstart);
+}
+
 void DFTensor2::StoredQTensor::Read(double * data, int i, int j)
 {
     Read_(data, calcindex(i,j));
@@ -200,6 +205,24 @@ void DFTensor2::MemoryQTensor::Write_(double * data, int ij)
     }
 }
 
+void DFTensor2::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
+{
+    if(byq())
+    {
+        std::copy(data,
+                  data + nq*ndim12(),
+                  data_.get()+qstart*ndim12());
+    }
+    else
+    {
+        for(int q = 0; q < nq; q++)
+        {
+            for(int ij = 0; ij < ndim12(); ij++)
+                data_[ij*naux()+qstart+q] = data[q*ndim12()+ij];
+        }
+    }
+}
+
 void DFTensor2::MemoryQTensor::Read_(double * data, int ij)
 {
     // index ij is given by calling function and takes into account packing
@@ -279,10 +302,10 @@ DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool pac
 
 
 
-DFTensor2::StoredQTensor * DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype)
+std::unique_ptr<DFTensor2::StoredQTensor> DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype)
 {
     if(storetype == QStorage::INMEM)
-        return new MemoryQTensor(naux, ndim1, ndim2, packed, byq);
+        return std::unique_ptr<DFTensor2::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
     else
         throw RuntimeError("No StoredQTensor for that type");
 }

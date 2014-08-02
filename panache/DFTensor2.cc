@@ -95,8 +95,7 @@ void DFTensor2::GenQso(QStorage storetype)
     timer_genqso.Start();
 #endif
 
-    //! \todo Maybe a factory for StoredQTensor based on storetype?
-    qso_ = std::unique_ptr<StoredQTensor>(StoredQTensorFactory(naux_, nso_, nso_, true, true, storetype));
+    qso_ = StoredQTensorFactory(naux_, nso_, nso_, true, true, storetype);
     qso_->Init();
 
     int maxpershell = primary_->max_function_per_shell();
@@ -122,15 +121,16 @@ void DFTensor2::GenQso(QStorage storetype)
     }
 
 
-#ifdef _OPENMP
-    #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
-#endif
+    #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+    #endif
     for (int M = 0; M < primary_->nshell(); M++)
     {
         int threadnum = 0;
-#ifdef _OPENMP
+
+        #ifdef _OPENMP
         threadnum = omp_get_thread_num();
-#endif
+        #endif
 
         int nm = primary_->shell(M).nfunction();
         int mstart = primary_->shell(M).function_index();
@@ -265,16 +265,102 @@ void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
 }
 
 
-// Bit    Matrix
-// 1      Qso
-// 2      Qmo
-// 3      Qoo
-// 4      Qov
-// 5      Qvv
-
-void DFTensor2::GenQTensors(int qflags)
+void DFTensor2::TransformQTensor(double * left, int lncols,
+                                 double * right, int rncols,
+                                 std::unique_ptr<StoredQTensor> & qout,
+                                 int q,
+                                 double * qso, double * qc, double * cqc)
 {
-    GenQso(QStorage::INMEM);
+    // transform
+    C_DGEMM('T', 'N', lncols, nso_, nso_, 1.0, left, lncols, qso, nso_, 0.0, qc, nso_);
+    C_DGEMM('N', 'N', lncols, rncols, nso_, 1.0, qc, nso_, right, rncols, 0.0, cqc, rncols);
+
+    // Write to memory or disk
+    qout->WriteByQ(cqc, 1, q);
+}
+
+
+// Bit    Matrix
+// 1      Qmo
+// 2      Qoo
+// 3      Qov
+// 4      Qvv
+void DFTensor2::GenQTensors(int qflags, QStorage storetype)
+{
+    // temporary space
+    // note that nmo, occupied, etc, are all <= nso
+    // so this is the max space that would be needed
+    double * buf = new double[nso2_*nthreads_];
+    double * qc = new double[nso2_*nthreads_];
+    double * cqc = new double[nso2_*nthreads_];
+
+    GenQso(storetype);
+
+    if((qflags & (15)) == 0)
+        return; //?
+
+    if(!Cmo_)
+        throw RuntimeError("Set the c-matrix first!");
+
+    if(qflags & (1 << 0))
+    {
+        // generate Qmo
+        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, false, false, storetype);
+        qmo_->Init();
+    }
+    if(qflags & (1 << 1))
+    {
+        // generate Qoo
+        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, false, false, storetype);
+        qoo_->Init();
+    }
+    if(qflags & (1 << 2))
+    {
+        // generate Qov
+        qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, false, false, storetype);
+        qov_->Init();
+    }
+    if(qflags & (1 << 3))
+    {
+        // generate Qvv
+        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, false, false, storetype);
+        qvv_->Init();
+    }
+
+  
+    // Read in Qso, and create any requested tensors 
+    #ifdef _OPENMP
+        #pragma omp parallel for num_threads(nthreads_)
+    #endif
+    for(int q = 0; q < naux_; q++)
+    {
+        int threadnum = 0;
+
+        #ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+        #endif
+
+        double * myqso = buf + threadnum*nso2_;
+        double * myqc = qc + threadnum*nso2_;
+        double * mycqc = cqc + threadnum*nso2_;
+
+        qso_->ReadByQ(myqso, 1, q);
+
+
+        if(qflags & (1 << 0))
+            TransformQTensor(Cmo_.get(), nmo_, Cmo_.get(), nmo_, qmo_, q, myqso, myqc, mycqc);
+        if(qflags & (1 << 1))
+            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_occ_.get(), nocc_, qoo_, q, myqso, myqc, mycqc);
+        if(qflags & (1 << 2))
+            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_vir_.get(), nvir_, qov_, q, myqso, myqc, mycqc);
+        if(qflags & (1 << 3))
+            TransformQTensor(Cmo_vir_.get(), nvir_, Cmo_vir_.get(), nvir_, qvv_, q, myqso, myqc, mycqc);
+    }
+
+
+    delete [] buf;
+    delete [] qc;
+    delete [] cqc;
 }
 
 
@@ -288,6 +374,58 @@ int DFTensor2::GetBatch_Qso(double * outbuf, int bufsize, int qstart)
 
     // get a batch
     int gotten = qso_->ReadByQ(outbuf, nq, qstart);
+
+    return gotten;
+}
+
+int DFTensor2::GetBatch_Qmo(double * outbuf, int bufsize, int qstart)
+{
+    if(bufsize < nmo2_)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    int nq = (bufsize / nmo2_);
+
+    // get a batch
+    int gotten = qmo_->ReadByQ(outbuf, nq, qstart);
+
+    return gotten;
+}
+
+int DFTensor2::GetBatch_Qoo(double * outbuf, int bufsize, int qstart)
+{
+    if(bufsize < nocc_*nocc_)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    int nq = (bufsize / (nocc_*nocc_));
+
+    // get a batch
+    int gotten = qoo_->ReadByQ(outbuf, nq, qstart);
+
+    return gotten;
+}
+
+int DFTensor2::GetBatch_Qov(double * outbuf, int bufsize, int qstart)
+{
+    if(bufsize < nocc_*nvir_)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    int nq = (bufsize / (nocc_*nvir_));
+
+    // get a batch
+    int gotten = qov_->ReadByQ(outbuf, nq, qstart);
+
+    return gotten;
+}
+
+int DFTensor2::GetBatch_Qvv(double * outbuf, int bufsize, int qstart)
+{
+    if(bufsize < nvir_*nvir_)
+        throw RuntimeError("Error - buffer is to small to hold even one row!");
+
+    int nq = (bufsize / (nvir_*nvir_));
+
+    // get a batch
+    int gotten = qvv_->ReadByQ(outbuf, nq, qstart);
 
     return gotten;
 }
