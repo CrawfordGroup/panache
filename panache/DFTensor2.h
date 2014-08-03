@@ -163,7 +163,6 @@ private:
 
     ///@}
 
-    
 
 
     /*! \name C matrix and dimensions */
@@ -245,71 +244,28 @@ private:
     };
 
 
-/*
     class DiskQTensor : public StoredQTensor
     {
     private:
-        string filename_;
         std::unique_ptr<std::fstream> file_;
+        std::string filename_;
+
+        void OpenFile_(void);
+        void CloseFile_(void);
 
     protected:
-        virtual void Reset_(void)
-        {
-            if(file_)
-            {
-                file_->seekg(0);
-                file_->seekp(0);
-            }
-        }
-
-        virtual void Write_(double * data, size_t nq, int ij)
-        {
-               // \todo write to file 
-        }
-
-        virtual void Read_(double * data, size_t nq, int ij)
-        {
-               // \todo write to file 
-        }
+        virtual void Reset_(void);
+        virtual void Write_(double * data, int ij);
+        virtual void WriteByQ_(double * data, int nq, int qstart);
+        virtual void Read_(double * data, int ij);
+        virtual void ReadByQ_(double * data, int nq, int qstart);
+        virtual void Clear_(void);
+        virtual void Init_(void);
 
     public:
-        DiskQTensor(int naux, int ndim1, int ndim2, bool packed, const string & filename)
-            : StoredQTensor(naux, ndim1, ndim2, packed, QStorage::ONDISK)
-        {
-            filename_ = filename;
-        }
-
-        void OpenFile(void)
-        {
-            if(file_is_open())
-                return;
-   
-
-            if(filename.length() == 0)
-                throw RuntimeError("Error - no file specified!");
- 
-            file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str()),
-                                                  std::fstream::in | std::fstream::out |
-                                                  std::fstream::binary | std::fstream::trunc );
-            if(!file_->is_open())
-                throw RuntimeError(filename_);
-
-            file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
-            curij_ = 0;
-        }
-
-        void CloseFile(void)
-        {
-            if(file_ && file_->is_open())
-            {
-                file_->close();
-                matfile_.reset();
-            }
-        }
-
+        DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename);
 
     };
-*/
 
     
     class MemoryQTensor : public StoredQTensor
@@ -332,7 +288,8 @@ private:
     };
 
 
-    std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
+    std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
+                                                        bool packed, bool byq, QStorage storetype, const std::string & name);
     std::unique_ptr<StoredQTensor> qso_;
     std::unique_ptr<StoredQTensor> qmo_;
     std::unique_ptr<StoredQTensor> qoo_;
@@ -377,6 +334,8 @@ private:
     int nthreads_;  //!< Number of threads to use
 
     ///@}
+
+    std::string directory_; 
 
 
     /*!

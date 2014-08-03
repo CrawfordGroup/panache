@@ -114,71 +114,187 @@ void DFTensor2::StoredQTensor::Init(void)
 
 
 
-/*
-    class DiskQTensor : public StoredQTensor
+
+//////////////////////////////
+// DiskQTensor
+//////////////////////////////
+void DFTensor2::DiskQTensor::OpenFile_(void)
+{
+    if(file_ && file_->is_open())
+        return;
+
+    if(filename_.length() == 0)
+        throw RuntimeError("Error - no file specified!");
+
+    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
+                                          std::fstream::in | std::fstream::out |
+                                          std::fstream::binary | std::fstream::trunc ));
+    if(!file_->is_open())
+        throw RuntimeError(filename_);
+
+    file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+}
+
+void DFTensor2::DiskQTensor::CloseFile_(void)
+{
+    if(file_ && file_->is_open())
     {
-    private:
-        string filename_;
-        std::unique_ptr<std::fstream> file_;
+        file_->close();
+        file_.reset();
+    }
+}
 
-    protected:
-        void Reset_(void)
+void DFTensor2::DiskQTensor::Reset_(void)
+{
+    file_->seekg(0);
+    file_->seekp(0);
+}
+
+void DFTensor2::DiskQTensor::Write_(double * data, int ij)
+{
+    #ifdef _OPENMP
+    #pragma omp critical
+    #endif
+    {
+        if(byq())
         {
-            if(file_)
+            for(int q = 0; q < naux(); q++)
             {
-                file_->seekg(0);
-                file_->seekp(0);
+                file_->seekp(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
+                file_->write(reinterpret_cast<const char *>(data+q), sizeof(double));
             }
         }
-
-        void Write_(double * data, size_t nq, int ij)
+        else
         {
-               // \todo write to file
+            file_->seekp(sizeof(double)*(ij * naux()), std::ios_base::beg);
+            file_->write(reinterpret_cast<const char *>(data), naux()*sizeof(double));
         }
+    }
+}
 
-        void Read_(double * data, size_t nq, int ij)
+void DFTensor2::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
+{
+    #ifdef _OPENMP
+    #pragma omp critical
+    #endif
+    {
+        if(byq())
         {
-               // \todo write to file
+            file_->seekp(sizeof(double)*(qstart*ndim12()), std::ios_base::beg);
+            file_->write(reinterpret_cast<const char *>(data), nq*ndim12()*sizeof(double));
         }
-
-    public:
-        DiskQTensor(int naux, int ndim1, int ndim2, bool packed, const string & filename)
-            : StoredQTensor(naux, ndim1, ndim2, packed, QStorage::ONDISK)
+        else
         {
-            filename_ = filename;
-        }
-
-        void OpenFile(void)
-        {
-            if(file_is_open())
-                return;
-
-
-            if(filename.length() == 0)
-                throw RuntimeError("Error - no file specified!");
-
-            file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str()),
-                                                  std::fstream::in | std::fstream::out |
-                                                  std::fstream::binary | std::fstream::trunc );
-            if(!file_->is_open())
-                throw RuntimeError(filename_);
-
-            file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
-            curij_ = 0;
-        }
-
-        void CloseFile(void)
-        {
-            if(file_ && file_->is_open())
+            for(int q = 0; q < nq; q++)
             {
-                file_->close();
-                matfile_.reset();
+    
+                for(int ij = 0; ij < ndim12(); ij++)
+                {
+                    file_->seekp(sizeof(double)*(ij*naux()+qstart+q), std::ios_base::beg);
+                    file_->write(reinterpret_cast<const char *>(data+q*ndim12()+ij), sizeof(double));
+                }
             }
         }
+    }
+}
+
+void DFTensor2::DiskQTensor::Read_(double * data, int ij)
+{
+    #ifdef _OPENMP
+    #pragma omp critical
+    #endif
+    {
+        // index ij is given by calling function and takes into account packing
+        if(byq())
+        {
+            for(int q = 0; q < naux(); q++)
+            {
+                file_->seekp(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
+                file_->read(reinterpret_cast<char *>(data+q), sizeof(double));
+            }
+        }
+        else
+        {
+            file_->seekp(sizeof(double)*(ij*naux()), std::ios_base::beg);
+            file_->read(reinterpret_cast<char *>(data), sizeof(double)*naux());
+        }
+    }
+}
+
+void DFTensor2::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
+{
+    #ifdef _OPENMP
+    #pragma omp critical
+    #endif
+    {
+        if(packed())
+        {
+            if(byq())
+            {
+                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+                for(int m = 0; m < ndim1(); m++)
+                for(int n = 0; n <= m; n++)
+                {
+                    file_->seekp(sizeof(double)*(q*ndim12()) + calcindex(m,n), std::ios_base::beg);
+                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2() + n), sizeof(double));
+                    data[q0*ndim1()*ndim2() + n*ndim1() + m] = data[q0*ndim1()*ndim2() + m*ndim2() + n];
+                }
+            }
+            else
+            {
+                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+                for(int m = 0; m < ndim1(); m++)
+                for(int n = 0; n <= m; n++)
+                {
+                    file_->seekp(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
+                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
+    
+                    // do the transpose
+                    data[q0*ndim1()*ndim2() + n*ndim1() + m] =
+                    data[q0*ndim1()*ndim2() + m*ndim2() + n];
+                }
+    
+            }
+        }
+        else
+        {
+            if(byq())
+            {
+                file_->seekp(sizeof(double)*(qstart*ndim12()), std::ios_base::beg);
+                file_->read(reinterpret_cast<char *>(data), sizeof(double)*nq*ndim12());
+            }
+            else
+            {
+                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+                for(int m = 0; m < ndim1(); m++)
+                for(int n = 0; n < ndim2(); n++)
+                {
+                    file_->seekp(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
+                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
+                }
+            }
+        }
+    }
+}
+
+void DFTensor2::DiskQTensor::Clear_(void)
+{
+    //! \todo Erase file
+    CloseFile_();
+}
+
+void DFTensor2::DiskQTensor::Init_(void)
+{
+    OpenFile_();
+}
 
 
-    };
-*/
+DFTensor2::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename)
+            : StoredQTensor(naux, ndim1, ndim2, packed, byq, QStorage::ONDISK)
+{
+    filename_ = filename;
+}
+
 
 
 //////////////////////////////
@@ -228,9 +344,8 @@ void DFTensor2::MemoryQTensor::Read_(double * data, int ij)
     // index ij is given by calling function and takes into account packing
     if(byq())
     {
-        for(int q0 = 0; q0 < naux(); q0++)
-            data[q0]
-                = data_[q0*ndim12()+ij];
+        for(int q = 0; q < naux(); q++)
+            data[q] = data_[q*ndim12()+ij];
     }
     else
     {
@@ -246,39 +361,36 @@ void DFTensor2::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
         if(byq())
         {
             for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                    for(int n = 0; n <= m; n++)
-                        data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                            = data[q0*ndim1()*ndim2() + n*ndim1() + m]
-                              = data_[q*ndim12()+calcindex(m,n)];
+            for(int m = 0; m < ndim1(); m++)
+            for(int n = 0; n <= m; n++)
+                data[q0*ndim1()*ndim2() + m*ndim2() + n]
+                    = data[q0*ndim1()*ndim2() + n*ndim1() + m]
+                    = data_[q*ndim12()+calcindex(m,n)];
         }
         else
         {
             for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                    for(int n = 0; n <= m; n++)
-                        data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                            = data[q0*ndim1()*ndim2() + n*ndim1() + m]
-                              = data_[calcindex(m,n)*naux() + q];
+            for(int m = 0; m < ndim1(); m++)
+            for(int n = 0; n <= m; n++)
+                data[q0*ndim1()*ndim2() + m*ndim2() + n]
+                    = data[q0*ndim1()*ndim2() + n*ndim1() + m]
+                    = data_[calcindex(m,n)*naux() + q];
         }
     }
     else
     {
         if(byq())
         {
-            for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                    for(int n = 0; n < ndim2(); n++)
-                        data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                            = data_[q*ndim12() + calcindex(m,n)];
+            double * start = data_.get()+qstart*ndim12();
+            std::copy(start, start+nq*ndim12(), data);
         }
         else
         {
             for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                    for(int n = 0; n < ndim2(); n++)
-                        data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                            = data_[calcindex(m,n)*naux() + q];
+            for(int m = 0; m < ndim1(); m++)
+            for(int n = 0; n < ndim2(); n++)
+                data[q0*ndim1()*ndim2() + m*ndim2() + n]
+                    = data_[calcindex(m,n)*naux() + q];
         }
     }
 }
@@ -302,10 +414,21 @@ DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool pac
 
 
 
-std::unique_ptr<DFTensor2::StoredQTensor> DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype)
+std::unique_ptr<DFTensor2::StoredQTensor> DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
+                                                                          bool packed, bool byq, QStorage storetype, const std::string & name)
 {
+    if(name == "")
+        throw RuntimeError("NO NAME SPECIFIED");
+
     if(storetype == QStorage::INMEM)
         return std::unique_ptr<DFTensor2::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
+    if(storetype == QStorage::ONDISK)
+    {
+        std::string filename(directory_);
+        filename.append("/");
+        filename.append(name);
+        return std::unique_ptr<DFTensor2::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, packed, byq, filename));
+    }
     else
         throw RuntimeError("No StoredQTensor for that type");
 }
