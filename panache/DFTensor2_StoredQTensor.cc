@@ -83,9 +83,13 @@ void DFTensor2::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
     WriteByQ_(data, nq, qstart);
 }
 
-void DFTensor2::StoredQTensor::Read(double * data, int nij, int ijstart)
+int DFTensor2::StoredQTensor::Read(double * data, int nij, int ijstart)
 {
+    if(ijstart + nij >= ndim12())
+        nij = ndim12() - ijstart;
+
     Read_(data, nij, ijstart);
+    return nij;
 }
 
 int DFTensor2::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
@@ -123,7 +127,7 @@ Timer & DFTensor2::StoredQTensor::GetQBatchTimer(void)
     return getqbatch_timer_;
 }
 
-Timer & DFTensor2::StoredQTensor::GetIJBatchTimer(void)
+Timer & DFTensor2::StoredQTensor::GetBatchTimer(void)
 {
     return getijbatch_timer_;
 }

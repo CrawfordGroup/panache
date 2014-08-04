@@ -410,7 +410,7 @@ int DFTensor2::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
     int nq = (bufsize / qt->ndim12());
 
     if(nq == 0)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
+        throw RuntimeError("Error - buffer is to small to hold even one batch!");
 
     // get a batch
     int gotten = qt->ReadByQ(outbuf, nq, qstart);
@@ -421,6 +421,30 @@ int DFTensor2::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
 
     return gotten;
 }
+
+
+int DFTensor2::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
+                             StoredQTensor * qt)
+{
+#ifdef PANACHE_TIMING
+    qt->GetBatchTimer().Start();
+#endif
+
+    int nij = (bufsize / qt->naux());
+
+    if(nij == 0)
+        throw RuntimeError("Error - buffer is to small to hold even one batch!");
+
+    // get a batch
+    int gotten = qt->Read(outbuf, nij, ijstart);
+
+#ifdef PANACHE_TIMING
+    qt->GetBatchTimer().Stop();
+#endif
+
+    return gotten;
+}
+
 
 
 int DFTensor2::GetQBatch_Qso(double * outbuf, int bufsize, int qstart)
@@ -447,6 +471,33 @@ int DFTensor2::GetQBatch_Qvv(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qvv_.get());
 }
+
+
+int DFTensor2::GetBatch_Qso(double * outbuf, int bufsize, int ijstart)
+{
+    return GetBatch_Base(outbuf, bufsize, ijstart, qso_.get());
+}
+
+int DFTensor2::GetBatch_Qmo(double * outbuf, int bufsize, int ijstart)
+{
+    return GetBatch_Base(outbuf, bufsize, ijstart, qmo_.get());
+}
+
+int DFTensor2::GetBatch_Qoo(double * outbuf, int bufsize, int ijstart)
+{
+    return GetBatch_Base(outbuf, bufsize, ijstart, qoo_.get());
+}
+
+int DFTensor2::GetBatch_Qov(double * outbuf, int bufsize, int ijstart)
+{
+    return GetBatch_Base(outbuf, bufsize, ijstart, qov_.get());
+}
+
+int DFTensor2::GetBatch_Qvv(double * outbuf, int bufsize, int ijstart)
+{
+    return GetBatch_Base(outbuf, bufsize, ijstart, qvv_.get());
+}
+
 
 
 // note - passing by value for the vector
@@ -583,7 +634,7 @@ void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTenso
     if(q)
         output::printf("%-6s  %17d  %17d  %17d\n", name, 
                         q->GenTimer().Microseconds(),
-                        q->GetIJBatchTimer().Microseconds(),
+                        q->GetBatchTimer().Microseconds(),
                         q->GetQBatchTimer().Microseconds());
     else
         output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
@@ -597,7 +648,7 @@ void DFTensor2::PrintTimings(void) const
     output::printf("*All timings in microseconds*\n");
     output::printf(std::string(80, '-').c_str());
     output::printf("\n");
-    output::printf("%-6s  %17s  %17s  %17s\n", "Tensor", "Generation", "GetIJBatch", "GetQBatch");
+    output::printf("%-6s  %17s  %17s  %17s\n", "Tensor", "Generation", "GetBatch", "GetQBatch");
     PrintTimer("QSO", qso_);
     PrintTimer("QMO", qmo_);
     PrintTimer("QOO", qoo_);

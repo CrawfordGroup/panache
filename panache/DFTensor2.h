@@ -244,14 +244,14 @@ private:
         QStorage StoreType(void) const;
         void Write(double * data, int nij, int ijstart);
         void WriteByQ(double * data, int nq, int qstart);
-        void Read(double * data, int nij, int ijstart);
+        int Read(double * data, int nij, int ijstart);
         int ReadByQ(double * data, int nq, int qstart);
         void Reset(void);
         void Clear(void);
         void Init(void);
 
         Timer & GenTimer(void);
-        Timer & GetIJBatchTimer(void);
+        Timer & GetBatchTimer(void);
         Timer & GetQBatchTimer(void);
 
         int naux(void) const;
@@ -362,6 +362,7 @@ private:
 
 
     int GetQBatch_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
+    int GetBatch_Base(double * outbuf, int bufsize, int ijstart, StoredQTensor * qt);
 
     // helper
     void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
