@@ -118,14 +118,14 @@ Timer & DFTensor2::StoredQTensor::GenTimer(void)
     return gen_timer_; 
 }
 
-Timer & DFTensor2::StoredQTensor::GetBatchByQTimer(void)
+Timer & DFTensor2::StoredQTensor::GetQBatchTimer(void)
 {
-    return getbatchbyq_timer_;
+    return getqbatch_timer_;
 }
 
-Timer & DFTensor2::StoredQTensor::GetBatchTimer(void)
+Timer & DFTensor2::StoredQTensor::GetIJBatchTimer(void)
 {
-    return getbatch_timer_;
+    return getijbatch_timer_;
 }
 
 

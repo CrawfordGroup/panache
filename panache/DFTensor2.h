@@ -132,11 +132,11 @@ public:
     int SetNThread(int nthread);
 
 
-    int GetBatchByQ_Qso(double * outbuf, int bufsize, int qstart);
-    int GetBatchByQ_Qmo(double * outbuf, int bufsize, int qstart);
-    int GetBatchByQ_Qoo(double * outbuf, int bufsize, int qstart);
-    int GetBatchByQ_Qov(double * outbuf, int bufsize, int qstart);
-    int GetBatchByQ_Qvv(double * outbuf, int bufsize, int qstart);
+    int GetQBatch_Qso(double * outbuf, int bufsize, int qstart);
+    int GetQBatch_Qmo(double * outbuf, int bufsize, int qstart);
+    int GetQBatch_Qoo(double * outbuf, int bufsize, int qstart);
+    int GetQBatch_Qov(double * outbuf, int bufsize, int qstart);
+    int GetQBatch_Qvv(double * outbuf, int bufsize, int qstart);
 
     void GenQTensors(int qflags, QStorage storetype);
 
@@ -158,7 +158,7 @@ private:
     int nso2_;   //!< Number of SO squared
 
     ///@}
- 
+
 
     /*! \name Metric generation */
     ///@{
@@ -206,47 +206,47 @@ private:
 
     class StoredQTensor
     {
-    private:
-        int naux_;
-        int ndim1_;
-        int ndim2_;
-        int ndim12_;
-        bool packed_;
-        bool byq_;
-        QStorage storetype_;
-        Timer gen_timer_;
-        Timer getbatch_timer_;
-        Timer getbatchbyq_timer_;
+            private:
+                    int naux_;
+                    int ndim1_;
+                    int ndim2_;
+                    int ndim12_;
+                    bool packed_;
+                    bool byq_;
+                    QStorage storetype_;
+                    Timer gen_timer_;
+                    Timer getijbatch_timer_;
+                    Timer getqbatch_timer_;
 
-    protected:
-        virtual void Init_(void) = 0;
-        virtual void Reset_(void) = 0;
-        virtual void Write_(double * data, int ij) = 0;
-        virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
-        virtual void Read_(double * data, int ij) = 0;
-        virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
-        virtual void Clear_() = 0;
+            protected:
+                    virtual void Init_(void) = 0;
+                    virtual void Reset_(void) = 0;
+                    virtual void Write_(double * data, int ij) = 0;
+                    virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
+                    virtual void Read_(double * data, int ij) = 0;
+                    virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
+                    virtual void Clear_() = 0;
 
-        int storesize(void) const;
-        int packed(void) const;
-        int byq(void) const;
-        int calcindex(int i, int j) const;
+                    int storesize(void) const;
+                    int packed(void) const;
+                    int byq(void) const;
+                    int calcindex(int i, int j) const;
 
-    public:
-        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
-        virtual ~StoredQTensor();
-        QStorage StoreType(void) const;
-        void Write(double * data, int i, int j);
-        void WriteByQ(double * data, int nq, int qstart);
-        void Read(double * data, int i, int j);
-        int ReadByQ(double * data, int nq, int qstart);
-        void Reset(void);
-        void Clear(void);
-        void Init(void);
+            public:
+                    StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
+                    virtual ~StoredQTensor();
+                    QStorage StoreType(void) const;
+                    void Write(double * data, int i, int j);
+                    void WriteByQ(double * data, int nq, int qstart);
+                    void Read(double * data, int i, int j);
+                    int ReadByQ(double * data, int nq, int qstart);
+                    void Reset(void);
+                    void Clear(void);
+                    void Init(void);
 
-        Timer & GenTimer(void);
-        Timer & GetBatchTimer(void);
-        Timer & GetBatchByQTimer(void);
+                    Timer & GenTimer(void);
+                    Timer & GetIJBatchTimer(void);
+                    Timer & GetQBatchTimer(void);
 
         int naux(void) const;
         int ndim1(void) const;
@@ -353,7 +353,7 @@ private:
     void GenQso(QStorage storetype);
 
 
-    int GetBatchByQ_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
+    int GetQBatch_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
 
     // helper
     void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
