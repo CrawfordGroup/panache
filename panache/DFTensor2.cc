@@ -632,10 +632,13 @@ void DFTensor2::SetNOcc(int nocc, int nfroz)
 void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
 {
     if(q)
-        output::printf("%-6s  %17d  %17d  %17d\n", name, 
+        output::printf("%-6s  %17d (%7d)  %17d (%7d)  %17d (%7d)\n", name, 
                         q->GenTimer().Microseconds(),
+                        q->GenTimer().TimesCalled(),
                         q->GetBatchTimer().Microseconds(),
-                        q->GetQBatchTimer().Microseconds());
+                        q->GetBatchTimer().TimesCalled(),
+                        q->GetQBatchTimer().Microseconds(),
+                        q->GetQBatchTimer().TimesCalled());
     else
         output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
 }
@@ -645,10 +648,18 @@ void DFTensor2::PrintTimings(void) const
     #ifdef PANACHE_TIMING
 
     output::printf("\n\n  ==> LibPANACHE DF Tensor Timings <==\n\n");
-    output::printf("*All timings in microseconds*\n");
-    output::printf(std::string(80, '-').c_str());
+    output::printf("*Time (in microseconds), followed by number of times called in parentheses*\n");
+    //output::printf(std::string(80, '-').c_str());
     output::printf("\n");
-    output::printf("%-6s  %17s  %17s  %17s\n", "Tensor", "Generation", "GetBatch", "GetQBatch");
+    output::printf("%-6s  %-27s  %-27s  %-27s\n",
+                   "Tensor",
+                   "        Generation", 
+                   "         GetBatch", 
+                   "         GetQBatch");
+    output::printf("%-6s  %-27s  %-27s  %-27s\n", "------",
+                   std::string(27,'-').c_str(), 
+                   std::string(27,'-').c_str(), 
+                   std::string(27,'-').c_str()); 
     PrintTimer("QSO", qso_);
     PrintTimer("QMO", qmo_);
     PrintTimer("QOO", qoo_);
