@@ -555,7 +555,7 @@ int main(int argc, char ** argv)
 
         while((n = dft2.GetQBatch_Qso(outbuf.get(), buffsize, curq)))
         {
-            std::copy(outbuf.get(), outbuf.get() + n*nsotri, mattmp.get() + curq*nso2);
+            std::copy(outbuf.get(), outbuf.get() + n*nsotri, mattmp.get() + curq*nsotri);
             curq += n;
         }
 
