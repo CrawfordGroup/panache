@@ -7,7 +7,6 @@
 #include <utility>
 #include <cmath>
 
-#include "panache/DFTensor.h"
 #include "panache/DFTensor2.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
@@ -523,10 +522,7 @@ int main(int argc, char ** argv)
         int nocc = ReadNocc(nocc_filename);
         int nmo = nso;
         int nmo2 = nmo*nmo;
-
-        DFTensor dft(primary, aux, "Test.mat", 0);
-        dft.SetCMatrix(cmat->pointer(), nmo, transpose);
-        dft.SetNOcc(nocc); 
+        int nvir = nmo - nocc;
 
         DFTensor2 dft2(primary, aux, "/tmp", 0);
         dft2.SetCMatrix(cmat->pointer(), nmo, transpose);
@@ -538,18 +534,17 @@ int main(int argc, char ** argv)
             dft2.GenQTensors(15, DFTensor2::QStorage::ONDISK);
 
 
-        size_t matsize = dft.QsoDimensions(naux, nso2);
+        size_t matsize = dft2.QsoDimensions(naux, nso2);
         size_t mattmpsize = nsotri * naux;
 
-        size_t buffsize = matsize;
+        size_t buffsize = mattmpsize;
 
         if(batchsize)
-            buffsize = batchsize * nso2;
+            buffsize = batchsize * nsotri;
 
 
-        dft.GenQso(inmem);
-        int curq = 0;
         int n;
+        int curq = 0;
 
         ///////////
         // Test Qso
@@ -557,24 +552,12 @@ int main(int argc, char ** argv)
         unique_ptr<double[]> mat(new double[matsize]);
         unique_ptr<double[]> mattmp(new double[mattmpsize]);
         unique_ptr<double[]> outbuf(new double[buffsize]);
-        dft.SetOutputBuffer(outbuf.get(), buffsize);
 
-        while((n = dft.GetBatch_Qso()))
+        while((n = dft2.GetQBatch_Qso(outbuf.get(), buffsize, curq)))
         {
-            std::copy(outbuf.get(), outbuf.get() + n*nso2, mat.get() + curq*nso2);
+            std::copy(outbuf.get(), outbuf.get() + n*nsotri, mattmp.get() + curq*nso2);
             curq += n;
         }
-
-        ret += TestMatrix("QSO", qso_filename,
-                          mat.get(), matsize,
-                          QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        dft.ResetBatches();
-
-
-        std::fill(mat.get(), mat.get()+matsize, 99);
-        dft2.GetQBatch_Qso(mattmp.get(), mattmpsize, 0);
 
         // expand
         for(int q = 0; q < naux; q++)
@@ -587,38 +570,32 @@ int main(int argc, char ** argv)
                           QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                           verbose);
 
-        
+        // no longer needed
+        mattmp.reset();
 
         curq = 0;
+
 
         ///////////
         // Test Qmo
         ///////////
 
+        matsize = nmo2*naux;
+
         if(batchsize)
             buffsize = batchsize * nmo2;
+        else
+            buffsize = matsize;
 
-        // Note - nmo = nso in this case, so no need to resize mat
-        //outbuf = unique_ptr<double[]>(new double[buffsize]);
-        //mat = unique_ptr<double[]>(new double[naux*nmo2]);
-        //dft.SetOutputBuffer(outbuf.get(), buffsize);
+        outbuf = unique_ptr<double[]>(new double[buffsize]);
+        mat = unique_ptr<double[]>(new double[matsize]);
  
 
-        while((n = dft.GetBatch_Qmo()))
+        while((n = dft2.GetQBatch_Qmo(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
             curq += n;
         }
-
-        ret += TestMatrix("QMO", qmo_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        dft.ResetBatches();
-
-        std::fill(mat.get(), mat.get()+matsize, 99);
-        dft2.GetQBatch_Qmo(mat.get(), matsize, 0);
         ret += TestMatrix("QMO2", qmo_filename,
                           mat.get(), matsize,
                           QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
@@ -630,32 +607,22 @@ int main(int argc, char ** argv)
         ///////////
         // Test Qov
         ///////////
-        int nvir = nmo - nocc;
         matsize = nocc*nvir*naux;
 
         if(batchsize)
             buffsize = batchsize * nocc*nvir;
+        else
+            buffsize = matsize;
 
         outbuf = unique_ptr<double[]>(new double[buffsize]);
         mat = unique_ptr<double[]>(new double[matsize]);
-        dft.SetOutputBuffer(outbuf.get(), buffsize);
 
 
-        while((n = dft.GetBatch_Qov()))
+        while((n = dft2.GetQBatch_Qov(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nocc*nvir, mat.get() + curq*nocc*nvir);
             curq += n;
         }
-
-        ret += TestMatrix("QOV", qov_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        dft.ResetBatches();
-
-        std::fill(mat.get(), mat.get()+matsize, 99);
-        dft2.GetQBatch_Qov(mat.get(), matsize, 0);
         ret += TestMatrix("QOV2", qov_filename,
                           mat.get(), matsize,
                           QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
@@ -673,27 +640,18 @@ int main(int argc, char ** argv)
 
         if(batchsize)
             buffsize = batchsize * nocc*nocc;
+        else
+            buffsize = matsize;
 
         outbuf = unique_ptr<double[]>(new double[buffsize]);
         mat = unique_ptr<double[]>(new double[matsize]);
-        dft.SetOutputBuffer(outbuf.get(), buffsize);
 
-        while((n = dft.GetBatch_Qoo()))
+        while((n = dft2.GetQBatch_Qoo(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nocc*nocc, mat.get() + curq*nocc*nocc);
             curq += n;
         }
-
         ret += TestMatrix("QOO", qoo_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        dft.ResetBatches();
-
-        std::fill(mat.get(), mat.get()+matsize, 99);
-        dft2.GetQBatch_Qoo(mat.get(), matsize, 0);
-        ret += TestMatrix("QOO2", qoo_filename,
                           mat.get(), matsize,
                           QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
                           verbose);
@@ -709,36 +667,23 @@ int main(int argc, char ** argv)
 
         if(batchsize)
             buffsize = batchsize * nvir*nvir;
+        else
+            buffsize = matsize;
 
         outbuf = unique_ptr<double[]>(new double[buffsize]);
         mat = unique_ptr<double[]>(new double[matsize]);
-        dft.SetOutputBuffer(outbuf.get(), buffsize);
 
-        while((n = dft.GetBatch_Qvv()))
+        while((n = dft2.GetQBatch_Qvv(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nvir*nvir, mat.get() + curq*nvir*nvir);
             curq += n;
         }
-
         ret += TestMatrix("QVV", qvv_filename,
                           mat.get(), matsize,
                           QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
                           verbose);
 
-        dft.ResetBatches();
-
-        std::fill(mat.get(), mat.get()+matsize, 99);
-        dft2.GetQBatch_Qvv(mat.get(), matsize, 0);
-        ret += TestMatrix("QVV2", qvv_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
         curq = 0;
-
-
-
-
 
 
 
