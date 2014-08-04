@@ -64,6 +64,7 @@ DFTensor2::DFTensor2(SharedBasisSet primary,
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
     naux_ = auxiliary_->nbf();
+    nsotri_ = (nso_*(nso_+1))/2;
 }
 
 
@@ -92,14 +93,12 @@ void DFTensor2::GenQso(QStorage storetype)
     if(qso_)
         return; // already created!
 
-
-#ifdef PANACHE_TIMING
-    timer_genqso.Reset();
-    timer_genqso.Start();
-#endif
-
     qso_ = StoredQTensorFactory(naux_, nso_, nso_, true, true, storetype, "qso");
     qso_->Init();
+
+#ifdef PANACHE_TIMING
+    qso_->GenTimer().Start();
+#endif
 
     int maxpershell = primary_->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
@@ -124,16 +123,16 @@ void DFTensor2::GenQso(QStorage storetype)
     }
 
 
-    #ifdef _OPENMP
-        #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
-    #endif
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads_)
+#endif
     for (int M = 0; M < primary_->nshell(); M++)
     {
         int threadnum = 0;
 
-        #ifdef _OPENMP
+#ifdef _OPENMP
         threadnum = omp_get_thread_num();
-        #endif
+#endif
 
         int nm = primary_->shell(M).nfunction();
         int mstart = primary_->shell(M).function_index();
@@ -176,9 +175,9 @@ void DFTensor2::GenQso(QStorage storetype)
 
 
             // write to disk or store in memory
-           for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-               for (int n0 = 0, n = nstart; n < nend; n0++, n++)
-                   qso_->Write(A[threadnum] + (m0*nn+n0)*naux_, m, n);
+            for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                for (int n0 = 0, n = nstart; n < nend; n0++, n++)
+                    qso_->Write(A[threadnum] + (m0*nn+n0)*naux_, m, n);
         }
 
         // Special Case: N = M
@@ -220,6 +219,10 @@ void DFTensor2::GenQso(QStorage storetype)
         delete [] A[i];
         delete [] B[i];
     }
+
+#ifdef PANACHE_TIMING
+    qso_->GenTimer().Stop();
+#endif
 
 }
 
@@ -274,12 +277,20 @@ void DFTensor2::TransformQTensor(double * left, int lncols,
                                  int q,
                                  double * qso, double * qc, double * cqc)
 {
+#ifdef PANACHE_TIMING
+    qout->GenTimer().Start();
+#endif
     // transform
+
     C_DGEMM('T', 'N', lncols, nso_, nso_, 1.0, left, lncols, qso, nso_, 0.0, qc, nso_);
     C_DGEMM('N', 'N', lncols, rncols, nso_, 1.0, qc, nso_, right, rncols, 0.0, cqc, rncols);
 
     // Write to memory or disk
     qout->WriteByQ(cqc, 1, q);
+
+#ifdef PANACHE_TIMING
+    qout->GenTimer().Stop();
+#endif
 }
 
 
@@ -290,12 +301,17 @@ void DFTensor2::TransformQTensor(double * left, int lncols,
 // 4      Qvv
 void DFTensor2::GenQTensors(int qflags, QStorage storetype)
 {
+#ifdef PANACHE_TIMING
+    timer_genqtensors_.Start();
+#endif
+
     // temporary space
     // note that nmo, occupied, etc, are all <= nso
     // so this is the max space that would be needed
-    double * buf = new double[nso2_*nthreads_];
-    double * qc = new double[nso2_*nthreads_];
-    double * cqc = new double[nso2_*nthreads_];
+    double * qp = new double[nsotri_*nthreads_];   // packed q
+    double * qe = new double[nso2_*nthreads_];   // expanded q
+    double * qc = new double[nso2_*nthreads_];     // C(t) Q
+    double * cqc = new double[nso2_*nthreads_];    // C(t) Q C
 
     GenQso(storetype);
 
@@ -330,107 +346,101 @@ void DFTensor2::GenQTensors(int qflags, QStorage storetype)
         qvv_->Init();
     }
 
-  
-    // Read in Qso, and create any requested tensors 
-    #ifdef _OPENMP
-        #pragma omp parallel for num_threads(nthreads_)
-    #endif
+
+    // Read in Qso, and create any requested tensors
+#ifdef _OPENMP
+    #pragma omp parallel for num_threads(nthreads_)
+#endif
     for(int q = 0; q < naux_; q++)
     {
         int threadnum = 0;
 
-        #ifdef _OPENMP
+#ifdef _OPENMP
         threadnum = omp_get_thread_num();
-        #endif
+#endif
 
-        double * myqso = buf + threadnum*nso2_;
+        double * myqp = qp + threadnum*nsotri_;
+        double * myqe = qe + threadnum*nso2_;
         double * myqc = qc + threadnum*nso2_;
         double * mycqc = cqc + threadnum*nso2_;
 
-        qso_->ReadByQ(myqso, 1, q);
+        qso_->ReadByQ(myqp, 1, q);
+
+        // expand packed matrix
+        int index = 0;
+        for(int i = 0; i < nso_; i++)
+            for(int j = 0; j <= i; j++)
+                myqe[i*nso_+j] = myqe[j*nso_+i] = myqp[index++];
 
 
         if(qflags & (1 << 0))
-            TransformQTensor(Cmo_.get(), nmo_, Cmo_.get(), nmo_, qmo_, q, myqso, myqc, mycqc);
+            TransformQTensor(Cmo_.get(), nmo_, Cmo_.get(), nmo_, qmo_, q, myqe, myqc, mycqc);
         if(qflags & (1 << 1))
-            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_occ_.get(), nocc_, qoo_, q, myqso, myqc, mycqc);
+            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_occ_.get(), nocc_, qoo_, q, myqe, myqc, mycqc);
         if(qflags & (1 << 2))
-            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_vir_.get(), nvir_, qov_, q, myqso, myqc, mycqc);
+            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_vir_.get(), nvir_, qov_, q, myqe, myqc, mycqc);
         if(qflags & (1 << 3))
-            TransformQTensor(Cmo_vir_.get(), nvir_, Cmo_vir_.get(), nvir_, qvv_, q, myqso, myqc, mycqc);
+            TransformQTensor(Cmo_vir_.get(), nvir_, Cmo_vir_.get(), nvir_, qvv_, q, myqe, myqc, mycqc);
     }
 
 
-    delete [] buf;
+    delete [] qp;
+    delete [] qe;
     delete [] qc;
     delete [] cqc;
+
+#ifdef PANACHE_TIMING
+    timer_genqtensors_.Stop();
+#endif
 }
 
 
-
-int DFTensor2::GetBatch_Qso(double * outbuf, int bufsize, int qstart)
+int DFTensor2::GetBatchByQ_Base(double * outbuf, int bufsize, int qstart,
+                                StoredQTensor * qt)
 {
-    if(bufsize < nso2_)
+#ifdef PANACHE_TIMING
+    qt->GetBatchByQTimer().Start();
+#endif
+
+    int nq = (bufsize / qt->ndim12());
+
+    if(nq == 0)
         throw RuntimeError("Error - buffer is to small to hold even one row!");
 
-    int nq = (bufsize / nso2_);
-
     // get a batch
-    int gotten = qso_->ReadByQ(outbuf, nq, qstart);
+    int gotten = qt->ReadByQ(outbuf, nq, qstart);
+
+#ifdef PANACHE_TIMING
+    qt->GetBatchByQTimer().Stop();
+#endif
 
     return gotten;
 }
 
-int DFTensor2::GetBatch_Qmo(double * outbuf, int bufsize, int qstart)
+
+int DFTensor2::GetBatchByQ_Qso(double * outbuf, int bufsize, int qstart)
 {
-    if(bufsize < nmo2_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-    int nq = (bufsize / nmo2_);
-
-    // get a batch
-    int gotten = qmo_->ReadByQ(outbuf, nq, qstart);
-
-    return gotten;
+    return GetBatchByQ_Base(outbuf, bufsize, qstart, qso_.get());
 }
 
-int DFTensor2::GetBatch_Qoo(double * outbuf, int bufsize, int qstart)
+int DFTensor2::GetBatchByQ_Qmo(double * outbuf, int bufsize, int qstart)
 {
-    if(bufsize < nocc_*nocc_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-    int nq = (bufsize / (nocc_*nocc_));
-
-    // get a batch
-    int gotten = qoo_->ReadByQ(outbuf, nq, qstart);
-
-    return gotten;
+    return GetBatchByQ_Base(outbuf, bufsize, qstart, qmo_.get());
 }
 
-int DFTensor2::GetBatch_Qov(double * outbuf, int bufsize, int qstart)
+int DFTensor2::GetBatchByQ_Qoo(double * outbuf, int bufsize, int qstart)
 {
-    if(bufsize < nocc_*nvir_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
-
-    int nq = (bufsize / (nocc_*nvir_));
-
-    // get a batch
-    int gotten = qov_->ReadByQ(outbuf, nq, qstart);
-
-    return gotten;
+    return GetBatchByQ_Base(outbuf, bufsize, qstart, qoo_.get());
 }
 
-int DFTensor2::GetBatch_Qvv(double * outbuf, int bufsize, int qstart)
+int DFTensor2::GetBatchByQ_Qov(double * outbuf, int bufsize, int qstart)
 {
-    if(bufsize < nvir_*nvir_)
-        throw RuntimeError("Error - buffer is to small to hold even one row!");
+    return GetBatchByQ_Base(outbuf, bufsize, qstart, qov_.get());
+}
 
-    int nq = (bufsize / (nvir_*nvir_));
-
-    // get a batch
-    int gotten = qvv_->ReadByQ(outbuf, nq, qstart);
-
-    return gotten;
+int DFTensor2::GetBatchByQ_Qvv(double * outbuf, int bufsize, int qstart)
+{
+    return GetBatchByQ_Base(outbuf, bufsize, qstart, qvv_.get());
 }
 
 
@@ -562,7 +572,39 @@ void DFTensor2::SetNOcc(int nocc, int nfroz)
     SplitCMat();
 }
 
-} // close namespace panache
 
+void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
+{
+    if(q)
+        output::printf("%-6s  %17d  %17d  %17d\n", name, 
+                        q->GenTimer().Microseconds(),
+                        q->GetBatchTimer().Microseconds(),
+                        q->GetBatchByQTimer().Microseconds());
+    else
+        output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
+}
+
+void DFTensor2::PrintTimings(void) const
+{
+    #ifdef PANACHE_TIMING
+
+    output::printf("\n\n  ==> LibPANACHE DF Tensor Timings <==\n\n");
+    output::printf("*All timings in microseconds*\n");
+    output::printf(std::string(80, '-').c_str());
+    output::printf("\n");
+    output::printf("%-6s  %17s  %17s  %17s\n", "Tensor", "Generation", "GetBatch", "GetBatchByQ");
+    PrintTimer("QSO", qso_);
+    PrintTimer("QMO", qmo_);
+    PrintTimer("QOO", qoo_);
+    PrintTimer("QOV", qov_);
+    PrintTimer("QVV", qvv_);
+    output::printf(std::string(80, '-').c_str());
+    output::printf("\n\n");
+
+    #endif
+}
+
+
+} // close namespace panache
 
 

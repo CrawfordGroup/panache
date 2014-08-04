@@ -132,13 +132,17 @@ public:
     int SetNThread(int nthread);
 
 
-    int GetBatch_Qso(double * outbuf, int bufsize, int qstart);
-    int GetBatch_Qmo(double * outbuf, int bufsize, int qstart);
-    int GetBatch_Qoo(double * outbuf, int bufsize, int qstart);
-    int GetBatch_Qov(double * outbuf, int bufsize, int qstart);
-    int GetBatch_Qvv(double * outbuf, int bufsize, int qstart);
+    int GetBatchByQ_Qso(double * outbuf, int bufsize, int qstart);
+    int GetBatchByQ_Qmo(double * outbuf, int bufsize, int qstart);
+    int GetBatchByQ_Qoo(double * outbuf, int bufsize, int qstart);
+    int GetBatchByQ_Qov(double * outbuf, int bufsize, int qstart);
+    int GetBatchByQ_Qvv(double * outbuf, int bufsize, int qstart);
 
     void GenQTensors(int qflags, QStorage storetype);
+
+
+
+    void PrintTimings(void) const;
 
 
 private:
@@ -177,6 +181,7 @@ private:
     int nocc_; //!< Number of occupied orbitals
     int nfroz_; //!< Number of frozen orbitals
     int nvir_; //!< Number of virtual orbitals
+    int nsotri_; //!< Packed nso*nso symmetric matrix
 
     /*!
      * \brief Splits the C matrix into occupied and virtual matrices
@@ -209,7 +214,9 @@ private:
         bool packed_;
         bool byq_;
         QStorage storetype_;
-
+        Timer gen_timer_;
+        Timer getbatch_timer_;
+        Timer getbatchbyq_timer_;
 
     protected:
         virtual void Init_(void) = 0;
@@ -220,10 +227,6 @@ private:
         virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
         virtual void Clear_() = 0;
 
-        int naux(void) const;
-        int ndim1(void) const;
-        int ndim2(void) const;
-        int ndim12(void) const;
         int storesize(void) const;
         int packed(void) const;
         int byq(void) const;
@@ -241,6 +244,14 @@ private:
         void Clear(void);
         void Init(void);
 
+        Timer & GenTimer(void);
+        Timer & GetBatchTimer(void);
+        Timer & GetBatchByQTimer(void);
+
+        int naux(void) const;
+        int ndim1(void) const;
+        int ndim2(void) const;
+        int ndim12(void) const;
     };
 
 
@@ -316,14 +327,7 @@ private:
 
     /*! \name Timing */
     ///@{
-    Timer timer_genqso;        //!< Total time spent in GenQso()
-    /*
-    Timer timer_getbatch_qso;  //!< Total time spent in GetBatch_Qso()
-    Timer timer_getbatch_qmo;  //!< Total time spent in GetBatch_Qmo()
-    Timer timer_getbatch_qoo;  //!< Total time spent in GetBatch_Qoo()
-    Timer timer_getbatch_qvv;  //!< Total time spent in GetBatch_Qvv()
-    Timer timer_getbatch_qov;  //!< Total time spent in GetBatch_Qov()
-    */
+    Timer timer_genqtensors_;   //!< Total time spent in GenQTensors()
     ///@}
 
 
@@ -348,6 +352,11 @@ private:
      */
     void GenQso(QStorage storetype);
 
+
+    int GetBatchByQ_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
+
+    // helper
+    void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
 
 };
 

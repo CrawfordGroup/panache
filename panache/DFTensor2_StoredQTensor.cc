@@ -113,6 +113,20 @@ void DFTensor2::StoredQTensor::Init(void)
 }
 
 
+Timer & DFTensor2::StoredQTensor::GenTimer(void)
+{
+    return gen_timer_; 
+}
+
+Timer & DFTensor2::StoredQTensor::GetBatchByQTimer(void)
+{
+    return getbatchbyq_timer_;
+}
+
+Timer & DFTensor2::StoredQTensor::GetBatchTimer(void)
+{
+    return getbatch_timer_;
+}
 
 
 //////////////////////////////
@@ -187,7 +201,6 @@ void DFTensor2::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
         {
             for(int q = 0; q < nq; q++)
             {
-    
                 for(int ij = 0; ij < ndim12(); ij++)
                 {
                     file_->seekp(sizeof(double)*(ij*naux()+qstart+q), std::ios_base::beg);
@@ -209,13 +222,13 @@ void DFTensor2::DiskQTensor::Read_(double * data, int ij)
         {
             for(int q = 0; q < naux(); q++)
             {
-                file_->seekp(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
+                file_->seekg(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
                 file_->read(reinterpret_cast<char *>(data+q), sizeof(double));
             }
         }
         else
         {
-            file_->seekp(sizeof(double)*(ij*naux()), std::ios_base::beg);
+            file_->seekg(sizeof(double)*(ij*naux()), std::ios_base::beg);
             file_->read(reinterpret_cast<char *>(data), sizeof(double)*naux());
         }
     }
@@ -227,51 +240,19 @@ void DFTensor2::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
     #pragma omp critical
     #endif
     {
-        if(packed())
+        if(byq())
         {
-            if(byq())
-            {
-                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                for(int n = 0; n <= m; n++)
-                {
-                    file_->seekp(sizeof(double)*(q*ndim12()) + calcindex(m,n), std::ios_base::beg);
-                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2() + n), sizeof(double));
-                    data[q0*ndim1()*ndim2() + n*ndim1() + m] = data[q0*ndim1()*ndim2() + m*ndim2() + n];
-                }
-            }
-            else
-            {
-                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                for(int n = 0; n <= m; n++)
-                {
-                    file_->seekp(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
-                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
-    
-                    // do the transpose
-                    data[q0*ndim1()*ndim2() + n*ndim1() + m] =
-                    data[q0*ndim1()*ndim2() + m*ndim2() + n];
-                }
-    
-            }
+            file_->seekg(sizeof(double)*(qstart*ndim12()), std::ios_base::beg);
+            file_->read(reinterpret_cast<char *>(data), sizeof(double)*nq*ndim12());
         }
         else
         {
-            if(byq())
+            for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+            for(int m = 0; m < ndim1(); m++)
+            for(int n = 0; n < ndim2(); n++)
             {
-                file_->seekp(sizeof(double)*(qstart*ndim12()), std::ios_base::beg);
-                file_->read(reinterpret_cast<char *>(data), sizeof(double)*nq*ndim12());
-            }
-            else
-            {
-                for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-                for(int m = 0; m < ndim1(); m++)
-                for(int n = 0; n < ndim2(); n++)
-                {
-                    file_->seekp(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
-                    file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
-                }
+                file_->seekg(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
+                file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
             }
         }
     }
@@ -310,9 +291,7 @@ void DFTensor2::MemoryQTensor::Write_(double * data, int ij)
     if(byq())
     {
         for(int q = 0; q < naux(); q++)
-        {
             data_[q*ndim12()+ij] = data[q];
-        }
     }
     else
     {
@@ -356,42 +335,18 @@ void DFTensor2::MemoryQTensor::Read_(double * data, int ij)
 
 void DFTensor2::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
-    if(packed())
+    if(byq())
     {
-        if(byq())
-        {
-            for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-            for(int m = 0; m < ndim1(); m++)
-            for(int n = 0; n <= m; n++)
-                data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                    = data[q0*ndim1()*ndim2() + n*ndim1() + m]
-                    = data_[q*ndim12()+calcindex(m,n)];
-        }
-        else
-        {
-            for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-            for(int m = 0; m < ndim1(); m++)
-            for(int n = 0; n <= m; n++)
-                data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                    = data[q0*ndim1()*ndim2() + n*ndim1() + m]
-                    = data_[calcindex(m,n)*naux() + q];
-        }
+        double * start = data_.get()+qstart*ndim12();
+        std::copy(start, start+nq*ndim12(), data);
     }
     else
     {
-        if(byq())
-        {
-            double * start = data_.get()+qstart*ndim12();
-            std::copy(start, start+nq*ndim12(), data);
-        }
-        else
-        {
-            for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
-            for(int m = 0; m < ndim1(); m++)
-            for(int n = 0; n < ndim2(); n++)
-                data[q0*ndim1()*ndim2() + m*ndim2() + n]
-                    = data_[calcindex(m,n)*naux() + q];
-        }
+        for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
+        for(int m = 0; m < ndim1(); m++)
+        for(int n = 0; n < ndim2(); n++)
+            data[q0*ndim1()*ndim2() + m*ndim2() + n]
+                = data_[calcindex(m,n)*naux() + q];
     }
 }
 
