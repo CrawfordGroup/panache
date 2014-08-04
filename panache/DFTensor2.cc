@@ -632,7 +632,7 @@ void DFTensor2::SetNOcc(int nocc, int nfroz)
 void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
 {
     if(q)
-        output::printf("%-6s  %17d (%7d)  %17d (%7d)  %17d (%7d)\n", name, 
+        output::printf("%-6s  %17lu (%7lu)  %17lu (%7lu)  %17lu (%7lu)\n", name, 
                         q->GenTimer().Microseconds(),
                         q->GenTimer().TimesCalled(),
                         q->GetBatchTimer().Microseconds(),
