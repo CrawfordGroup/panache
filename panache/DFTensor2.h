@@ -138,6 +138,14 @@ public:
     int GetQBatch_Qov(double * outbuf, int bufsize, int qstart);
     int GetQBatch_Qvv(double * outbuf, int bufsize, int qstart);
 
+
+    int GetBatch_Qso(double * outbuf, int bufsize, int ijstart);
+    int GetBatch_Qmo(double * outbuf, int bufsize, int ijstart);
+    int GetBatch_Qoo(double * outbuf, int bufsize, int ijstart);
+    int GetBatch_Qov(double * outbuf, int bufsize, int ijstart);
+    int GetBatch_Qvv(double * outbuf, int bufsize, int ijstart);
+
+
     void GenQTensors(int qflags, QStorage storetype);
 
 
@@ -206,52 +214,52 @@ private:
 
     class StoredQTensor
     {
-            private:
-                    int naux_;
-                    int ndim1_;
-                    int ndim2_;
-                    int ndim12_;
-                    bool packed_;
-                    bool byq_;
-                    QStorage storetype_;
-                    Timer gen_timer_;
-                    Timer getijbatch_timer_;
-                    Timer getqbatch_timer_;
+    private:
+        int naux_;
+        int ndim1_;
+        int ndim2_;
+        int ndim12_;
+        bool packed_;
+        bool byq_;
+        QStorage storetype_;
+        Timer gen_timer_;
+        Timer getijbatch_timer_;
+        Timer getqbatch_timer_;
 
-            protected:
-                    virtual void Init_(void) = 0;
-                    virtual void Reset_(void) = 0;
-                    virtual void Write_(double * data, int ij) = 0;
-                    virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
-                    virtual void Read_(double * data, int ij) = 0;
-                    virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
-                    virtual void Clear_() = 0;
+    protected:
+        virtual void Init_(void) = 0;
+        virtual void Reset_(void) = 0;
+        virtual void Write_(double * data, int nij, int ijstart) = 0;
+        virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
+        virtual void Read_(double * data, int nij, int ijstart) = 0;
+        virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
+        virtual void Clear_() = 0;
 
-                    int storesize(void) const;
-                    int packed(void) const;
-                    int byq(void) const;
-                    int calcindex(int i, int j) const;
+        int storesize(void) const;
+        int byq(void) const;
 
-            public:
-                    StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
-                    virtual ~StoredQTensor();
-                    QStorage StoreType(void) const;
-                    void Write(double * data, int i, int j);
-                    void WriteByQ(double * data, int nq, int qstart);
-                    void Read(double * data, int i, int j);
-                    int ReadByQ(double * data, int nq, int qstart);
-                    void Reset(void);
-                    void Clear(void);
-                    void Init(void);
+    public:
+        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
+        virtual ~StoredQTensor();
+        QStorage StoreType(void) const;
+        void Write(double * data, int nij, int ijstart);
+        void WriteByQ(double * data, int nq, int qstart);
+        void Read(double * data, int nij, int ijstart);
+        int ReadByQ(double * data, int nq, int qstart);
+        void Reset(void);
+        void Clear(void);
+        void Init(void);
 
-                    Timer & GenTimer(void);
-                    Timer & GetIJBatchTimer(void);
-                    Timer & GetQBatchTimer(void);
+        Timer & GenTimer(void);
+        Timer & GetIJBatchTimer(void);
+        Timer & GetQBatchTimer(void);
 
         int naux(void) const;
         int ndim1(void) const;
         int ndim2(void) const;
         int ndim12(void) const;
+        int packed(void) const;
+        int calcindex(int i, int j) const;
     };
 
 
@@ -266,9 +274,9 @@ private:
 
     protected:
         virtual void Reset_(void);
-        virtual void Write_(double * data, int ij);
+        virtual void Write_(double * data, int nij, int ijstart);
         virtual void WriteByQ_(double * data, int nq, int qstart);
-        virtual void Read_(double * data, int ij);
+        virtual void Read_(double * data, int nij, int ijstart);
         virtual void ReadByQ_(double * data, int nq, int qstart);
         virtual void Clear_(void);
         virtual void Init_(void);
@@ -286,9 +294,9 @@ private:
 
     protected:
         virtual void Reset_(void);
-        virtual void Write_(double * data, int ij);
+        virtual void Write_(double * data, int nij, int ijstart);
         virtual void WriteByQ_(double * data, int nq, int qstart);
-        virtual void Read_(double * data, int ij);
+        virtual void Read_(double * data, int nij, int ijstart);
         virtual void ReadByQ_(double * data, int nq, int qstart);
         virtual void Clear_(void);
         virtual void Init_(void);

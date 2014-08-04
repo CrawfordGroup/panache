@@ -142,7 +142,7 @@ void DFTensor2::GenQso(QStorage storetype)
         {
             int nn = primary_->shell(N).nfunction();
             int nstart = primary_->shell(N).function_index();
-            int nend = nstart + nn;
+            //int nend = nstart + nn;
 
             for (int P = 0; P < auxiliary_->nshell(); P++)
             {
@@ -176,8 +176,7 @@ void DFTensor2::GenQso(QStorage storetype)
 
             // write to disk or store in memory
             for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                for (int n0 = 0, n = nstart; n < nend; n0++, n++)
-                    qso_->Write(A[threadnum] + (m0*nn+n0)*naux_, m, n);
+                    qso_->Write(A[threadnum] + (m0*nn)*naux_, nn, qso_->calcindex(m, nstart));
         }
 
         // Special Case: N = M
@@ -208,10 +207,16 @@ void DFTensor2::GenQso(QStorage storetype)
 
 
         // write to disk or store in memory
+        /*
         for (int m0 = 0, m = mstart; m < mend; m0++, m++)
             for (int n0 = 0, n = mstart; n < mend; n0++, n++)
                 if(m <= n)
-                    qso_->Write(A[threadnum] + (m0*nm+n0)*naux_, m, n);
+                    qso_->Write(A[threadnum] + (m0*nm+n0)*naux_, 1, qso_->calcindex(m, n));
+        */
+        int iwrite = 1;
+        for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+            qso_->Write(A[threadnum] + (m0*nm)*naux_, iwrite++, qso_->calcindex(m, mstart));
+
     }
 
     for(int i = 0; i < nthreads_; i++)

@@ -73,9 +73,9 @@ DFTensor2::QStorage DFTensor2::StoredQTensor::StoreType(void) const
     return storetype_;
 }
 
-void DFTensor2::StoredQTensor::Write(double * data, int i, int j)
+void DFTensor2::StoredQTensor::Write(double * data, int nij, int ijstart)
 {
-    Write_(data, calcindex(i,j));
+    Write_(data, nij, ijstart);
 }
 
 void DFTensor2::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
@@ -83,9 +83,9 @@ void DFTensor2::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
     WriteByQ_(data, nq, qstart);
 }
 
-void DFTensor2::StoredQTensor::Read(double * data, int i, int j)
+void DFTensor2::StoredQTensor::Read(double * data, int nij, int ijstart)
 {
-    Read_(data, calcindex(i,j));
+    Read_(data, nij, ijstart);
 }
 
 int DFTensor2::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
@@ -164,7 +164,7 @@ void DFTensor2::DiskQTensor::Reset_(void)
     file_->seekp(0);
 }
 
-void DFTensor2::DiskQTensor::Write_(double * data, int ij)
+void DFTensor2::DiskQTensor::Write_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -174,14 +174,16 @@ void DFTensor2::DiskQTensor::Write_(double * data, int ij)
         {
             for(int q = 0; q < naux(); q++)
             {
-                file_->seekp(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
-                file_->write(reinterpret_cast<const char *>(data+q), sizeof(double));
+                file_->seekp(sizeof(double)*(q*ndim12()+ijstart), std::ios_base::beg);
+
+                for(int ij = 0; ij < nij; ij++)
+                    file_->write(reinterpret_cast<const char *>(data+ij*naux()+q), sizeof(double));
             }
         }
         else
         {
-            file_->seekp(sizeof(double)*(ij * naux()), std::ios_base::beg);
-            file_->write(reinterpret_cast<const char *>(data), naux()*sizeof(double));
+            file_->seekp(sizeof(double)*(ijstart * naux()), std::ios_base::beg);
+            file_->write(reinterpret_cast<const char *>(data), nij*naux()*sizeof(double));
         }
     }
 }
@@ -211,25 +213,26 @@ void DFTensor2::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::DiskQTensor::Read_(double * data, int ij)
+void DFTensor2::DiskQTensor::Read_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
     #endif
     {
-        // index ij is given by calling function and takes into account packing
         if(byq())
         {
             for(int q = 0; q < naux(); q++)
             {
-                file_->seekg(sizeof(double)*(q*ndim12()+ij), std::ios_base::beg);
-                file_->read(reinterpret_cast<char *>(data+q), sizeof(double));
+                file_->seekg(sizeof(double)*(q*ndim12()+ijstart), std::ios_base::beg);
+
+                for(int ij = 0; ij < nij; ij++)
+                    file_->read(reinterpret_cast<char *>(data+ij*naux()+q), sizeof(double));
             }
         }
         else
         {
-            file_->seekg(sizeof(double)*(ij*naux()), std::ios_base::beg);
-            file_->read(reinterpret_cast<char *>(data), sizeof(double)*naux());
+            file_->seekg(sizeof(double)*(ijstart*naux()), std::ios_base::beg);
+            file_->read(reinterpret_cast<char *>(data), sizeof(double)*nij*naux());
         }
     }
 }
@@ -286,16 +289,17 @@ void DFTensor2::MemoryQTensor::Reset_(void)
     // nothing needed
 }
 
-void DFTensor2::MemoryQTensor::Write_(double * data, int ij)
+void DFTensor2::MemoryQTensor::Write_(double * data, int nij, int ijstart)
 {
     if(byq())
     {
         for(int q = 0; q < naux(); q++)
-            data_[q*ndim12()+ij] = data[q];
+        for(int ij = 0; ij < nij; ij++)
+            data_[q*ndim12()+ijstart+ij] = data[ij*naux()+q];
     }
     else
     {
-        double * start = data_.get() + ij * naux();
+        double * start = data_.get() + ijstart * naux();
         std::copy(data, data+naux(), start);
     }
 }
@@ -318,17 +322,18 @@ void DFTensor2::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::MemoryQTensor::Read_(double * data, int ij)
+void DFTensor2::MemoryQTensor::Read_(double * data, int nij, int ijstart)
 {
     // index ij is given by calling function and takes into account packing
     if(byq())
     {
         for(int q = 0; q < naux(); q++)
-            data[q] = data_[q*ndim12()+ij];
+        for(int ij = 0; ij < nij; ij++)
+            data[ij*naux()+q] = data_[q*ndim12()+ijstart+ij];
     }
     else
     {
-        double * start = data_.get() + ij * naux();
+        double * start = data_.get() + ijstart * naux();
         std::copy(start, start+naux(), data);
     }
 }
