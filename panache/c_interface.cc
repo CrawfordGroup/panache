@@ -197,6 +197,39 @@ extern "C" {
         return dftensors_[df_handle]->GetQBatch_Qvv(outbuf, bufsize, qstart);
     }
 
+    ////////////////////
+    // GetBatch
+    ////////////////////
+    int_t panache_getbatch_qso(int_t df_handle, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch_Qso(outbuf, bufsize, ijstart);
+    }
+
+    int_t panache_getbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch_Qmo(outbuf, bufsize, ijstart);
+    }
+
+    int_t panache_getbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch_Qoo(outbuf, bufsize, ijstart);
+    }
+
+    int_t panache_getbatch_qov(int_t df_handle, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch_Qov(outbuf, bufsize, ijstart);
+    }
+
+    int_t panache_getbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch_Qvv(outbuf, bufsize, ijstart);
+    }
+
 
 
 }
