@@ -4,7 +4,6 @@ add_library(panache
             BasisSet.cc
             BasisSetParser.cc
             CartesianIter.cc
-            DFTensor.cc
             DFTensor2.cc
             DFTensor2_StoredQTensor.cc
             FittingMetric.cc
