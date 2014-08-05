@@ -7,10 +7,10 @@
 #define PANACHE_DFTENSOR2_H
 
 #include <fstream>
+#include <future>
 
 #include "panache/Timing.h"
-
-#include <future>
+#include "panache/Flags.h"
 
 
 namespace panache
@@ -29,21 +29,6 @@ class Orderings;
 class DFTensor2
 {
 public:
-    enum class BSOrder
-    {
-        Psi4,
-        GAMESS
-    };
-
-    enum class QStorage
-    {
-        INMEM,
-        ONDISK,
-        ONFLY
-    };
-
-
-
     DFTensor2 & operator=(const DFTensor2 & other) = delete;
     DFTensor2(const DFTensor2 & other) = delete;
 
@@ -101,7 +86,7 @@ public:
      *                          is in column-major order.
      * \param [in] order Ordering of the basis functions
      */
-    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans, BSOrder order = BSOrder::Psi4);
+    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans, int order = BSORDER_PSI4);
 
 
 
@@ -110,6 +95,8 @@ public:
      *
      * Number of virtual orbitals is taken to be the remainder after the occupied.
      * Used by Qov, etc.
+     *
+     * The number of frozen orbitals should be counted in \p nocc as well.
      *
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
@@ -146,7 +133,7 @@ public:
     int GetBatch_Qvv(double * outbuf, int bufsize, int ijstart);
 
 
-    void GenQTensors(int qflags, QStorage storetype);
+    void GenQTensors(int qflags, int storetype);
 
 
 
@@ -221,7 +208,7 @@ private:
         int ndim12_;
         bool packed_;
         bool byq_;
-        QStorage storetype_;
+        int storetype_;
         Timer gen_timer_;
         Timer getijbatch_timer_;
         Timer getqbatch_timer_;
@@ -239,9 +226,9 @@ private:
         int byq(void) const;
 
     public:
-        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype);
+        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype);
         virtual ~StoredQTensor();
-        QStorage StoreType(void) const;
+        int StoreType(void) const;
         void Write(double * data, int nij, int ijstart);
         void WriteByQ(double * data, int nq, int qstart);
         int Read(double * data, int nij, int ijstart);
@@ -308,7 +295,9 @@ private:
 
 
     std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
-                                                        bool packed, bool byq, QStorage storetype, const std::string & name);
+                                                        bool packed, bool byq, int storetype,
+                                                        const std::string & name);
+
     std::unique_ptr<StoredQTensor> qso_;
     std::unique_ptr<StoredQTensor> qmo_;
     std::unique_ptr<StoredQTensor> qoo_;
@@ -358,7 +347,7 @@ private:
      *
      * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
      */
-    void GenQso(QStorage storetype);
+    void GenQso(int storetype);
 
 
     int GetQBatch_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);

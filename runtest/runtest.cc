@@ -529,9 +529,9 @@ int main(int argc, char ** argv)
         dft2.SetNOcc(nocc);
 
         if(inmem)
-            dft2.GenQTensors(15, DFTensor2::QStorage::INMEM);
+            dft2.GenQTensors(15, QSTORAGE_INMEM);
         else
-            dft2.GenQTensors(15, DFTensor2::QStorage::ONDISK);
+            dft2.GenQTensors(15, QSTORAGE_ONDISK);
 
 
         size_t matsize = dft2.QsoDimensions(naux, nso2);

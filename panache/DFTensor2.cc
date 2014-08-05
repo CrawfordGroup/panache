@@ -88,7 +88,7 @@ DFTensor2::~DFTensor2()
 {
 }
 
-void DFTensor2::GenQso(QStorage storetype)
+void DFTensor2::GenQso(int storetype)
 {
     if(qso_)
         return; // already created!
@@ -239,7 +239,7 @@ int DFTensor2::QsoDimensions(int & naux, int & nso2)
 }
 
 void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
-                           BSOrder order)
+                           int order)
 {
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
@@ -255,11 +255,11 @@ void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
     else
         std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get());
 
-    if(order != BSOrder::Psi4)
+    if(order != BSORDER_PSI4)
     {
         reorder::Orderings * ord;
 
-        if (order == BSOrder::GAMESS)
+        if (order == BSORDER_GAMESS)
             ord = new reorder::GAMESS_Ordering();
         else
             throw RuntimeError("Unknown ordering!");
@@ -304,7 +304,7 @@ void DFTensor2::TransformQTensor(double * left, int lncols,
 // 2      Qoo
 // 3      Qov
 // 4      Qvv
-void DFTensor2::GenQTensors(int qflags, QStorage storetype)
+void DFTensor2::GenQTensors(int qflags, int storetype)
 {
 #ifdef PANACHE_TIMING
     timer_genqtensors_.Start();
@@ -326,25 +326,25 @@ void DFTensor2::GenQTensors(int qflags, QStorage storetype)
     if(!Cmo_)
         throw RuntimeError("Set the c-matrix first!");
 
-    if(qflags & (1 << 0))
+    if(qflags & QFLAGS_QMO)
     {
         // generate Qmo
         qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, false, false, storetype, "qmo");
         qmo_->Init();
     }
-    if(qflags & (1 << 1))
+    if(qflags & QFLAGS_QOO)
     {
         // generate Qoo
         qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, false, false, storetype, "qoo");
         qoo_->Init();
     }
-    if(qflags & (1 << 2))
+    if(qflags & QFLAGS_QOV)
     {
         // generate Qov
         qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, false, false, storetype, "qov");
         qov_->Init();
     }
-    if(qflags & (1 << 3))
+    if(qflags & QFLAGS_QVV)
     {
         // generate Qvv
         qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, false, false, storetype, "qvv");

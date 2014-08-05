@@ -49,7 +49,7 @@ int DFTensor2::StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-DFTensor2::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, QStorage storetype)
+DFTensor2::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype)
 {
     naux_ = naux;
     ndim1_ = ndim1;
@@ -68,7 +68,7 @@ DFTensor2::StoredQTensor::~StoredQTensor()
 {
 }
 
-DFTensor2::QStorage DFTensor2::StoredQTensor::StoreType(void) const
+int DFTensor2::StoredQTensor::StoreType(void) const
 {
     return storetype_;
 }
@@ -278,7 +278,7 @@ void DFTensor2::DiskQTensor::Init_(void)
 
 
 DFTensor2::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename)
-            : StoredQTensor(naux, ndim1, ndim2, packed, byq, QStorage::ONDISK)
+            : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_ONDISK)
 {
     filename_ = filename;
 }
@@ -371,7 +371,7 @@ void DFTensor2::MemoryQTensor::Init_(void)
 }
 
 DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq)
-    : StoredQTensor(naux, ndim1, ndim2, packed, byq, QStorage::INMEM)
+    : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_INMEM)
 {
 }
 
@@ -379,14 +379,14 @@ DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool pac
 
 
 std::unique_ptr<DFTensor2::StoredQTensor> DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
-                                                                          bool packed, bool byq, QStorage storetype, const std::string & name)
+                                                                          bool packed, bool byq, int storetype, const std::string & name)
 {
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
-    if(storetype == QStorage::INMEM)
+    if(storetype == QSTORAGE_INMEM)
         return std::unique_ptr<DFTensor2::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
-    if(storetype == QStorage::ONDISK)
+    if(storetype == QSTORAGE_ONDISK)
     {
         std::string filename(directory_);
         filename.append("/");

@@ -376,39 +376,15 @@ extern "C" {
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in row-major order.
+     * \param [in] bsorder Ordering of the C matrix passed in (see BSORDER_* in Flags.h)
      */
-    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
+    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans,
+                              int_t * bsorder)
     {
         if(*cmo_is_trans)
-          panache_setcmatrix(*df_handle, cmo, *nmo, 0);
+          panache_setcmatrix(*df_handle, cmo, *nmo, 0, *bsorder);
         else
-          panache_setcmatrix(*df_handle, cmo, *nmo, 1);
-    }
-
-    /*!
-     * \brief Sets the C matrix (so-ao matrix) in GAMESS order
-     *
-     * The matrix is expected be nso x nmo (MOs in the columns) in column-major order.
-     * If it is nmo x nso, or the matrix is in row major order, set \p cmo_is_trans.
-     *
-     * \note This is different from panache_setcmatrix(), as fortran column-major order
-     * matrices are handled automatically.
-     *
-     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
-     * changed after calling this function.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
-     * \param [in] nmo Number of MOs in this C matrix
-     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
-     *                          is in row-major order.
-     */
-    void panachef_setcmatrix_gamess_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
-    {
-        if(*cmo_is_trans)
-          panache_setcmatrix_gamess(*df_handle, cmo, *nmo, 0);
-        else
-          panache_setcmatrix_gamess(*df_handle, cmo, *nmo, 1);
+          panache_setcmatrix(*df_handle, cmo, *nmo, 1, *bsorder);
     }
 
 
@@ -418,7 +394,7 @@ extern "C" {
      *
      * Useful for determining buffer sizes or determining if Qso should be placed in memory.
      * The size of Qso (unpacked) will be naux * nso2, and batches of Qso will be read in
-     * multiples of nso2 (for panache_getbatch_qso()).
+     * multiples of nso2 (for panache_getqbatch_qso()).
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [out] naux Number of auxiliary basis functions
@@ -428,41 +404,6 @@ extern "C" {
     void panachef_qsodimensions_(int_t * df_handle, int_t * naux, int_t * nso2, int_t * matsize)
     {
         *matsize = panache_qsodimensions(*df_handle, naux, nso2);
-    }
-
-
-
-    /*!
-     * \brief Generates the basic Qso matrix
-     *
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory. 
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] inmem If nonzero, store the Qso matrix in memory
-     */
-    void panachef_genqso_(int_t * df_handle, int_t * inmem)
-    {
-        panache_genqso(*df_handle, *inmem);
-    }
-
-
-
-
-    /*!
-     * \brief Sets the buffer used for storing batches of Qso or Qmo
-     *
-     * Batches are read in multiples of either nso2 (panache_getbatch_qso(), see panache_qsodimensions()) or
-     * nmo*nmo (panache_getbatch_qmo()). How many can fit in the buffer is determined automatically
-     * from the matsize parameter. Any 'left over' buffer space is not used.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] buffer A pointer to memory for a buffer (of \p matsize size)
-     * \param [in] bufsize Number of elements in \p matout (not number of bytes)
-     */ 
-    void panachef_setoutputbuffer_(int_t * df_handle, double * buffer, int_t * bufsize)
-    {
-        panache_setoutputbuffer(*df_handle, buffer, *bufsize);
     }
 
 
@@ -480,11 +421,15 @@ extern "C" {
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] nq The number of batches actually stored in the buffer.
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [out] nq The number of batches actually stored in the \p outbuf buffer.
      */
-    void panachef_getbatch_qso_(int_t * df_handle, int_t * nq)
+    void panachef_getqbatch_qso_(int_t * df_handle, double * outbuf, int_t * bufsize,
+                                 int_t * qstart, int_t * nq)
     {
-        *nq = panache_getbatch_qso(*df_handle);
+        *nq = panache_getqbatch_qso(*df_handle, outbuf, *bufsize, *qstart);
     }
 
 
@@ -502,11 +447,15 @@ extern "C" {
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] nq The number of batches actually stored in the buffer.
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [out] nq The number of batches actually stored in the \p outbuf buffer.
      */
-    void panachef_getbatch_qmo_(int_t * df_handle, int_t * nq)
+    void panachef_getqbatch_qmo_(int_t * df_handle, double * outbuf, int_t * bufsize,
+                                 int_t * qstart, int_t * nq)
     {
-        *nq = panache_getbatch_qmo(*df_handle);
+        *nq = panache_getqbatch_qmo(*df_handle, outbuf, *bufsize, *qstart);
     }
 
     /*!
@@ -522,11 +471,15 @@ extern "C" {
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] nq The number of batches actually stored in the buffer.
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [out] nq The number of batches actually stored in the \p outbuf buffer.
      */
-    void panachef_getbatch_qoo_(int_t * df_handle, int_t * nq)
+    void panachef_getqbatch_qoo_(int_t * df_handle, double * outbuf, int_t * bufsize,
+                                 int_t * qstart, int_t * nq)
     {
-        *nq = panache_getbatch_qoo(*df_handle);
+        *nq = panache_getqbatch_qoo(*df_handle, outbuf, *bufsize, *qstart);
     }
 
     /*!
@@ -542,11 +495,15 @@ extern "C" {
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] nq The number of batches actually stored in the buffer.
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [out] nq The number of batches actually stored in the \p outbuf buffer.
      */
-    void panachef_getbatch_qov_(int_t * df_handle, int_t * nq)
+    void panachef_getqbatch_qov_(int_t * df_handle, double * outbuf, int_t * bufsize,
+                                 int_t * qstart, int_t * nq)
     {
-        *nq = panache_getbatch_qov(*df_handle);
+        *nq = panache_getqbatch_qov(*df_handle, outbuf, *bufsize, *qstart);
     }
 
     /*!
@@ -562,11 +519,15 @@ extern "C" {
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] nq The number of batches actually stored in the buffer.
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [out] nq The number of batches actually stored in the \p outbuf buffer.
      */
-    void panachef_getbatch_qvv_(int_t * df_handle, int_t * nq)
+    void panachef_getqbatch_qvv_(int_t * df_handle, double * outbuf, int_t * bufsize,
+                                 int_t * qstart, int_t * nq)
     {
-        *nq = panache_getbatch_qvv(*df_handle);
+        *nq = panache_getqbatch_qvv(*df_handle, outbuf, *bufsize, *qstart);
     }
 
 
@@ -623,19 +584,6 @@ extern "C" {
 
 
     /*!
-     * \brief Resets the internal information for a handle regarding batches
-     *
-     * Needed if switching between Qso and Qmo
-     *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     */
-    void panachef_resetbatches_(int_t * df_handle)
-    {
-        panache_resetbatches(*df_handle);
-    }
-
-
-    /*!
      * \brief Sets the number of occupied and virtual orbitals.
      *
      * Number of virtual orbitals is taken to be the remainder after the occupied.
@@ -646,41 +594,10 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
      * \param [in] nocc Number of occupied orbitals
      */
-     void panachef_setnocc_(int_t * df_handle, int_t * nocc)
+     void panachef_setnocc_(int_t * df_handle, int_t * nocc, int_t * nfroz)
      {
-        panache_setnocc(*df_handle, *nocc);
+        panache_setnocc(*df_handle, *nocc, *nfroz);
      }
-
-
-/*
-    void panachef_eri_(int_t * df_handle, double * qso, int_t * qsosize,
-               int_t * shell1, int_t * shell2, int_t * shell3, int_t * shell4,
-               double * outbuffer, int_t * buffersize, int_t * ncalc)
-    {
-        *ncalc = C_CalculateERI(*df_handle, qso, *qsosize, *shell1, *shell2, *shell3, *shell4,
-                       outbuffer, *buffersize);
-    }
-
-    void panachef_eri_multi_(int_t * df_handle,
-                           double * qso, int_t * qsosize,
-                           int_t * shell1, int_t * nshell1,
-                           int_t * shell2, int_t * nshell2,
-                           int_t * shell3, int_t * nshell3,
-                           int_t * shell4, int_t * nshell4,
-                           double * outbuffer, int_t * buffersize, int_t * ncalc)
-    {
-        *ncalc = C_CalculateERIMulti(*df_handle, qso, *qsosize,
-                                     *shell1, *nshell1, *shell2, *nshell2,
-                                     *shell3, *nshell3, *shell4, *nshell4,
-                                     outbuffer, *buffersize);
-    }
-
-    void panachef_reorderq_gamess_(int_t * df_handle,
-                                  double * qso, int_t * qsosize)
-    {
-        C_ReorderQ_GAMESS(*df_handle, qso, *qsosize);
-    }
-*/
 
 
 }
