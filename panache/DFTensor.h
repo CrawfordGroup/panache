@@ -119,25 +119,239 @@ public:
     int SetNThread(int nthread);
 
 
-    int GetQBatch_Qso(double * outbuf, int bufsize, int qstart);
-    int GetQBatch_Qmo(double * outbuf, int bufsize, int qstart);
-    int GetQBatch_Qoo(double * outbuf, int bufsize, int qstart);
-    int GetQBatch_Qov(double * outbuf, int bufsize, int qstart);
-    int GetQBatch_Qvv(double * outbuf, int bufsize, int qstart);
+    /*!
+     * \brief Prints out timing information collected so far
+     *
+     * All times are cumulative for all operations. The output must be set
+     *  first (See Output.h)
+     */
+    void PrintTimings(void) const;
 
 
-    int GetBatch_Qso(double * outbuf, int bufsize, int ijstart);
-    int GetBatch_Qmo(double * outbuf, int bufsize, int ijstart);
-    int GetBatch_Qoo(double * outbuf, int bufsize, int ijstart);
-    int GetBatch_Qov(double * outbuf, int bufsize, int ijstart);
-    int GetBatch_Qvv(double * outbuf, int bufsize, int ijstart);
-
-
+    /*!
+     * \brief Generates various 3-index tensors
+     *
+     * For the \p qflags and \p storetype parameters, see Flags.h. For example, to calculate the
+     * Qmo and Qov tensors on disk,
+     *
+     * \code{.cpp}
+     * dft.GenQTensors(QFLAGS_QMO | QFLAGS_QOV, QSTORAGE_ONDISK);
+     * \endcode
+     *
+     * \note Be sure to set the C-Matrix first!
+     *
+     * \param [in] qflags A combination of flags specifying which tensors to generate
+     * \param [in] storetype How to store the matrix
+     */
     void GenQTensors(int qflags, int storetype);
 
 
+    /*! \brief Retrieving batches by Q */
+    ///@{
 
-    void PrintTimings(void) const;
+    /*!
+     * \brief Retrieves a batch of Qso
+     *
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nso2 elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch_Qso(double * outbuf, int bufsize, int qstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qmo
+     *
+     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nmo2 elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch_Qmo(double * outbuf, int bufsize, int qstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qoo
+     *
+     * See \ref theory_page for what Qoo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nocc*nocc elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch_Qoo(double * outbuf, int bufsize, int qstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qov
+     *
+     * See \ref theory_page for what Qov actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nocc*nvir elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch_Qov(double * outbuf, int bufsize, int qstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qvv
+     *
+     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*nvir*nvir elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch_Qvv(double * outbuf, int bufsize, int qstart);
+    ///@}
+
+
+
+    /*! \brief Retrieving batches by orbital index */
+    ///@{
+    /*!
+     * \brief Retrieves a batch of Qso
+     *
+     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart The starting value of the ij index
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qso(double * outbuf, int bufsize, int ijstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qmo
+     *
+     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart The starting value of the ij index
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qmo(double * outbuf, int bufsize, int ijstart);
+
+    /*!
+     * \brief Retrieves a batch of Qoo
+     *
+     * See \ref theory_page for what Qoo actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart The starting value of the ij index
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qoo(double * outbuf, int bufsize, int ijstart);
+
+    /*!
+     * \brief Retrieves a batch of Qov
+     *
+     * See \ref theory_page for what Qov actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart The starting value of the ij index
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qov(double * outbuf, int bufsize, int ijstart);
+
+
+    /*!
+     * \brief Retrieves a batch of Qvv
+     *
+     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * Call this and process the batches until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart The starting value of the ij index
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch_Qvv(double * outbuf, int bufsize, int ijstart);
+    ///@}
+
+
 
 
 private:
@@ -197,21 +411,22 @@ private:
 
 
 
-
+    /*! \brief Storage of the 3-index tensors */
+    ///@{ Storage of the 3-index tensors
 
     class StoredQTensor
     {
     private:
-        int naux_;
-        int ndim1_;
-        int ndim2_;
-        int ndim12_;
-        bool packed_;
-        bool byq_;
-        int storetype_;
-        Timer gen_timer_;
-        Timer getijbatch_timer_;
-        Timer getqbatch_timer_;
+        int naux_;   //!< Number of auxiliary functions
+        int ndim1_;  //!< Length of index 1
+        int ndim2_;  //!< Length of index 2
+        int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
+        bool packed_; //!< Is the tensor packed or not
+        bool byq_;    //!< Is the tensor stored with q on the slowest index
+        int storetype_; //!< How is this tensor stored
+        Timer gen_timer_; //!< Timer for the generation of this tensor
+        Timer getijbatch_timer_; //!< Timer for getting batch by orbital index
+        Timer getqbatch_timer_; //!< Timer for getting batch by q index
 
     protected:
         virtual void Init_(void) = 0;
@@ -294,33 +509,51 @@ private:
     };
 
 
+    /*!
+     * \brief Create a StoredQTensor object
+     *
+     * \param [in] naux Number of auxiliary functions
+     * \param [in] ndim1 Length along dimension 1
+     * \param [in] ndim2 Length along dimension 2
+     * \param [in] packed Trus if tensor is to be stored packed
+     * \param [in] byq Store with the auxiliary basis function first (slowest)
+     * \param [in] storetype How to store (disk, memory)
+     * \param [in] name Name of the tensor
+     * \return Pointer to a an object derived from StoredQTensor
+     */
     std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                         bool packed, bool byq, int storetype,
                                                         const std::string & name);
 
-    std::unique_ptr<StoredQTensor> qso_;
-    std::unique_ptr<StoredQTensor> qmo_;
-    std::unique_ptr<StoredQTensor> qoo_;
-    std::unique_ptr<StoredQTensor> qov_;
-    std::unique_ptr<StoredQTensor> qvv_;
+    std::unique_ptr<StoredQTensor> qso_;  //!< Qso matrix
+    std::unique_ptr<StoredQTensor> qmo_;  //!< Qmo matrix
+    std::unique_ptr<StoredQTensor> qoo_;  //!< Qoo matrix
+    std::unique_ptr<StoredQTensor> qov_;  //!< Qov matrix
+    std::unique_ptr<StoredQTensor> qvv_;  //!< Qvv matrix
 
     ///@}
 
 
-
-
-
-
-
-
-    ///@}
-
-
+    /*!
+     * \brief Transform a batch of Qso given the left and right matrices
+     *
+     * \param [in] left Flattened left transformation matrix 
+     * \param [in] lncols Number of columns in the left transformation matrix
+     * \param [in] right Flattened right transformation matrix 
+     * \param [in] rncols Number of columns in the right transformation matrix
+     * \param [out] qout StoredQTensor object to write to
+     * \param [in] q Value of the auxiliary basis function index
+     * \param [in] qso The Qso matrix to transform
+     * \param [in] qc Scratch space for the (Ct Q) matrix multiplication
+     * \param [in] cqc Scratch space for the (Ct Q C) matrix multiplication
+     */
     void TransformQTensor(double * left, int lncols,
                           double * right, int rncols,
                           std::unique_ptr<StoredQTensor> & qout,
                           int q,
                           double * qso, double * qc, double * cqc);
+
+
 
     /*! \name Timing */
     ///@{
@@ -336,7 +569,9 @@ private:
 
     ///@}
 
+
     std::string directory_; 
+
 
 
     /*!
@@ -350,10 +585,31 @@ private:
     void GenQso(int storetype);
 
 
+    /*!
+     * \brief Base function for getting batches by Q
+     * 
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart The starting value of q
+     * \param [in] qt Pointer to the StoredQTensor to retrieve
+     */
     int GetQBatch_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
+
+    /*!
+     * \brief Base function for getting batches by orbital index
+     * 
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] ijstart Starting combined orbital index
+     * \param [in] qt Pointer to the StoredQTensor to retrieve
+     */
     int GetBatch_Base(double * outbuf, int bufsize, int ijstart, StoredQTensor * qt);
 
-    // helper
+    
+
+    /*!
+     * \param Prints the timer information for a given StoredQTensor
+     */
     void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
 
 };

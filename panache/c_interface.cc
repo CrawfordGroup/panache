@@ -4,6 +4,7 @@
  */
 
 #include <map>
+#include <sstream>
 
 #include "panache/c_interface.h"
 #include "panache/c_convert.h"
@@ -25,6 +26,18 @@ namespace
 
 int tensor_index_ = 0;
 std::map<int, DFTensor *> dftensors_;
+
+
+void CheckHandle(int_t df_handle, const char * func)
+{
+    if(dftensors_.count(df_handle) == 0)
+    {
+        std::stringstream ss;
+        ss << "Function: " << func << ": Error - cannot find DFTensor object with that handle!";
+        throw RuntimeError(ss.str());
+    }
+}
+
 
 } // close anonymous namespace
 
@@ -90,9 +103,6 @@ extern "C" {
             delete dftensors_[df_handle];
             dftensors_.erase(df_handle);
         }
-        else
-            throw RuntimeError("Error - cannot erase DFTensor object with that handle!");
-
     }
 
 
@@ -107,70 +117,22 @@ extern "C" {
 
     void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans, int_t bsorder)
     {
-        // matsize is checked in here
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
+        CheckHandle(df_handle, __FUNCTION__);
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans, bsorder);
     }
 
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype)
     {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
+        CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->GenQTensors(qflags, storetype); 
     }
 
 
-    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
-        return dftensors_[df_handle]->GetQBatch_Qso(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
-        return dftensors_[df_handle]->GetQBatch_Qmo(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
-        return dftensors_[df_handle]->GetQBatch_Qoo(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
-        return dftensors_[df_handle]->GetQBatch_Qov(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
-
-        return dftensors_[df_handle]->GetQBatch_Qvv(outbuf, bufsize, qstart);
-    }
-
 
     int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2)
     {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+        CheckHandle(df_handle, __FUNCTION__);
 
-        //DFTensor class takes d1-d3 by reference
-        // use regular ints first
         int t1, t2;
         int tot = dftensors_[df_handle]->QsoDimensions(t1, t2);
 
@@ -186,17 +148,56 @@ extern "C" {
 
     int_t panache_setnthread(int_t df_handle, int_t nthread)
     {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+        CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->SetNThread(nthread); 
     }
 
     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz)
     {
-        if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
+        CheckHandle(df_handle, __FUNCTION__);
         dftensors_[df_handle]->SetNOcc(nocc, nfroz); 
     }
+
+    void panache_printtimings(int_t df_handle)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        dftensors_[df_handle]->PrintTimings(); 
+    }
+
+    ////////////////////
+    // GetQBatch
+    ////////////////////
+    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetQBatch_Qso(outbuf, bufsize, qstart);
+    }
+
+    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetQBatch_Qmo(outbuf, bufsize, qstart);
+    }
+
+    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetQBatch_Qoo(outbuf, bufsize, qstart);
+    }
+
+    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetQBatch_Qov(outbuf, bufsize, qstart);
+    }
+
+    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetQBatch_Qvv(outbuf, bufsize, qstart);
+    }
+
+
 
 }
 
