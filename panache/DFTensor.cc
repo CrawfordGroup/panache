@@ -7,7 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include "panache/DFTensor2.h"
+#include "panache/DFTensor.h"
 #include "panache/FittingMetric.h"
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
@@ -30,7 +30,7 @@
 namespace panache
 {
 
-DFTensor2::DFTensor2(SharedBasisSet primary,
+DFTensor::DFTensor(SharedBasisSet primary,
                      SharedBasisSet auxiliary,
                      const std::string & directory,
                      int nthreads)
@@ -68,7 +68,7 @@ DFTensor2::DFTensor2(SharedBasisSet primary,
 }
 
 
-int DFTensor2::SetNThread(int nthread)
+int DFTensor::SetNThread(int nthread)
 {
 #ifdef _OPENMP
     if(nthread <= 0)
@@ -84,11 +84,11 @@ int DFTensor2::SetNThread(int nthread)
 
 
 
-DFTensor2::~DFTensor2()
+DFTensor::~DFTensor()
 {
 }
 
-void DFTensor2::GenQso(int storetype)
+void DFTensor::GenQso(int storetype)
 {
     if(qso_)
         return; // already created!
@@ -231,14 +231,14 @@ void DFTensor2::GenQso(int storetype)
 
 }
 
-int DFTensor2::QsoDimensions(int & naux, int & nso2)
+int DFTensor::QsoDimensions(int & naux, int & nso2)
 {
     nso2 = nso2_;
     naux = naux_;
     return nso2*naux;
 }
 
-void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
+void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
                            int order)
 {
     nmo_ = nmo;
@@ -276,7 +276,7 @@ void DFTensor2::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
 }
 
 
-void DFTensor2::TransformQTensor(double * left, int lncols,
+void DFTensor::TransformQTensor(double * left, int lncols,
                                  double * right, int rncols,
                                  std::unique_ptr<StoredQTensor> & qout,
                                  int q,
@@ -304,7 +304,7 @@ void DFTensor2::TransformQTensor(double * left, int lncols,
 // 2      Qoo
 // 3      Qov
 // 4      Qvv
-void DFTensor2::GenQTensors(int qflags, int storetype)
+void DFTensor::GenQTensors(int qflags, int storetype)
 {
 #ifdef PANACHE_TIMING
     timer_genqtensors_.Start();
@@ -400,7 +400,7 @@ void DFTensor2::GenQTensors(int qflags, int storetype)
 }
 
 
-int DFTensor2::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
+int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
                                 StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
@@ -423,7 +423,7 @@ int DFTensor2::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
 }
 
 
-int DFTensor2::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
+int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
@@ -447,53 +447,53 @@ int DFTensor2::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
 
 
 
-int DFTensor2::GetQBatch_Qso(double * outbuf, int bufsize, int qstart)
+int DFTensor::GetQBatch_Qso(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qso_.get());
 }
 
-int DFTensor2::GetQBatch_Qmo(double * outbuf, int bufsize, int qstart)
+int DFTensor::GetQBatch_Qmo(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qmo_.get());
 }
 
-int DFTensor2::GetQBatch_Qoo(double * outbuf, int bufsize, int qstart)
+int DFTensor::GetQBatch_Qoo(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qoo_.get());
 }
 
-int DFTensor2::GetQBatch_Qov(double * outbuf, int bufsize, int qstart)
+int DFTensor::GetQBatch_Qov(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qov_.get());
 }
 
-int DFTensor2::GetQBatch_Qvv(double * outbuf, int bufsize, int qstart)
+int DFTensor::GetQBatch_Qvv(double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, qvv_.get());
 }
 
 
-int DFTensor2::GetBatch_Qso(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch_Qso(double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, qso_.get());
 }
 
-int DFTensor2::GetBatch_Qmo(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch_Qmo(double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, qmo_.get());
 }
 
-int DFTensor2::GetBatch_Qoo(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch_Qoo(double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, qoo_.get());
 }
 
-int DFTensor2::GetBatch_Qov(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch_Qov(double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, qov_.get());
 }
 
-int DFTensor2::GetBatch_Qvv(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch_Qvv(double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, qvv_.get());
 }
@@ -551,7 +551,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void DFTensor2::ReorderCMat(reorder::Orderings & order)
+void DFTensor::ReorderCMat(reorder::Orderings & order)
 {
     using namespace reorder;
     using std::placeholders::_1;
@@ -593,7 +593,7 @@ void DFTensor2::ReorderCMat(reorder::Orderings & order)
     }
 }
 
-void DFTensor2::SplitCMat(void)
+void DFTensor::SplitCMat(void)
 {
     Cmo_occ_ = std::unique_ptr<double[]>(new double[nso_*nocc_]);
     Cmo_vir_ = std::unique_ptr<double[]>(new double[nso_*nvir_]);
@@ -613,7 +613,7 @@ void DFTensor2::SplitCMat(void)
     }
 }
 
-void DFTensor2::SetNOcc(int nocc, int nfroz)
+void DFTensor::SetNOcc(int nocc, int nfroz)
 {
     if(nocc <= 0)
         throw RuntimeError("Error - nocc <= 0!");
@@ -629,7 +629,7 @@ void DFTensor2::SetNOcc(int nocc, int nfroz)
 }
 
 
-void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
+void DFTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
 {
     if(q)
         output::printf("%-6s  %17lu (%7lu)  %17lu (%7lu)  %17lu (%7lu)\n", name, 
@@ -643,7 +643,7 @@ void DFTensor2::PrintTimer(const char * name, const std::unique_ptr<StoredQTenso
         output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
 }
 
-void DFTensor2::PrintTimings(void) const
+void DFTensor::PrintTimings(void) const
 {
     #ifdef PANACHE_TIMING
 

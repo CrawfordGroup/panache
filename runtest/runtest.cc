@@ -7,7 +7,7 @@
 #include <utility>
 #include <cmath>
 
-#include "panache/DFTensor2.h"
+#include "panache/DFTensor.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
@@ -524,17 +524,17 @@ int main(int argc, char ** argv)
         int nmo2 = nmo*nmo;
         int nvir = nmo - nocc;
 
-        DFTensor2 dft2(primary, aux, "/tmp", 0);
-        dft2.SetCMatrix(cmat->pointer(), nmo, transpose);
-        dft2.SetNOcc(nocc);
+        DFTensor dft(primary, aux, "/tmp", 0);
+        dft.SetCMatrix(cmat->pointer(), nmo, transpose);
+        dft.SetNOcc(nocc);
 
         if(inmem)
-            dft2.GenQTensors(15, QSTORAGE_INMEM);
+            dft.GenQTensors(15, QSTORAGE_INMEM);
         else
-            dft2.GenQTensors(15, QSTORAGE_ONDISK);
+            dft.GenQTensors(15, QSTORAGE_ONDISK);
 
 
-        size_t matsize = dft2.QsoDimensions(naux, nso2);
+        size_t matsize = dft.QsoDimensions(naux, nso2);
         size_t mattmpsize = nsotri * naux;
 
         size_t buffsize = mattmpsize;
@@ -553,7 +553,7 @@ int main(int argc, char ** argv)
         unique_ptr<double[]> mattmp(new double[mattmpsize]);
         unique_ptr<double[]> outbuf(new double[buffsize]);
 
-        while((n = dft2.GetQBatch_Qso(outbuf.get(), buffsize, curq)))
+        while((n = dft.GetQBatch_Qso(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nsotri, mattmp.get() + curq*nsotri);
             curq += n;
@@ -591,7 +591,7 @@ int main(int argc, char ** argv)
         mat = unique_ptr<double[]>(new double[matsize]);
  
 
-        while((n = dft2.GetQBatch_Qmo(outbuf.get(), buffsize, curq)))
+        while((n = dft.GetQBatch_Qmo(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
             curq += n;
@@ -618,7 +618,7 @@ int main(int argc, char ** argv)
         mat = unique_ptr<double[]>(new double[matsize]);
 
 
-        while((n = dft2.GetQBatch_Qov(outbuf.get(), buffsize, curq)))
+        while((n = dft.GetQBatch_Qov(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nocc*nvir, mat.get() + curq*nocc*nvir);
             curq += n;
@@ -646,7 +646,7 @@ int main(int argc, char ** argv)
         outbuf = unique_ptr<double[]>(new double[buffsize]);
         mat = unique_ptr<double[]>(new double[matsize]);
 
-        while((n = dft2.GetQBatch_Qoo(outbuf.get(), buffsize, curq)))
+        while((n = dft.GetQBatch_Qoo(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nocc*nocc, mat.get() + curq*nocc*nocc);
             curq += n;
@@ -673,7 +673,7 @@ int main(int argc, char ** argv)
         outbuf = unique_ptr<double[]>(new double[buffsize]);
         mat = unique_ptr<double[]>(new double[matsize]);
 
-        while((n = dft2.GetQBatch_Qvv(outbuf.get(), buffsize, curq)))
+        while((n = dft.GetQBatch_Qvv(outbuf.get(), buffsize, curq)))
         {
             std::copy(outbuf.get(), outbuf.get() + n*nvir*nvir, mat.get() + curq*nvir*nvir);
             curq += n;
@@ -697,7 +697,7 @@ int main(int argc, char ** argv)
              << "*************************************************\n";
 
 
-        dft2.PrintTimings();
+        dft.PrintTimings();
 
 
     }

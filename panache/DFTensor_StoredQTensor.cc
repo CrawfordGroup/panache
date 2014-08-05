@@ -1,45 +1,45 @@
 #include "panache/Exception.h"
-#include "panache/DFTensor2.h"
+#include "panache/DFTensor.h"
 
 namespace panache
 {
 
-int DFTensor2::StoredQTensor::naux(void) const
+int DFTensor::StoredQTensor::naux(void) const
 {
     return naux_;
 }
 
-int DFTensor2::StoredQTensor::ndim1(void) const
+int DFTensor::StoredQTensor::ndim1(void) const
 {
     return ndim1_;
 }
 
-int DFTensor2::StoredQTensor::ndim2(void) const
+int DFTensor::StoredQTensor::ndim2(void) const
 {
     return ndim2_;
 }
 
-int DFTensor2::StoredQTensor::ndim12(void) const
+int DFTensor::StoredQTensor::ndim12(void) const
 {
     return ndim12_;
 }
 
-int DFTensor2::StoredQTensor::storesize(void) const
+int DFTensor::StoredQTensor::storesize(void) const
 {
     return ndim12_*naux_;
 }
 
-int DFTensor2::StoredQTensor::packed(void) const
+int DFTensor::StoredQTensor::packed(void) const
 {
     return packed_;
 }
 
-int DFTensor2::StoredQTensor::byq(void) const
+int DFTensor::StoredQTensor::byq(void) const
 {
     return byq_;
 }
 
-int DFTensor2::StoredQTensor::calcindex(int i, int j) const
+int DFTensor::StoredQTensor::calcindex(int i, int j) const
 {
     if(!packed_)
         return (i*ndim2_+j);
@@ -49,7 +49,7 @@ int DFTensor2::StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-DFTensor2::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype)
+DFTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype)
 {
     naux_ = naux;
     ndim1_ = ndim1;
@@ -64,26 +64,26 @@ DFTensor2::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool pac
     ndim12_ = (packed ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
 }
 
-DFTensor2::StoredQTensor::~StoredQTensor()
+DFTensor::StoredQTensor::~StoredQTensor()
 {
 }
 
-int DFTensor2::StoredQTensor::StoreType(void) const
+int DFTensor::StoredQTensor::StoreType(void) const
 {
     return storetype_;
 }
 
-void DFTensor2::StoredQTensor::Write(double * data, int nij, int ijstart)
+void DFTensor::StoredQTensor::Write(double * data, int nij, int ijstart)
 {
     Write_(data, nij, ijstart);
 }
 
-void DFTensor2::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
+void DFTensor::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
 {
     WriteByQ_(data, nq, qstart);
 }
 
-int DFTensor2::StoredQTensor::Read(double * data, int nij, int ijstart)
+int DFTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
 {
     if(ijstart + nij >= ndim12())
         nij = ndim12() - ijstart;
@@ -92,7 +92,7 @@ int DFTensor2::StoredQTensor::Read(double * data, int nij, int ijstart)
     return nij;
 }
 
-int DFTensor2::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
+int DFTensor::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
 {
     if(qstart + nq >= naux_)
         nq = naux_-qstart;
@@ -101,33 +101,33 @@ int DFTensor2::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
     return nq;
 }
 
-void DFTensor2::StoredQTensor::Reset(void)
+void DFTensor::StoredQTensor::Reset(void)
 {
     Reset_();
 }
 
-void DFTensor2::StoredQTensor::Clear(void)
+void DFTensor::StoredQTensor::Clear(void)
 {
     Clear_();
 }
 
-void DFTensor2::StoredQTensor::Init(void)
+void DFTensor::StoredQTensor::Init(void)
 {
     Init_();
 }
 
 
-Timer & DFTensor2::StoredQTensor::GenTimer(void)
+Timer & DFTensor::StoredQTensor::GenTimer(void)
 {
     return gen_timer_; 
 }
 
-Timer & DFTensor2::StoredQTensor::GetQBatchTimer(void)
+Timer & DFTensor::StoredQTensor::GetQBatchTimer(void)
 {
     return getqbatch_timer_;
 }
 
-Timer & DFTensor2::StoredQTensor::GetBatchTimer(void)
+Timer & DFTensor::StoredQTensor::GetBatchTimer(void)
 {
     return getijbatch_timer_;
 }
@@ -136,7 +136,7 @@ Timer & DFTensor2::StoredQTensor::GetBatchTimer(void)
 //////////////////////////////
 // DiskQTensor
 //////////////////////////////
-void DFTensor2::DiskQTensor::OpenFile_(void)
+void DFTensor::DiskQTensor::OpenFile_(void)
 {
     if(file_ && file_->is_open())
         return;
@@ -153,7 +153,7 @@ void DFTensor2::DiskQTensor::OpenFile_(void)
     file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
 }
 
-void DFTensor2::DiskQTensor::CloseFile_(void)
+void DFTensor::DiskQTensor::CloseFile_(void)
 {
     if(file_ && file_->is_open())
     {
@@ -162,13 +162,13 @@ void DFTensor2::DiskQTensor::CloseFile_(void)
     }
 }
 
-void DFTensor2::DiskQTensor::Reset_(void)
+void DFTensor::DiskQTensor::Reset_(void)
 {
     file_->seekg(0);
     file_->seekp(0);
 }
 
-void DFTensor2::DiskQTensor::Write_(double * data, int nij, int ijstart)
+void DFTensor::DiskQTensor::Write_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -192,7 +192,7 @@ void DFTensor2::DiskQTensor::Write_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor2::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
+void DFTensor::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -217,7 +217,7 @@ void DFTensor2::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::DiskQTensor::Read_(double * data, int nij, int ijstart)
+void DFTensor::DiskQTensor::Read_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -241,7 +241,7 @@ void DFTensor2::DiskQTensor::Read_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor2::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
+void DFTensor::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -265,19 +265,19 @@ void DFTensor2::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::DiskQTensor::Clear_(void)
+void DFTensor::DiskQTensor::Clear_(void)
 {
     //! \todo Erase file
     CloseFile_();
 }
 
-void DFTensor2::DiskQTensor::Init_(void)
+void DFTensor::DiskQTensor::Init_(void)
 {
     OpenFile_();
 }
 
 
-DFTensor2::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename)
+DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename)
             : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_ONDISK)
 {
     filename_ = filename;
@@ -288,12 +288,12 @@ DFTensor2::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed,
 //////////////////////////////
 // MemoryQTensor
 //////////////////////////////
-void DFTensor2::MemoryQTensor::Reset_(void)
+void DFTensor::MemoryQTensor::Reset_(void)
 {
     // nothing needed
 }
 
-void DFTensor2::MemoryQTensor::Write_(double * data, int nij, int ijstart)
+void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
 {
     if(byq())
     {
@@ -308,7 +308,7 @@ void DFTensor2::MemoryQTensor::Write_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor2::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
+void DFTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
     if(byq())
     {
@@ -326,7 +326,7 @@ void DFTensor2::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::MemoryQTensor::Read_(double * data, int nij, int ijstart)
+void DFTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
 {
     // index ij is given by calling function and takes into account packing
     if(byq())
@@ -342,7 +342,7 @@ void DFTensor2::MemoryQTensor::Read_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor2::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
+void DFTensor::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
     if(byq())
     {
@@ -359,18 +359,18 @@ void DFTensor2::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor2::MemoryQTensor::Clear_(void)
+void DFTensor::MemoryQTensor::Clear_(void)
 {
     data_.reset();
 }
 
-void DFTensor2::MemoryQTensor::Init_(void)
+void DFTensor::MemoryQTensor::Init_(void)
 {
     if(!data_)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq)
+DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq)
     : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_INMEM)
 {
 }
@@ -378,20 +378,20 @@ DFTensor2::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool pac
 
 
 
-std::unique_ptr<DFTensor2::StoredQTensor> DFTensor2::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
+std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
                                                                           bool packed, bool byq, int storetype, const std::string & name)
 {
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
     if(storetype == QSTORAGE_INMEM)
-        return std::unique_ptr<DFTensor2::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
+        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
     if(storetype == QSTORAGE_ONDISK)
     {
         std::string filename(directory_);
         filename.append("/");
         filename.append(name);
-        return std::unique_ptr<DFTensor2::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, packed, byq, filename));
+        return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, packed, byq, filename));
     }
     else
         throw RuntimeError("No StoredQTensor for that type");

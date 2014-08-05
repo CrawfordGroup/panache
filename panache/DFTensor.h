@@ -3,8 +3,8 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_DFTENSOR2_H
-#define PANACHE_DFTENSOR2_H
+#ifndef PANACHE_DFTENSOR_H
+#define PANACHE_DFTENSOR_H
 
 #include <fstream>
 #include <future>
@@ -26,11 +26,11 @@ namespace reorder
 class Orderings;
 }
 
-class DFTensor2
+class DFTensor
 {
 public:
-    DFTensor2 & operator=(const DFTensor2 & other) = delete;
-    DFTensor2(const DFTensor2 & other) = delete;
+    DFTensor & operator=(const DFTensor & other) = delete;
+    DFTensor(const DFTensor & other) = delete;
 
     /*!
      * \brief Constructor
@@ -40,7 +40,7 @@ public:
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 
-    DFTensor2(SharedBasisSet primary,
+    DFTensor(SharedBasisSet primary,
              SharedBasisSet auxiliary,
              const std::string & directory,
              int nthreads);
@@ -50,7 +50,7 @@ public:
      *
      * Frees memory and stuff
      */
-    ~DFTensor2();
+    ~DFTensor();
 
 
     /*!

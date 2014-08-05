@@ -7,7 +7,7 @@
 
 #include "panache/c_interface.h"
 #include "panache/c_convert.h"
-#include "panache/DFTensor2.h"
+#include "panache/DFTensor.h"
 #include "panache/Output.h"
 #include "panache/Exception.h"
 #include "panache/BasisSetParser.h"
@@ -16,7 +16,7 @@ using panache::RuntimeError;
 using panache::BasisSet;
 using panache::Gaussian94BasisSetParser;
 using panache::SharedBasisSet;
-using panache::DFTensor2;
+using panache::DFTensor;
 using panache::Molecule;
 using panache::SharedMolecule;
 
@@ -24,7 +24,7 @@ namespace
 {
 
 int tensor_index_ = 0;
-std::map<int, DFTensor2 *> dftensors_;
+std::map<int, DFTensor *> dftensors_;
 
 } // close anonymous namespace
 
@@ -49,7 +49,7 @@ extern "C" {
         auto auxBasis = BasisSetFromArrays(molecule, ncenters,
                         aux_nshellspercenter, aux_shells, normalized);
 
-        DFTensor2 * dft = new DFTensor2(primaryBasis, auxBasis, filename, nthreads);
+        DFTensor * dft = new DFTensor(primaryBasis, auxBasis, filename, nthreads);
         dftensors_[tensor_index_] = dft;
 
         return tensor_index_++;
@@ -74,7 +74,7 @@ extern "C" {
         std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
         SharedBasisSet auxBasis(new BasisSet(parser, molecule, auxfilename));
 
-        DFTensor2 * dft = new DFTensor2(primaryBasis, auxBasis, matfilename, nthreads);
+        DFTensor * dft = new DFTensor(primaryBasis, auxBasis, matfilename, nthreads);
         dftensors_[tensor_index_] = dft;
 
         return tensor_index_++;
@@ -91,7 +91,7 @@ extern "C" {
             dftensors_.erase(df_handle);
         }
         else
-            throw RuntimeError("Error - cannot erase DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot erase DFTensor object with that handle!");
 
     }
 
@@ -109,7 +109,7 @@ extern "C" {
     {
         // matsize is checked in here
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans, bsorder);
     }
@@ -117,7 +117,7 @@ extern "C" {
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GenQTensors(qflags, storetype); 
     }
@@ -126,7 +126,7 @@ extern "C" {
     int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int bufsize, int qstart)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GetQBatch_Qso(outbuf, bufsize, qstart);
     }
@@ -134,7 +134,7 @@ extern "C" {
     int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int qstart)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GetQBatch_Qmo(outbuf, bufsize, qstart);
     }
@@ -142,7 +142,7 @@ extern "C" {
     int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int qstart)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GetQBatch_Qoo(outbuf, bufsize, qstart);
     }
@@ -150,7 +150,7 @@ extern "C" {
     int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int bufsize, int qstart)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GetQBatch_Qov(outbuf, bufsize, qstart);
     }
@@ -158,7 +158,7 @@ extern "C" {
     int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int qstart)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
         return dftensors_[df_handle]->GetQBatch_Qvv(outbuf, bufsize, qstart);
     }
@@ -167,9 +167,9 @@ extern "C" {
     int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
 
-        //DFTensor2 class takes d1-d3 by reference
+        //DFTensor class takes d1-d3 by reference
         // use regular ints first
         int t1, t2;
         int tot = dftensors_[df_handle]->QsoDimensions(t1, t2);
@@ -187,14 +187,14 @@ extern "C" {
     int_t panache_setnthread(int_t df_handle, int_t nthread)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
         return dftensors_[df_handle]->SetNThread(nthread); 
     }
 
     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz)
     {
         if(dftensors_.count(df_handle) == 0)
-            throw RuntimeError("Error - cannot find DFTensor2 object with that handle!");
+            throw RuntimeError("Error - cannot find DFTensor object with that handle!");
         dftensors_[df_handle]->SetNOcc(nocc, nfroz); 
     }
 
