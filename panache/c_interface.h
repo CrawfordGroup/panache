@@ -59,9 +59,10 @@ extern "C" {
      *                                   Expected to be of length \p ncenters.
      * \param [in] aux_shells  Information about each shell in the auxiliary (density fitting) basis.
      *                         Length should be the sum of \p aux_nshellspercenter.
-     * \param [in] filename A full path to a file to be used if storing matrices to disk.
-     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
-     *                      may be set to an empty string if disk is not to be used.
+     * \param [in] directory A full path to a directory to be used for storing matrices to disk.
+     *                       Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                       may be set to an empty string if disk is not to be used.
+     *                       If used, any existing files will be overwritten.
      * \param [in] nthreads Max number of threads to use
      *
      * \return A handle representing this particular density-fitting calculation.
@@ -70,7 +71,7 @@ extern "C" {
                        C_AtomCenter * atoms, int_t normalized,
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                       const char * filename, int_t nthreads);
+                       const char * directory, int_t nthreads);
 
 
 
@@ -91,10 +92,10 @@ extern "C" {
      * \param [in] primary_shells  Information about each shell in the primary basis.
      *                             Length should be the sum of \p primary_nshellspercenter.
      * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
-     * \param [in] filename A full path to a file to be used if storing matrices to disk.
-     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
-     *                      may be set to an empty string if disk is not to be used. If used, any existing
-     *                      file will be overwritten.
+     * \param [in] directory A full path to a file to be used for storing matrices to disk.
+     *                       Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                       may be set to an empty string if disk is not to be used.
+     *                       If used, any existing files will be overwritten.
      * \param [in] nthreads Max number of threads to use
      *
      * \return A handle representing this particular density-fitting calculation.
@@ -102,7 +103,7 @@ extern "C" {
     int_t panache_init2(int_t ncenters,
                         C_AtomCenter * atoms, int_t normalized,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename, const char * filename, int_t nthreads);
+                        const char * auxfilename, const char * directory, int_t nthreads);
 
 
 

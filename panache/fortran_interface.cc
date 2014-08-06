@@ -58,10 +58,11 @@ extern "C" {
      * \param [in] aux_coef All basis function coefficients for all shells of the auxiliary basis. 
      *                      Length should be the sum of aux_nprimpershell, with grouping
      *                      by shell.
-     * \param [in] filename A full path to a file to be used if storing matrices to disk.
-     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
-     *                      may be set to an empty string if disk is not to be used.
-     * \param [in] filenamelen Actual length of \p filename
+     * \param [in] directory A full path to a file to be used if storing matrices to disk.
+     *                       Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                       may be set to an empty string if disk is not to be used.
+     *                       If used, any existing files will be overwritten.
+     * \param [in] directorylen Actual length of \p filename
      * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
@@ -72,7 +73,7 @@ extern "C" {
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
                        int_t * aux_nprimpershell, double * aux_exp, double * aux_coef,
-                       const char * filename, int_t * filenamelen, int_t * nthreads, int_t * dfhandle)
+                       const char * directory, int_t * directorylen, int_t * nthreads, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -147,9 +148,14 @@ extern "C" {
             }
         }
 
+        // create a real, null-terminated c string
+        char * mdir = new char[*directorylen+1];
+        strncpy(mdir, directory, *directorylen);
+        mdir[*directorylen] = '\0';
+
         *dfhandle = panache_init(*ncenters, atoms, *normalized,
                                  primary_nshellspercenter, primary_shells,
-                                 aux_nshellspercenter, aux_shells, filename, *nthreads);
+                                 aux_nshellspercenter, aux_shells, mdir, *nthreads);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -209,10 +215,10 @@ extern "C" {
      * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
      * \param [in] auxfilenamelen Actual length of \p auxfilename
      *
-     * \param [in] matfilename A full path to a file to be used if storing matrices to disk.
-     *                      Not referenced if the disk is not used. Should not be set to "NULL", but
-     *                      may be set to an empty string if disk is not to be used.
-     * \param [in] matfilenamelen Actual length of \p filename
+     * \param [in] directory A full path to a file to be used if storing matrices to disk.
+     *                       Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                       may be set to an empty string if disk is not to be used.
+     * \param [in] directorylen Actual length of \p filename
      * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
@@ -221,8 +227,8 @@ extern "C" {
                         double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
-                        const char * auxfilename, int_t * auxfilenamelen, const char * matfilename,
-                        int_t * matfilenamelen, int_t * nthreads, int_t * dfhandle)
+                        const char * auxfilename, int_t * auxfilenamelen, const char * directory,
+                        int_t * directorylen, int_t * nthreads, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -326,19 +332,19 @@ extern "C" {
 
         // create a real, null-terminated c string
         char * cfname = new char[*auxfilenamelen+1];
-        char * mfname = new char[*matfilenamelen+1];
+        char * mdir = new char[*directorylen+1];
         strncpy(cfname, auxfilename, *auxfilenamelen);
-        strncpy(mfname, matfilename, *matfilenamelen);
+        strncpy(mdir, directory, *directorylen);
         cfname[*auxfilenamelen] = '\0';
-        mfname[*matfilenamelen] = '\0';
+        mdir[*directorylen] = '\0';
 
         *dfhandle = panache_init2(*ncenters, atoms, *normalized,
                                   primary_nshellspercenter, primary_shells,
-                                  cfname, mfname, *nthreads);
+                                  cfname, mdir, *nthreads);
 
         // Free memory
         delete [] cfname;
-        delete [] mfname;
+        delete [] mdir;
 
         for(int_t i = 0; i < p_nshell; i++)
         {
