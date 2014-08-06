@@ -10,10 +10,11 @@
 
     /*! \name Flags specifing which tensors to calculate */
     ///@{
-    #define QGEN_QMO 1 //!< Generate Qmo
-    #define QGEN_QOO 2 //!< Generate Qoo
-    #define QGEN_QOV 4 //!< Generate Qov
-    #define QGEN_QVV 8 //!< Generate Qvv
+    #define QGEN_QSO 1 //!< Generate Qso
+    #define QGEN_QMO 2 //!< Generate Qmo
+    #define QGEN_QOO 4 //!< Generate Qoo
+    #define QGEN_QOV 8 //!< Generate Qov
+    #define QGEN_QVV 16 //!< Generate Qvv
     ///@}
 
     /*! \name Flags specifing how tensors should be stored */

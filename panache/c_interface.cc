@@ -94,7 +94,24 @@ extern "C" {
     }
 
 
+    int panache_qbatchsize(int_t df_handle, int_t tensorflag)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->QBatchSize(tensorflag); 
+    }
 
+    int panache_batchsize(int_t df_handle, int_t tensorflag)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->BatchSize(tensorflag); 
+    }
+
+    int panache_tensordimensions(int_t df_handle, int_t tensorflag,
+                                 int_t & naux, int_t & ndim1, int_t & ndim2)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->TensorDimensions(tensorflag, naux, ndim1, ndim2); 
+    }
 
     void panache_cleanup(int_t df_handle)
     {
@@ -129,18 +146,6 @@ extern "C" {
 
 
 
-    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-
-        int t1, t2;
-        int tot = dftensors_[df_handle]->QsoDimensions(t1, t2);
-
-        *naux = t1;
-        *nso2 = t2;
-        return tot;
-    }
-
     void panache_output(FILE * out)
     {
        panache::output::SetOutput(out); 
@@ -164,73 +169,17 @@ extern "C" {
         dftensors_[df_handle]->PrintTimings(); 
     }
 
-    ////////////////////
-    // GetQBatch
-    ////////////////////
-    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int bufsize, int qstart)
+    int_t panache_getqbatch(int_t df_handle, int tensorflag, double * outbuf, int bufsize, int qstart)
     {
         CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetQBatch_Qso(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetQBatch_Qmo(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetQBatch_Qoo(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetQBatch_Qov(outbuf, bufsize, qstart);
-    }
-
-    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int qstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetQBatch_Qvv(outbuf, bufsize, qstart);
-    }
-
-    ////////////////////
-    // GetBatch
-    ////////////////////
-    int_t panache_getbatch_qso(int_t df_handle, double * outbuf, int bufsize, int ijstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch_Qso(outbuf, bufsize, ijstart);
-    }
-
-    int_t panache_getbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int ijstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch_Qmo(outbuf, bufsize, ijstart);
-    }
-
-    int_t panache_getbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int ijstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch_Qoo(outbuf, bufsize, ijstart);
-    }
-
-    int_t panache_getbatch_qov(int_t df_handle, double * outbuf, int bufsize, int ijstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch_Qov(outbuf, bufsize, ijstart);
-    }
-
-    int_t panache_getbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int ijstart)
-    {
-        CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch_Qvv(outbuf, bufsize, ijstart);
+        return dftensors_[df_handle]->GetQBatch(tensorflag, outbuf, bufsize, qstart);
     }
 
 
-
+    int_t panache_getbatch(int_t df_handle, int tensorflag, double * outbuf, int bufsize, int ijstart)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);
+    }
 }
 

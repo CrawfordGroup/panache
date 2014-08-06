@@ -130,23 +130,6 @@ extern "C" {
 
 
 
-    /*!
-     * \brief Queries information about the expected matrix dimensions
-     *
-     * Useful for determining buffer sizes or determining if Qso should be placed in memory.
-     * The size of Qso (unpacked) will be naux * nso2, and batches of Qso will be read in
-     * multiples of nso2 (for panache_getqbatch_qso()).
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [out] naux Number of auxiliary basis functions
-     * \param [out] nso2 Number of primary basis functions squared (nso*nso)
-     * \return Total size of an unpacked Qso tensor (ie naux * nso2)
-     */
-    int_t panache_qsodimensions(int_t df_handle, int_t * naux, int_t * nso2);
-
-
-
-
 
     /*!
      * \brief Sets the number of OpenMP threads used in DF routines
@@ -183,6 +166,50 @@ extern "C" {
      */
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype);
 
+    /*!
+     * \brief Obtain the batch size for panache_getqbatch()
+     *
+     * The size will be as follows
+     *
+     * | Tensor | Packed Size      | Unpacked Size |
+     * |--------|------------------|---------------|
+     * | Qso    | nso*(nso+1)/2    |               |
+     * | Qmo    | nmo*(nmo+1)/2    |               |
+     * | Qoo    | nocc*(nocc+1)/2  |               |
+     * | Qov    |                  | nocc*nvir     |
+     * | Qvv    | nvir*(nvir+1)/2  |               |
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \return Size of batches returned by panache_getqbatch
+     */
+     int panache_qbatchsize(int_t df_handle, int_t tensorflag);
+
+
+    /*!
+     * \brief Obtain the batch size for panache_getbatch()
+     *
+     * Size will always be naux
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \return Size of batches returned by panache_getbatch()
+     */
+    int panache_batchsize(int_t df_handle, int_t tensorflag);
+
+
+    /*!
+     * \brief Obtain the dimensions of a tensor
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] ndim1 First dimension for a particular q
+     * \param [out] ndim2 Second dimension for a particular q
+     * \return Total tensor size (depends on packing)
+     */
+    int panache_tensordimensions(int_t df_handle, int_t tensorflag,
+                                 int_t & naux, int_t & ndim1, int_t & ndim2);
 
 
     /*!
@@ -234,222 +261,54 @@ extern "C" {
      void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz);
 
 
-    /*! \name Retrieving by auxiliary basis index */
-    ///@{
     /*!
-     * \brief Retrieves a batch of Qso
+     * \brief Retrieves a batch of a 3-index tensor 
      *
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
+     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nso2 elements with
+     * will contain (number of batches)*batchsize elements with
      * the index of the auxiliary basis function as the slowest index.
+     *
+     * The batchsize can be obtained using panache_qbatchsize()
      *
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] tensorflag Which tensor to get (see Flags.h)
      * \param [in] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] qstart The starting value of q
-     * \return The number of batches returned in the \p outbuf buffer.
+     * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
+    int_t panache_getqbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t qstart);
 
 
 
     /*!
-     * \brief Retrieves a batch of Qmo
+     * \brief Retrieves a batch of a 3-index tensor 
      *
-     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
+     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nmo2 elements with
-     * the index of the auxiliary basis function as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart The starting value of q
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
-
-
-    /*!
-     * \brief Retrieves a batch of Qoo
-     *
-     * See \ref theory_page for what Qoo actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nocc*nocc elements with
-     * the index of the auxiliary basis function as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart The starting value of q
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
-
-    /*!
-     * \brief Retrieves a batch of Qov
-     *
-     * See \ref theory_page for what Qov actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nocc*nvir elements with
-     * the index of the auxiliary basis function as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart The starting value of q
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
-    ///@}
-
-
-
-    /*! \name Retrieving by orbital index */
-    ///@{
-    /*!
-     * \brief Retrieves a batch of Qvv
-     *
-     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*nvir*nvir elements with
-     * the index of the auxiliary basis function as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart The starting value of q
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
-
-
-    /*!
-     * \brief Retrieves a batch of Qso
-     *
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with
+     * will contain (number of batches)*batchsize elements with
      * the combined orbital index as the slowest index.
      *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] ijstart The starting value of the ij index
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getbatch_qso(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
-
-
-
-    /*!
-     * \brief Retrieves a batch of Qmo
-     *
-     * See \ref theory_page for what Qmo actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with
-     * the combined orbital index as the slowest index.
+     * The batchsize can be obtained using panache_batchsize()
      *
      * Call this and process the batches until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] tensorflag Which tensor to get (see Flags.h)
      * \param [in] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] ijstart The starting value of the ij index
-     * \return The number of batches returned in the \p outbuf buffer.
+     * \param [in] ijstart The starting value of q
+     * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getbatch_qmo(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
+    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart);
 
-
-    /*!
-     * \brief Retrieves a batch of Qoo
-     *
-     * See \ref theory_page for what Qoo actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with
-     * the combined orbital index as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] ijstart The starting value of the ij index
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getbatch_qoo(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
-
-
-    /*!
-     * \brief Retrieves a batch of Qov
-     *
-     * See \ref theory_page for what Qov actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with
-     * the combined orbital index as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] ijstart The starting value of the ij index
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getbatch_qov(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
-
-
-    /*!
-     * \brief Retrieves a batch of Qvv
-     *
-     * See \ref theory_page for what Qvv actually is, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with
-     * the combined orbital index as the slowest index.
-     *
-     * Call this and process the batches until this function returns zero.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] ijstart The starting value of the ij index
-     * \return The number of batches returned in the \p outbuf buffer.
-     */
-    int_t panache_getbatch_qvv(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
-    ///@}
 
 } // end extern "C"
 

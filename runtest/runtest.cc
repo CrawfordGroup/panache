@@ -412,6 +412,55 @@ int ReadNocc(const string & filename)
 
 
 
+int RunTestMatrix(DFTensor & dft, const string & title,
+                  int batchsize, int tensorflag,
+                  const string & reffile,
+                  double sum_threshold, double checksum_threshold, double element_threshold,
+                  bool verbose)
+{
+        int naux, ndim1, ndim2;
+        dft.TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+        int matsize = naux * ndim1 * ndim2; // always expanded
+
+        // may be packed
+        int ndim12 = dft.QBatchSize(tensorflag);
+
+        int bufsize = ndim12 * naux;
+        if(batchsize)
+            bufsize = ndim12 * batchsize;
+            
+        unique_ptr<double[]> mat(new double[matsize]);
+        unique_ptr<double[]> outbuf(new double[bufsize]);
+
+
+        int n;
+        int curq = 0;
+        while((n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, curq)))
+        {
+            if(dft.IsPacked(tensorflag))
+            {
+                // expand
+                for(int q = 0; q < n; q++)
+                for(int i = 0; i < ndim1; i++)
+                for(int j = 0; j <= i; j++)
+                    mat[(curq+q)*ndim1*ndim2+i*ndim1+j] 
+                  = mat[(curq+q)*ndim1*ndim2+j*ndim1+i] 
+                  = outbuf[q*ndim12+i*(i+1)/2+j];
+            }
+            else
+                std::copy(outbuf.get(), outbuf.get() + n*ndim12, mat.get() + curq*ndim12);
+
+            curq += n;
+        }
+
+        return TestMatrix(title, reffile,
+                          mat.get(), matsize,
+                          sum_threshold, checksum_threshold, element_threshold,
+                          verbose);
+}
+
+
 int main(int argc, char ** argv)
 {
     int ret = 0;
@@ -517,13 +566,8 @@ int main(int argc, char ** argv)
         }
 
         int nso = primary->nbf();
-        int naux = aux->nbf();
-        int nso2 = nso*nso;
-        int nsotri = nso*(nso+1)/2;
         int nocc = ReadNocc(nocc_filename);
         int nmo = nso;
-        int nmo2 = nmo*nmo;
-        int nvir = nmo - nocc;
 
         DFTensor dft(primary, aux, "/tmp", 0);
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
@@ -535,157 +579,52 @@ int main(int argc, char ** argv)
             dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_ONDISK);
 
 
-        size_t matsize = dft.QsoDimensions(naux, nso2);
-        size_t mattmpsize = nsotri * naux;
 
-        size_t buffsize = mattmpsize;
-
-        if(batchsize)
-            buffsize = batchsize * nsotri;
-
-
-        int n;
-        int curq = 0;
 
         ///////////
         // Test Qso
         ///////////
-        unique_ptr<double[]> mat(new double[matsize]);
-        unique_ptr<double[]> mattmp(new double[mattmpsize]);
-        unique_ptr<double[]> outbuf(new double[buffsize]);
-
-        while((n = dft.GetQBatch_Qso(outbuf.get(), buffsize, curq)))
-        {
-            std::copy(outbuf.get(), outbuf.get() + n*nsotri, mattmp.get() + curq*nsotri);
-            curq += n;
-        }
-
-        // expand
-        for(int q = 0; q < naux; q++)
-        for(int i = 0; i < nso; i++)
-        for(int j = 0; j <= i; j++)
-            mat[q*nso2+i*nso+j] = mat[q*nso2+j*nso+i] = mattmp[q*nsotri+i*(i+1)/2+j];
-
-        ret += TestMatrix("QSO2", qso_filename,
-                          mat.get(), matsize,
-                          QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        // no longer needed
-        mattmp.reset();
-
-        curq = 0;
-
+        ret += RunTestMatrix(dft, "QSO",
+                             batchsize, QGEN_QSO,
+                             qso_filename, 
+                             QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
+                             verbose);
 
         ///////////
         // Test Qmo
         ///////////
-
-        matsize = nmo2*naux;
-
-        if(batchsize)
-            buffsize = batchsize * nmo2;
-        else
-            buffsize = matsize;
-
-        outbuf = unique_ptr<double[]>(new double[buffsize]);
-        mat = unique_ptr<double[]>(new double[matsize]);
- 
-
-        while((n = dft.GetQBatch_Qmo(outbuf.get(), buffsize, curq)))
-        {
-            std::copy(outbuf.get(), outbuf.get() + n*nmo2, mat.get() + curq*nmo2);
-            curq += n;
-        }
-        ret += TestMatrix("QMO2", qmo_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        curq = 0;
-
-
-        ///////////
-        // Test Qov
-        ///////////
-        matsize = nocc*nvir*naux;
-
-        if(batchsize)
-            buffsize = batchsize * nocc*nvir;
-        else
-            buffsize = matsize;
-
-        outbuf = unique_ptr<double[]>(new double[buffsize]);
-        mat = unique_ptr<double[]>(new double[matsize]);
-
-
-        while((n = dft.GetQBatch_Qov(outbuf.get(), buffsize, curq)))
-        {
-            std::copy(outbuf.get(), outbuf.get() + n*nocc*nvir, mat.get() + curq*nocc*nvir);
-            curq += n;
-        }
-        ret += TestMatrix("QOV2", qov_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        curq = 0;
-
-
-
+        ret += RunTestMatrix(dft, "QMO",
+                             batchsize, QGEN_QMO,
+                             qmo_filename, 
+                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                             verbose);
 
         ///////////
         // Test Qoo
         ///////////
-        matsize = nocc*nocc*naux;
+        ret += RunTestMatrix(dft, "QOO",
+                             batchsize, QGEN_QOO,
+                             qoo_filename, 
+                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                             verbose);
 
-        if(batchsize)
-            buffsize = batchsize * nocc*nocc;
-        else
-            buffsize = matsize;
-
-        outbuf = unique_ptr<double[]>(new double[buffsize]);
-        mat = unique_ptr<double[]>(new double[matsize]);
-
-        while((n = dft.GetQBatch_Qoo(outbuf.get(), buffsize, curq)))
-        {
-            std::copy(outbuf.get(), outbuf.get() + n*nocc*nocc, mat.get() + curq*nocc*nocc);
-            curq += n;
-        }
-        ret += TestMatrix("QOO", qoo_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        curq = 0;
-
-
+        ///////////
+        // Test Qov
+        ///////////
+        ret += RunTestMatrix(dft, "QOV",
+                             batchsize, QGEN_QOV,
+                             qov_filename, 
+                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                             verbose);
 
         ///////////
         // Test Qvv
         ///////////
-        matsize = nvir*nvir*naux;
-
-        if(batchsize)
-            buffsize = batchsize * nvir*nvir;
-        else
-            buffsize = matsize;
-
-        outbuf = unique_ptr<double[]>(new double[buffsize]);
-        mat = unique_ptr<double[]>(new double[matsize]);
-
-        while((n = dft.GetQBatch_Qvv(outbuf.get(), buffsize, curq)))
-        {
-            std::copy(outbuf.get(), outbuf.get() + n*nvir*nvir, mat.get() + curq*nvir*nvir);
-            curq += n;
-        }
-        ret += TestMatrix("QVV", qvv_filename,
-                          mat.get(), matsize,
-                          QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                          verbose);
-
-        curq = 0;
-
+        ret += RunTestMatrix(dft, "QVV",
+                             batchsize, QGEN_QVV,
+                             qvv_filename, 
+                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                             verbose);
 
 
         cout << "\n\n";

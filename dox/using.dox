@@ -57,51 +57,15 @@ delete [] aux_shells;
 \endcode
 
 Optionally, set the number of threads used by the this instance of the library. Default
-is to use as many threads as there are cores.
+is to use as many threads as there are cores or the number specified by the
+environment variable OMP_NUM_THREADS.
 
 \code{.c}
 panache_setnthread(dfhandle, <some_number>);
 \endcode
 
-
-Next is to calculate the main Qso and other matrices, storing it in memory or on disk.
-The second and third parameters of panache_genqtensors() are a set of flags (given in Flags.h).
-The first specifies which tensors to build and the second how to store them.
-
-\code{.c}
-panache_genqtensors(dfhandle, QFLAGS_QMO | QFLAGS_QOV, QSTORAGE_INMEM | QSTORAGE_BYQ);
-\endcode
-
-To read Qso or Qmo, we need to set a buffer where the library will place the data.
-We can query for nso (although the calling code should know this).
-
-\code{.c}
-int nso2, naux;    // number of primary basis functions squared, number of auxiliary basis functions
-
-panache_qsodimensions(dfhandle, &naux, &nso2);
-
-double outbuffer[4*nso2];  // usually best to be some multiple of nso2,
-                           // but can be anything greater than nso2.
-
-
-panache_setoutputbuffer(dfhandle, outbuffer, 4*nso2);
-
-\endcode
-
-
-If Qso is desired, we use repeated calls to panache_getbatch_qso(). This functions
-returns the number of (nso*nso) sized blocks, and is called until it returns zero.
-
-\code{.c}
-int nbatch = 0;
-while((nbatch = panache_getbatch_qso(dfhandle))
-{
-    // output will be nbatch blocks of size nso2 in outbuffer
-    // ... do something with it!
-}
-\endcode
-
-For Qmo, a similar procedure is used, except the MO coefficient matrix must be set first
+If needed, we need to set the C matrix (MO coefficient matrix) to be used in calculating Qmo, etc.
+This is not needed if you are only generating/using Qso
 
 \code{.c}
 double * cmat;
@@ -115,18 +79,39 @@ panache_setcmatrix(dfhandle, cmat, nmo, 0);  // last argument: 0 = normal, 1 = t
 delete [] cmat;
 \endcode
 
-Afterwards, do the same thing as above, but call panache_getbatch_qmo(). The only
-difference is the size of the blocks will be nmo*nmo, of course.
+Next is to calculate the main Qso and other tensors, storing it in memory or on disk.
+The second and third parameters of panache_genqtensors() are a set of flags (given in Flags.h).
+The second specifies which tensors to build and the third how to store them. For example,
 
 \code{.c}
-//If switching between Qso and Qmo
-panache_resetbatches(dfhandle);
+panache_genqtensors(dfhandle, QFLAGS_QMO | QFLAGS_QOV | QSTORAGE_INMEM);
+\endcode
 
+To read Qso or Qmo, we need to create a buffer where the library will place the data.
+We can query for nso (although the calling code should know this).
+
+\code{.c}
+int nso2, naux;    // number of primary basis functions squared, number of auxiliary basis functions
+
+panache_qsodimensions(dfhandle, &naux, &nso2);
+
+double outbuffer[4*nso2];  // usually best to be some multiple of nso2,
+                           // but can be anything greater than nso2.
+
+\endcode
+
+
+To obtain the tensors, we use repeated calls to panache_getbatch_q**. These functions
+return the number of blocks, and is called until it returns zero.
+
+\code{.c}
+int curq = 0;
 int nbatch = 0;
-while((nbatch = panache_getbatch_qmo(dfhandle))
+while((nbatch = panache_getbatch_qmo(dfhandle, outbuffer, 4*nso2, curq))
 {
-    // output will be nbatch blocks of size nmo2 in outbuffer
+    // output will be nbatch blocks of size nso2 in outbuffer
     // ... do something with it!
+    curq += nbatch;
 }
 \endcode
 

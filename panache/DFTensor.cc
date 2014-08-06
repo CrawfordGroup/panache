@@ -231,13 +231,6 @@ void DFTensor::GenQso(int storeflags)
 
 }
 
-int DFTensor::QsoDimensions(int & naux, int & nso2)
-{
-    nso2 = nso2_;
-    naux = naux_;
-    return nso2*naux;
-}
-
 void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
                            int order)
 {
@@ -407,7 +400,7 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
 
 
 int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
-                                StoredQTensor * qt)
+                             StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
     qt->GetQBatchTimer().Start();
@@ -452,59 +445,62 @@ int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
 }
 
 
-
-int DFTensor::GetQBatch_Qso(double * outbuf, int bufsize, int qstart)
+std::unique_ptr<DFTensor::StoredQTensor> & DFTensor::ResolveTensorFlag(int tensorflag)
 {
-    return GetQBatch_Base(outbuf, bufsize, qstart, qso_.get());
-}
-
-int DFTensor::GetQBatch_Qmo(double * outbuf, int bufsize, int qstart)
-{
-    return GetQBatch_Base(outbuf, bufsize, qstart, qmo_.get());
-}
-
-int DFTensor::GetQBatch_Qoo(double * outbuf, int bufsize, int qstart)
-{
-    return GetQBatch_Base(outbuf, bufsize, qstart, qoo_.get());
-}
-
-int DFTensor::GetQBatch_Qov(double * outbuf, int bufsize, int qstart)
-{
-    return GetQBatch_Base(outbuf, bufsize, qstart, qov_.get());
-}
-
-int DFTensor::GetQBatch_Qvv(double * outbuf, int bufsize, int qstart)
-{
-    return GetQBatch_Base(outbuf, bufsize, qstart, qvv_.get());
+    switch(tensorflag)
+    {
+        case QGEN_QSO:
+            return qso_;
+        case QGEN_QMO:
+            return qmo_;
+        case QGEN_QOO:
+            return qoo_;
+        case QGEN_QOV:
+            return qov_;
+        case QGEN_QVV:
+            return qvv_;
+        default:
+            throw RuntimeError("Unknown tensorflag");
+    }
 }
 
 
-int DFTensor::GetBatch_Qso(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, int qstart)
 {
-    return GetBatch_Base(outbuf, bufsize, ijstart, qso_.get());
+    return GetQBatch_Base(outbuf, bufsize, qstart, ResolveTensorFlag(tensorflag).get());
 }
 
-int DFTensor::GetBatch_Qmo(double * outbuf, int bufsize, int ijstart)
+int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart)
 {
-    return GetBatch_Base(outbuf, bufsize, ijstart, qmo_.get());
-}
-
-int DFTensor::GetBatch_Qoo(double * outbuf, int bufsize, int ijstart)
-{
-    return GetBatch_Base(outbuf, bufsize, ijstart, qoo_.get());
-}
-
-int DFTensor::GetBatch_Qov(double * outbuf, int bufsize, int ijstart)
-{
-    return GetBatch_Base(outbuf, bufsize, ijstart, qov_.get());
-}
-
-int DFTensor::GetBatch_Qvv(double * outbuf, int bufsize, int ijstart)
-{
-    return GetBatch_Base(outbuf, bufsize, ijstart, qvv_.get());
+    return GetBatch_Base(outbuf, bufsize, ijstart, ResolveTensorFlag(tensorflag).get());
 }
 
 
+int DFTensor::QBatchSize(int tensorflag)
+{
+    return ResolveTensorFlag(tensorflag)->ndim12();
+}
+
+
+int DFTensor::BatchSize(int tensorflag)
+{
+    return naux_;
+}
+
+int DFTensor::TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2)
+{
+    auto & qt = ResolveTensorFlag(tensorflag);
+    naux = qt->naux();
+    ndim1 = qt->ndim1();
+    ndim2 = qt->ndim2();
+    return qt->naux() * qt->ndim12();
+}
+
+
+bool DFTensor::IsPacked(int tensorflag)
+{
+    return ResolveTensorFlag(tensorflag)->packed();
+}
 
 // note - passing by value for the vector
 static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
