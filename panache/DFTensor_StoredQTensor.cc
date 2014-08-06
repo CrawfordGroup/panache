@@ -4,6 +4,10 @@
 namespace panache
 {
 
+
+/////////////////////////////
+// STOREDQTENSOR BASE CLASS
+/////////////////////////////
 int DFTensor::StoredQTensor::naux(void) const
 {
     return naux_;
@@ -31,17 +35,17 @@ int DFTensor::StoredQTensor::storesize(void) const
 
 int DFTensor::StoredQTensor::packed(void) const
 {
-    return packed_;
+    return (storeflags_ & QSTORAGE_PACKED);
 }
 
 int DFTensor::StoredQTensor::byq(void) const
 {
-    return byq_;
+    return (storeflags_ & QSTORAGE_BYQ);
 }
 
 int DFTensor::StoredQTensor::calcindex(int i, int j) const
 {
-    if(!packed_)
+    if(!packed())
         return (i*ndim2_+j);
     else if(i >= j)
         return ((i*(i+1))>>1) + j;
@@ -49,28 +53,26 @@ int DFTensor::StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-DFTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype)
+DFTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, int storeflags)
 {
     naux_ = naux;
     ndim1_ = ndim1;
     ndim2_ = ndim2;
-    storetype_ = storetype;
-    packed_ = packed;
-    byq_ = byq;
+    storeflags_ = storeflags;
 
-    if(packed && ndim1 != ndim2)
+    if(packed() && ndim1 != ndim2)
         throw RuntimeError("non square packed matrices?");
 
-    ndim12_ = (packed ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
+    ndim12_ = (packed() ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
 }
 
 DFTensor::StoredQTensor::~StoredQTensor()
 {
 }
 
-int DFTensor::StoredQTensor::StoreType(void) const
+int DFTensor::StoredQTensor::StoreFlags(void) const
 {
-    return storetype_;
+    return storeflags_;
 }
 
 void DFTensor::StoredQTensor::Write(double * data, int nij, int ijstart)
@@ -277,8 +279,8 @@ void DFTensor::DiskQTensor::Init_(void)
 }
 
 
-DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename)
-            : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_ONDISK)
+DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename)
+            : StoredQTensor(naux, ndim1, ndim2, storeflags)
 {
     filename_ = filename;
 }
@@ -370,8 +372,8 @@ void DFTensor::MemoryQTensor::Init_(void)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq)
-    : StoredQTensor(naux, ndim1, ndim2, packed, byq, QSTORAGE_INMEM)
+DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags)
+    : StoredQTensor(naux, ndim1, ndim2, storeflags)
 {
 }
 
@@ -379,19 +381,19 @@ DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, bool pack
 
 
 std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
-                                                                          bool packed, bool byq, int storetype, const std::string & name)
+                                                                        int storeflags, const std::string & name)
 {
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
-    if(storetype == QSTORAGE_INMEM)
-        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, packed, byq));
-    if(storetype == QSTORAGE_ONDISK)
+    if(storeflags & QSTORAGE_INMEM)
+        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
+    else if(storeflags & QSTORAGE_ONDISK)
     {
         std::string filename(directory_);
         filename.append("/");
         filename.append(name);
-        return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, packed, byq, filename));
+        return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
     }
     else
         throw RuntimeError("No StoredQTensor for that type");

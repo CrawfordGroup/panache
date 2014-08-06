@@ -88,12 +88,12 @@ DFTensor::~DFTensor()
 {
 }
 
-void DFTensor::GenQso(int storetype)
+void DFTensor::GenQso(int storeflags)
 {
     if(qso_)
         return; // already created!
 
-    qso_ = StoredQTensorFactory(naux_, nso_, nso_, true, true, storetype, "qso");
+    qso_ = StoredQTensorFactory(naux_, nso_, nso_, storeflags, "qso");
     qso_->Init();
 
 #ifdef PANACHE_TIMING
@@ -304,7 +304,7 @@ void DFTensor::TransformQTensor(double * left, int lncols,
 // 2      Qoo
 // 3      Qov
 // 4      Qvv
-void DFTensor::GenQTensors(int qflags, int storetype)
+void DFTensor::GenQTensors(int qflags, int storeflags)
 {
 #ifdef PANACHE_TIMING
     timer_genqtensors_.Start();
@@ -318,7 +318,13 @@ void DFTensor::GenQTensors(int qflags, int storetype)
     double * qc = new double[nso2_*nthreads_];     // C(t) Q
     double * cqc = new double[nso2_*nthreads_];    // C(t) Q C
 
-    GenQso(storetype);
+    // Remove QSTORAGE_PACKED if specified
+    storeflags &= ~(QSTORAGE_PACKED);
+
+
+    // Always gen qso as packed and by q
+    GenQso(storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ);
+
 
     if((qflags & (15)) == 0)
         return; //?
@@ -329,25 +335,25 @@ void DFTensor::GenQTensors(int qflags, int storetype)
     if(qflags & QFLAGS_QMO)
     {
         // generate Qmo
-        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, false, false, storetype, "qmo");
+        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags, "qmo");
         qmo_->Init();
     }
     if(qflags & QFLAGS_QOO)
     {
         // generate Qoo
-        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, false, false, storetype, "qoo");
+        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags, "qoo");
         qoo_->Init();
     }
     if(qflags & QFLAGS_QOV)
     {
         // generate Qov
-        qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, false, false, storetype, "qov");
+        qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, storeflags, "qov");
         qov_->Init();
     }
     if(qflags & QFLAGS_QVV)
     {
         // generate Qvv
-        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, false, false, storetype, "qvv");
+        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags, "qvv");
         qvv_->Init();
     }
 

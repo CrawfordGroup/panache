@@ -449,7 +449,8 @@ extern "C" {
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] nocc Number of occupied orbitals
+     * \param [in] nocc Number of occupied orbitals. This includes frozen orbitals.
+     * \param [in] nfroz Number of frozen occupied orbitals.
      */
      void panachef_setnocc_(int_t * df_handle, int_t * nocc, int_t * nfroz)
      {

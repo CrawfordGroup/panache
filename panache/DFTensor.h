@@ -131,7 +131,7 @@ public:
     /*!
      * \brief Generates various 3-index tensors
      *
-     * For the \p qflags and \p storetype parameters, see Flags.h. For example, to calculate the
+     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
      * Qmo and Qov tensors on disk,
      *
      * \code{.cpp}
@@ -141,9 +141,9 @@ public:
      * \note Be sure to set the C-Matrix first!
      *
      * \param [in] qflags A combination of flags specifying which tensors to generate
-     * \param [in] storetype How to store the matrix
+     * \param [in] storeflags How to store the matrix
      */
-    void GenQTensors(int qflags, int storetype);
+    void GenQTensors(int qflags, int storeflags);
 
 
     /*! \brief Retrieving batches by Q */
@@ -421,9 +421,7 @@ private:
         int ndim1_;  //!< Length of index 1
         int ndim2_;  //!< Length of index 2
         int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
-        bool packed_; //!< Is the tensor packed or not
-        bool byq_;    //!< Is the tensor stored with q on the slowest index
-        int storetype_; //!< How is this tensor stored
+        int storeflags_; //!< How is this tensor stored
         Timer gen_timer_; //!< Timer for the generation of this tensor
         Timer getijbatch_timer_; //!< Timer for getting batch by orbital index
         Timer getqbatch_timer_; //!< Timer for getting batch by q index
@@ -438,12 +436,11 @@ private:
         virtual void Clear_() = 0;
 
         int storesize(void) const;
-        int byq(void) const;
 
     public:
-        StoredQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, int storetype);
+        StoredQTensor(int naux, int ndim1, int ndim2, int storeflags);
         virtual ~StoredQTensor();
-        int StoreType(void) const;
+        int StoreFlags(void) const;
         void Write(double * data, int nij, int ijstart);
         void WriteByQ(double * data, int nq, int qstart);
         int Read(double * data, int nij, int ijstart);
@@ -461,6 +458,7 @@ private:
         int ndim2(void) const;
         int ndim12(void) const;
         int packed(void) const;
+        int byq(void) const;
         int calcindex(int i, int j) const;
     };
 
@@ -484,7 +482,7 @@ private:
         virtual void Init_(void);
 
     public:
-        DiskQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq, const std::string & filename);
+        DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename);
 
     };
 
@@ -504,7 +502,7 @@ private:
         virtual void Init_(void);
 
     public:
-        MemoryQTensor(int naux, int ndim1, int ndim2, bool packed, bool byq);
+        MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags);
 
     };
 
@@ -515,14 +513,12 @@ private:
      * \param [in] naux Number of auxiliary functions
      * \param [in] ndim1 Length along dimension 1
      * \param [in] ndim2 Length along dimension 2
-     * \param [in] packed Trus if tensor is to be stored packed
-     * \param [in] byq Store with the auxiliary basis function first (slowest)
-     * \param [in] storetype How to store (disk, memory)
+     * \param [in] storeflags How to store (disk, memory, packed, etc)
      * \param [in] name Name of the tensor
      * \return Pointer to a an object derived from StoredQTensor
      */
     std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
-                                                        bool packed, bool byq, int storetype,
+                                                        int storeflags,
                                                         const std::string & name);
 
     std::unique_ptr<StoredQTensor> qso_;  //!< Qso matrix
@@ -580,9 +576,9 @@ private:
      * See \ref theory_page for what Qso actually is, and memory_sec for more information
      * about memory.
      *
-     * \param [in] inmem If nonzero, store the Qso matrix in memoryof auxiliary basis functions
+     * \param [in] storeflags How to store the matrix (see Flags.h)
      */
-    void GenQso(int storetype);
+    void GenQso(int storeflags);
 
 
     /*!
@@ -608,7 +604,11 @@ private:
     
 
     /*!
-     * \param Prints the timer information for a given StoredQTensor
+     * \brief Prints the timer information for a given StoredQTensor
+     *
+     * \param [in] name Descriptive name of the tensor
+     * \param [in] q Tensor whose timings to print
+     * 
      */
     void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
 
