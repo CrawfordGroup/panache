@@ -292,11 +292,6 @@ void DFTensor::TransformQTensor(double * left, int lncols,
 }
 
 
-// Bit    Matrix
-// 1      Qmo
-// 2      Qoo
-// 3      Qov
-// 4      Qvv
 void DFTensor::GenQTensors(int qflags, int storeflags)
 {
 #ifdef PANACHE_TIMING
@@ -377,13 +372,13 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
                 myqe[i*nso_+j] = myqe[j*nso_+i] = myqp[index++];
 
 
-        if(qflags & (1 << 0))
+        if(qflags & QGEN_QMO)
             TransformQTensor(Cmo_.get(), nmo_, Cmo_.get(), nmo_, qmo_, q, myqe, myqc, mycqc);
-        if(qflags & (1 << 1))
+        if(qflags & QGEN_QOO)
             TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_occ_.get(), nocc_, qoo_, q, myqe, myqc, mycqc);
-        if(qflags & (1 << 2))
+        if(qflags & QGEN_QOV)
             TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_vir_.get(), nvir_, qov_, q, myqe, myqc, mycqc);
-        if(qflags & (1 << 3))
+        if(qflags & QGEN_QVV)
             TransformQTensor(Cmo_vir_.get(), nvir_, Cmo_vir_.get(), nvir_, qvv_, q, myqe, myqc, mycqc);
     }
 

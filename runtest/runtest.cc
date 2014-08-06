@@ -574,9 +574,9 @@ int main(int argc, char ** argv)
         dft.SetNOcc(nocc);
 
         if(inmem)
-            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_INMEM);
+            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_INMEM);
         else
-            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_ONDISK);
+            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_ONDISK);
 
 
 
