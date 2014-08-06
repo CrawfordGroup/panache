@@ -11,6 +11,7 @@
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
+#include "panache/Flags.h"
 
 #define QSO_ELEMENT_THRESHOLD 1e-11
 #define QSO_SUM_THRESHOLD 1e-8
@@ -529,9 +530,9 @@ int main(int argc, char ** argv)
         dft.SetNOcc(nocc);
 
         if(inmem)
-            dft.GenQTensors(15, QSTORAGE_INMEM);
+            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_INMEM);
         else
-            dft.GenQTensors(15, QSTORAGE_ONDISK);
+            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_ONDISK);
 
 
         size_t matsize = dft.QsoDimensions(naux, nso2);

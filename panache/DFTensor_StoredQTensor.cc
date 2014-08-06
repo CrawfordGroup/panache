@@ -386,9 +386,7 @@ std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
-    if(storeflags & QSTORAGE_INMEM)
-        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
-    else if(storeflags & QSTORAGE_ONDISK)
+    if(storeflags & QSTORAGE_ONDISK)
     {
         std::string filename(directory_);
         filename.append("/");
@@ -396,7 +394,7 @@ std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux
         return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
     }
     else
-        throw RuntimeError("No StoredQTensor for that type");
+        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
 }
 
 } // close namespace panache

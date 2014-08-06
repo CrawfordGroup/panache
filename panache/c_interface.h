@@ -125,7 +125,7 @@ extern "C" {
      * \param [in] bsorder Ordering of the basis function in the c-matrix. See Flags.h
      */
     void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans,
-                            int bsorder = BSORDER_PSI4);
+                            int_t bsorder = BSORDER_PSI4);
 
 
 
@@ -159,23 +159,26 @@ extern "C" {
     int_t panache_setnthread(int_t df_handle, int_t nthread);
 
 
-
     /*!
      * \brief Generates various 3-index tensors
      *
-     * For the \p qflags and \p storetype parameters, see Flags.h. For example, to calculate the
+     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
      * Qmo and Qov tensors on disk,
      *
      * \code{.c}
-     * panache_genqtensors(df_handle, QFLAGS_QMO | QFLAGS_QOV, QSTORAGE_ONDISK);
+     * panache_genqtensors(df_handle, QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
      * \endcode
      *
+     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
+     *
+     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
      * \note Be sure to set the C-Matrix first!
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] qflags A combination of flags specifying which tensors to generate
-     * \param [in] storetype How to store the matrix
-     *
+     * \param [in] storeflags How to store the matrix
      */
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype);
 
@@ -250,7 +253,7 @@ extern "C" {
      * \param [in] qstart The starting value of q
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int bufsize, int qstart);
+    int_t panache_getqbatch_qso(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
 
 
 
@@ -272,7 +275,7 @@ extern "C" {
      * \param [in] qstart The starting value of q
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int qstart);
+    int_t panache_getqbatch_qmo(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
 
 
     /*!
@@ -293,7 +296,7 @@ extern "C" {
      * \param [in] qstart The starting value of q
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int qstart);
+    int_t panache_getqbatch_qoo(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
 
     /*!
      * \brief Retrieves a batch of Qov
@@ -313,7 +316,7 @@ extern "C" {
      * \param [in] qstart The starting value of q
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int bufsize, int qstart);
+    int_t panache_getqbatch_qov(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
     ///@}
 
 
@@ -338,7 +341,7 @@ extern "C" {
      * \param [in] qstart The starting value of q
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int qstart);
+    int_t panache_getqbatch_qvv(int_t df_handle, double * outbuf, int_t bufsize, int_t qstart);
 
 
     /*!
@@ -359,7 +362,7 @@ extern "C" {
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getbatch_qso(int_t df_handle, double * outbuf, int bufsize, int ijstart);
+    int_t panache_getbatch_qso(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
 
 
 
@@ -381,7 +384,7 @@ extern "C" {
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getbatch_qmo(int_t df_handle, double * outbuf, int bufsize, int ijstart);
+    int_t panache_getbatch_qmo(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
 
 
     /*!
@@ -402,7 +405,7 @@ extern "C" {
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getbatch_qoo(int_t df_handle, double * outbuf, int bufsize, int ijstart);
+    int_t panache_getbatch_qoo(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
 
 
     /*!
@@ -423,7 +426,7 @@ extern "C" {
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getbatch_qov(int_t df_handle, double * outbuf, int bufsize, int ijstart);
+    int_t panache_getbatch_qov(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
 
 
     /*!
@@ -444,7 +447,7 @@ extern "C" {
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches returned in the \p outbuf buffer.
      */
-    int_t panache_getbatch_qvv(int_t df_handle, double * outbuf, int bufsize, int ijstart);
+    int_t panache_getbatch_qvv(int_t df_handle, double * outbuf, int_t bufsize, int_t ijstart);
     ///@}
 
 } // end extern "C"

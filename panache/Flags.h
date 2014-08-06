@@ -8,20 +8,27 @@
 #ifndef PANACHE_FLAGS_H
 #define PANACHE_FLAGS_H
 
+    /*! \name Flags specifing which tensors to calculate */
+    ///@{
+    #define QGEN_QMO 1 //!< Generate Qmo
+    #define QGEN_QOO 2 //!< Generate Qoo
+    #define QGEN_QOV 4 //!< Generate Qov
+    #define QGEN_QVV 8 //!< Generate Qvv
+    ///@}
 
-    #define QFLAGS_QMO 1
-    #define QFLAGS_QOO 2
-    #define QFLAGS_QOV 4
-    #define QFLAGS_QVV 8
+    /*! \name Flags specifing how tensors should be stored */
+    ///@{
+    #define QSTORAGE_PACKED 1  //!< Internal use only
+    #define QSTORAGE_INMEM  2  //!< Store in memory (core)
+    #define QSTORAGE_ONDISK 4  //!< Store on disk
+    #define QSTORAGE_ONFLY  8  //!< Generate on-the-fly (not yet implemented)
+    #define QSTORAGE_BYQ    16 //!< Store with Q as the first (slowest) index
+    ///@}
 
-    #define BSORDER_PSI4   1
-    #define BSORDER_GAMESS 2
-
-    #define QSTORAGE_INMEM  1
-    #define QSTORAGE_ONDISK 2
-    #define QSTORAGE_ONFLY  4
-    #define QSTORAGE_BYQ    8
-    #define QSTORAGE_PACKED 16 //!< Internal use only
-
+    /*! \name Flags specifing basis function ordering */
+    ///@{
+    #define BSORDER_PSI4   1 //!< Order as Psi4 does
+    #define BSORDER_GAMESS 2 //!< Order as GAMESS does
+    ///@}
 
 #endif

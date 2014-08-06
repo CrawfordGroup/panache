@@ -477,6 +477,32 @@ extern "C" {
     }
 
 
+    /*!
+     * \brief Generates various 3-index tensors
+     *
+     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
+     * Qmo and Qov tensors on disk,
+     *
+     * \code{.f90}
+     * panache_genqtensors(df_handle, 5, 4)
+     * \endcode
+     *
+     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
+     *
+     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
+     * \note Be sure to set the C-Matrix first!
+     *
+     * \param [in] qflags A combination of flags specifying which tensors to generate
+     * \param [in] storeflags How to store the matrix
+     */
+    void panachef_genqtensors_(int_t * df_handle, int_t * qflags, int_t * storetype)
+    {
+        panache_genqtensors(*df_handle, *qflags, *storetype);
+    }
+
+
     /*! \name Retrieving by auxiliary basis index */
     ///@{
     /*!

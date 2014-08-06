@@ -135,9 +135,14 @@ public:
      * Qmo and Qov tensors on disk,
      *
      * \code{.cpp}
-     * dft.GenQTensors(QFLAGS_QMO | QFLAGS_QOV, QSTORAGE_ONDISK);
+     * dft.GenQTensors(QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
      * \endcode
      *
+     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
+     *
+     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
      * \note Be sure to set the C-Matrix first!
      *
      * \param [in] qflags A combination of flags specifying which tensors to generate

@@ -332,25 +332,25 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
     if(!Cmo_)
         throw RuntimeError("Set the c-matrix first!");
 
-    if(qflags & QFLAGS_QMO)
+    if(qflags & QGEN_QMO)
     {
         // generate Qmo
         qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags, "qmo");
         qmo_->Init();
     }
-    if(qflags & QFLAGS_QOO)
+    if(qflags & QGEN_QOO)
     {
         // generate Qoo
         qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags, "qoo");
         qoo_->Init();
     }
-    if(qflags & QFLAGS_QOV)
+    if(qflags & QGEN_QOV)
     {
         // generate Qov
         qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, storeflags, "qov");
         qov_->Init();
     }
-    if(qflags & QFLAGS_QVV)
+    if(qflags & QGEN_QVV)
     {
         // generate Qvv
         qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags, "qvv");
