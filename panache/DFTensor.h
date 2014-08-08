@@ -319,9 +319,9 @@ private:
         int ndim2_;  //!< Length of index 2
         int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
         int storeflags_; //!< How is this tensor stored
-        Timer gen_timer_; //!< Timer for the generation of this tensor
-        Timer getijbatch_timer_; //!< Timer for getting batch by orbital index
-        Timer getqbatch_timer_; //!< Timer for getting batch by q index
+        CumulativeTime gen_timer_; //!< Timer for the generation of this tensor
+        CumulativeTime getijbatch_timer_; //!< Timer for getting batch by orbital index
+        CumulativeTime getqbatch_timer_; //!< Timer for getting batch by q index
 
     protected:
         virtual void Init_(void) = 0;
@@ -346,9 +346,9 @@ private:
         void Clear(void);
         void Init(void);
 
-        Timer & GenTimer(void);
-        Timer & GetBatchTimer(void);
-        Timer & GetQBatchTimer(void);
+        CumulativeTime & GenTimer(void);
+        CumulativeTime & GetBatchTimer(void);
+        CumulativeTime & GetQBatchTimer(void);
 
         int naux(void) const;
         int ndim1(void) const;
@@ -448,7 +448,7 @@ private:
 
 
 
-    Timer timer_genqtensors_;   //!< Total time spent in GenQTensors()
+    CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()
 
     int nthreads_;  //!< Number of threads to use
 

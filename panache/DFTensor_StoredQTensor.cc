@@ -119,17 +119,17 @@ void DFTensor::StoredQTensor::Init(void)
 }
 
 
-Timer & DFTensor::StoredQTensor::GenTimer(void)
+CumulativeTime & DFTensor::StoredQTensor::GenTimer(void)
 {
     return gen_timer_; 
 }
 
-Timer & DFTensor::StoredQTensor::GetQBatchTimer(void)
+CumulativeTime & DFTensor::StoredQTensor::GetQBatchTimer(void)
 {
     return getqbatch_timer_;
 }
 
-Timer & DFTensor::StoredQTensor::GetBatchTimer(void)
+CumulativeTime & DFTensor::StoredQTensor::GetBatchTimer(void)
 {
     return getijbatch_timer_;
 }

@@ -9,13 +9,16 @@
 #define PANACHE_TIMING_H
 
 #include <chrono>
-
+#include <atomic>
 
 namespace panache
 {
 
 
 using panacheclock = std::chrono::high_resolution_clock;
+
+
+
 
 
 /*!
@@ -30,7 +33,7 @@ private:
     panacheclock::time_point begin;   //!< The last time the clock was started
     panacheclock::time_point end;     //!< The (last) time the clocked was stopped
     panacheclock::duration dur;       //!< Accumulated duration (all the time between starts and stops)
-    unsigned long int nmeasurements;  //!< Number of times the timer has been stopped
+    unsigned long nmeasurements;  //!< Number of times the timer has been stopped
 
 public:
     /*!
@@ -78,6 +81,7 @@ public:
         nmeasurements++;
     }
 
+
     /*!
      * \brief Zeroes the duration and number of measurements
      */
@@ -123,6 +127,29 @@ public:
         return nmeasurements;
     }
 
+};
+
+
+/*!
+ * \brief Stored accumulated time
+ */
+struct CumulativeTime
+{
+    std::atomic<unsigned long> microseconds;
+    std::atomic<unsigned long> timescalled;
+
+    CumulativeTime()
+    {
+        microseconds = 0;
+        timescalled = 0;
+    }
+
+
+    void AddTime(const Timer & t)
+    {
+        microseconds += t.Microseconds();
+        timescalled  += t.TimesCalled();
+    }
 };
 
 

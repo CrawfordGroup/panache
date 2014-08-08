@@ -97,7 +97,8 @@ void DFTensor::GenQso(int storeflags)
     qso_->Init();
 
 #ifdef PANACHE_TIMING
-    qso_->GenTimer().Start();
+    Timer tim;
+    tim.Start();
 #endif
 
     int maxpershell = primary_->max_function_per_shell();
@@ -226,7 +227,8 @@ void DFTensor::GenQso(int storeflags)
     }
 
 #ifdef PANACHE_TIMING
-    qso_->GenTimer().Stop();
+    tim.Stop();
+    qso_->GenTimer().AddTime(tim);
 #endif
 
 }
@@ -276,7 +278,8 @@ void DFTensor::TransformQTensor(double * left, int lncols,
                                  double * qso, double * qc, double * cqc)
 {
 #ifdef PANACHE_TIMING
-    qout->GenTimer().Start();
+    Timer tim;
+    tim.Start();
 #endif
     // transform
 
@@ -287,7 +290,8 @@ void DFTensor::TransformQTensor(double * left, int lncols,
     qout->WriteByQ(cqc, 1, q);
 
 #ifdef PANACHE_TIMING
-    qout->GenTimer().Stop();
+    tim.Stop();
+    qout->GenTimer().AddTime(tim);
 #endif
 }
 
@@ -295,7 +299,8 @@ void DFTensor::TransformQTensor(double * left, int lncols,
 void DFTensor::GenQTensors(int qflags, int storeflags)
 {
 #ifdef PANACHE_TIMING
-    timer_genqtensors_.Start();
+    Timer tim;
+    tim.Start();
 #endif
 
     // temporary space
@@ -389,7 +394,8 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
     delete [] cqc;
 
 #ifdef PANACHE_TIMING
-    timer_genqtensors_.Stop();
+    tim.Stop();
+    timer_genqtensors_.AddTime(tim);
 #endif
 }
 
@@ -398,7 +404,8 @@ int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
-    qt->GetQBatchTimer().Start();
+    Timer tim;
+    tim.Start();
 #endif
 
     int nq = (bufsize / qt->ndim12());
@@ -410,7 +417,8 @@ int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
     int gotten = qt->ReadByQ(outbuf, nq, qstart);
 
 #ifdef PANACHE_TIMING
-    qt->GetQBatchTimer().Stop();
+    tim.Stop();
+    qt->GetQBatchTimer().AddTime(tim);
 #endif
 
     return gotten;
@@ -421,7 +429,8 @@ int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
-    qt->GetBatchTimer().Start();
+    Timer tim;
+    tim.Start();
 #endif
 
     int nij = (bufsize / qt->naux());
@@ -433,7 +442,8 @@ int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
     int gotten = qt->Read(outbuf, nij, ijstart);
 
 #ifdef PANACHE_TIMING
-    qt->GetBatchTimer().Stop();
+    tim.Stop();
+    qt->GetBatchTimer().AddTime(tim);
 #endif
 
     return gotten;
@@ -629,13 +639,20 @@ void DFTensor::SetNOcc(int nocc, int nfroz)
 void DFTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
 {
     if(q)
+    {
+        // need to convert from std::atomic
+        unsigned long genm = q->GenTimer().microseconds;
+        unsigned long gent = q->GenTimer().timescalled;
+        unsigned long getm = q->GetBatchTimer().microseconds;
+        unsigned long gett = q->GetBatchTimer().timescalled;
+        unsigned long getqm = q->GetQBatchTimer().microseconds;
+        unsigned long getqt = q->GetQBatchTimer().timescalled;
+
         output::printf("%-6s  %17lu (%7lu)  %17lu (%7lu)  %17lu (%7lu)\n", name, 
-                        q->GenTimer().Microseconds(),
-                        q->GenTimer().TimesCalled(),
-                        q->GetBatchTimer().Microseconds(),
-                        q->GetBatchTimer().TimesCalled(),
-                        q->GetQBatchTimer().Microseconds(),
-                        q->GetQBatchTimer().TimesCalled());
+                        genm, gent,
+                        getm, gett,
+                        getqm, getqt);
+    }
     else
         output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
 }
