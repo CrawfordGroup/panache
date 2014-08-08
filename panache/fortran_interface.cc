@@ -365,33 +365,6 @@ extern "C" {
 
 
     
-    /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, etc
-     *
-     * The matrix is expected be nso x nmo (MOs in the columns) in column-major order.
-     * If it is nmo x nso, or the matrix is in row major order, set \p cmo_is_trans.
-     *
-     * \note This is different from panache_setcmatrix(), as fortran column-major order
-     * matrices are handled automatically.
-     *
-     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
-     * changed after calling this function.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
-     * \param [in] nmo Number of MOs in this C matrix
-     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
-     *                          is in row-major order.
-     * \param [in] bsorder Ordering of the C matrix passed in (see BSORDER_* in Flags.h)
-     */
-    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans,
-                              int_t * bsorder)
-    {
-        if(*cmo_is_trans)
-          panache_setcmatrix(*df_handle, cmo, *nmo, 0, *bsorder);
-        else
-          panache_setcmatrix(*df_handle, cmo, *nmo, 1, *bsorder);
-    }
 
 
     /*!
@@ -421,19 +394,6 @@ extern "C" {
     }
 
 
-    /*!
-     * \brief Sets the number of OpenMP threads used in DF routines
-     *
-     * Set to zero to use the maximum number of threads for this machine.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] nthread Max number of threads to use
-     * \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
-     */ 
-    void panachef_setnthread_(int_t * df_handle, int_t * nthread, int_t * actual)
-    {
-        *actual = panache_setnthread(*df_handle, *nthread);
-    }
 
 
     /*!
@@ -445,6 +405,35 @@ extern "C" {
     }
 
 
+    /*!
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, etc
+     *
+     * The matrix is expected be nso x nmo (MOs in the columns) in column-major order.
+     * If it is nmo x nso, or the matrix is in row major order, set \p cmo_is_trans.
+     *
+     * \note This is different from panache_setcmatrix(), as fortran column-major order
+     * matrices are handled automatically.
+     *
+     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+     * changed after calling this function.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
+     * \param [in] nmo Number of MOs in this C matrix
+     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
+     *                          is in row-major order.
+     * \param [in] bsorder Ordering of the C matrix passed in (see BSORDER_* in Flags.h)
+     */
+    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans,
+                              int_t * bsorder)
+    {
+        if(*cmo_is_trans)
+          panache_setcmatrix(*df_handle, cmo, *nmo, 0, *bsorder);
+        else
+          panache_setcmatrix(*df_handle, cmo, *nmo, 1, *bsorder);
+    }
+
+
 
     /*!
      * \brief Sets the number of occupied and virtual orbitals.
@@ -452,7 +441,9 @@ extern "C" {
      * Number of virtual orbitals is taken to be the remainder after the occupied.
      * Used by Qov, etc.
      *
-     * \note You must set the C Matrix first before calling (see SetCMatrix())
+     * The number of frozen orbitals should be counted in \p nocc as well.
+     *
+     * \note You must set the C Matrix first before calling (see panache_setcmatrix())
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
      * \param [in] nocc Number of occupied orbitals. This includes frozen orbitals.
@@ -462,6 +453,70 @@ extern "C" {
      {
         panache_setnocc(*df_handle, *nocc, *nfroz);
      }
+
+
+    /*!
+     * \brief Sets the maximum number of (OpenMP) threads used
+     *
+     * Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
+     * set by omp_num_threads, or the default for this machine).
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] nthread Max number of threads to use
+     * \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
+     */ 
+    void panachef_setnthread_(int_t * df_handle, int_t * nthread, int_t * actual)
+    {
+        *actual = panache_setnthread(*df_handle, *nthread);
+    }
+
+
+
+    /*!
+     * \brief Prints out timing information collected so far
+     *
+     * All times are cumulative for all operations. The output must be set
+     *  first (See Output.h)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     */
+    void panachef_printtimings_(int_t * df_handle)
+    {
+        panache_printtimings(*df_handle);
+    }
+
+
+    /*!
+     * \brief Generates various 3-index tensors
+     *
+     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
+     * Qmo and Qov tensors on disk,
+     *
+     * \code{.f90}
+     * call panachef_genqtensors(df_handle, 10, 4)
+     * \endcode
+     *
+     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
+     *
+     * To calculate just Qso, set \p qflags = QGEN_QSO
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
+     * \warning Be sure to set the C-Matrix first and number of occupied orbitals first
+     *          if qflags contains more than QGEN_QSO
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
+     * \note Be sure to set the C-Matrix first!
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] qflags A combination of flags specifying which tensors to generate
+     * \param [in] storeflags How to store the matrix
+     */
+    void panachef_genqtensors_(int_t * df_handle, int_t * qflags, int_t * storetype)
+    {
+        panache_genqtensors(*df_handle, *qflags, *storetype);
+    }
+
+
 
 
     /*!
@@ -505,32 +560,6 @@ extern "C" {
     }
 
 
-    /*!
-     * \brief Generates various 3-index tensors
-     *
-     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
-     * Qmo and Qov tensors on disk,
-     *
-     * \code{.f90}
-     * panache_genqtensors(df_handle, 10, 4)
-     * \endcode
-     *
-     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
-     *
-     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
-     *
-     * \note The Qso matrix is always stored with QSTORAGE_BYQ
-     * \note Be sure to set the C-Matrix first!
-     *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] qflags A combination of flags specifying which tensors to generate
-     * \param [in] storeflags How to store the matrix
-     */
-    void panachef_genqtensors_(int_t * df_handle, int_t * qflags, int_t * storetype)
-    {
-        panache_genqtensors(*df_handle, *qflags, *storetype);
-    }
-
 
     /*!
      * \brief Retrieves a batch of a 3-index tensor 
@@ -542,9 +571,12 @@ extern "C" {
      * will contain (number of batches)*batchsize elements with
      * the index of the auxiliary basis function as the slowest index.
      *
-     * The batchsize can be obtained using panachef_qbatchsize_()
+     * The batchsize can be obtained using QBatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until nbatch = 0
+     *
+     * \note Tensors are always in row-major order!
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
@@ -568,12 +600,15 @@ extern "C" {
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*batchsize elements with
-     * the combined orbital index as the slowest index.
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
      *
-     * The batchsize can be obtained using panachef_batchsize_()
+     * The batchsize can be obtained using BatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
+     *
+     * \note Tensors are always in row-major order!
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)

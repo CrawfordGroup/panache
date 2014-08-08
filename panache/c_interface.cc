@@ -94,19 +94,25 @@ extern "C" {
     }
 
 
-    int panache_qbatchsize(int_t df_handle, int_t tensorflag)
+    int_t panache_qbatchsize(int_t df_handle, int_t tensorflag)
     {
         CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->QBatchSize(tensorflag); 
     }
 
-    int panache_batchsize(int_t df_handle, int_t tensorflag)
+    int_t panache_batchsize(int_t df_handle, int_t tensorflag)
     {
         CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->BatchSize(tensorflag); 
     }
 
-    int panache_tensordimensions(int_t df_handle, int_t tensorflag,
+    int_t panache_ispacked(int_t df_handle, int_t tensorflag)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return dftensors_[df_handle]->IsPacked(tensorflag); 
+    }
+
+    int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
                                  int_t & naux, int_t & ndim1, int_t & ndim2)
     {
         CheckHandle(df_handle, __FUNCTION__);
@@ -157,6 +163,7 @@ extern "C" {
         return dftensors_[df_handle]->SetNThread(nthread); 
     }
 
+
     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz)
     {
         CheckHandle(df_handle, __FUNCTION__);
@@ -169,14 +176,14 @@ extern "C" {
         dftensors_[df_handle]->PrintTimings(); 
     }
 
-    int_t panache_getqbatch(int_t df_handle, int tensorflag, double * outbuf, int bufsize, int qstart)
+    int_t panache_getqbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t qstart)
     {
         CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->GetQBatch(tensorflag, outbuf, bufsize, qstart);
     }
 
 
-    int_t panache_getbatch(int_t df_handle, int tensorflag, double * outbuf, int bufsize, int ijstart)
+    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart)
     {
         CheckHandle(df_handle, __FUNCTION__);
         return dftensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);

@@ -28,8 +28,6 @@ extern "C" {
 
     /*!
      * \brief Information about a basis function center
-     *
-     * \todo Rename?
      */
     struct C_AtomCenter
     {
@@ -107,111 +105,6 @@ extern "C" {
 
 
 
-
-
-    /*!
-     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, etc 
-     *
-     * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
-     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
-     *
-     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
-     * changed after calling this function.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
-     * \param [in] nmo Number of MOs in this C matrix
-     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
-     *                          is in column-major order.
-     * \param [in] bsorder Ordering of the basis function in the c-matrix. See Flags.h
-     */
-    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans,
-                            int_t bsorder = BSORDER_PSI4);
-
-
-
-
-    /*!
-     * \brief Sets the number of OpenMP threads used in DF routines
-     *
-     * Set to zero to use the maximum number of threads for this machine.
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] nthread Max number of threads to use
-     * \return The max number of threads that will actually be used (ie if \p nthread is zero).
-     */ 
-    int_t panache_setnthread(int_t df_handle, int_t nthread);
-
-
-    /*!
-     * \brief Generates various 3-index tensors
-     *
-     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
-     * Qmo and Qov tensors on disk,
-     *
-     * \code{.c}
-     * panache_genqtensors(df_handle, QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
-     * \endcode
-     *
-     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
-     *
-     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
-     *
-     * \note The Qso matrix is always stored with QSTORAGE_BYQ
-     * \note Be sure to set the C-Matrix first!
-     *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
-     * \param [in] qflags A combination of flags specifying which tensors to generate
-     * \param [in] storeflags How to store the matrix
-     */
-    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype);
-
-    /*!
-     * \brief Obtain the batch size for panache_getqbatch()
-     *
-     * The size will be as follows
-     *
-     * | Tensor | Packed Size      | Unpacked Size |
-     * |--------|------------------|---------------|
-     * | Qso    | nso*(nso+1)/2    |               |
-     * | Qmo    | nmo*(nmo+1)/2    |               |
-     * | Qoo    | nocc*(nocc+1)/2  |               |
-     * | Qov    |                  | nocc*nvir     |
-     * | Qvv    | nvir*(nvir+1)/2  |               |
-     *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] tensorflag Which tensor to query (see Flags.h)
-     * \return Size of batches returned by panache_getqbatch
-     */
-     int panache_qbatchsize(int_t df_handle, int_t tensorflag);
-
-
-    /*!
-     * \brief Obtain the batch size for panache_getbatch()
-     *
-     * Size will always be naux
-     *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] tensorflag Which tensor to query (see Flags.h)
-     * \return Size of batches returned by panache_getbatch()
-     */
-    int panache_batchsize(int_t df_handle, int_t tensorflag);
-
-
-    /*!
-     * \brief Obtain the dimensions of a tensor
-     *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] tensorflag Which tensor to query (see Flags.h)
-     * \param [out] naux Number of auxiliary basis functions
-     * \param [out] ndim1 First dimension for a particular q
-     * \param [out] ndim2 Second dimension for a particular q
-     * \return Total tensor size (depends on packing)
-     */
-    int panache_tensordimensions(int_t df_handle, int_t tensorflag,
-                                 int_t & naux, int_t & ndim1, int_t & ndim2);
-
-
     /*!
      * \brief Clean up a particular density-fitting calculation and free memory
      *
@@ -245,20 +138,151 @@ extern "C" {
 
 
     /*!
+     * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, Qov, Qoo, and Qvv
+     *
+     * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
+     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans
+     * to true.
+     *
+     * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+     * changed after calling this function.
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
+     * \param [in] nmo Number of MOs in this C matrix
+     * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
+     *                          is in column-major order.
+     * \param [in] bsorder Ordering of the basis function in the c-matrix. See Flags.h
+     */
+    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans,
+                            int_t bsorder = BSORDER_PSI4);
+
+
+    /*!
      * \brief Sets the number of occupied and virtual orbitals.
      *
      * Number of virtual orbitals is taken to be the remainder after the occupied.
      * Used by Qov, etc.
      *
-     * The number of frozen orbitals should be counted in the \p nocc parameter as well.
+     * The number of frozen orbitals should be counted in \p nocc as well.
      *
-     * \note You must set the C Matrix first before calling (see SetCMatrix())
+     * \note You must set the C Matrix first before calling (see panache_setcmatrix())
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
      * \param [in] nocc Number of occupied orbitals. This includes frozen orbitals
      * \param [in] nfroz Number of frozen occupied orbitals
      */
-     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz);
+     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz = 0);
+
+
+    /*!
+     * \brief Sets the maximum number of (OpenMP) threads used
+     *
+     * Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
+     * set by omp_num_threads, or the default for this machine).
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] nthread Max number of threads to use
+     * \return The max number of threads that will actually be used (ie if \p nthread is zero).
+     */ 
+    int_t panache_setnthread(int_t df_handle, int_t nthread);
+
+
+
+    /*!
+     * \brief Prints out timing information collected so far
+     *
+     * All times are cumulative for all operations. The output must be set
+     *  first (See Output.h)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     */
+    void panache_printtimings(int_t df_handle);
+
+
+
+    /*!
+     * \brief Generates various 3-index tensors
+     *
+     * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
+     * Qmo and Qov tensors on disk,
+     *
+     * \code{.c}
+     * panache_genqtensors(df_handle, QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
+     * \endcode
+     *
+     * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
+     *
+     * To calculate just Qso, set \p qflags = QGEN_QSO
+     *
+     * \note The Qso matrix is always stored with QSTORAGE_BYQ
+     * \warning Be sure to set the C-Matrix first and number of occupied orbitals first
+     *          if qflags contains more than QGEN_QSO
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] qflags A combination of flags specifying which tensors to generate
+     * \param [in] storeflags How to store the matrix
+     */
+    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype);
+
+    /*!
+     * \brief Obtain the batch size for panache_getqbatch()
+     *
+     * The size will be as follows
+     *
+     * | Tensor | Packed Size      | Unpacked Size |
+     * |--------|------------------|---------------|
+     * | Qso    | nso*(nso+1)/2    |               |
+     * | Qmo    | nmo*(nmo+1)/2    |               |
+     * | Qoo    | nocc*(nocc+1)/2  |               |
+     * | Qov    |                  | nocc*nvir     |
+     * | Qvv    | nvir*(nvir+1)/2  |               |
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \return Size of batches returned by panache_getqbatch
+     */
+    int_t panache_qbatchsize(int_t df_handle, int_t tensorflag);
+
+
+    /*!
+     * \brief Obtain the batch size for panache_getbatch()
+     *
+     * The size will always be naux (number of auxiliary basis functions)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \return Size of batches returned by panache_getbatch()
+     */
+    int_t panache_batchsize(int_t df_handle, int_t tensorflag);
+
+
+
+    /*!
+     * \brief See if a particular tensor is stored packed
+     *
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \return Nonzero if the tensor is in packed storage
+     */
+    int_t ispacked(int_t df_handle, int_t tensorflag);
+
+
+    /*!
+     * \brief Obtain the dimensions of a tensor
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] ndim1 First dimension for a particular q
+     * \param [out] ndim2 Second dimension for a particular q
+     * \return Total tensor size (depends on packing)
+     */
+    int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
+                                 int_t & naux, int_t & ndim1, int_t & ndim2);
+
+
+
+
 
 
     /*!
@@ -271,9 +295,10 @@ extern "C" {
      * will contain (number of batches)*batchsize elements with
      * the index of the auxiliary basis function as the slowest index.
      *
-     * The batchsize can be obtained using panache_qbatchsize()
+     * The batchsize can be obtained using QBatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
@@ -293,12 +318,13 @@ extern "C" {
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*batchsize elements with
-     * the combined orbital index as the slowest index.
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
      *
-     * The batchsize can be obtained using panache_batchsize()
+     * The batchsize can be obtained using BatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)

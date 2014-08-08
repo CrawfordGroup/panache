@@ -38,6 +38,9 @@ public:
     /*!
      * \brief Constructor
      *
+     * Initializes the basis set members, and constructs the creates the
+     * FittingMetric
+     *
      * \param [in] primary The primary basis set
      * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] directory Full path to a directory to put scratch files
@@ -62,7 +65,8 @@ public:
      * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, Qov, Qoo, and Qvv
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.
-     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans.
+     * If it is nmo x nso, or the matrix is in column major order, set \p cmo_is_trans
+     * to true.
      *
      * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
      * changed after calling this function.
@@ -87,7 +91,7 @@ public:
      *
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
-     * \param [in] nocc Number of occupied orbitals
+     * \param [in] nocc Number of occupied orbitals (including frozen)
      * \param [in] nfroz Number of frozen orbitals
      */
     void SetNOcc(int nocc, int nfroz = 0);
@@ -98,12 +102,14 @@ public:
     /*!
      * \brief Sets the maximum number of (OpenMP) threads used
      *
-     * Set to zero to use the maximum number of threads for this machine.
+     * Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
+     * set by omp_num_threads, or the default for this machine).
      *
      * \param [in] nthread Max number of threads to use
      * \return The max number of threads that will actually be used (ie if \p nthread is zero).
      */
     int SetNThread(int nthread);
+
 
 
     /*!
@@ -113,6 +119,7 @@ public:
      *  first (See Output.h)
      */
     void PrintTimings(void) const;
+
 
 
     /*!
@@ -127,10 +134,11 @@ public:
      *
      * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
      *
-     * To calculate just Qso, do not give it any QGEN (ie just QSTORAGE_ONDISK, etc).
+     * To calculate just Qso, set \p qflags = QGEN_QSO
      *
      * \note The Qso matrix is always stored with QSTORAGE_BYQ
-     * \note Be sure to set the C-Matrix first!
+     * \warning Be sure to set the C-Matrix first and number of occupied orbitals first
+     *          if qflags contains more than QGEN_QSO
      *
      * \param [in] qflags A combination of flags specifying which tensors to generate
      * \param [in] storeflags How to store the matrix
@@ -138,8 +146,18 @@ public:
     void GenQTensors(int qflags, int storeflags);
 
 
-    /*! \brief Retrieving batches by Q */
-    ///@{
+
+    /*!
+     * \brief Obtain the dimensions of a tensor
+     *
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] ndim1 First dimension
+     * \param [out] ndim2 Second dimension
+     * \return Total tensor size (depends on packing)
+     */
+    int TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2);
+
 
 
     /*!
@@ -161,28 +179,16 @@ public:
     int QBatchSize(int tensorflag);
 
 
+
     /*!
      * \brief Obtain the batch size for GetBatch()
      *
-     * The size will always be naux
+     * The size will always be naux (number of auxiliary basis functions)
      *
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \return Size of batches returned by GetBatch
      */
     int BatchSize(int tensorflag);
-
-
-
-    /*!
-     * \brief Obtain the dimensions of a tensor
-     *
-     * \param [in] tensorflag Which tensor to query (see Flags.h)
-     * \param [out] naux Number of auxiliary basis functions
-     * \param [out] ndim1 First dimension for a particular q
-     * \param [out] ndim2 Second dimension for a particular q
-     * \return Total tensor size (depends on packing)
-     */
-    int TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2);
 
 
 
@@ -207,10 +213,11 @@ public:
      *
      * The batchsize can be obtained using QBatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
      *
      * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] outbuf Memory location to store the batch of tensors
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] qstart The starting value of q
      * \return The number of batches actually stored in the buffer.
@@ -225,12 +232,13 @@ public:
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*batchsize elements with the combined orbital index
+     * will contain (number of batches)*naux elements with the combined orbital index
      * as the slowest index.
      *
      * The batchsize can be obtained using BatchSize()
      *
-     * Call this and process the batches until this function returns zero.
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
      *
      * \param [in] outbuf Memory location to store the tensor
      * \param [in] tensorflag Which tensor to get (see Flags.h)
@@ -279,6 +287,7 @@ private:
     int nvir_; //!< Number of virtual orbitals
     int nsotri_; //!< Packed nso*nso symmetric matrix
 
+
     /*!
      * \brief Splits the C matrix into occupied and virtual matrices
      *
@@ -287,6 +296,7 @@ private:
      * nocc_, nvir_ nmo_, and nso_ must be set first!
      */
     void SplitCMat(void);
+
 
     /*!
      * \brief Reorders the whole C matrix into the specified ordering
@@ -438,22 +448,11 @@ private:
 
 
 
-    /*! \name Timing */
-    ///@{
     Timer timer_genqtensors_;   //!< Total time spent in GenQTensors()
-    ///@}
-
-
-
-    /*! \name Threading and Prefetching */
-    ///@{
 
     int nthreads_;  //!< Number of threads to use
 
-    ///@}
-
-
-    std::string directory_; 
+    std::string directory_;  //!< Directory to use to store matrices on disk (if requested)
 
 
 
@@ -469,7 +468,7 @@ private:
 
 
     /*!
-     * \brief Obtains a stored tensor corresponding to a tensor flag
+     * \brief Obtains a stored tensor object corresponding to a tensor flag
      *
      * \param [in] tensorflag Flag for the tensor
      * \return Stored object for the tensor
