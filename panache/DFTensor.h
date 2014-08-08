@@ -29,8 +29,11 @@ class Orderings;
 class DFTensor
 {
 public:
-    DFTensor & operator=(const DFTensor & other) = delete;
     DFTensor(const DFTensor & other) = delete;
+    DFTensor(const DFTensor && other) = delete;
+    DFTensor & operator=(const DFTensor & other) = delete;
+
+
 
     /*!
      * \brief Constructor
@@ -44,6 +47,7 @@ public:
              SharedBasisSet auxiliary,
              const std::string & directory,
              int nthreads);
+
 
     /*!
      * \brief Destructor

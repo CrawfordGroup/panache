@@ -68,6 +68,9 @@ protected:
     void pivot();
 
 public:
+    FittingMetric(const FittingMetric & f) = delete;
+    FittingMetric(const FittingMetric && f) = delete;
+    FittingMetric & operator=(const FittingMetric && f) = delete;
 
     /// DF Fitting Metric
     FittingMetric(SharedBasisSet aux, int nthreads);

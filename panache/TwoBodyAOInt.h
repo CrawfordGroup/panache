@@ -189,6 +189,12 @@ protected:
                  const SharedBasisSet original_bs4);
 
 public:
+    TwoBodyAOInt(const TwoBodyAOInt & t) = delete;
+    TwoBodyAOInt(const TwoBodyAOInt && t) = delete;
+    TwoBodyAOInt & operator=(const TwoBodyAOInt && t) = delete;
+
+
+
     virtual ~TwoBodyAOInt();
 
     /*!
