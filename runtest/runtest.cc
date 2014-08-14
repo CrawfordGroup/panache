@@ -302,6 +302,10 @@ int TestMatrix(const string & title, const string & reffile,
 {
     TestMatrixInfo tmi = ReadMatrixInfo(reffile);
     int nfailures = 0;
+    cout << "***********************************************************************\n";
+    cout << "Matrix \"" << title;
+    cout << "\n";
+    cout << "***********************************************************************\n";
 
     PrintRow("Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator();
@@ -348,7 +352,7 @@ int TestMatrix(const string & title, const string & reffile,
 
     cout << "\n";
     cout << "***********************************************************************\n";
-
+    cout << "\n\n\n\n\n";
     return nfailures;
 }
 
@@ -410,6 +414,162 @@ int ReadNocc(const string & filename)
 
 
 
+class IJIterator
+{
+private:
+    int i_;
+    int j_;
+    int ij_;
+    int ni_, nj_;
+    int nij_;
+    bool valid_;
+    bool packed_;
+
+    void validate_(void)
+    {
+        valid_ = (ij_ < nij_ && ij_ >= 0);
+    }
+
+public:
+    IJIterator(int ni, int nj, bool packed = false) 
+             : ni_(ni),nj_(nj),nij_(packed ? (ni_*(ni_+1))/2 : ni_*nj_),packed_(packed)
+    { 
+        i_ = j_ = ij_  = 0; 
+        valid_ = true;
+    }
+    
+    IJIterator(IJIterator & iji)
+    {
+        i_ = iji.i_;
+        j_ = iji.j_;
+        ij_ = iji.ij_;
+        ni_ = iji.ni_;
+        nj_ = iji.nj_;
+        valid_ = iji.valid_;
+        packed_ = packed_;
+    }
+
+    int i(void) const { return i_; }
+    int j(void) const { return j_; }
+    int ij(void) const { return ij_; }
+    bool packed(void) const { return packed_; }
+    operator bool() const { return valid_; }
+
+    // prefix
+    IJIterator & operator++()
+    {
+        return (*this += 1);
+    }
+
+    IJIterator & operator--()
+    {
+        return (*this -= 1);
+    }
+
+
+    // postfix
+    IJIterator operator++(int)
+    {
+        IJIterator n(*this);
+        ++(*this);
+        return n; 
+    }
+
+    IJIterator operator--(int)
+    {
+        IJIterator n(*this);
+        --(*this);
+        return n; 
+    }
+
+    IJIterator & operator+=(int ij)
+    {
+        if(!valid_)
+            return *this;
+
+        if(packed_)
+        {
+            while(ij > 0)
+            {
+                j_++;
+                if(j_ > i_)
+                {
+                    i_++;
+                    j_ = 0;
+                }
+                ij--;
+                ij_++;
+            }
+        }
+        else
+        {
+            i_ += (j_ + ij)/nj_;
+            j_ = (j_ + ij) % nj_;
+            ij_ += ij;
+        }
+
+        validate_();
+
+        return *this;
+    }
+
+    IJIterator & operator-=(int ij)
+    {
+        if(!valid_)
+            return *this;
+
+        if(packed_)
+        {
+            while(ij > 0)
+            {
+                ij_--;
+                j_--;
+                if(j_ < 0)
+                {
+                    i_--;
+                    j_ = i_;
+
+                    if(i_ < 0)
+                        break;
+                }
+                ij--;
+            }
+        }
+        else
+        {
+            int idec = ij / nj_;
+            int jdec = ij % nj_;
+
+            if(jdec > j_)
+            {
+                idec++;
+                j_ = nj_;
+            }
+
+            i_ -= idec;
+            j_ -= jdec;
+            ij_ -= ij;
+        }
+
+        validate_();
+        return *this;
+    }
+
+
+    IJIterator operator+(int ij)
+    {
+        IJIterator n(*this);
+        n += ij;
+        return n;
+    }
+
+    IJIterator operator-(int ij)
+    {
+        IJIterator n(*this);
+        n -= ij;
+        return n;
+    }
+};
 
 
 int RunTestMatrix(DFTensor & dft, const string & title,
@@ -418,24 +578,29 @@ int RunTestMatrix(DFTensor & dft, const string & title,
                   double sum_threshold, double checksum_threshold, double element_threshold,
                   bool verbose)
 {
+        int ret = 0;
         int naux, ndim1, ndim2;
         dft.TensorDimensions(tensorflag, naux, ndim1, ndim2);
-
-        int matsize = naux * ndim1 * ndim2; // always expanded
 
         // may be packed
         int ndim12 = dft.QBatchSize(tensorflag);
 
+        int matsize = naux * ndim1 * ndim2; // always expanded
         int bufsize = ndim12 * naux;
         if(batchsize)
             bufsize = ndim12 * batchsize;
             
         unique_ptr<double[]> mat(new double[matsize]);
         unique_ptr<double[]> outbuf(new double[bufsize]);
+        std::fill(mat.get(), mat.get()+matsize, 0.0);
+        std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
 
         int n;
         int curq = 0;
+
+
+        // First, do by q
         while((n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, curq)))
         {
             if(dft.IsPacked(tensorflag))
@@ -444,7 +609,7 @@ int RunTestMatrix(DFTensor & dft, const string & title,
                 for(int q = 0; q < n; q++)
                 for(int i = 0; i < ndim1; i++)
                 for(int j = 0; j <= i; j++)
-                    mat[(curq+q)*ndim1*ndim2+i*ndim1+j] 
+                    mat[(curq+q)*ndim1*ndim2+i*ndim2+j] 
                   = mat[(curq+q)*ndim1*ndim2+j*ndim1+i] 
                   = outbuf[q*ndim12+i*(i+1)/2+j];
             }
@@ -454,10 +619,58 @@ int RunTestMatrix(DFTensor & dft, const string & title,
             curq += n;
         }
 
-        return TestMatrix(title, reffile,
+
+        string titleq(title);
+        titleq.append(" (by Q)");
+        ret += TestMatrix(titleq, reffile,
                           mat.get(), matsize,
                           sum_threshold, checksum_threshold, element_threshold,
                           verbose);
+
+
+        // Now do by ij
+        bufsize = matsize;
+        if(batchsize)
+            bufsize = naux * batchsize;
+
+        outbuf = unique_ptr<double[]>(new double[bufsize]);
+        std::fill(mat.get(), mat.get()+matsize, 0.0);
+        std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
+
+        IJIterator ij(ndim1, ndim2, dft.IsPacked(tensorflag));
+
+        while((n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, ij.ij())))
+        {
+            // matrix testing is done by q
+            for(int ni = 0; ni < n; ni++)
+            {
+                if(dft.IsPacked(tensorflag))
+                {
+                    // expand
+                    for(int q = 0; q < naux; q++)
+                        mat[q*ndim1*ndim2 + ij.i() * ndim2 + ij.j()]
+                      = mat[q*ndim1*ndim2 + ij.j() * ndim1 + ij.i()]
+                      = outbuf[ni*naux+q];
+                }
+                else
+                {
+                    for(int q = 0; q < naux; q++)
+                        mat[q*ndim1*ndim2 + ij.i() * ndim2 + ij.j()] = outbuf[ni*naux+q];
+                }
+
+                ++ij;
+            }
+        }
+
+        string titleij(title);
+        titleij.append(" (by IJ)");
+        ret += TestMatrix(titleij, reffile,
+                          mat.get(), matsize,
+                          sum_threshold, checksum_threshold, element_threshold,
+                          verbose);
+
+        return ret;
+
 }
 
 
@@ -478,6 +691,7 @@ int main(int argc, char ** argv)
 
         bool verbose = false;
         bool inmem = true;
+        bool byq = false;
         bool transpose = false;
         int batchsize = 0;
 
@@ -497,6 +711,8 @@ int main(int argc, char ** argv)
                 verbose = true;
             else if(starg == "-t")
                 transpose = true;
+            else if(starg == "-q")
+                byq = true;
             else
             {
                 // add trailing slash if needed
@@ -573,10 +789,17 @@ int main(int argc, char ** argv)
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
         dft.SetNOcc(nocc);
 
+        int qflags = (QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+
+        int qstore = 0;
+        if(byq)
+            qstore |= QSTORAGE_BYQ;
+
+
         if(inmem)
-            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_INMEM);
+            dft.GenQTensors(qflags, qstore | QSTORAGE_INMEM);
         else
-            dft.GenQTensors(QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV, QSTORAGE_ONDISK);
+            dft.GenQTensors(qflags, qstore | QSTORAGE_ONDISK);
 
 
 

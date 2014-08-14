@@ -1,6 +1,5 @@
 #include "panache/Exception.h"
 #include "panache/DFTensor.h"
-
 namespace panache
 {
 
@@ -340,7 +339,7 @@ void DFTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
     else
     {
         double * start = data_.get() + ijstart * naux();
-        std::copy(start, start+naux(), data);
+        std::copy(start, start+nij*naux(), data);
     }
 }
 
