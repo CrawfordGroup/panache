@@ -511,9 +511,9 @@ extern "C" {
      * \param [in] qflags A combination of flags specifying which tensors to generate
      * \param [in] storeflags How to store the matrix
      */
-    void panachef_genqtensors_(int_t * df_handle, int_t * qflags, int_t * storetype)
+    void panachef_genqtensors_(int_t * df_handle, int_t * qflags, int_t * storeflags)
     {
-        panache_genqtensors(*df_handle, *qflags, *storetype);
+        panache_genqtensors(*df_handle, *qflags, *storeflags);
     }
 
 
@@ -540,6 +540,20 @@ extern "C" {
     {
         *batchsize = panache_qbatchsize(*df_handle, *tensorflag);
     }
+
+
+    /*!
+     * \brief See if a particular tensor is stored packed
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [out] ispacked Nonzero if the tensor is in packed storage
+     */
+    void panachef_ispacked_(int_t * df_handle, int_t * tensorflag, int_t * ispacked)
+    {
+        *ispacked = panache_ispacked(*df_handle, *tensorflag);
+    }
+
 
 
     /*!

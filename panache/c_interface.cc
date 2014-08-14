@@ -144,10 +144,10 @@ extern "C" {
         dftensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans, bsorder);
     }
 
-    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storetype)
+    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storeflags)
     {
         CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GenQTensors(qflags, storetype); 
+        return dftensors_[df_handle]->GenQTensors(qflags, storeflags); 
     }
 
 
