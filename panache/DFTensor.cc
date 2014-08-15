@@ -287,7 +287,17 @@ void DFTensor::TransformQTensor(double * left, int lncols,
     C_DGEMM('N', 'N', lncols, rncols, nso_, 1.0, qc, nso_, right, rncols, 0.0, cqc, rncols);
 
     // Write to memory or disk
-    qout->WriteByQ(cqc, 1, q);
+    if(qout->packed())
+    {
+        // can use qc for scratch
+        for(int i = 0, index = 0; i < lncols; i++)
+        for(int j = 0; j <= i; j++, index++)
+            qc[index] = cqc[i*rncols+j];
+
+        qout->WriteByQ(qc, 1, q);
+    }
+    else
+        qout->WriteByQ(cqc, 1, q);
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -328,13 +338,13 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QMO)
     {
         // generate Qmo
-        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags, "qmo");
+        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo");
         qmo_->Init();
     }
     if(qflags & QGEN_QOO)
     {
         // generate Qoo
-        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags, "qoo");
+        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo");
         qoo_->Init();
     }
     if(qflags & QGEN_QOV)
@@ -346,7 +356,7 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QVV)
     {
         // generate Qvv
-        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags, "qvv");
+        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv");
         qvv_->Init();
     }
 
