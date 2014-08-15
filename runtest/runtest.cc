@@ -518,6 +518,29 @@ int RunTestMatrix(DFTensor & dft, const string & title,
 }
 
 
+string GetNextArg(int & i, int argc, char ** argv)
+{
+    if(i >= argc)
+        throw runtime_error("Error - no more arguments!");
+
+    return argv[i++];
+}
+
+int GetIArg(int & i, int argc, char ** argv)
+{
+    string str = GetNextArg(i, argc, argv);
+    try {
+
+        return stoi(str);
+    }
+    catch(...)
+    {
+        stringstream ss;
+        ss << "Cannot convert to int: " << str;
+        throw runtime_error(ss.str());
+    }
+}
+
 int main(int argc, char ** argv)
 {
     int ret = 0;
@@ -531,6 +554,8 @@ int main(int argc, char ** argv)
             return 0;
         }
 
+
+
         string dir;
 
         bool verbose = false;
@@ -539,16 +564,17 @@ int main(int argc, char ** argv)
         bool transpose = false;
         int batchsize = 0;
 
-        for(int i = 1; i < argc; i++)
+        int i = 1;
+        while(i < argc)
         {
-            string starg(argv[i]);
+            string starg(GetNextArg(i, argc, argv));
             if(starg == "-h")
             {
                 PrintUsage();
                 return 0;
             }
             else if(starg == "-b")
-                batchsize = 3;
+                batchsize = GetIArg(i, argc, argv);
             else if(starg == "-d")
                 inmem = false;
             else if(starg == "-v")
