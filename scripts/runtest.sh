@@ -10,29 +10,32 @@ echo "===================================================================="
 for T in ${TESTDIR}/*
 do
   for N in `seq 1 4`; do
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:      :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST}          ${T} | grep OVERALL | awk '{print $3}'`"
+  for B in `seq 0 5`; do
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:      :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B}          ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:  B   :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST}    -b    ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:  D   :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B}    -d    ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:    D :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST}       -d ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:T     :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B} -t       ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:  B D :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST}    -b -d ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:T D   :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B} -t -d    ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:T     :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -t       ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:T B   :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -t -b    ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:    Q :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B}       -q ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:T   D :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -t    -d ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:  D Q :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B}    -d -q ${T} | grep OVERALL | awk '{print $3}'`"
 
-    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:T B D :"`
-    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -t -b -d ${T} | grep OVERALL | awk '{print $3}'`"
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:T   Q :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B} -t    -q ${T} | grep OVERALL | awk '{print $3}'`"
+
+    PREFIX=`printf "%-20s %s" "$(basename $T)" ":${N}:${B}:T D Q :"`
+    echo "${PREFIX} `OMP_NUM_THREADS=${N} ${RUNTEST} -b ${B} -t -d -q ${T} | grep OVERALL | awk '{print $3}'`"
+  done
   done
   echo 
 done
