@@ -260,7 +260,7 @@ void DFTensor::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
             for(int n = 0; n < ndim2(); n++)
             {
                 file_->seekg(sizeof(double)*(calcindex(m,n)*naux()+q), std::ios_base::beg);
-                file_->read(reinterpret_cast<char *>(data+q0*ndim1()*ndim2() + m*ndim2()+n), sizeof(double));
+                file_->read(reinterpret_cast<char *>(data+q0*ndim12() + calcindex(m,n)), sizeof(double));
             }
         }
     }
@@ -355,7 +355,7 @@ void DFTensor::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
         for(int q0 = 0, q = qstart; q0 < nq; q++, q0++)
         for(int m = 0; m < ndim1(); m++)
         for(int n = 0; n < ndim2(); n++)
-            data[q0*ndim1()*ndim2() + m*ndim2() + n]
+            data[q0*ndim12() + calcindex(m,n)]
                 = data_[calcindex(m,n)*naux() + q];
     }
 }
