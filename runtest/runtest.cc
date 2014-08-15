@@ -304,7 +304,7 @@ int TestMatrix(const string & title, const string & reffile,
     TestMatrixInfo tmi = ReadMatrixInfo(reffile);
     int nfailures = 0;
     cout << "***********************************************************************\n";
-    cout << "Matrix \"" << title;
+    cout << "Matrix \"" << title << "\"";
     cout << "\n";
     cout << "***********************************************************************\n";
 
@@ -331,7 +331,7 @@ int TestMatrix(const string & title, const string & reffile,
     }
 
     nfailures += TestAndPrint("sum", sum, tmi.sum, sum_threshold, verbose);
-    nfailures += TestAndPrint("checksums", checksum, tmi.checksum, checksum_threshold, verbose);
+    nfailures += TestAndPrint("checksum", checksum, tmi.checksum, checksum_threshold, verbose);
 
     for(int i = 0; i < 100; i++)
     {
