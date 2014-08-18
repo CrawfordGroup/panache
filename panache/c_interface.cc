@@ -116,7 +116,12 @@ extern "C" {
                                  int_t & naux, int_t & ndim1, int_t & ndim2)
     {
         CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->TensorDimensions(tensorflag, naux, ndim1, ndim2); 
+        int nauxtmp, ndim1tmp, ndim2tmp;
+        int ret = dftensors_[df_handle]->TensorDimensions(tensorflag, nauxtmp, ndim1tmp, ndim2tmp);
+        naux = nauxtmp;
+        ndim1 = ndim1tmp;
+        ndim2 = ndim2tmp;
+        return ret;
     }
 
     void panache_cleanup(int_t df_handle)
