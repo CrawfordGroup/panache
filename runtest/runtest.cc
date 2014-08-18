@@ -440,13 +440,15 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
 
-        int n;
-        int curq = 0;
-
+        QIteratorType qtype(naux, dft.IsPacked(tensorflag));
+        IndexIterator<QIteratorType> qi(qtype);
 
         // First, do by q
-        while((n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, curq)))
+        while(qi)
         {
+            int n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, qi.iterator().q);
+            int curq = qi.iterator().q;
+
             if(dft.IsPacked(tensorflag))
             {
                 // expand
@@ -460,7 +462,7 @@ int RunTestMatrix(DFTensor & dft, const string & title,
             else
                 std::copy(outbuf.get(), outbuf.get() + n*ndim12, mat.get() + curq*ndim12);
 
-            curq += n;
+            ++qi;
         }
 
 
@@ -481,28 +483,34 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(mat.get(), mat.get()+matsize, 0.0);
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
-        IJIterator ij(ndim1, ndim2, dft.IsPacked(tensorflag));
+        IJIteratorType ijtype(ndim1, ndim2, dft.IsPacked(tensorflag));
+        IndexIterator<IJIteratorType> iji(ijtype);
 
-        while((n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, ij.ij())))
+        while(iji)
         {
+            int n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, iji.iterator().ij);
+
             // matrix testing is done by q
             for(int ni = 0; ni < n; ni++)
             {
+                int i = iji.iterator().i;
+                int j = iji.iterator().j;
+   
                 if(dft.IsPacked(tensorflag))
                 {
                     // expand
                     for(int q = 0; q < naux; q++)
-                        mat[q*ndim1*ndim2 + ij.i() * ndim2 + ij.j()]
-                      = mat[q*ndim1*ndim2 + ij.j() * ndim1 + ij.i()]
+                        mat[q*ndim1*ndim2 + i * ndim2 + j]
+                      = mat[q*ndim1*ndim2 + j * ndim1 + i]
                       = outbuf[ni*naux+q];
                 }
                 else
                 {
                     for(int q = 0; q < naux; q++)
-                        mat[q*ndim1*ndim2 + ij.i() * ndim2 + ij.j()] = outbuf[ni*naux+q];
+                        mat[q*ndim1*ndim2 + i * ndim2 + j] = outbuf[ni*naux+q];
                 }
 
-                ++ij;
+                ++iji;
             }
         }
 
