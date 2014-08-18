@@ -8,98 +8,41 @@
 
 namespace panache {
 
-/*!
- * \brief Iterator over combined orbital indices
- *
- * Can handle packed or unpacked
- */
-class IJIterator
+template<typename ITTYPE>
+class IndexIterator
 {
 private:
-    int i_;       //!< Current i value
-    int j_;       //!< Current j value
-    int ij_;      //!< Current combined index
-    int ni_;      //!< Dimension along i
-    int nj_;      //!< Dimension along j
-    int nij_;     //!< Total number of combined indices
-    bool valid_;  //!< Is currently valid or not
-    bool packed_; //!< Use packed indices
-    int perm_;    //!< Permutational symmetry factor
-
-    /*!
-     * \brief Fill in valid_ member
-     */
-    void validate_(void)
-    {
-        valid_ = (ij_ < nij_ && ij_ >= 0);
-    }
+    ITTYPE data_;
 
 public:
+    IndexIterator(ITTYPE & it) : data_(it) { }
 
-    /*!
-     * \brief Constructor
-     *
-     * \param [in] ni Dimension along first index
-     * \param [in] nj Dimension along second index
-     * \param [in] packed Use packed indices
-     */
-    IJIterator(int ni, int nj, bool packed = false) 
-             : ni_(ni),nj_(nj),nij_(packed ? (ni_*(ni_+1))/2 : ni_*nj_),packed_(packed)
-    { 
-        i_ = j_ = ij_  = 0; 
-        valid_ = true;
-    }
 
-    /*!
-     * \brief Copy Constructor
-     */ 
-    IJIterator(IJIterator & iji)
-    {
-        i_ = iji.i_;
-        j_ = iji.j_;
-        ij_ = iji.ij_;
-        ni_ = iji.ni_;
-        nj_ = iji.nj_;
-        valid_ = iji.valid_;
-        packed_ = iji.packed_;
-    }
-
-    /*!
-     * \brief Get the current value of i
-     */ 
-    int i(void) const { return i_; }
-
-    /*!
-     * \brief Get the current value of j
-     */ 
-    int j(void) const { return j_; }
-
-    /*!
-     * \brief Get the current combined index
-     */ 
-    int ij(void) const { return ij_; }
+    const ITTYPE & iterator(void) const { return data_; }
 
     /*!
      * \brief Get whether or not these are packed indices
      */ 
-    bool packed(void) const { return packed_; }
+    bool Packed(void) const { return data_.Packed(); }
 
     /*!
      * \brief Get the permutational symmetry factor
      */ 
-    bool perm(void) const { return perm_; }
+    bool Perm(void) const { return data_.Perm(); }
+
+    bool Valid(void) const { return data_.Valid(); }
 
     /*!
      * \brief Test if the iterator is valid or not
      */
-    operator bool() const { return valid_; }
+    operator bool() const { return data_.Valid(); }
 
     /*!
      * \brief Prefix increment operator
      *
      * Move to the next combined index
      */
-    IJIterator & operator++()
+    IndexIterator & operator++()
     {
         return (*this += 1);
     }
@@ -109,7 +52,7 @@ public:
      *
      * Move to the previous combined index
      */
-    IJIterator & operator--()
+    IndexIterator & operator--()
     {
         return (*this -= 1);
     }
@@ -120,9 +63,9 @@ public:
      *
      * Move to the next combined index
      */
-    IJIterator operator++(int)
+    IndexIterator operator++(int)
     {
-        IJIterator n(*this);
+        IndexIterator n(*this);
         ++(*this);
         return n; 
     }
@@ -132,9 +75,9 @@ public:
      *
      * Move to the previous combined index
      */
-    IJIterator operator--(int)
+    IndexIterator operator--(int)
     {
-        IJIterator n(*this);
+        IndexIterator n(*this);
         --(*this);
         return n; 
     }
@@ -145,106 +88,9 @@ public:
      *
      * Jump ahead some number of combined indices
      */
-    IJIterator & operator+=(int ij)
+    IndexIterator operator+(int ij)
     {
-        if(!valid_)
-            return *this;
-
-        if(packed_)
-        {
-            while(ij > 0)
-            {
-                j_++;
-                if(j_ > i_)
-                {
-                    i_++;
-                    j_ = 0;
-                }
-                ij--;
-                ij_++;
-            }
-        }
-        else
-        {
-            i_ += (j_ + ij)/nj_;
-            j_ = (j_ + ij) % nj_;
-            ij_ += ij;
-        }
-
-        validate_();
-
-        // Set the permutational symmetry factor
-        if(valid_ && packed_ && i_ != j_)
-            perm_ = 2;
-        else
-            perm_ = 1;  // will be set to 1 if !valid_, but shouldn't care
-
-        return *this;
-    }
-
-    /*!
-     * \brief Move backward
-     *
-     * Jump back some number of combined indices
-     */
-    IJIterator & operator-=(int ij)
-    {
-        if(!valid_)
-            return *this;
-
-        if(packed_)
-        {
-            while(ij > 0)
-            {
-                ij_--;
-                j_--;
-                if(j_ < 0)
-                {
-                    i_--;
-                    j_ = i_;
-
-                    if(i_ < 0)
-                        break;
-                }
-                ij--;
-            }
-        }
-        else
-        {
-            int idec = ij / nj_;
-            int jdec = ij % nj_;
-
-            if(jdec > j_)
-            {
-                idec++;
-                j_ = nj_;
-            }
-
-            i_ -= idec;
-            j_ -= jdec;
-            ij_ -= ij;
-        }
-
-        validate_();
-
-        // Set the permutational symmetry factor
-        if(valid_ && packed_ && i_ != j_)
-            perm_ = 2;
-        else
-            perm_ = 1;  // will be set to 1 if !valid_, but shouldn't care
-
-        return *this;
-    }
-
-
-    /*!
-     * \brief Move forward
-     *
-     * Jump ahead some number of combined indices
-     */
-    IJIterator operator+(int ij)
-    {
-        IJIterator n(*this);
+        IndexIterator n(*this);
         n += ij;
         return n;
     }
@@ -254,13 +100,204 @@ public:
      *
      * Jump backward some number of combined indices
      */
-    IJIterator operator-(int ij)
+    IndexIterator operator-(int ij)
     {
-        IJIterator n(*this);
+        IndexIterator n(*this);
         n -= ij;
         return n;
     }
+
+    IndexIterator & operator+=(int a)
+    {
+        if(a < 0)
+            data_ -= (-1*a);
+        else
+            data_ += a;
+
+        return *this;
+    }   
+
+    IndexIterator & operator-=(int a)
+    {
+        if(a < 0)
+            data_ += (-1*a);
+        else
+            data_ -= a;
+    }   
+
 };
+
+struct IJIteratorType
+{
+    int i;       //!< Current i value
+    int j;       //!< Current j value
+    int ij;      //!< Current combined index
+    int ni;      //!< Dimension along i
+    int nj;      //!< Dimension along j
+    int nij;     //!< Total number of combined indices
+    bool packed;
+
+    IJIteratorType(int ni, int nj, bool packed)
+        : ni(ni),nj(nj),packed(packed)
+    {
+        nij = (packed ? (ni*(ni+1))/2 : ni*nj);
+        i = j = ij = 0;
+    }
+
+    bool Valid(void) const
+    {
+        return (ij < nij && ij >= 0);
+    }
+
+    short Perm(void) const
+    {
+        if(packed)
+            return (i == j ? 1 : 2);
+        else
+            return 1; 
+    }
+
+    bool Packed(void) const
+    {
+        return packed;
+    }
+
+
+    /*!
+     * \brief Move forward
+     *
+     * Jump ahead some number of combined indices
+     */
+    IJIteratorType & operator+=(int a)
+    {
+        if(!Valid())
+            return *this;
+
+        if(packed)
+        {
+            while(a > 0)
+            {
+                j++;
+                if(j > i)
+                {
+                    i++;
+                    j = 0;
+                }
+                a--;
+                ij++;
+            }
+        }
+        else
+        {
+            i += (j + a)/nj;
+            j = (j + a) % nj;
+            ij += a;
+        }
+
+        return *this;
+    }
+
+
+    /*!
+     * \brief Move backward
+     *
+     * Jump back some number of combined indices
+     */
+    IJIteratorType & operator-=(int a)
+    {
+        if(!Valid())
+            return *this;
+
+        if(packed)
+        {
+            while(a > 0)
+            {
+                ij--;
+                j--;
+                if(j < 0)
+                {
+                    i--;
+                    j = i;
+
+                    if(i < 0)
+                        break;
+                }
+                a--;
+            }
+        }
+        else
+        {
+            int idec = a / nj;
+            int jdec = a % nj;
+
+            if(jdec > j)
+            {
+                idec++;
+                j = nj;
+            }
+
+            i -= idec;
+            j -= jdec;
+            ij -= a;
+        }
+
+        return *this;
+    }
+};
+
+
+struct QIteratorType
+{
+    int q;       //!< Current q value
+    int nq;      //!< Number of aux functions
+    bool packed;
+
+    QIteratorType(int nq, bool packed)
+        : nq(nq),packed(packed)
+    {
+        q = 0;
+    }
+
+    bool Valid(void) const
+    {
+        return (q >= 0 && q < nq);
+    }
+
+    short Perm(void) const
+    {
+        return 1;
+    }
+
+    bool Packed(void) const
+    {
+        return packed;
+    }
+
+    /*!
+     * \brief Move forward
+     *
+     * Jump ahead some number of combined indices
+     */
+    QIteratorType & operator+=(int a)
+    {
+        q += a;
+        return *this;
+    }
+
+
+    /*!
+     * \brief Move backward
+     *
+     * Jump back some number of combined indices
+     */
+    QIteratorType & operator-=(int a)
+    {
+        q -= a;
+        return *this;
+    }
+};
+
+
 
 } // close namespace panache
 
