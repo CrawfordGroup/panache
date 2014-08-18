@@ -24,6 +24,7 @@ private:
     int nij_;     //!< Total number of combined indices
     bool valid_;  //!< Is currently valid or not
     bool packed_; //!< Use packed indices
+    int perm_;    //!< Permutational symmetry factor
 
     /*!
      * \brief Fill in valid_ member
@@ -167,6 +168,12 @@ public:
 
         validate_();
 
+        // Set the permutational symmetry factor
+        if(valid_ && packed_ && i_ != j_)
+            perm_ = 2;
+        else
+            perm_ = 1;  // will be set to 1 if !valid_, but shouldn't care
+
         return *this;
     }
 
@@ -214,6 +221,13 @@ public:
         }
 
         validate_();
+
+        // Set the permutational symmetry factor
+        if(valid_ && packed_ && i_ != j_)
+            perm_ = 2;
+        else
+            perm_ = 1;  // will be set to 1 if !valid_, but shouldn't care
+
         return *this;
     }
 
