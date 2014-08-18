@@ -85,6 +85,11 @@ public:
     bool packed(void) const { return packed_; }
 
     /*!
+     * \brief Get the permutational symmetry factor
+     */ 
+    bool perm(void) const { return perm_; }
+
+    /*!
      * \brief Test if the iterator is valid or not
      */
     operator bool() const { return valid_; }
