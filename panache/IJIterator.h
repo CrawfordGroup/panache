@@ -61,7 +61,7 @@ public:
         ni_ = iji.ni_;
         nj_ = iji.nj_;
         valid_ = iji.valid_;
-        packed_ = packed_;
+        packed_ = iji.packed_;
     }
 
     /*!
