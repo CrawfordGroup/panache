@@ -12,7 +12,7 @@
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
 #include "panache/Flags.h"
-#include "panache/IJIterator.h"
+#include "panache/Iterator.h"
 
 #define QSO_ELEMENT_THRESHOLD 1e-11
 #define QSO_SUM_THRESHOLD 1e-8
@@ -441,12 +441,12 @@ int RunTestMatrix(DFTensor & dft, const string & title,
 
 
         QIteratorType qtype(naux, dft.IsPacked(tensorflag));
-        IndexIterator<QIteratorType> qi(qtype);
+        QIterator qi(qtype);
 
         // First, do by q
         while(qi)
         {
-            int n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, qi.iterator().q);
+            int n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, qi);
             int curq = qi.iterator().q;
 
             if(dft.IsPacked(tensorflag))
@@ -484,11 +484,11 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
         IJIteratorType ijtype(ndim1, ndim2, dft.IsPacked(tensorflag));
-        IndexIterator<IJIteratorType> iji(ijtype);
+        IJIterator iji(ijtype);
 
         while(iji)
         {
-            int n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, iji.iterator().ij);
+            int n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, iji);
 
             // matrix testing is done by q
             for(int ni = 0; ni < n; ni++)

@@ -491,6 +491,23 @@ int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart
 }
 
 
+int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart)
+{
+    if(qstart)
+        return GetQBatch_Base(outbuf, bufsize, qstart.Index(), ResolveTensorFlag(tensorflag).get());
+    else
+        return 0;
+}
+
+int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart)
+{
+    if(ijstart)
+        return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag).get());
+    else
+        return 0;
+}
+
+
 int DFTensor::QBatchSize(int tensorflag)
 {
     return ResolveTensorFlag(tensorflag)->ndim12();

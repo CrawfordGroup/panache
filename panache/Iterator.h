@@ -3,8 +3,8 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_IJITERATOR_H
-#define PANACHE_IJITERATOR_H
+#ifndef PANACHE_ITERATOR_H
+#define PANACHE_ITERATOR_H
 
 namespace panache {
 
@@ -19,6 +19,12 @@ public:
 
 
     const ITTYPE & iterator(void) const { return data_; }
+
+    
+    /*!
+     * \brief Get the "master" index
+     */ 
+    int Index(void) const { return data_.Index(); }
 
     /*!
      * \brief Get whether or not these are packed indices
@@ -144,6 +150,11 @@ struct IJIteratorType
         i = j = ij = 0;
     }
 
+    int Index(void) const
+    {
+        return ij; 
+    }
+
     bool Valid(void) const
     {
         return (ij < nij && ij >= 0);
@@ -258,6 +269,11 @@ struct QIteratorType
         q = 0;
     }
 
+    int Index(void) const
+    {
+        return q; 
+    }
+
     bool Valid(void) const
     {
         return (q >= 0 && q < nq);
@@ -297,6 +313,9 @@ struct QIteratorType
     }
 };
 
+
+typedef IndexIterator<IJIteratorType> IJIterator;
+typedef IndexIterator<QIteratorType> QIterator;
 
 
 } // close namespace panache

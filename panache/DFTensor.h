@@ -11,7 +11,7 @@
 
 #include "panache/Timing.h"
 #include "panache/Flags.h"
-
+#include "panache/Iterator.h"
 
 namespace panache
 {
@@ -247,6 +247,54 @@ public:
      * \return The number of batches actually stored in the buffer.
      */
     int GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart);
+
+
+    /*!
+     * \brief Retrieves a batch of a 3-index tensor 
+     *
+     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*batchsize elements with
+     * the index of the auxiliary basis function as the slowest index.
+     *
+     * The batchsize can be obtained using QBatchSize()
+     *
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
+     *
+     * \param [in] tensorflag Which tensor to get (see Flags.h)
+     * \param [in] outbuf Memory location to store the batch of tensors
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart Iterator representing where to start
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart);
+
+
+    /*!
+     * \brief Retrieves a batch of a 3-index tensor 
+     *
+     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
+     * about memory.
+     *
+     * This function returns the number of batches it has stored in the buffer. The buffer
+     * will contain (number of batches)*naux elements with the combined orbital index
+     * as the slowest index.
+     *
+     * The batchsize can be obtained using BatchSize()
+     *
+     * Call this and process the batches, incrementing qstart by the return value,
+     * until this function returns zero.
+     *
+     * \param [in] outbuf Memory location to store the tensor
+     * \param [in] tensorflag Which tensor to get (see Flags.h)
+     * \param [in] bufsize The size of \p outbuf (in number of doubles)
+     * \param [in] qstart Iterator representing where to start
+     * \return The number of batches actually stored in the buffer.
+     */
+    int GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart);
 
 
 private:
