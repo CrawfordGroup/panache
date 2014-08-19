@@ -440,14 +440,17 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
 
-        QIteratorType qtype(naux, dft.IsPacked(tensorflag));
-        QIterator qi(qtype);
-
+        /////////////////////////////////////
+        // NOTE - Testing always done by q //
+        /////////////////////////////////////
+/*
         // First, do by q
+        QIterator qi(naux, dft.IsPacked(tensorflag));
+
         while(qi)
         {
             int n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, qi);
-            int curq = qi.iterator().q;
+            int curq = qi.q();
 
             if(dft.IsPacked(tensorflag))
             {
@@ -464,7 +467,25 @@ int RunTestMatrix(DFTensor & dft, const string & title,
 
             ++qi;
         }
+*/
+        DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+        while(iqtq)
+        {
+            int curq = iqtq.q();
 
+            if(dft.IsPacked(tensorflag))
+            {
+                for(int i = 0; i < ndim1; i++)
+                for(int j = 0; j <= i; j++)
+                    mat[curq*ndim1*ndim2+i*ndim2+j] 
+                  = mat[curq*ndim1*ndim2+j*ndim1+i] 
+                  = iqtq[i*(i+1)/2+j];
+            }
+            else
+                std::copy(iqtq.Get(), iqtq.Get() + ndim12, mat.get() + curq*ndim12);
+
+            ++iqtq;
+        }
 
         string titleq(title);
         titleq.append(" (by Q)");
@@ -483,8 +504,8 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(mat.get(), mat.get()+matsize, 0.0);
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
-        IJIteratorType ijtype(ndim1, ndim2, dft.IsPacked(tensorflag));
-        IJIterator iji(ijtype);
+/*
+        IJIterator iji(ndim1, ndim2, dft.IsPacked(tensorflag));
 
         while(iji)
         {
@@ -493,8 +514,8 @@ int RunTestMatrix(DFTensor & dft, const string & title,
             // matrix testing is done by q
             for(int ni = 0; ni < n; ni++)
             {
-                int i = iji.iterator().i;
-                int j = iji.iterator().j;
+                int i = iji.i();
+                int j = iji.j();
    
                 if(dft.IsPacked(tensorflag))
                 {
@@ -512,6 +533,29 @@ int RunTestMatrix(DFTensor & dft, const string & title,
 
                 ++iji;
             }
+        }
+*/
+        DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
+        while(iqtij)
+        {
+            int i = iqtij.i();
+            int j = iqtij.j();
+
+            if(dft.IsPacked(tensorflag))
+            {
+                // expand
+                for(int q = 0; q < naux; q++)
+                    mat[q*ndim1*ndim2 + i * ndim2 + j]
+                  = mat[q*ndim1*ndim2 + j * ndim1 + i]
+                  = iqtij[q];
+            }
+            else
+            {
+                for(int q = 0; q < naux; q++)
+                    mat[q*ndim1*ndim2 + i * ndim2 + j] = iqtij[q];
+            }
+
+            ++iqtij;
         }
 
         string titleij(title);

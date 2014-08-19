@@ -14,11 +14,15 @@ class IndexIterator
 private:
     ITTYPE data_;
 
+
+protected:
+    const ITTYPE & Iterator(void) const { return data_; }
+
+
 public:
-    IndexIterator(ITTYPE & it) : data_(it) { }
+    IndexIterator(const ITTYPE & it) : data_(it) { }
 
 
-    const ITTYPE & iterator(void) const { return data_; }
 
     
     /*!
@@ -150,6 +154,9 @@ struct IJIteratorType
         i = j = ij = 0;
     }
 
+    IJIteratorType(const IJIteratorType & rhs) = default;
+
+
     int Index(void) const
     {
         return ij; 
@@ -269,6 +276,8 @@ struct QIteratorType
         q = 0;
     }
 
+    QIteratorType(const QIteratorType & rhs) = default;
+    
     int Index(void) const
     {
         return q; 
@@ -313,9 +322,26 @@ struct QIteratorType
     }
 };
 
+class IJIterator : public IndexIterator<IJIteratorType>
+{
+public:
+    IJIterator(const IJIteratorType ijt) : IndexIterator(ijt) { }
+    IJIterator(int ni, int nj, bool packed) : IndexIterator(IJIteratorType(ni, nj, packed)) { }
 
-typedef IndexIterator<IJIteratorType> IJIterator;
-typedef IndexIterator<QIteratorType> QIterator;
+    int i(void) const { return Iterator().i; } 
+    int j(void) const { return Iterator().j; } 
+    int ij(void) const { return Iterator().ij; } 
+};
+
+
+class QIterator : public IndexIterator<QIteratorType>
+{
+public:
+    QIterator(const QIteratorType & qi) : IndexIterator(qi) { }
+    QIterator(int nq, bool packed) : IndexIterator(QIteratorType(nq, packed)) { }
+
+    int q(void) const { return Iterator().q; } 
+};
 
 
 } // close namespace panache

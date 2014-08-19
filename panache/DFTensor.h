@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <future>
+#include <functional>
 
 #include "panache/Timing.h"
 #include "panache/Flags.h"
@@ -295,6 +296,144 @@ public:
      * \return The number of batches actually stored in the buffer.
      */
     int GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart);
+
+
+
+
+    template<typename ITTYPE>
+    class IteratedQTensor
+    {
+        public:
+            typedef std::function<int(int)> GetBatchFunc;
+
+            IteratedQTensor(int tensorflag, double * buf, int bufsize,
+                            int batchsize, const ITTYPE & it, GetBatchFunc gbf)
+                : gbf_(gbf),it_(it),buf_(buf),bufsize_(bufsize),batchsize_(batchsize)
+            {
+                GetBatch();
+            }
+
+            // note that we don't own the pointer
+            // so no need to deep copy
+            IteratedQTensor(const IteratedQTensor & rhs) = default;
+
+            operator bool() const { return nbatch_ > 0 && it_; }
+            bool Valid(void) const { return nbatch_ > 0 && it_; }
+
+            // Prefix increments only
+            IteratedQTensor & operator++()
+            {
+                ++it_;
+                if(!it_)
+                    return *this; // finish now
+
+                curbatch_++;
+                if(curbatch_ >= nbatch_)
+                    GetBatch();
+                else
+                    curptr_ += batchsize_;
+
+                return *this;
+            }
+
+            double * Get(void) { return curptr_; }
+
+            double operator[](int i) { return curptr_[i]; }
+
+            int Batchsize(void) const { return batchsize_; }
+
+            int Index(void) const { return it_.Index(); }
+
+        protected:
+            const ITTYPE & Iterator(void) const { return it_; }
+
+        private:
+            GetBatchFunc gbf_;
+
+            ITTYPE it_;
+            double * curptr_;
+            int nbatch_;   //!< Number of batches currently in the buffer
+            int curbatch_; //!< The one I'm currently on
+
+            double * buf_;
+            int bufsize_;
+            int batchsize_;
+
+            void GetBatch(void)
+            {
+                nbatch_ = gbf_(it_.Index());
+                curptr_ = buf_;
+                curbatch_ = 0;
+            }
+
+    };
+
+    class IteratedQTensorByQ : public IteratedQTensor<QIterator>
+    {
+        public:
+            IteratedQTensorByQ(int tensorflag, double * buf, int bufsize,
+                               int batchsize, const QIterator & it, GetBatchFunc gbf)
+                    : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
+
+
+            int q(void) const { return Iterator().q(); } 
+    };
+
+    class IteratedQTensorByIJ : public IteratedQTensor<IJIterator>
+    {
+        public:
+            IteratedQTensorByIJ(int tensorflag, double * buf, int bufsize,
+                                int batchsize, const IJIterator & it, GetBatchFunc gbf)
+                    : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
+
+
+            int i(void) const { return Iterator().i(); }
+            int j(void) const { return Iterator().j(); }
+            int ij(void) const { return Iterator().ij(); }
+    };
+
+
+
+    IteratedQTensorByQ IterateByQ(int tensorflag, double * buf, int bufsize)
+    {
+        using std::placeholders::_1;
+
+        // ugly
+        IteratedQTensorByQ::GetBatchFunc gbf(std::bind(
+                                       static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetQBatch),
+                                       this, tensorflag, buf, bufsize, _1));
+
+        int ndim1, ndim2, naux;
+        TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+        IteratedQTensorByQ iqt(tensorflag, buf, bufsize, 
+                               QBatchSize(tensorflag),
+                               QIterator(naux, IsPacked(tensorflag)),
+                               gbf);
+
+        return iqt;
+    }
+
+
+    IteratedQTensorByIJ IterateByIJ(int tensorflag, double * buf, int bufsize)
+    {
+        using std::placeholders::_1;
+
+        // ugly
+        IteratedQTensorByIJ::GetBatchFunc gbf(std::bind(
+                                       static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetBatch),
+                                       this, tensorflag, buf, bufsize, _1));
+
+        int ndim1, ndim2, naux;
+        TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+        IteratedQTensorByIJ iqt(tensorflag, buf, bufsize, 
+                                BatchSize(tensorflag),
+                                IJIterator(ndim1, ndim2, IsPacked(tensorflag)),
+                                gbf);
+
+        return iqt;
+    }
 
 
 private:
