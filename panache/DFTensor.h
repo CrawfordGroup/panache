@@ -25,6 +25,7 @@ class FittingMetric;
 namespace reorder
 {
 class Orderings;
+class CNorm;
 }
 
 class DFTensor
@@ -486,11 +487,13 @@ private:
 
 
     /*!
-     * \brief Reorders the whole C matrix into the specified ordering
+     * \brief Reorders the whole C matrix into the specified ordering, including
+     *        some renormalization if needed
      * 
      * \param [in] order The order to use
+     * \param [in] cnorm Normalization factors to multiply by
      */
-    void ReorderCMat(reorder::Orderings & order);
+    void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
     ///@}
 
 

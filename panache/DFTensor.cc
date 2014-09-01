@@ -15,8 +15,9 @@
 #include "panache/Exception.h"
 
 // for reordering
-#include "panache/Orderings.h"
 #include "panache/MemorySwapper.h"
+#include "panache/CNormalization.h"
+#include "panache/Orderings.h"
 
 #include "panache/ERI.h"
 
@@ -253,16 +254,20 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
     if(order != BSORDER_PSI4)
     {
         reorder::Orderings * ord;
+        reorder::CNorm * cnorm;
 
         if (order == BSORDER_GAMESS)
+        {
             ord = new reorder::GAMESS_Ordering();
+            cnorm = new reorder::GAMESS_CNorm();
+        }
         else
             throw RuntimeError("Unknown ordering!");
 
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        ReorderCMat(*ord);
+        ReorderCMat(*ord, *cnorm);
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
@@ -585,11 +590,31 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void DFTensor::ReorderCMat(reorder::Orderings & order)
+void DFTensor::ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm)
 {
     using namespace reorder;
     using std::placeholders::_1;
     using std::placeholders::_2;
+
+    // First, renormalize
+    for(int i = 0; i < primary_->nshell(); i++)
+    {
+        const GaussianShell & s = primary_->shell(i);
+        if(cnorm.NeedsCNorm(s.is_pure(), s.am()))
+        {
+            auto normfac = cnorm.GetCNorm(s.is_pure(), s.am());
+            
+            // multiply rows by factors
+            for(size_t j = 0; j < normfac.size(); j++)
+            {
+                int jstart = s.function_index();
+
+                for(int k = 0; k < nmo_; k++)
+                    Cmo_[(jstart+j)*nmo_+k] *= normfac[j];
+            }
+        }
+    }
+
 
     TotalMemorySwapper sf1(nmo_);  // swaps rows
 
@@ -599,16 +624,8 @@ void DFTensor::ReorderCMat(reorder::Orderings & order)
     for(int i = 0; i < primary_->nshell(); i++)
     {
         const GaussianShell & s = primary_->shell(i);
-        if(s.is_pure())
-        {
-            if(order.NeedsInvSphReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order.GetInvSphOrder(s.am())));
-        }
-        else
-        {
-            if(order.NeedsInvCartReordering(s.am()))
-                vpm.push_back(PointerMap(s.function_index(), order.GetInvCartOrder(s.am())));
-        }
+        if(order.NeedsInvReordering(s.is_pure(), s.am()))
+            vpm.push_back(PointerMap(s.function_index(), order.GetInvOrder(s.is_pure(), s.am())));
     }
 
 
