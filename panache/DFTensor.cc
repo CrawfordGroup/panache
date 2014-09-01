@@ -16,7 +16,7 @@
 
 // for reordering
 #include "panache/MemorySwapper.h"
-#include "panache/CNormalization.h"
+#include "panache/CNorm.h"
 #include "panache/Orderings.h"
 
 #include "panache/ERI.h"

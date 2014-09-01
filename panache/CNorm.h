@@ -1,5 +1,5 @@
 #ifndef PANACHE_CNORM_H
-#define PANACHE_CNROM_H
+#define PANACHE_CNORM_H
 
 #include <vector>
 #include <array>
