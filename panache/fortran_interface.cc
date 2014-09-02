@@ -102,9 +102,9 @@ extern "C" {
 
             atoms[i].symbol = csymbols[i]; 
 
-            atoms[i].center[0] = xyz[i*(*ncenters)];
-            atoms[i].center[1] = xyz[i*(*ncenters)+1];
-            atoms[i].center[2] = xyz[i*(*ncenters)+2];
+            atoms[i].center[0] = xyz[3*i];
+            atoms[i].center[1] = xyz[3*i+1];
+            atoms[i].center[2] = xyz[3*i+2];
         }
 
         int_t p_nshell = 0;
@@ -270,6 +270,7 @@ extern "C" {
         // So the extra element from above guarentee room for a null
         // character
 
+
         for(int_t i = 0; i < *ncenters; i++)
         {
             for(int_t j = 0; j < *symbollen; j++)
@@ -281,9 +282,9 @@ extern "C" {
 
             atoms[i].symbol = csymbols[i]; 
 
-            atoms[i].center[0] = xyz[i*(*ncenters)];
-            atoms[i].center[1] = xyz[i*(*ncenters)+1];
-            atoms[i].center[2] = xyz[i*(*ncenters)+2];
+            atoms[i].center[0] = xyz[3*i];
+            atoms[i].center[1] = xyz[3*i+1];
+            atoms[i].center[2] = xyz[3*i+2];
             //std::cout << "Adding atom " << i << "(" << atoms[i].symbol << ") with center:\n";
             //std::cout << atoms[i].center[0] << "  " << atoms[i].center[1] << "  " << atoms[i].center[2] << "\n";
         }
