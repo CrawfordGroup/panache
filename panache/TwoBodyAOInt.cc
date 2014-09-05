@@ -28,6 +28,7 @@ TwoBodyAOInt::TwoBodyAOInt(const SharedBasisSet original_bs1,
       original_bs2_(original_bs2),
       original_bs3_(original_bs3),
       original_bs4_(original_bs4),
+      curshells({{-1, -1, -1, -1}}),
       target_(0)
 {
     // The derived classes allocate this memory.
@@ -45,6 +46,54 @@ TwoBodyAOInt::~TwoBodyAOInt()
 size_t TwoBodyAOInt::compute_shell(const AOShellCombinationsIterator& shellIter)
 {
     return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
+}
+
+
+double TwoBodyAOInt::compute_basisfunction(int bf1, int bf2, int bf3, int bf4)
+{
+
+    // \todo permute here so compute_shell doesn't have to?
+
+    // first get the shell numbers
+    int sh1 = original_bs1_->function_to_shell(bf1);
+    int sh2 = original_bs2_->function_to_shell(bf2);
+    int sh3 = original_bs3_->function_to_shell(bf3);
+    int sh4 = original_bs4_->function_to_shell(bf4);
+
+    std::array<int, 4> theseshells({{sh1, sh2, sh3, sh4}});
+    if(curshells != theseshells)
+    {
+        // compute over the shells
+        curnint = compute_shell(sh1, sh2, sh3, sh4);
+
+        curshells = theseshells;
+    }
+
+    if(curnint == 0)
+        return 0.0;
+
+    // get only the integral we want
+    const GaussianShell & gsh1 = original_bs1_->shell(sh1);
+    const GaussianShell & gsh2 = original_bs2_->shell(sh2);
+    const GaussianShell & gsh3 = original_bs3_->shell(sh3);
+    const GaussianShell & gsh4 = original_bs4_->shell(sh4);
+
+    //int nsh1 = gsh1.nfunction();
+    int nsh2 = gsh2.nfunction();
+    int nsh3 = gsh3.nfunction();
+    int nsh4 = gsh4.nfunction();
+
+    int start1 = gsh1.function_index();
+    int start2 = gsh2.function_index();
+    int start3 = gsh3.function_index();
+    int start4 = gsh4.function_index();
+
+    size_t index = (bf1-start1)*nsh2*nsh3*nsh4 
+                 + (bf2-start2)*nsh3*nsh4
+                 + (bf3-start3)*nsh4
+                 + (bf4-start4);
+
+    return buffer()[index];
 }
 
 

@@ -7,6 +7,7 @@
 #define PANACHE_TWOBODYAOINT_H
 
 #include <memory>
+#include <array>
 
 namespace panache {
 
@@ -34,6 +35,8 @@ protected:
     const SharedBasisSet original_bs3_;  //!< Original basis set on center 3 (before any reordering)
     const SharedBasisSet original_bs4_;  //!< Original basis set on center 4 (before any reordering)
 
+    std::array<int, 4> curshells;  //!< Current shells contained in the buffer (used in compute_basisfunction)
+    size_t curnint;                //!< Current number of integrals in the buffer (used in compute_basisfunction)
     
     double *target_;            //!< Buffer to hold the final integrals.
     int curr_buff_size_;        //!< Number of integrals in the current buffer
@@ -288,6 +291,20 @@ public:
      * \param [in] nchunk Chunk size (???)
      */
     void pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk);
+
+
+
+
+    /*!
+     * \brief Compute the integrals between 4 (contracted) basis functions 
+     *
+     * \param [in] sh1 First basis function
+     * \param [in] sh2 Second basis function
+     * \param [in] sh3 Third basis function
+     * \param [in] sh4 Fourth basis function
+     * \return The integral ( bf1 bf2 | bf3 bf4 )
+     */
+    virtual double compute_basisfunction(int bf1, int bf2, int bf3, int bf4);
 };
 
 
