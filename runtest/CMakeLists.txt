@@ -34,4 +34,5 @@ endif(OPENMP_FOUND)
 #
 #
 #install(TARGETS runtest fruntest RUNTIME DESTINATION bin)
+install(TARGETS runtest RUNTIME DESTINATION bin)
 
