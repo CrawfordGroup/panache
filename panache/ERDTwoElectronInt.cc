@@ -6,7 +6,6 @@
 #include "panache/ERDTwoElectronInt.h"
 #include "panache/BasisSet.h"
 #include "panache/BasisFunctionMacros.h"
-#include "panache/AOShellCombinationsIterator.h"
 #include "panache/Output.h"
 
 #define DEBUG 0
@@ -115,11 +114,6 @@ ERDTwoElectronInt::~ERDTwoElectronInt()
     delete[] iscratch_;
 }
 
-
-size_t ERDTwoElectronInt::compute_shell(const AOShellCombinationsIterator& shellIter)
-{
-    return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
-}
 
 
 void ERDTwoElectronInt::compute_scratch_size()

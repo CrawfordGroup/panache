@@ -6,6 +6,7 @@
 #include "panache/SphericalTransform.h"
 #include "panache/Molecule.h"
 #include "panache/TwoBodyAOInt.h"
+#include "panache/AOShellCombinationsIterator.h"
 #include "panache/BasisFunctionMacros.h"
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
@@ -39,6 +40,13 @@ TwoBodyAOInt::TwoBodyAOInt(const SharedBasisSet original_bs1,
 TwoBodyAOInt::~TwoBodyAOInt()
 {
 }
+
+
+size_t TwoBodyAOInt::compute_shell(const AOShellCombinationsIterator& shellIter)
+{
+    return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
+}
+
 
 void TwoBodyAOInt::permute_target(double *s, double *t, int sh1, int sh2, int sh3, int sh4, bool p12, bool p34, bool p13p24)
 {
@@ -454,6 +462,10 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
     }
 }
 
+
+/////////////////////
+// HELPER FUNCTIONS
+/////////////////////
 static void transform2e_1(int am, const SphericalTransform& sti, double *s, double *t, int njkl)
 {
     std::fill(t, t + INT_NPURE(am)*njkl, 0);
@@ -556,6 +568,8 @@ static void transform2e_4(int am, const SphericalTransform& sti, double *s, doub
         }
     }
 }
+
+
 
 } // close namespace panache
 

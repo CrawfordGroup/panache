@@ -7,7 +7,6 @@
 #include "panache/LibintTwoElectronInt.h"
 #include "panache/BasisSet.h"
 #include "panache/BasisFunctionMacros.h"
-#include "panache/AOShellCombinationsIterator.h"
 #include "panache/Fjt.h"
 #include "panache/Lapack.h"
 #include "panache/PhysConst.h"
@@ -81,11 +80,6 @@ LibintTwoElectronInt::~LibintTwoElectronInt()
     delete[] target_;
     delete[] source_;
     free_libint(&libint_);
-}
-
-size_t LibintTwoElectronInt::compute_shell(const AOShellCombinationsIterator& shellIter)
-{
-    return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
 }
 
 size_t LibintTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)

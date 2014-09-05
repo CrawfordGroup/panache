@@ -7,7 +7,6 @@
 #include "panache/SlowTwoElectronInt.h"
 #include "panache/BasisSet.h"
 #include "panache/BasisFunctionMacros.h"
-#include "panache/AOShellCombinationsIterator.h"
 #include "panache/CartesianIter.h"
 
 namespace panache
@@ -45,11 +44,6 @@ SlowTwoElectronInt::~SlowTwoElectronInt()
     delete[] tformbuf_;
     delete[] target_;
     delete[] source_;
-}
-
-size_t SlowTwoElectronInt::compute_shell(const AOShellCombinationsIterator& shellIter)
-{
-    return compute_shell(shellIter.p(), shellIter.q(), shellIter.r(), shellIter.s());
 }
 
 size_t SlowTwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)

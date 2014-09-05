@@ -175,6 +175,8 @@ protected:
      */
     void permute_1234_to_4321(double *s, double *t, int nbf1, int nbf2, int nbf3, int nbf4);
 
+
+
     /*!
      * \brief Constructor (to be called only by derived classes) 
      *
@@ -257,8 +259,7 @@ public:
      * \param [in] shellIter Iterator representing the shells to compute
      * \return Number of computed integrals
      */
-    virtual size_t compute_shell(const AOShellCombinationsIterator & shellIter) = 0;
-
+    virtual size_t compute_shell(const AOShellCombinationsIterator & shellIter);
 
 
 
@@ -272,6 +273,7 @@ public:
      * \return Number of computed integrals
      */
     virtual size_t compute_shell(int sh1, int sh2, int sh3, int sh4) = 0;
+
 
 
     /*!

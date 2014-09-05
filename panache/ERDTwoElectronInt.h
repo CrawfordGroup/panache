@@ -96,10 +96,6 @@ public:
     virtual ~ERDTwoElectronInt();
 
 
-
-    // See TwoBodyAOInt::compute_shell
-    virtual size_t compute_shell(const AOShellCombinationsIterator& shellIter);
-
     // See TwoBodyAOInt::compute_shell
     virtual size_t compute_shell(int sh1, int sh2, int sh3, int sh4);
 };
