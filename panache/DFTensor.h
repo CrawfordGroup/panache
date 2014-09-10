@@ -623,27 +623,6 @@ private:
     ///@}
 
 
-    /*!
-     * \brief Transform a batch of Qso given the left and right matrices
-     *
-     * \param [in] left Flattened left transformation matrix 
-     * \param [in] lncols Number of columns in the left transformation matrix
-     * \param [in] right Flattened right transformation matrix 
-     * \param [in] rncols Number of columns in the right transformation matrix
-     * \param [out] qout StoredQTensor object to write to
-     * \param [in] q Value of the auxiliary basis function index
-     * \param [in] qso The Qso matrix to transform
-     * \param [in] qc Scratch space for the (Ct Q) matrix multiplication
-     * \param [in] cqc Scratch space for the (Ct Q C) matrix multiplication
-     */
-    void TransformQTensor(double * left, int lncols,
-                          double * right, int rncols,
-                          std::unique_ptr<StoredQTensor> & qout,
-                          int q,
-                          double * qso, double * qc, double * cqc);
-
-
-
     CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()
 
     int nthreads_;  //!< Number of threads to use
