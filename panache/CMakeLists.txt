@@ -20,7 +20,6 @@ add_library(panache
             fortran_interface.cc
             c_convert.cc
             Lapack.cc
-            MPI.cc
             ${LIBINT_FILES}
             ${MPI_FILES}
             ${CYCLOPS_FILES}
