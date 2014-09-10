@@ -23,6 +23,7 @@ add_library(panache
             MPI.cc
             ${LIBINT_FILES}
             ${MPI_FILES}
+            ${CYCLOPS_FILES}
             )
 
 ##############################################

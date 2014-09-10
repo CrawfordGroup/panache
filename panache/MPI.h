@@ -8,6 +8,10 @@
 
 #include <utility>
 
+#ifdef PANACHE_CYCLOPS
+#include <ctf.hpp>
+#endif
+
 namespace panache
 {
 
@@ -28,6 +32,10 @@ int Size(void);
 int Rank(void);
 
 std::pair<int, int> MyRange(int totalsize);
+
+#ifdef PANACHE_CYCLOPS
+CTF_World & CTFWorld(void);
+#endif
 
 
 } //close namespace panache

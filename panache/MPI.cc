@@ -4,8 +4,7 @@
  */
 
 #include "panache/MPI.h"
-
-#include <mpi.h>
+#include "panache/Exception.h"
 
 namespace
 {
@@ -14,6 +13,8 @@ int * argc_ = nullptr;
 char *** argv_ = nullptr;
 
 bool initialized_ = false;
+
+CTF_World * ctfworld_ = nullptr;
 
 } // close anonymous namespace
 
@@ -31,13 +32,24 @@ void Init(int * argc, char *** argv)
         argv_ = argv;
         MPI_Init(argc, argv);
         initialized_ = true;
+
+        #ifdef PANACHE_CYCLOPS
+        ctfworld_ = new CTF_World(MPI_COMM_WORLD); 
+        #endif
     }
 }
 
 void Finalize(void)
 {
+
     if(initialized_)
+    {
+        #ifdef PANACHE_CYCLOPS
+        delete ctfworld_;
+        #endif
+
         MPI_Finalize();
+    }
 }
 
 int & Argc(void)
@@ -88,6 +100,15 @@ std::pair<int, int> MyRange(int totalsize)
     
     return std::pair<int, int>(start, start+nelements);
 }
+
+#ifdef PANACHE_CYCLOPS
+CTF_World & CTFWorld(void)
+{
+    if(!initialized_)
+        throw RuntimeError("MPI is not initialized!");
+    return *ctfworld_;
+}
+#endif
 
 } //close namespace panache
 } //close namespace mpi

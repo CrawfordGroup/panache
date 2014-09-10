@@ -608,7 +608,7 @@ private:
     class CyclopsQTensor : public StoredQTensor
     {
     private:
-        CTF_Tensor tensor_;
+        std::unique_ptr<CTF_Tensor> tensor_;
 
     protected:
         virtual void Reset_(void);
@@ -620,7 +620,7 @@ private:
         virtual void Init_(void);
 
     public:
-        CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags);
+        CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const char * name);
 
         void Transform(const std::vector<TransformMat> & left,
                        const std::vector<TransformMat> & right,
