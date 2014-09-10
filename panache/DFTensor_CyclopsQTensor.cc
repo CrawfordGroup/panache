@@ -18,14 +18,70 @@ void DFTensor::CyclopsQTensor::Reset_(void)
 
 void DFTensor::CyclopsQTensor::Write_(double * data, int nij, int ijstart)
 {
+    size_t nelements = nij*ndim12();
+
+    std::vector<long> indices;
+    indices.reserve(nelements);
+
+
+    IJIterator it(ndim1(), ndim2(), packed());
+    it += ijstart;
+
+    if(byq())
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
+            ++it;
+        }
+    }
+    else
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
+            ++it;
+        }
+    }
+
+    tensor_->write(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
+
+
 }
 
 void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 {
+    size_t nelements = nij*ndim12();
+
+    std::vector<long> indices;
+    indices.reserve(nelements);
+
+
+    IJIterator it(ndim1(), ndim2(), packed());
+    it += ijstart;
+
+    if(byq())
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
+            ++it;
+        }
+    }
+    else
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
+            ++it;
+        }
+    }
+
+    tensor_->read(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
