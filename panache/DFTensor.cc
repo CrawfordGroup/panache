@@ -276,55 +276,13 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
 }
 
 
-void DFTensor::TransformQTensor(double * left, int lncols,
-                                 double * right, int rncols,
-                                 std::unique_ptr<StoredQTensor> & qout,
-                                 int q,
-                                 double * qso, double * qc, double * cqc)
-{
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-    // transform
-
-    C_DGEMM('T', 'N', lncols, nso_, nso_, 1.0, left, lncols, qso, nso_, 0.0, qc, nso_);
-    C_DGEMM('N', 'N', lncols, rncols, nso_, 1.0, qc, nso_, right, rncols, 0.0, cqc, rncols);
-
-    // Write to memory or disk
-    if(qout->packed())
-    {
-        // can use qc for scratch
-        for(int i = 0, index = 0; i < lncols; i++)
-        for(int j = 0; j <= i; j++, index++)
-            qc[index] = cqc[i*rncols+j];
-
-        qout->WriteByQ(qc, 1, q);
-    }
-    else
-        qout->WriteByQ(cqc, 1, q);
-
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    qout->GenTimer().AddTime(tim);
-#endif
-}
-
-
 void DFTensor::GenQTensors(int qflags, int storeflags)
 {
+
 #ifdef PANACHE_TIMING
     Timer tim;
     tim.Start();
 #endif
-
-    // temporary space
-    // note that nmo, occupied, etc, are all <= nso
-    // so this is the max space that would be needed
-    double * qp = new double[nsotri_*nthreads_];   // packed q
-    double * qe = new double[nso2_*nthreads_];   // expanded q
-    double * qc = new double[nso2_*nthreads_];     // C(t) Q
-    double * cqc = new double[nso2_*nthreads_];    // C(t) Q C
 
     // Remove QSTORAGE_PACKED if specified
     storeflags &= ~(QSTORAGE_PACKED);
@@ -340,78 +298,55 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
     if(!Cmo_)
         throw RuntimeError("Set the c-matrix first!");
 
+    std::vector<StoredQTensor::TransformMat> lefts;
+    std::vector<StoredQTensor::TransformMat> rights;
+    std::vector<StoredQTensor *> qouts;
+
     if(qflags & QGEN_QMO)
     {
         // generate Qmo
         qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo");
         qmo_->Init();
+        qouts.push_back(qmo_.get());
+        lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
+        rights.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
     }
     if(qflags & QGEN_QOO)
     {
         // generate Qoo
         qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo");
         qoo_->Init();
+        qouts.push_back(qoo_.get());
+        lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+        rights.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
     }
     if(qflags & QGEN_QOV)
     {
         // generate Qov
         qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, storeflags, "qov");
         qov_->Init();
+        qouts.push_back(qov_.get());
+        lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+        rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
     }
     if(qflags & QGEN_QVV)
     {
         // generate Qvv
         qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv");
         qvv_->Init();
+        qouts.push_back(qvv_.get());
+        lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+        rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
     }
 
-
-    // Read in Qso, and create any requested tensors
-#ifdef _OPENMP
-    #pragma omp parallel for num_threads(nthreads_)
-#endif
-    for(int q = 0; q < naux_; q++)
-    {
-        int threadnum = 0;
-
-#ifdef _OPENMP
-        threadnum = omp_get_thread_num();
-#endif
-
-        double * myqp = qp + threadnum*nsotri_;
-        double * myqe = qe + threadnum*nso2_;
-        double * myqc = qc + threadnum*nso2_;
-        double * mycqc = cqc + threadnum*nso2_;
-
-        qso_->ReadByQ(myqp, 1, q);
-
-        // expand packed matrix
-        int index = 0;
-        for(int i = 0; i < nso_; i++)
-            for(int j = 0; j <= i; j++)
-                myqe[i*nso_+j] = myqe[j*nso_+i] = myqp[index++];
-
-
-        if(qflags & QGEN_QMO)
-            TransformQTensor(Cmo_.get(), nmo_, Cmo_.get(), nmo_, qmo_, q, myqe, myqc, mycqc);
-        if(qflags & QGEN_QOO)
-            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_occ_.get(), nocc_, qoo_, q, myqe, myqc, mycqc);
-        if(qflags & QGEN_QOV)
-            TransformQTensor(Cmo_occ_.get(), nocc_, Cmo_vir_.get(), nvir_, qov_, q, myqe, myqc, mycqc);
-        if(qflags & QGEN_QVV)
-            TransformQTensor(Cmo_vir_.get(), nvir_, Cmo_vir_.get(), nvir_, qvv_, q, myqe, myqc, mycqc);
-    }
-
-
-    delete [] qp;
-    delete [] qe;
-    delete [] qc;
-    delete [] cqc;
+    // actually do the transformation
+    qso_->Transform(lefts, rights, qouts, nthreads_);
 
 #ifdef PANACHE_TIMING
     tim.Stop();
     timer_genqtensors_.AddTime(tim);
 #endif
+
 }
 
 

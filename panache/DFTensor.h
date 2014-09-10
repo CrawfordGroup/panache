@@ -6,9 +6,8 @@
 #ifndef PANACHE_DFTENSOR_H
 #define PANACHE_DFTENSOR_H
 
-#include <fstream>
-#include <future>
-#include <functional>
+#include <vector>
+#include <memory>
 
 #include "panache/Timing.h"
 #include "panache/Flags.h"
@@ -535,6 +534,13 @@ private:
         void Reset(void);
         void Clear(void);
         void Init(void);
+
+        typedef std::pair<double *, int> TransformMat;
+
+        void Transform(const std::vector<TransformMat> & left,
+                       const std::vector<TransformMat> & right,
+                       std::vector<StoredQTensor *> results,
+                       int nthreads);
 
         CumulativeTime & GenTimer(void);
         CumulativeTime & GetBatchTimer(void);
