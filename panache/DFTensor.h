@@ -309,8 +309,10 @@ public:
     class IteratedQTensor
     {
         public:
+            typedef std::function<int(const ITTYPE &)> GetBatchFunc;
+
             IteratedQTensor(int tensorflag, double * buf, int bufsize,
-                            int batchsize, const ITTYPE & it, typename ITTYPE::GetBatchFunc gbf)
+                            int batchsize, const ITTYPE & it, GetBatchFunc gbf)
                 : gbf_(gbf),it_(it),buf_(buf),bufsize_(bufsize),batchsize_(batchsize)
             {
                 GetBatch();
@@ -351,7 +353,7 @@ public:
             const ITTYPE & Iterator(void) const { return it_; }
 
         private:
-            typename ITTYPE::GetBatchFunc gbf_;
+            GetBatchFunc gbf_;
 
             ITTYPE it_;
             double * curptr_;
@@ -375,7 +377,7 @@ public:
     {
         public:
             IteratedQTensorByQ(int tensorflag, double * buf, int bufsize,
-                               int batchsize, const QIterator & it, QIterator::GetBatchFunc gbf)
+                               int batchsize, const QIterator & it, GetBatchFunc gbf)
                     : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
 
 
@@ -386,7 +388,7 @@ public:
     {
         public:
             IteratedQTensorByIJ(int tensorflag, double * buf, int bufsize,
-                                int batchsize, const IJIterator & it, IJIterator::GetBatchFunc gbf)
+                                int batchsize, const IJIterator & it, GetBatchFunc gbf)
                     : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
 
 
@@ -402,9 +404,9 @@ public:
         using std::placeholders::_1;
 
         // ugly
-        QIterator::GetBatchFunc gbf(std::bind(
-                                    static_cast<int(DFTensor::*)(int, double *, int, const QIterator &)>(&DFTensor::GetQBatch),
-                                    this, tensorflag, buf, bufsize, _1));
+        IteratedQTensorByQ::GetBatchFunc gbf(std::bind(
+                                             static_cast<int(DFTensor::*)(int, double *, int, const QIterator &)>(&DFTensor::GetQBatch),
+                                             this, tensorflag, buf, bufsize, _1));
 
         int ndim1, ndim2, naux;
         TensorDimensions(tensorflag, naux, ndim1, ndim2);
@@ -423,9 +425,9 @@ public:
         using std::placeholders::_1;
 
         // ugly
-        IJIterator::GetBatchFunc gbf(std::bind(
-                                     static_cast<int(DFTensor::*)(int, double *, int, const IJIterator &)>(&DFTensor::GetBatch),
-                                     this, tensorflag, buf, bufsize, _1));
+        IteratedQTensorByIJ::GetBatchFunc gbf(std::bind(
+                                              static_cast<int(DFTensor::*)(int, double *, int, const IJIterator &)>(&DFTensor::GetBatch),
+                                              this, tensorflag, buf, bufsize, _1));
 
         int ndim1, ndim2, naux;
         TensorDimensions(tensorflag, naux, ndim1, ndim2);
