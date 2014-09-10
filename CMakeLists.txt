@@ -44,10 +44,12 @@ endif(NOT CMAKE_BUILD_TYPE)
 list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
+list(APPEND PANACHE_CXX_INCLUDES "${CMAKE_SOURCE_DIR}")
 
 
 # Ditto for test programs
 list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
+list(APPEND RUNTEST_CXX_INCLUDES "${CMAKE_SOURCE_DIR}")
 
 # Todo - other compiler types?
 if(CMAKE_COMPILER_IS_GNUG77)
@@ -73,11 +75,11 @@ if(PANACHE_OPENMP)
   if(OPENMP_FOUND)
     message(STATUS "Found OpenMP. Remember to link to OpenMP libraries when building your final project (if needed)")
     list(APPEND PANACHE_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
-    list(APPEND RUNTEST_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
-    # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
-    #list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
-    list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
     list(APPEND RUNTEST_CXX_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
+
+    # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
+    list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
+    list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else(OPENMP_FOUND)
     message(WARNING "OpenMP was not found! Disabling...")
   endif(OPENMP_FOUND)
@@ -87,7 +89,8 @@ endif(PANACHE_OPENMP)
 #####################################
 # Cyclops & MPI
 #####################################
-set(PANACHE_CYCLOPS TRUE CACHE BOOL "Enable Cyclops (requires MPI)")
+set(CYCLOPS_PATH "" CACHE FILEPATH "Path to Cyclops top directory")
+PATH_TO_BOOL(CYCLOPS_PATH PANACHE_CYCLOPS)
 if(PANACHE_CYCLOPS)
   message(STATUS "Enabling Cyclops/MPI for Panache")
   find_package(MPI)
@@ -95,11 +98,12 @@ if(PANACHE_CYCLOPS)
     message(STATUS "Found MPI. Remember to link to MPI libraries when building your final project")
     list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_CYCLOPS")
     list(APPEND PANACHE_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
-    list(APPEND RUNTEST_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
+    list(APPEND RUNTEST_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
     #list(APPEND FRUNTEST_F90_FLAGS "${MPI_CXX_FLAGS}") 
     #list(APPEND LIBERD_F90_FLAGS "${MPI_CXX_FLAGS}")
     list(APPEND RUNTEST_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
     list(APPEND RUNTEST_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
+    list(APPEND RUNTEST_LINK_LIBRARIES "${CYCLOPS_PATH}/lib/libctf.a")
   else(MPI_CXX_FOUND)
     message(ERROR "MPI was not found! This is required for Cyclops")
   endif(MPI_CXX_FOUND)
@@ -234,6 +238,7 @@ if(PANACHE_USE_LIBINT)
   message(STATUS "Using Libint library from ${LIBINT_LIBRARYDIR}")
   message(STATUS "Using Libint library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT")
+  list(APPEND PANACHE_CXX_INCLUDES "${LIBINT_INCLUDEDIR}")
   list(APPEND RUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
 endif(PANACHE_USE_LIBINT)
 
@@ -249,6 +254,7 @@ if(PANACHE_USE_LIBINT2)
   message(STATUS "Using Libint2 library from ${LIBINT_LIBRARYDIR}")
   message(STATUS "Using Libint2 library ${LIBINT_LIBRARY}")
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT2")
+  list(APPEND PANACHE_CXX_INCLUDES "${LIBINT_INCLUDEDIR}")
   list(APPEND RUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
 endif(PANACHE_USE_LIBINT2)
 

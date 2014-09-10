@@ -30,7 +30,7 @@ add_library(panache
 # Compiler definitions list need to be split
 string(REPLACE ";" " " PANACHE_CXX_FLAGS "${PANACHE_CXX_FLAGS}")
 set_target_properties(panache PROPERTIES COMPILE_FLAGS ${PANACHE_CXX_FLAGS})
-set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${LIBINT_INCLUDEDIR};${CMAKE_SOURCE_DIR}")
+set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${PANACHE_CXX_INCLUDES}")
 
 # For now, install all header files
 file(GLOB HFILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
