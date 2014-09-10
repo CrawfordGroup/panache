@@ -178,7 +178,7 @@ void DFTensor::GenQso(int storeflags)
 
             // write to disk or store in memory
             for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                    qso_->Write(A[threadnum] + (m0*nn)*naux_, nn, m, nstart);
+                    qso_->Write(A[threadnum] + (m0*nn)*naux_, nn, qso_->calcindex(m, nstart));
         }
 
         // Special Case: N = M
@@ -217,7 +217,7 @@ void DFTensor::GenQso(int storeflags)
         */
         int iwrite = 1;
         for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-            qso_->Write(A[threadnum] + (m0*nm)*naux_, iwrite++, m, mstart);
+            qso_->Write(A[threadnum] + (m0*nm)*naux_, iwrite++, qso_->calcindex(m, mstart));
 
     }
 
@@ -375,7 +375,7 @@ int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
 }
 
 
-int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int istart, int jstart,
+int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
@@ -389,7 +389,7 @@ int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int istart, int jstart
         throw RuntimeError("Error - buffer is to small to hold even one batch!");
 
     // get a batch
-    int gotten = qt->Read(outbuf, nij, istart, jstart);
+    int gotten = qt->Read(outbuf, nij, ijstart);
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -425,13 +425,13 @@ int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, int qstart
     return GetQBatch_Base(outbuf, bufsize, qstart, ResolveTensorFlag(tensorflag).get());
 }
 
-int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int istart, int jstart)
+int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart)
 {
-    return GetBatch_Base(outbuf, bufsize, istart, jstart, ResolveTensorFlag(tensorflag).get());
+    return GetBatch_Base(outbuf, bufsize, ijstart, ResolveTensorFlag(tensorflag).get());
 }
 
 
-int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, const QIterator & qstart)
+int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart)
 {
     if(qstart)
         return GetQBatch_Base(outbuf, bufsize, qstart.Index(), ResolveTensorFlag(tensorflag).get());
@@ -439,10 +439,10 @@ int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, const QIte
         return 0;
 }
 
-int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, const IJIterator & ijstart)
+int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart)
 {
     if(ijstart)
-        return GetBatch_Base(outbuf, bufsize, ijstart.i(), ijstart.j(), ResolveTensorFlag(tensorflag).get());
+        return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag).get());
     else
         return 0;
 }

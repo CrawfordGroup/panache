@@ -334,7 +334,7 @@ extern "C" {
      * \param [in] ijstart The starting value of q
      * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t istart, int_t jstart);
+    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart);
 
 
 } // end extern "C"

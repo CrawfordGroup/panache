@@ -325,8 +325,6 @@ struct QIteratorType
 class IJIterator : public IndexIterator<IJIteratorType>
 {
 public:
-    typedef std::function<int(const IJIterator &)> GetBatchFunc;
-
     IJIterator(const IJIteratorType ijt) : IndexIterator(ijt) { }
     IJIterator(int ni, int nj, bool packed) : IndexIterator(IJIteratorType(ni, nj, packed)) { }
 
@@ -339,8 +337,6 @@ public:
 class QIterator : public IndexIterator<QIteratorType>
 {
 public:
-    typedef std::function<int(const QIterator &)> GetBatchFunc;
-
     QIterator(const QIteratorType & qi) : IndexIterator(qi) { }
     QIterator(int nq, bool packed) : IndexIterator(QIteratorType(nq, packed)) { }
 

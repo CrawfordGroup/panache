@@ -603,7 +603,7 @@ extern "C" {
     void panachef_getqbatch_(int_t  *df_handle, int_t * tensorflag,
                              double * outbuf, int_t * bufsize, int_t * qstart, int_t * nbatch)
     {
-        *nbatch = panache_getqbatch(*df_handle, *tensorflag, outbuf, *bufsize, *qstart);
+        *nbatch = panache_getbatch(*df_handle, *tensorflag, outbuf, *bufsize, *qstart);
     }
 
 
@@ -633,9 +633,9 @@ extern "C" {
      * \param [out] nbatch The number of batches actually stored in the buffer.
      */
     void panachef_getbatch_(int_t  *df_handle, int_t * tensorflag,
-                             double * outbuf, int_t * bufsize, int_t * istart, int_t * jstart, int_t * nbatch)
+                             double * outbuf, int_t * bufsize, int_t * ijstart, int_t * nbatch)
     {
-        *nbatch = panache_getbatch(*df_handle, *tensorflag, outbuf, *bufsize, *istart, *jstart);
+        *nbatch = panache_getbatch(*df_handle, *tensorflag, outbuf, *bufsize, *ijstart);
     }
 
 }
