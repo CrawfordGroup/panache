@@ -435,7 +435,7 @@ void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
 
 
     #ifdef _OPENMP
-    #pragma omp parallel for num_threads(nthreads)
+        #pragma omp parallel for num_threads(nthreads)
     #endif
     for(int q = 0; q < naux_; q++)
     {
@@ -447,6 +447,12 @@ void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
 
         for(size_t i = 0; i < left.size(); i++)
         {
+
+            #ifdef PANACHE_TIMING
+                Timer tim;
+                tim.Start();
+            #endif
+
             int lncols = left[i].second;
             int rncols = right[i].second;
             double * lptr = left[i].first;
@@ -494,6 +500,11 @@ void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
             }
             else
                 qout->WriteByQ(mycqc, 1, q);
+
+            #ifdef PANACHE_TIMING
+            tim.Stop();
+            qout->GenTimer().AddTime(tim);
+            #endif
         }
     }
 
