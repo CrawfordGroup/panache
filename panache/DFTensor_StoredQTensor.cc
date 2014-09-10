@@ -82,9 +82,9 @@ int DFTensor::StoredQTensor::StoreFlags(void) const
     return storeflags_;
 }
 
-void DFTensor::StoredQTensor::Write(double * data, int nij, int ijstart)
+void DFTensor::StoredQTensor::Write(double * data, int nij, int istart, int jstart)
 {
-    Write_(data, nij, ijstart);
+    Write_(data, nij, istart, jstart);
 }
 
 void DFTensor::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
@@ -92,12 +92,12 @@ void DFTensor::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
     WriteByQ_(data, nq, qstart);
 }
 
-int DFTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
+int DFTensor::StoredQTensor::Read(double * data, int nij, int istart, int jstart)
 {
-    if(ijstart + nij >= ndim12())
-        nij = ndim12() - ijstart;
+    if(calcindex(istart, jstart) + nij >= ndim12())
+        nij = ndim12() - calcindex(istart, jstart);
 
-    Read_(data, nij, ijstart);
+    Read_(data, nij, istart, jstart);
     return nij;
 }
 
@@ -177,8 +177,10 @@ void DFTensor::DiskQTensor::Reset_(void)
     file_->seekp(0);
 }
 
-void DFTensor::DiskQTensor::Write_(double * data, int nij, int ijstart)
+void DFTensor::DiskQTensor::Write_(double * data, int nij, int istart, int jstart)
 {
+    int ijstart = calcindex(istart, jstart);
+
     #ifdef _OPENMP
     #pragma omp critical
     #endif
@@ -226,8 +228,10 @@ void DFTensor::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::DiskQTensor::Read_(double * data, int nij, int ijstart)
+void DFTensor::DiskQTensor::Read_(double * data, int nij, int istart, int jstart)
 {
+    int ijstart = calcindex(istart, jstart);
+
     #ifdef _OPENMP
     #pragma omp critical
     #endif
@@ -302,8 +306,10 @@ void DFTensor::MemoryQTensor::Reset_(void)
     // nothing needed
 }
 
-void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
+void DFTensor::MemoryQTensor::Write_(double * data, int nij, int istart, int jstart)
 {
+    int ijstart = calcindex(istart, jstart);
+
     if(byq())
     {
         for(int q = 0; q < naux(); q++)
@@ -335,9 +341,10 @@ void DFTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
+void DFTensor::MemoryQTensor::Read_(double * data, int nij, int istart, int jstart)
 {
-    // index ij is given by calling function and takes into account packing
+    int ijstart = calcindex(istart, jstart);
+
     if(byq())
     {
         for(int q = 0; q < naux(); q++)

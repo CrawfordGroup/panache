@@ -188,10 +188,10 @@ extern "C" {
     }
 
 
-    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart)
+    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t istart, int_t jstart)
     {
         CheckHandle(df_handle, __FUNCTION__);
-        return dftensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);
+        return dftensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, istart, jstart);
     }
 }
 

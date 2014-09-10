@@ -16,15 +16,31 @@ void DFTensor::CyclopsQTensor::Reset_(void)
     // nothing needed
 }
 
-void DFTensor::CyclopsQTensor::Write_(double * data, int nij, int ijstart)
+void DFTensor::CyclopsQTensor::Write_(double * data, int nij, int istart, int jstart)
 {
+/*
+    size_t nelements = nij*ndim12();
+
+    std::vector<long> indices(nelements);
+
+    for(size_t i = 0; i < nelements; i++)
+    {
+        if(byq())
+        {
+            indices.push_back()
+        }
+        else
+        {
+        }
+    }
+*/
 }
 
 void DFTensor::CyclopsQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
 }
 
-void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
+void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int istart, int jstart)
 {
 }
 
