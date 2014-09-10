@@ -600,6 +600,32 @@ private:
     };
 
 
+    #ifdef PANACHE_CYCLOPS
+    class CyclopsQTensor : public StoredQTensor
+    {
+    private:
+        CTF_Tensor tensor_;
+
+    protected:
+        virtual void Reset_(void);
+        virtual void Write_(double * data, int nij, int ijstart);
+        virtual void WriteByQ_(double * data, int nq, int qstart);
+        virtual void Read_(double * data, int nij, int ijstart);
+        virtual void ReadByQ_(double * data, int nq, int qstart);
+        virtual void Clear_(void);
+        virtual void Init_(void);
+
+    public:
+        CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags);
+
+        void Transform(const std::vector<TransformMat> & left,
+                       const std::vector<TransformMat> & right,
+                       std::vector<StoredQTensor *> results,
+                       int nthreads);
+
+    };
+    #endif
+
     /*!
      * \brief Create a StoredQTensor object
      *
