@@ -13,6 +13,10 @@
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
+#ifdef PANACHE_CYCLOPS
+#include <ctf.hpp>
+#endif
+
 namespace panache
 {
 
