@@ -22,6 +22,7 @@ add_library(panache
             Lapack.cc
             MPI.cc
             ${LIBINT_FILES}
+            ${MPI_FILES}
             )
 
 ##############################################
