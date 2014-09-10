@@ -66,27 +66,6 @@ list(APPEND FRUNTEST_LINK_LIBRARIES "stdc++" "m")
 
 
 #####################################
-# OpenMP
-#####################################
-set(PANACHE_OPENMP TRUE CACHE BOOL "Enable OpenMP")
-if(PANACHE_OPENMP)
-  message(STATUS "Enabling OpenMP for Panache")
-  find_package(OpenMP)
-  if(OPENMP_FOUND)
-    message(STATUS "Found OpenMP. Remember to link to OpenMP libraries when building your final project (if needed)")
-    list(APPEND PANACHE_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
-    list(APPEND RUNTEST_CXX_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
-
-    # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
-    list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
-    list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
-  else(OPENMP_FOUND)
-    message(WARNING "OpenMP was not found! Disabling...")
-  endif(OPENMP_FOUND)
-endif(PANACHE_OPENMP)
-
-
-#####################################
 # Cyclops & MPI
 #####################################
 set(CYCLOPS_PATH "" CACHE FILEPATH "Path to Cyclops top directory")
@@ -108,6 +87,33 @@ if(PANACHE_CYCLOPS)
     message(ERROR "MPI was not found! This is required for Cyclops")
   endif(MPI_CXX_FOUND)
 endif(PANACHE_CYCLOPS)
+
+
+#####################################
+# OpenMP
+#####################################
+set(PANACHE_OPENMP TRUE CACHE BOOL "Enable OpenMP")
+
+if(PANACHE_CYCLOPS)
+  message(STATUS "Disabling OpenMP because Cyclops is enabled")
+  set(PANACHE_OPENMP FALSE)
+endif(PANACHE_CYCLOPS)
+
+if(PANACHE_OPENMP)
+  message(STATUS "Enabling OpenMP for Panache")
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    message(STATUS "Found OpenMP. Remember to link to OpenMP libraries when building your final project (if needed)")
+    list(APPEND PANACHE_CXX_FLAGS "${OpenMP_CXX_FLAGS}") 
+    list(APPEND RUNTEST_CXX_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
+
+    # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
+    list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
+    list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
+  else(OPENMP_FOUND)
+    message(WARNING "OpenMP was not found! Disabling...")
+  endif(OPENMP_FOUND)
+endif(PANACHE_OPENMP)
 
 
 #####################################
