@@ -6,6 +6,8 @@
 #ifndef PANACHE_MPI_H
 #define PANACHE_MPI_H
 
+#include <utility>
+
 namespace panache
 {
 
@@ -24,6 +26,8 @@ char ** & Argv(void);
 
 int Size(void);
 int Rank(void);
+
+std::pair<int, int> MyRange(int totalsize);
 
 
 } //close namespace panache

@@ -70,6 +70,25 @@ int Rank(void)
     return rank;    
 }
 
+std::pair<int, int> MyRange(int totalsize)
+{
+    int rank = Rank();
+    int nelements = (totalsize / Size());
+    int start = nelements * rank;
+
+    int leftover = (totalsize % Size());
+
+    if(rank < leftover)
+    {
+        start += rank;
+        nelements++;
+    }
+    else
+        start += leftover;
+    
+    return std::pair<int, int>(start, start+nelements);
+}
+
 } //close namespace panache
 } //close namespace mpi
 
