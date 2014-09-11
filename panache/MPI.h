@@ -30,6 +30,7 @@ char ** & Argv(void);
 
 int Size(void);
 int Rank(void);
+bool IsMaster(void);
 
 std::pair<int, int> MyRange(int totalsize);
 

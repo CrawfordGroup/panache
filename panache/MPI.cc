@@ -14,6 +14,10 @@ char *** argv_ = nullptr;
 
 bool initialized_ = false;
 
+int rank_ = 0;
+int size_ = 0;
+
+
 CTF_World * ctfworld_ = nullptr;
 
 } // close anonymous namespace
@@ -32,6 +36,10 @@ void Init(int * argc, char *** argv)
         argv_ = argv;
         MPI_Init(argc, argv);
         initialized_ = true;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+        MPI_Comm_size(MPI_COMM_WORLD, &size_);
+
 
         #ifdef PANACHE_CYCLOPS
         ctfworld_ = new CTF_World(MPI_COMM_WORLD); 
@@ -63,22 +71,17 @@ char ** & Argv(void)
 
 int Size(void)
 {
-    int size = 0;
-
-    if(initialized_)
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    return size;    
+    return size_;    
 }
 
 int Rank(void)
 {
-    int rank = 0;
+    return rank_;    
+}
 
-    if(initialized_)
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    return rank;    
+bool IsMaster(void)
+{
+    return (rank_ == 0);
 }
 
 std::pair<int, int> MyRange(int totalsize)
