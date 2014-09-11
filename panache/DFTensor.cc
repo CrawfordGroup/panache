@@ -665,6 +665,48 @@ void DFTensor::PrintTimings(void) const
 }
 
 
+DFTensor::IteratedQTensorByQ DFTensor::IterateByQ(int tensorflag, double * buf, int bufsize)
+{
+    using std::placeholders::_1;
+
+    // ugly
+    IteratedQTensorByQ::GetBatchFunc gbf(std::bind(
+                                   static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetQBatch),
+                                   this, tensorflag, buf, bufsize, _1));
+
+    int ndim1, ndim2, naux;
+    TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+    IteratedQTensorByQ iqt(tensorflag, buf, bufsize, 
+                           QBatchSize(tensorflag),
+                           QIterator(naux, IsPacked(tensorflag)),
+                           gbf);
+
+    return iqt;
+}
+
+
+DFTensor::IteratedQTensorByIJ DFTensor::IterateByIJ(int tensorflag, double * buf, int bufsize)
+{
+    using std::placeholders::_1;
+
+    // ugly
+    IteratedQTensorByIJ::GetBatchFunc gbf(std::bind(
+                                   static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetBatch),
+                                   this, tensorflag, buf, bufsize, _1));
+
+    int ndim1, ndim2, naux;
+    TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+    IteratedQTensorByIJ iqt(tensorflag, buf, bufsize, 
+                            BatchSize(tensorflag),
+                            IJIterator(ndim1, ndim2, IsPacked(tensorflag)),
+                            gbf);
+
+    return iqt;
+}
+
+
 } // close namespace panache
 
 
