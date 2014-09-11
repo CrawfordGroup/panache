@@ -605,10 +605,10 @@ private:
     {
     private:
         std::string name_;
-        std::unique_ptr<CTF_Tensor> tensor_;
+        CTF_Tensor tensor_;
 
         void DecomposeIndex_(int64_t index, int & i, int & j, int & q);
-        std::unique_ptr<CTF_Matrix> FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name);
+        CTF_Matrix FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name);
  
 
     protected:

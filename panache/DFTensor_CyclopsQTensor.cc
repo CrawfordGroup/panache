@@ -49,7 +49,7 @@ void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
         }
     }
 
-    tensor_->read(nelements, indices.data(), data);
+    tensor_.read(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
@@ -65,7 +65,7 @@ void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
         for(int q = 0; q < naux(); q++)
         {
             IJIterator it(ndim1(), ndim2(), packed());
-            
+
             for(int ij = 0; ij < ndim12(); ij++)
             {
                 indices.push_back((q+qstart)+it.i()*naux()+it.j()*naux()*ndim1());
@@ -78,7 +78,7 @@ void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
         for(int q = 0; q < naux(); q++)
         {
             IJIterator it(ndim1(), ndim2(), packed());
-            
+
             for(int ij = 0; ij < ndim12(); ij++)
             {
                 indices.push_back(it.i()+it.j()*ndim1()+(q+qstart)*ndim1()*ndim2());
@@ -87,12 +87,12 @@ void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
         }
     }
 
-    tensor_->read(nelements, indices.data(), data);
+    tensor_.read(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::Clear_(void)
 {
-    tensor_.release();
+    tensor_ = CTF_Tensor();
 }
 
 void DFTensor::CyclopsQTensor::Init_(void)
@@ -125,16 +125,15 @@ void DFTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, 
 }
 
 
-std::unique_ptr<CTF_Matrix>
-DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
+CTF_Matrix DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
 {
-    std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, parallel::CTFWorld(), name));
+    CTF_Matrix ret(nrow, ncol, sym, parallel::CTFWorld(), name);
 
     int64_t np;
     int64_t * idx;
     double * data;
 
-    ret->read_local(&np, &idx, &data);
+    ret.read_local(&np, &idx, &data);
 
     for(int64_t n = 0; n < np; n++)
     {
@@ -146,7 +145,7 @@ DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int 
         data[n] = mat[row * ncol + col];
     }
 
-    ret->write(np, idx, data);
+    ret.write(np, idx, data);
 
     free(idx);
     free(data);
@@ -184,8 +183,7 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
 
 
     // Distributed J matrix
-    std::unique_ptr<CTF_Matrix> ctfj = FillWithMatrix_(fit->get_metric(), naux(), naux(), NS, "Jmat");
-
+    CTF_Matrix ctfj = FillWithMatrix_(fit->get_metric(), naux(), naux(), NS, "Jmat");
 
     // Now fill up a base matrix
     SharedBasisSet zero(new BasisSet);
@@ -196,10 +194,12 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
     double * data;
 
     CTF_Tensor base(3, dims, syms, parallel::CTFWorld(), name_.c_str());
-    
+
     base.read_local(&np, &idx, &data);
 
     int i, j, q;
+
+    //! \todo openmp here?
     for(int64_t n = 0; n < np; n++)
     {
         DecomposeIndex_(idx[n], i, j, q);
@@ -212,12 +212,10 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
     free(data);
 
     // contract!
-    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, parallel::CTFWorld(), name_.c_str()));
-
     if(byq())
-        (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];
+        tensor_["iab"] = ctfj["ij"]*base["jab"];
     else
-        (*tensor_)["abi"] = (*ctfj)["ij"]*base["abj"];
+        tensor_["abi"] = ctfj["ij"]*base["abj"];
 }
 
 
@@ -227,6 +225,9 @@ void DFTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left
                                           int nthreads)
 {
     // nthreads is ignored
+
+    // fi
+    
 }
 
 
