@@ -3,6 +3,9 @@
 #include "panache/Exception.h"
 #include "panache/DFTensor.h"
 #include "panache/MPI.h"
+#include "panache/ERI.h"
+#include "panache/FittingMetric.h"
+#include "panache/BasisSet.h"
 
 namespace panache
 {
@@ -98,28 +101,12 @@ void DFTensor::CyclopsQTensor::Init_(void)
 
 
 DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
-            : StoredQTensor(naux, ndim1, ndim2, storeflags)
+            : StoredQTensor(naux, ndim1, ndim2, storeflags), name_(name)
 {
-
-    int dims1[3] = {ndim1, ndim2, naux};
-    int dims2[3] = {naux, ndim1, ndim2};
-    int * dims = dims1;
-
-    int syms1[3] = {NS, NS, NS};
-    int syms2[3] = {NS, SY, SY};
-    int * syms = syms1;
-
-    if(byq())
-        dims = dims2;
-
-    if(packed())
-        syms = syms2;
-
-    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, mpi::CTFWorld(), name.c_str()));
 }
 
 
-void DFTensor::CyclopsQTensor::DecomposeIndex_(int index, int & i, int & j, int & q)
+void DFTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, int & q)
 {
     if(byq())
     {
@@ -137,12 +124,100 @@ void DFTensor::CyclopsQTensor::DecomposeIndex_(int index, int & i, int & j, int 
     }
 }
 
+
+std::unique_ptr<CTF_Matrix>
+DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
+{
+    std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, mpi::CTFWorld(), name));
+
+    int64_t np;
+    int64_t * idx;
+    double * data;
+
+    ret->read_local(&np, &idx, &data);
+
+    for(int64_t n = 0; n < np; n++)
+    {
+        // note that indicies are in column major order
+        // so we have to convert them
+        int64_t col = idx[n] / nrow;
+        int64_t row = idx[n] - col * nrow;
+
+        data[n] = mat[row * ncol + col];
+    }
+
+    ret->write(np, idx, data);
+
+    free(idx);
+    free(data);
+
+    return ret;
+}
+
+
 void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
                                        const SharedBasisSet primary,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
 {
     // nthreads is ignored
+
+    int dimsIJ[3] = {ndim1(), ndim2(), naux()};
+    int dimsQ[3] = {naux(), ndim1(), ndim2()};
+    int * dims = dimsIJ;
+
+    int symsNS[3] = {NS, NS, NS};
+    int symIJ[3] = {SY, NS, SY};
+    int symQ[3] = {NS, SY, NS};
+    int * syms = symsNS;
+
+    if(byq())
+        dims = dimsQ;
+
+    if(packed())
+    {
+        if(byq())
+            syms = symQ;
+        else
+            syms = symIJ;
+    }
+
+
+    // Distributed J matrix
+    std::unique_ptr<CTF_Matrix> ctfj = FillWithMatrix_(fit->get_metric(), naux(), naux(), NS, "Jmat");
+
+
+    // Now fill up a base matrix
+    SharedBasisSet zero(new BasisSet);
+    std::shared_ptr<TwoBodyAOInt> eri = GetERI(auxiliary, zero, primary, primary);
+
+    int64_t np;
+    int64_t *idx;
+    double * data;
+
+    CTF_Tensor base(3, dims, syms, mpi::CTFWorld(), name_.c_str());
+    
+    base.read_local(&np, &idx, &data);
+
+    int i, j, q;
+    for(int64_t n = 0; n < np; n++)
+    {
+        DecomposeIndex_(idx[n], i, j, q);
+        data[n] = eri->compute_basisfunction(q, 0, i, j);
+    }
+
+    base.write(np, idx, data);
+
+    free(idx);
+    free(data);
+
+    // contract!
+    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, mpi::CTFWorld(), name_.c_str()));
+
+    if(byq())
+        (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];
+    else
+        (*tensor_)["abi"] = (*ctfj)["ij"]*base["abj"];
 }
 
 
