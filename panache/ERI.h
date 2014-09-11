@@ -45,8 +45,8 @@ namespace panache {
  * \param [in] bs4 Basis set on the fourth center
  * \return A generator of ERI
  */
-inline shared_ptr<TwoBodyAOInt> GetERI(shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
-                                       shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
+inline shared_ptr<TwoBodyAOInt> GetERI(const shared_ptr<BasisSet> & bs1, const shared_ptr<BasisSet> & bs2,
+                                       const shared_ptr<BasisSet> & bs3, const shared_ptr<BasisSet> & bs4)
 {
             #ifdef PANACHE_USE_LIBINT
               return std::shared_ptr<TwoBodyAOInt>(new LibintERI(bs1, bs2, bs3, bs4));

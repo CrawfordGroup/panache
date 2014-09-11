@@ -3,6 +3,11 @@
 #include "panache/Exception.h"
 #include "panache/DFTensor.h"
 #include "panache/Lapack.h"
+#include "panache/BasisSet.h"
+#include "panache/FittingMetric.h"
+#include "panache/Timing.h"
+
+#include "panache/ERI.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -82,16 +87,6 @@ int DFTensor::StoredQTensor::StoreFlags(void) const
     return storeflags_;
 }
 
-void DFTensor::StoredQTensor::Write(double * data, int nij, int ijstart)
-{
-    Write_(data, nij, ijstart);
-}
-
-void DFTensor::StoredQTensor::WriteByQ(double * data, int nq, int qstart)
-{
-    WriteByQ_(data, nq, qstart);
-}
-
 int DFTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
 {
     if(ijstart + nij >= ndim12())
@@ -128,7 +123,7 @@ void DFTensor::StoredQTensor::Init(void)
 
 CumulativeTime & DFTensor::StoredQTensor::GenTimer(void)
 {
-    return gen_timer_; 
+    return gen_timer_;
 }
 
 CumulativeTime & DFTensor::StoredQTensor::GetQBatchTimer(void)
@@ -140,6 +135,271 @@ CumulativeTime & DFTensor::StoredQTensor::GetBatchTimer(void)
 {
     return getijbatch_timer_;
 }
+
+void DFTensor::StoredQTensor::GenQso(const std::shared_ptr<FittingMetric> & fit,
+                                     const SharedBasisSet primary,
+                                     const SharedBasisSet auxiliary,
+                                     int nthreads)
+{
+    GenQso_(fit, primary, auxiliary, nthreads);
+}
+
+
+void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
+                                        const std::vector<TransformMat> & right,
+                                        std::vector<StoredQTensor *> results,
+                                        int nthreads)
+{
+    Transform_(left, right, results, nthreads);
+}
+
+
+
+
+//////////////////////////////
+// LocalQTensor
+//////////////////////////////
+
+
+DFTensor::LocalQTensor::LocalQTensor(int naux, int ndim1, int ndim2, int storeflags)
+            : DFTensor::StoredQTensor(naux, ndim1, ndim2, storeflags)
+{
+}
+
+
+
+void DFTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
+                                     const SharedBasisSet primary,
+                                     const SharedBasisSet auxiliary,
+                                     int nthreads)
+{
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
+
+    int maxpershell = primary->max_function_per_shell();
+    int maxpershell2 = maxpershell*maxpershell;
+
+    double * J = fit->get_metric();
+
+    // default constructor = zero basis
+    SharedBasisSet zero(new BasisSet);
+
+    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<const double *> eribuffers;
+    std::vector<double *> A, B;
+
+    int naux = StoredQTensor::naux();
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        eris.push_back(GetERI(auxiliary, zero, primary, primary));
+        eribuffers.push_back(eris[eris.size()-1]->buffer());
+
+        // temporary buffers
+        A.push_back(new double[naux*maxpershell2]);
+        B.push_back(new double[naux*maxpershell2]);
+    }
+
+
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+#endif
+    for (int M = 0; M < primary->nshell(); M++)
+    {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+
+        int nm = primary->shell(M).nfunction();
+        int mstart = primary->shell(M).function_index();
+        int mend = mstart + nm;
+
+        for (int N = 0; N <= M; N++)
+        {
+            int nn = primary->shell(N).nfunction();
+            int nstart = primary->shell(N).function_index();
+            //int nend = nstart + nn;
+
+            for (int P = 0; P < auxiliary->nshell(); P++)
+            {
+                int np = auxiliary->shell(P).nfunction();
+                int pstart = auxiliary->shell(P).function_index();
+                int pend = pstart + np;
+
+                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
+
+                if(ncalc)
+                {
+                    for (int p = pstart, index = 0; p < pend; p++)
+                    {
+                        for (int m = 0; m < nm; m++)
+                        {
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // we now have a set of columns of B, although "condensed"
+            // we can do a DGEMM with J
+            // Access to J are only reads, so that is safe in parallel
+            C_DGEMM('T','T',nm*nn, naux, naux, 1.0, B[threadnum], nm*nn, J, naux, 0.0,
+                    A[threadnum], naux);
+
+
+            // write to disk or store in memory
+            if(N == M)
+            {
+                int iwrite = 1;
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                    Write_(A[threadnum] + (m0*nm)*naux, iwrite++, calcindex(m, mstart));
+            }
+            else
+            {
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                    Write_(A[threadnum] + (m0*nn)*naux, nn, calcindex(m, nstart));
+            }
+        }
+    }
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        delete [] A[i];
+        delete [] B[i];
+    }
+
+#ifdef PANACHE_TIMING
+    tim.Stop();
+    GenTimer().AddTime(tim);
+#endif
+
+}
+
+void DFTensor::LocalQTensor::Transform_(const std::vector<TransformMat> & left,
+                                        const std::vector<TransformMat> & right,
+                                        std::vector<StoredQTensor *> results,
+                                        int nthreads)
+{
+    int naux = StoredQTensor::naux();
+    int ndim1 = StoredQTensor::ndim1();
+    int ndim2 = StoredQTensor::ndim2();
+    int ndim12 = StoredQTensor::ndim12();
+
+    if(left.size() != right.size())
+        throw RuntimeError("Error - imbalanced left & right transformation matrix sizes!");
+    if(left.size() != results.size())
+        throw RuntimeError("Error - not enough results in vector");
+
+    // find the max dimension of the transformation matrices
+    int maxl = 0;
+    int maxr = 0;
+    for(const auto & it : left)
+        maxl = (it.second > maxl) ? it.second : maxl;
+    for(const auto & it : right)
+        maxr = (it.second > maxr) ? it.second : maxr;
+
+    // temporary space
+    double * qe = new double[ndim1*ndim2*nthreads];   // expanded q
+    double * qc = new double[maxl*ndim2*nthreads];     // C(t) Q
+    double * cqc = new double[maxl*maxr*nthreads];    // C(t) Q C
+
+    double * qp = qe;
+    if(packed())
+        qp = new double[ndim12*nthreads];         // packed q
+
+
+    #ifdef _OPENMP
+        #pragma omp parallel for num_threads(nthreads)
+    #endif
+    for(int q = 0; q < naux; q++)
+    {
+        int threadnum = 0;
+
+        #ifdef _OPENMP
+            threadnum = omp_get_thread_num();
+        #endif
+
+        for(size_t i = 0; i < left.size(); i++)
+        {
+
+            #ifdef PANACHE_TIMING
+                Timer tim;
+                tim.Start();
+            #endif
+
+            int lncols = left[i].second;
+            int rncols = right[i].second;
+            double * lptr = left[i].first;
+            double * rptr = right[i].first;
+
+            LocalQTensor * qout = dynamic_cast<LocalQTensor *>(results[i]);
+            if(qout == nullptr)
+                throw RuntimeError("Cannot transform LocalQTensor into another type!");
+
+            double * myqe = qe + threadnum*ndim1*ndim2;
+            double * myqc = qc + threadnum*maxl*ndim2;
+            double * mycqc = cqc + threadnum*maxl*maxr;
+
+            double * myqp = myqe;
+            if(packed())
+                myqp = qp + threadnum*ndim12;
+
+            // read this tensor by Q
+            this->ReadByQ(myqp, 1, q);
+
+            if(packed())
+            {
+                // expand packed matrix
+                // ndim1 should equal ndim2
+                int index = 0;
+                for(int i = 0; i < ndim1; i++)
+                    for(int j = 0; j <= i; j++)
+                        myqe[i*ndim1+j] = myqe[j*ndim2+i] = myqp[index++];
+            }
+
+
+            // actually do the transformation
+            C_DGEMM('T', 'N', lncols, ndim2, ndim1, 1.0, lptr, lncols, myqe, ndim2, 0.0, myqc, ndim2);
+            C_DGEMM('N', 'N', lncols, rncols, ndim2, 1.0, myqc, ndim2, rptr, rncols, 0.0, mycqc, rncols);
+
+
+            // write out
+            // Write to memory or disk
+            if(qout->packed())
+            {
+                // can use qc for scratch
+                for(int i = 0, index = 0; i < lncols; i++)
+                for(int j = 0; j <= i; j++, index++)
+                    myqc[index] = mycqc[i*rncols+j];
+
+                qout->WriteByQ_(myqc, 1, q);
+            }
+            else
+                qout->WriteByQ_(mycqc, 1, q);
+
+            #ifdef PANACHE_TIMING
+            tim.Stop();
+            qout->GenTimer().AddTime(tim);
+            #endif
+        }
+    }
+
+    // done with stuff
+    delete [] qe;
+    delete [] qc;
+    delete [] cqc;
+
+    if(packed())
+        delete [] qp;
+}
+
 
 
 //////////////////////////////
@@ -287,7 +547,7 @@ void DFTensor::DiskQTensor::Init_(void)
 
 
 DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename)
-            : StoredQTensor(naux, ndim1, ndim2, storeflags)
+            : LocalQTensor(naux, ndim1, ndim2, storeflags)
 {
     filename_ = filename;
 }
@@ -301,6 +561,7 @@ void DFTensor::MemoryQTensor::Reset_(void)
 {
     // nothing needed
 }
+
 
 void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
 {
@@ -316,6 +577,7 @@ void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
         std::copy(data, data+naux(), start);
     }
 }
+
 
 void DFTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
@@ -380,14 +642,14 @@ void DFTensor::MemoryQTensor::Init_(void)
 }
 
 DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags)
-    : StoredQTensor(naux, ndim1, ndim2, storeflags)
+    : LocalQTensor(naux, ndim1, ndim2, storeflags)
 {
 }
 
 
 
 
-std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2, 
+std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                                         int storeflags, const std::string & name)
 {
     if(name == "")
@@ -414,117 +676,6 @@ std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux
 }
 
 
-void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
-                                        const std::vector<TransformMat> & right,
-                                        std::vector<StoredQTensor *> results,
-                                        int nthreads)
-{
-
-    if(left.size() != right.size())
-        throw RuntimeError("Error - imbalanced left & right transformation matrix sizes!");
-    if(left.size() != results.size())
-        throw RuntimeError("Error - not enough results in vector");
-
-    // find the max dimension of the transformation matrices
-    int maxl = 0;
-    int maxr = 0;
-    for(const auto & it : left)
-        maxl = (it.second > maxl) ? it.second : maxl;
-    for(const auto & it : right)
-        maxr = (it.second > maxr) ? it.second : maxr;
-
-    // temporary space
-    double * qe = new double[ndim1_*ndim2_*nthreads];   // expanded q
-    double * qc = new double[maxl*ndim2_*nthreads];     // C(t) Q
-    double * cqc = new double[maxl*maxr*nthreads];    // C(t) Q C
-
-    double * qp = qe;
-    if(packed())
-        qp = new double[ndim12_*nthreads];         // packed q
-
-
-    #ifdef _OPENMP
-        #pragma omp parallel for num_threads(nthreads)
-    #endif
-    for(int q = 0; q < naux_; q++)
-    {
-        int threadnum = 0;
-
-        #ifdef _OPENMP
-            threadnum = omp_get_thread_num();
-        #endif
-
-        for(size_t i = 0; i < left.size(); i++)
-        {
-
-            #ifdef PANACHE_TIMING
-                Timer tim;
-                tim.Start();
-            #endif
-
-            int lncols = left[i].second;
-            int rncols = right[i].second;
-            double * lptr = left[i].first;
-            double * rptr = right[i].first;
-
-            StoredQTensor * qout = results[i];
-
-            double * myqe = qe + threadnum*ndim1_*ndim2_;
-            double * myqc = qc + threadnum*maxl*ndim2_;
-            double * mycqc = cqc + threadnum*maxl*maxr;
-
-            double * myqp = myqe;
-            if(packed())
-                myqp = qp + threadnum*ndim12_;
-
-            // read this tensor by Q
-            this->ReadByQ(myqp, 1, q);
-
-            if(packed())
-            {
-                // expand packed matrix
-                // ndim1_ should equal ndim2_
-                int index = 0;
-                for(int i = 0; i < ndim1_; i++)
-                    for(int j = 0; j <= i; j++)
-                        myqe[i*ndim1_+j] = myqe[j*ndim2_+i] = myqp[index++];
-            }
-
-
-            // actually do the transformation
-            C_DGEMM('T', 'N', lncols, ndim2_, ndim1_, 1.0, lptr, lncols, myqe, ndim2_, 0.0, myqc, ndim2_);
-            C_DGEMM('N', 'N', lncols, rncols, ndim2_, 1.0, myqc, ndim2_, rptr, rncols, 0.0, mycqc, rncols);
-
-
-            // write out            
-            // Write to memory or disk
-            if(qout->packed())
-            {
-                // can use qc for scratch
-                for(int i = 0, index = 0; i < lncols; i++)
-                for(int j = 0; j <= i; j++, index++)
-                    myqc[index] = mycqc[i*rncols+j];
-    
-                qout->WriteByQ(myqc, 1, q);
-            }
-            else
-                qout->WriteByQ(mycqc, 1, q);
-
-            #ifdef PANACHE_TIMING
-            tim.Stop();
-            qout->GenTimer().AddTime(tim);
-            #endif
-        }
-    }
-
-    // done with stuff
-    delete [] qe;
-    delete [] qc;
-    delete [] cqc;
-
-    if(packed())
-        delete [] qp;
-}
 
 
 } // close namespace panache
