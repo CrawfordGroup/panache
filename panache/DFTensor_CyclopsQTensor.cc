@@ -18,7 +18,7 @@ void DFTensor::CyclopsQTensor::Reset_(void)
 
 void DFTensor::CyclopsQTensor::Write_(double * data, int nij, int ijstart)
 {
-    size_t nelements = nij*ndim12();
+    size_t nelements = nij*naux();
 
     std::vector<long> indices;
     indices.reserve(nelements);
@@ -29,33 +29,80 @@ void DFTensor::CyclopsQTensor::Write_(double * data, int nij, int ijstart)
 
     if(byq())
     {
-        for(int q = 0; q < naux(); q++)
+        for(int ij = 0; ij < nij; ij++)
         {
-            indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
+            for(int q = 0; q < naux(); q++)
+                indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
             ++it;
         }
     }
     else
     {
-        for(int q = 0; q < naux(); q++)
+        for(int ij = 0; ij < nij; ij++)
         {
-            indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
+            for(int q = 0; q < naux(); q++)
+                indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
             ++it;
         }
     }
+
+/*
+    std::cout << "IN " << __FUNCTION__ << " :\n";
+    for(auto & it : indices)
+        std::cout << it << "\n";
+*/
 
     tensor_->write(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
+    size_t nelements = nq*ndim12();
+
+    std::vector<long> indices;
+    indices.reserve(nelements);
 
 
+    if(byq())
+    {
+        for(int q = 0; q < nq; q++)
+        {
+            IJIterator it(ndim1(), ndim2(), packed());
+            
+            for(int ij = 0; ij < ndim12(); ij++)
+            {
+                indices.push_back((q+qstart)+it.i()*naux()+it.j()*naux()*ndim1());
+                ++it;
+            }
+        }
+    }
+    else
+    {
+        for(int q = 0; q < nq; q++)
+        {
+            IJIterator it(ndim1(), ndim2(), packed());
+            
+            for(int ij = 0; ij < ndim12(); ij++)
+            {
+                indices.push_back(it.i()+it.j()*ndim1()+(q+qstart)*ndim1()*ndim2());
+                ++it;
+            }
+        }
+    }
+
+/*
+    std::cout << "IN " << __FUNCTION__ << " :\n";
+    for(auto & it : indices)
+        std::cout << it << "\n";
+*/
+
+    tensor_->write(nelements, indices.data(), data);
 }
+
 
 void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 {
-    size_t nelements = nij*ndim12();
+    size_t nelements = nij*naux();
 
     std::vector<long> indices;
     indices.reserve(nelements);
@@ -66,17 +113,19 @@ void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 
     if(byq())
     {
-        for(int q = 0; q < naux(); q++)
+        for(int ij = 0; ij < nij; ij++)
         {
-            indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
+            for(int q = 0; q < naux(); q++)
+                indices.push_back(q+it.i()*naux()+it.j()*naux()*ndim1());
             ++it;
         }
     }
     else
     {
-        for(int q = 0; q < naux(); q++)
+        for(int ij = 0; ij < nij; ij++)
         {
-            indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
+            for(int q = 0; q < naux(); q++)
+                indices.push_back(it.i()+it.j()*ndim1()+q*ndim1()*ndim2());
             ++it;
         }
     }
@@ -86,6 +135,40 @@ void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 
 void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
+    size_t nelements = nq*ndim12();
+
+    std::vector<long> indices;
+    indices.reserve(nelements);
+
+
+    if(byq())
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            IJIterator it(ndim1(), ndim2(), packed());
+            
+            for(int ij = 0; ij < ndim12(); ij++)
+            {
+                indices.push_back((q+qstart)+it.i()*naux()+it.j()*naux()*ndim1());
+                ++it;
+            }
+        }
+    }
+    else
+    {
+        for(int q = 0; q < naux(); q++)
+        {
+            IJIterator it(ndim1(), ndim2(), packed());
+            
+            for(int ij = 0; ij < ndim12(); ij++)
+            {
+                indices.push_back(it.i()+it.j()*ndim1()+(q+qstart)*ndim1()*ndim2());
+                ++it;
+            }
+        }
+    }
+
+    tensor_->read(nelements, indices.data(), data);
 }
 
 void DFTensor::CyclopsQTensor::Clear_(void)
@@ -98,30 +181,35 @@ void DFTensor::CyclopsQTensor::Init_(void)
 }
 
 
-DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const char *name)
+DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
             : StoredQTensor(naux, ndim1, ndim2, storeflags)
 {
 
-    int dims[3] = {naux, ndim1, ndim2};
+    int dims1[3] = {ndim1, ndim2, naux};
+    int dims2[3] = {naux, ndim1, ndim2};
+    int * dims = dims1;
 
     int syms1[3] = {NS, NS, NS};
     int syms2[3] = {NS, SY, SY};
     int * syms = syms1;
 
-    if(packed())
-        syms = syms2;
+    if(byq())
+        dims = dims2;
 
-    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, mpi::CTFWorld(), name));
+//    if(packed())
+//        syms = syms2;
+
+    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, mpi::CTFWorld(), name.c_str()));
 }
 
 
 
+/*
 void DFTensor::CyclopsQTensor::Transform(const std::vector<TransformMat> & left,
                                          const std::vector<TransformMat> & right,
                                          std::vector<StoredQTensor *> results,
                                          int nthreads)
 {
-/*
     if(left.size() != right.size())
         throw RuntimeError("Error - imbalanced left & right transformation matrix sizes!");
     if(left.size() != results.size())
@@ -226,8 +314,8 @@ void DFTensor::CyclopsQTensor::Transform(const std::vector<TransformMat> & left,
 
     if(packed())
         delete [] qp;
-*/
 }
+*/
 
 
 } // close namespace panache

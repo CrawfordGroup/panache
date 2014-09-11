@@ -19,11 +19,15 @@
 
     /*! \name Flags specifing how tensors should be stored */
     ///@{
-    #define QSTORAGE_PACKED 1  //!< Internal use only
-    #define QSTORAGE_INMEM  2  //!< Store in memory (core)
-    #define QSTORAGE_ONDISK 4  //!< Store on disk
-    #define QSTORAGE_ONFLY  8  //!< Generate on-the-fly (not yet implemented)
-    #define QSTORAGE_BYQ    16 //!< Store with Q as the first (slowest) index
+    #define QSTORAGE_PACKED  1  //!< Internal use only
+    #define QSTORAGE_ONFLY   2  //!< Generate on-the-fly (not yet implemented)
+    #define QSTORAGE_BYQ     4 //!< Store with Q as the first (slowest) index
+    #define QSTORAGE_INMEM   8  //!< Store in memory (core)
+    #define QSTORAGE_ONDISK  16  //!< Store on disk
+
+    #ifdef PANACHE_CYCLOPS
+    #define QSTORAGE_CYCLOPS 32  //!< Use Cyclops library
+    #endif
     ///@}
 
     /*! \name Flags specifing basis function ordering */

@@ -79,6 +79,10 @@ if(PANACHE_CYCLOPS)
     list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_MPI")
     list(APPEND PANACHE_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
     list(APPEND PANACHE_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
+    list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_CYCLOPS")
+    list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_MPI")
+    list(APPEND RUNTEST_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
+    list(APPEND RUNTEST_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
     #list(APPEND FRUNTEST_F90_FLAGS "${MPI_CXX_FLAGS}") 
     #list(APPEND LIBERD_F90_FLAGS "${MPI_CXX_FLAGS}")
     list(APPEND RUNTEST_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
@@ -98,8 +102,8 @@ endif(PANACHE_CYCLOPS)
 set(PANACHE_OPENMP TRUE CACHE BOOL "Enable OpenMP")
 
 if(PANACHE_CYCLOPS)
-  message(STATUS "Disabling OpenMP because Cyclops is enabled")
-  set(PANACHE_OPENMP FALSE)
+  message(STATUS "Enabling OpenMP because Cyclops is enabled")
+  set(PANACHE_OPENMP TRUE)
 endif(PANACHE_CYCLOPS)
 
 if(PANACHE_OPENMP)
@@ -117,6 +121,10 @@ if(PANACHE_OPENMP)
     message(WARNING "OpenMP was not found! Disabling...")
   endif(OPENMP_FOUND)
 endif(PANACHE_OPENMP)
+
+if(PANACHE_CYCLOPS AND NOT PANACHE_OPENMP)
+  message(ERROR "OpenMP was not found, but is required for Cyclops")
+endif(PANACHE_CYCLOPS AND NOT PANACHE_OPENMP)
 
 
 #####################################

@@ -41,7 +41,6 @@ void Init(int * argc, char *** argv)
 
 void Finalize(void)
 {
-
     if(initialized_)
     {
         #ifdef PANACHE_CYCLOPS

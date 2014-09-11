@@ -400,6 +400,15 @@ std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux
         filename.append(name);
         return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
     }
+
+    #ifdef PANACHE_CYCLOPS
+    else if(storeflags & QSTORAGE_CYCLOPS)
+    {
+        std::cout << "New cyclops tensor: " << name << "\n";
+        return std::unique_ptr<DFTensor::StoredQTensor>(new CyclopsQTensor(naux, ndim1, ndim2, storeflags, name));
+    }
+    #endif
+
     else
         return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
 }

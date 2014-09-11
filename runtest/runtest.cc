@@ -25,6 +25,11 @@
 using namespace panache;
 using namespace std;
 
+#ifdef PANACHE_MPI
+#include "panache/MPI.h"
+#include <mpi.h>
+#endif
+
 void PrintUsage(void)
 {
     cout << "\n"
@@ -34,7 +39,8 @@ void PrintUsage(void)
          << "\n"
          << "Options:\n"
          << "-v           Verbose printing\n"
-         << "-d           Write Qso to disk (rather than in core)\n"
+         << "-d           Write Q tensors to disk (rather than in core)\n"
+         << "-c           Use Cyclops Tensor Framework\n"
          << "-b           Get Qso/Qmo in batches\n"
          << "-t           Use transpose of C matrix\n"
          << "-h           Print help (you're looking at it\n"
@@ -607,14 +613,18 @@ int main(int argc, char ** argv)
         }
 
 
+        #ifdef PANACHE_MPI
+        panache::mpi::Init(&argc, &argv);
+        #endif
 
         string dir;
 
         bool verbose = false;
-        bool inmem = true;
         bool byq = false;
         bool transpose = false;
         int batchsize = 0;
+        bool cyclops = false;
+        bool disk = false;
 
         int i = 1;
         while(i < argc)
@@ -628,13 +638,21 @@ int main(int argc, char ** argv)
             else if(starg == "-b")
                 batchsize = GetIArg(i, argc, argv);
             else if(starg == "-d")
-                inmem = false;
+            {
+                disk = true;
+                cyclops = false;
+            }
             else if(starg == "-v")
                 verbose = true;
             else if(starg == "-t")
                 transpose = true;
             else if(starg == "-q")
                 byq = true;
+            else if(starg == "-c")
+            {
+                disk = false;
+                cyclops = true;
+            }
             else
             {
                 // add trailing slash if needed
@@ -643,6 +661,11 @@ int main(int argc, char ** argv)
                 dir = starg;
             }
         }
+
+        #ifndef PANACHE_CYCLOPS
+        if(cyclops)
+            throw std::runtime_error("Error - Panache not compiled with cyclops!");
+        #endif
 
         if(verbose)
             panache::output::SetOutput(&cout);
@@ -718,10 +741,16 @@ int main(int argc, char ** argv)
             qstore |= QSTORAGE_BYQ;
 
 
-        if(inmem)
-            dft.GenQTensors(qflags, qstore | QSTORAGE_INMEM);
-        else
+        if(disk)
             dft.GenQTensors(qflags, qstore | QSTORAGE_ONDISK);
+
+        #ifdef PANACHE_CYCLOPS
+        else if(cyclops)
+            dft.GenQTensors(qflags, qstore | QSTORAGE_CYCLOPS);
+        #endif
+
+        else
+            dft.GenQTensors(qflags, qstore | QSTORAGE_INMEM);
 
 
 
@@ -784,6 +813,9 @@ int main(int argc, char ** argv)
 
         dft.PrintTimings();
 
+        #ifdef PANACHE_MPI
+        panache::mpi::Finalize();
+        #endif
 
     }
 
