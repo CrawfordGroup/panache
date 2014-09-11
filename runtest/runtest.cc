@@ -25,8 +25,9 @@
 using namespace panache;
 using namespace std;
 
+#include "panache/Parallel.h"
+
 #ifdef PANACHE_MPI
-#include "panache/MPI.h"
 #include <mpi.h>
 #endif
 
@@ -614,8 +615,10 @@ int main(int argc, char ** argv)
 
 
         #ifdef PANACHE_MPI
-        panache::mpi::Init(&argc, &argv);
+        MPI_Init(&argc, &argv);
         #endif
+
+        panache::parallel::Init(&argc, &argv);
 
         string dir;
 
@@ -814,8 +817,9 @@ int main(int argc, char ** argv)
         dft.PrintTimings();
 
         #ifdef PANACHE_MPI
-        panache::mpi::Finalize();
+        MPI_Finalize();
         #endif
+        panache::parallel::Finalize();
 
     }
 

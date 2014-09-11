@@ -3,7 +3,7 @@
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/MPI.h"
+#include "panache/Parallel.h"
 #include "panache/Exception.h"
 
 namespace
@@ -25,7 +25,7 @@ CTF_World * ctfworld_ = nullptr;
 
 namespace panache
 {
-namespace mpi
+namespace parallel
 {
 
 void Init(int * argc, char *** argv)
@@ -34,7 +34,6 @@ void Init(int * argc, char *** argv)
     {
         argc_ = argc;
         argv_ = argv;
-        MPI_Init(argc, argv);
         initialized_ = true;
 
         MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
@@ -54,8 +53,6 @@ void Finalize(void)
         #ifdef PANACHE_CYCLOPS
         delete ctfworld_;
         #endif
-
-        MPI_Finalize();
     }
 }
 
@@ -113,6 +110,6 @@ CTF_World & CTFWorld(void)
 #endif
 
 } //close namespace panache
-} //close namespace mpi
+} //close namespace parallel
 
 

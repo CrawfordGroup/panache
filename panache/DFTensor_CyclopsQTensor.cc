@@ -2,7 +2,7 @@
 
 #include "panache/Exception.h"
 #include "panache/DFTensor.h"
-#include "panache/MPI.h"
+#include "panache/Parallel.h"
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"
 #include "panache/BasisSet.h"
@@ -128,7 +128,7 @@ void DFTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, 
 std::unique_ptr<CTF_Matrix>
 DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
 {
-    std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, mpi::CTFWorld(), name));
+    std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, parallel::CTFWorld(), name));
 
     int64_t np;
     int64_t * idx;
@@ -195,7 +195,7 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
     int64_t *idx;
     double * data;
 
-    CTF_Tensor base(3, dims, syms, mpi::CTFWorld(), name_.c_str());
+    CTF_Tensor base(3, dims, syms, parallel::CTFWorld(), name_.c_str());
     
     base.read_local(&np, &idx, &data);
 
@@ -212,7 +212,7 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
     free(data);
 
     // contract!
-    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, mpi::CTFWorld(), name_.c_str()));
+    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, parallel::CTFWorld(), name_.c_str()));
 
     if(byq())
         (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];

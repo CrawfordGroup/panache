@@ -21,7 +21,7 @@ add_library(panache
             c_convert.cc
             Lapack.cc
             ${LIBINT_FILES}
-            ${MPI_FILES}
+            ${PARALLEL_FILES}
             ${CYCLOPS_FILES}
             )
 

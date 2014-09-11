@@ -3,8 +3,8 @@
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_MPI_H
-#define PANACHE_MPI_H
+#ifndef PANACHE_PARALLEL_H
+#define PANACHE_PARALLEL_H
 
 #include <utility>
 
@@ -18,7 +18,7 @@ namespace panache
 /*!
  * \brief Holder for some MPI information
  */
-namespace mpi
+namespace parallel
 {
 
 void Init(int * argc, char *** argv);
@@ -40,7 +40,7 @@ CTF_World & CTFWorld(void);
 
 
 } //close namespace panache
-} //close namespace mpi
+} //close namespace parallel
 
 #endif
 
