@@ -534,6 +534,11 @@ private:
         CumulativeTime gen_timer_; //!< Timer for the generation of this tensor
         CumulativeTime getijbatch_timer_; //!< Timer for getting batch by orbital index
         CumulativeTime getqbatch_timer_; //!< Timer for getting batch by q index
+
+        // disable copying, etc
+        StoredQTensor & operator=(const StoredQTensor & rhs) = delete;
+        StoredQTensor(const StoredQTensor & rhs) = delete;
+        StoredQTensor(const StoredQTensor && rhs) = delete;
     };
 
 

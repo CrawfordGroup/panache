@@ -520,7 +520,7 @@ void DFTensor::PrintTimings(void) const
     PrintTimer("QOO", qoo_);
     PrintTimer("QOV", qov_);
     PrintTimer("QVV", qvv_);
-    output::printf(std::string(80, '-').c_str());
+    output::printf(std::string(90, '-').c_str());
     output::printf("\n\n");
 
     #endif

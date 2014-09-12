@@ -7,6 +7,10 @@
 #include "panache/FittingMetric.h"
 #include "panache/BasisSet.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace panache
 {
 
@@ -90,30 +94,24 @@ void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
 
 void DFTensor::CyclopsQTensor::Clear_(void)
 {
-    //?
     tensor_.release();
 }
 
 void DFTensor::CyclopsQTensor::Init_(void)
 {
-}
-
-
-DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
-            : StoredQTensor(naux, ndim1, ndim2, storeflags), name_(name)
-{
-    int dimsIJ[3] = {ndim1, ndim2, naux};
-    int dimsQ[3] = {naux, ndim1, ndim2};
+    //! \todo Symmetry not implemented
+    int dimsIJ[3] = {ndim1(), ndim2(), naux()};
+    int dimsQ[3] = {naux(), ndim1(), ndim2()};
     int * dims = dimsIJ;
 
     int symsNS[3] = {NS, NS, NS};
-    int symIJ[3] = {SY, NS, NS};
-    int symQ[3] = {NS, SY, NS};
+//    int symIJ[3] = {SY, NS, NS};
+//    int symQ[3] = {NS, SY, NS};
     int * syms = symsNS;
 
     if(byq())
         dims = dimsQ;
-
+/*
     if(packed())
     {
         if(byq())
@@ -121,9 +119,15 @@ DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int sto
         else
             syms = symIJ;
     }
-
+*/
 
     tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, parallel::CTFWorld(), name_.c_str()));
+}
+
+
+DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
+            : StoredQTensor(naux, ndim1, ndim2, storeflags), name_(name)
+{
 
 }
 
@@ -181,14 +185,20 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
 {
-    // nthreads is ignored
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
 
     // Distributed J matrix
     std::unique_ptr<CTF_Matrix> ctfj(FillWithMatrix_(fit->get_metric(), naux(), naux(), NS, "Jmat"));
 
     // Now fill up a base matrix
     SharedBasisSet zero(new BasisSet);
-    std::shared_ptr<TwoBodyAOInt> eri = GetERI(auxiliary, zero, primary, primary);
+
+    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    for(int i = 0; i < nthreads; i++)
+        eris.push_back(GetERI(auxiliary, zero, primary, primary));
 
     int64_t np;
     int64_t *idx;
@@ -199,13 +209,21 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
 
     base.read_local(&np, &idx, &data);
 
-    int i, j, q;
-
-    //! \todo openmp here?
+    //! \todo better scheduling? We want sequential blocks so
+    //        that compute_basisfunction won't miss all the time
+    #ifdef _OPENMP
+    #pragma omp parallel for num_threads(nthreads)
+    #endif
     for(int64_t n = 0; n < np; n++)
     {
+        int threadnum = 0;
+        #ifdef _OPENMP
+        threadnum = omp_get_thread_num(); 
+        #endif
+        
+        int i, j, q;
         DecomposeIndex_(idx[n], i, j, q);
-        data[n] = eri->compute_basisfunction(q, 0, i, j);
+        data[n] = eris[threadnum]->compute_basisfunction(q, 0, i, j);
     }
 
     base.write(np, idx, data);
@@ -219,6 +237,11 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
         (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];
     else
         (*tensor_)["abi"] = (*ctfj)["ij"]*base["abj"];
+
+#ifdef PANACHE_TIMING
+    tim.Stop();
+    GenTimer().AddTime(tim);
+#endif
 }
 
 
@@ -231,6 +254,11 @@ void DFTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left
 
     for(size_t i = 0; i < left.size(); i++)
     {
+        #ifdef PANACHE_TIMING
+        Timer tim;
+        tim.Start();
+        #endif
+
         CyclopsQTensor * rptr = dynamic_cast<CyclopsQTensor *>(results[i]);
         if(rptr == nullptr)
             throw RuntimeError("Cannot store result of Cyclops contraction in non-cyclops object");
@@ -276,9 +304,13 @@ void DFTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left
                 (*(rptr->tensor_))["ijq"] = cq["iaq"] * (*ctfright)["aj"];
             }
         }
+
+        #ifdef PANACHE_TIMING
+        tim.Stop();
+        rptr->GenTimer().AddTime(tim);
+        #endif
     }
 }
-
 
 } // close namespace panache
 
