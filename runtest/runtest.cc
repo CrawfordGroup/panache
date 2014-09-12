@@ -604,6 +604,11 @@ int main(int argc, char ** argv)
 {
     int ret = 0;
 
+    #ifdef PANACHE_MPI
+    MPI_Init(&argc, &argv);
+    #endif
+    panache::parallel::Init(&argc, &argv);
+
     try
     {
 
@@ -613,12 +618,6 @@ int main(int argc, char ** argv)
             return 0;
         }
 
-
-        #ifdef PANACHE_MPI
-        MPI_Init(&argc, &argv);
-        #endif
-
-        panache::parallel::Init(&argc, &argv);
 
         string dir;
 
@@ -816,13 +815,7 @@ int main(int argc, char ** argv)
 
         dft.PrintTimings();
 
-        #ifdef PANACHE_MPI
-        MPI_Finalize();
-        #endif
-        panache::parallel::Finalize();
-
     }
-
     catch(const exception & ex)
     {
         cout << "\n*****************"
@@ -833,6 +826,13 @@ int main(int argc, char ** argv)
 
         ret = -1;
     }
+
+
+    panache::parallel::Finalize();
+    #ifdef PANACHE_MPI
+    MPI_Finalize();
+    #endif
+
 
     return ret;
 }

@@ -652,6 +652,7 @@ DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int store
 std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                                         int storeflags, const std::string & name)
 {
+    std::cout << "naux, ndim1, ndim2 = " << naux << " " << ndim1 << " " << ndim2 << "\n";
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
