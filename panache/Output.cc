@@ -4,6 +4,7 @@
  */
 
 #include "panache/Output.h"
+#include "panache/Parallel.h"
 
 namespace
 {
@@ -42,6 +43,9 @@ void SetOutput(std::ostream * outstream)
 
 void printf(const char * format, ...)
 {
+    if(!parallel::IsMaster())
+        return;
+
     if(use_stream && _outstream)
     {
         va_list args;

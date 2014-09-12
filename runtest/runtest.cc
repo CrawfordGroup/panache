@@ -31,9 +31,11 @@ using namespace std;
 #include <mpi.h>
 #endif
 
+ostream * out;
+
 void PrintUsage(void)
 {
-    cout << "\n"
+    *out << "\n"
          << "Libpanache Testing Utility\n"
          << "\n"
          << "Usage: runtest [opt] <dir>\n"
@@ -195,12 +197,12 @@ static void PrintRow(const std::string name,
                      const T & thresh,
                      const std::string & result)
 {
-    cout << std::setw(35) << std::left << name;
-    cout << std::setw(15) << std::left << ref;
-    cout << std::setw(15) << std::left << run;
-    cout << std::setw(15) << std::left << diff;
-    cout << std::setw(15) << std::left << thresh;
-    cout << std::setw(15) << std::left << result << "\n";
+    *out << std::setw(35) << std::left << name;
+    *out << std::setw(15) << std::left << ref;
+    *out << std::setw(15) << std::left << run;
+    *out << std::setw(15) << std::left << diff;
+    *out << std::setw(15) << std::left << thresh;
+    *out << std::setw(15) << std::left << result << "\n";
 }
 
 
@@ -224,12 +226,12 @@ static void PrintRow(const char * name,
                      const char * thresh,
                      const char * result)
 {
-    cout << std::setw(35) << std::left << name;
-    cout << std::setw(15) << std::left << ref;
-    cout << std::setw(15) << std::left << run;
-    cout << std::setw(15) << std::left << diff;
-    cout << std::setw(15) << std::left << thresh;
-    cout << std::setw(15) << std::left << result << "\n";
+    *out << std::setw(35) << std::left << name;
+    *out << std::setw(15) << std::left << ref;
+    *out << std::setw(15) << std::left << run;
+    *out << std::setw(15) << std::left << diff;
+    *out << std::setw(15) << std::left << thresh;
+    *out << std::setw(15) << std::left << result << "\n";
 }
 
 
@@ -239,7 +241,7 @@ static void PrintRow(const char * name,
  */
 static void PrintSeparator(void)
 {
-    cout << std::string(104, '-') << std::endl;
+    *out << std::string(104, '-') << std::endl;
 }
 
 
@@ -310,10 +312,10 @@ int TestMatrix(const string & title, const string & reffile,
 {
     TestMatrixInfo tmi = ReadMatrixInfo(reffile);
     int nfailures = 0;
-    cout << "***********************************************************************\n";
-    cout << "Matrix \"" << title << "\"";
-    cout << "\n";
-    cout << "***********************************************************************\n";
+    *out << "***********************************************************************\n";
+    *out << "Matrix \"" << title << "\"";
+    *out << "\n";
+    *out << "***********************************************************************\n";
 
     PrintRow("Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
     PrintSeparator();
@@ -324,7 +326,7 @@ int TestMatrix(const string & title, const string & reffile,
     // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
     if(nfailures > 0)
     {
-        cout << "... not continuing with matrix test since dimensions are wrong!\n";
+        *out << "... not continuing with matrix test since dimensions are wrong!\n";
         return nfailures;
     }
 
@@ -350,17 +352,17 @@ int TestMatrix(const string & title, const string & reffile,
     }
 
     if(!verbose && nfailures == 0)
-        cout << "           ... no failed tests!\n";
-    cout << "\n";
-    cout << "***********************************************************************\n";
-    cout << "Matrix \"" << title << "\" result: " << (nfailures ? "FAIL" : "PASS");
+        *out << "           ... no failed tests!\n";
+    *out << "\n";
+    *out << "***********************************************************************\n";
+    *out << "Matrix \"" << title << "\" result: " << (nfailures ? "FAIL" : "PASS");
 
     if(nfailures)
-        cout << " (" << nfailures << " failures)";
+        *out << " (" << nfailures << " failures)";
 
-    cout << "\n";
-    cout << "***********************************************************************\n";
-    cout << "\n\n\n\n\n";
+    *out << "\n";
+    *out << "***********************************************************************\n";
+    *out << "\n\n\n\n\n";
     return nfailures;
 }
 
@@ -602,12 +604,20 @@ int GetIArg(int & i, int argc, char ** argv)
 
 int main(int argc, char ** argv)
 {
+
     int ret = 0;
 
     #ifdef PANACHE_MPI
     MPI_Init(&argc, &argv);
     #endif
     panache::parallel::Init(&argc, &argv);
+
+
+    // if not master, dump output to a string stream
+    if(panache::parallel::IsMaster())
+        out = &cout;
+    else
+        out = new stringstream;
 
     try
     {
@@ -670,7 +680,7 @@ int main(int argc, char ** argv)
         #endif
 
         if(verbose)
-            panache::output::SetOutput(&cout);
+            panache::output::SetOutput(&*out);
 
         // Get the test description
         string desc_path(dir);
@@ -679,16 +689,16 @@ int main(int argc, char ** argv)
         fstream desc(desc_path.c_str());
         if(!desc.is_open())
         {
-            cout << "\nFatal Error: Cannot open " << desc_path << "\"\n\n";
+            *out << "\nFatal Error: Cannot open " << desc_path << "\"\n\n";
             return -1;
         }
 
         string desc_str;
         getline(desc, desc_str);
 
-        cout << "--------------------------------------\n";
-        cout << "Results for test: " << desc_str << "\n";
-        cout << "--------------------------------------\n";
+        *out << "--------------------------------------\n";
+        *out << "Results for test: " << desc_str << "\n";
+        *out << "--------------------------------------\n";
 
         string primary_basis_filename(dir);
         string aux_basis_filename(dir);
@@ -803,13 +813,13 @@ int main(int argc, char ** argv)
                              verbose);
 
 
-        cout << "\n\n";
-        cout << "*************************************************\n"
+        *out << "\n\n";
+        *out << "*************************************************\n"
              << "*************************************************\n"
              << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
         if(ret)
-            cout << "    ( " << ret << " failures)\n";
-        cout << "*************************************************\n"
+            *out << "    ( " << ret << " failures)\n";
+        *out << "*************************************************\n"
              << "*************************************************\n";
 
 
@@ -818,7 +828,7 @@ int main(int argc, char ** argv)
     }
     catch(const exception & ex)
     {
-        cout << "\n*****************"
+        *out << "\n*****************"
              << "\nCAUGHT EXCEPTION!"
              << "\n" << ex.what()
              << "\n*****************"
@@ -833,6 +843,8 @@ int main(int argc, char ** argv)
     MPI_Finalize();
     #endif
 
+    if(!panache::parallel::IsMaster())
+        delete out;
 
     return ret;
 }

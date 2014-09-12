@@ -219,8 +219,6 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
         (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];
     else
         (*tensor_)["abi"] = (*ctfj)["ij"]*base["abj"];
-
-    std::cout << "QSO GENERATED\n";
 }
 
 
