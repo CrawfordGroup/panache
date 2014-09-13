@@ -36,6 +36,7 @@ TwoBodyAOInt::TwoBodyAOInt(const SharedBasisSet original_bs1,
     tformbuf_ = 0;
     source_ = 0;
     natom_ = original_bs1_->molecule()->natom();  // This assumes the 4 bases come from the same molecule.
+    bmiss_ = 0;
 }
 
 TwoBodyAOInt::~TwoBodyAOInt()
@@ -63,9 +64,11 @@ double TwoBodyAOInt::compute_basisfunction(int bf1, int bf2, int bf3, int bf4)
     std::array<int, 4> theseshells({{sh1, sh2, sh3, sh4}});
     if(curshells != theseshells)
     {
+        #ifdef PANACHE_PROFILE
+        bmiss_++;
+        #endif
         // compute over the shells
         curnint = compute_shell(sh1, sh2, sh3, sh4);
-
         curshells = theseshells;
     }
 
@@ -512,6 +515,11 @@ void TwoBodyAOInt::pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk
 }
 
 
+unsigned long TwoBodyAOInt::BMiss(void) const
+{
+    return bmiss_;
+}
+
 /////////////////////
 // HELPER FUNCTIONS
 /////////////////////
@@ -617,7 +625,6 @@ static void transform2e_4(int am, const SphericalTransform& sti, double *s, doub
         }
     }
 }
-
 
 
 } // close namespace panache

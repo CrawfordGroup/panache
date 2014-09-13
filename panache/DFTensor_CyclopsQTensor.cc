@@ -6,6 +6,10 @@
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"
 #include "panache/BasisSet.h"
+    
+#ifdef PANACHE_PROFILE
+#include "panache/Output.h"
+#endif
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -225,6 +229,13 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
         DecomposeIndex_(idx[n], i, j, q);
         data[n] = eris[threadnum]->compute_basisfunction(q, 0, i, j);
     }
+
+    #ifdef PANACHE_PROFILE
+    unsigned long bmiss = 0;
+    for(const auto & it : eris)
+        bmiss += it->BMiss();
+    output::printf("\n\n***Cyclops GenQso : compute_basisfunction misses = %lu\n\n", bmiss);
+    #endif
 
     base.write(np, idx, data);
 

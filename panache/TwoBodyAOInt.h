@@ -47,6 +47,7 @@ protected:
     bool force_cartesian_;      //!< Whether to force integrals to be generated in the Cartesian (AO) basis;
     unsigned char buffer_offsets_[4];  //!< The order of the derivative integral buffers, after permuting shells
 
+    unsigned long bmiss_;       //!< Number of 'misses' in compute_basisfunction
 
 
     /*!
@@ -305,6 +306,9 @@ public:
      * \return The integral ( bf1 bf2 | bf3 bf4 )
      */
     virtual double compute_basisfunction(int bf1, int bf2, int bf3, int bf4);
+
+
+    unsigned long BMiss(void) const;
 };
 
 

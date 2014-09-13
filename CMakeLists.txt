@@ -139,6 +139,16 @@ if(PANACHE_TIMING)
 endif(PANACHE_TIMING)
 
 
+#####################################
+# Some simple profiling stuff
+#####################################
+set(PANACHE_PROFILE FALSE CACHE BOOL "Enable some profiling code")
+if(PANACHE_PROFILE)
+  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_PROFILE")
+  message(STATUS "Enabling some profiling")
+endif(PANACHE_PROFILE)
+
+
 
 ############################
 # Find lapack/blas/mkl, etc
