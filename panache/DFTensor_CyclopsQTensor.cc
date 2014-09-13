@@ -214,7 +214,8 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
     base.read_local(&np, &idx, &data);
 
     //! \todo better scheduling? We want sequential blocks so
-    //        that compute_basisfunction won't miss all the time
+    //        that compute_basisfunction won't miss all the time,
+    //        so dynamic is out
     #ifdef _OPENMP
     #pragma omp parallel for num_threads(nthreads)
     #endif
@@ -224,7 +225,7 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
         #ifdef _OPENMP
         threadnum = omp_get_thread_num(); 
         #endif
-        
+
         int i, j, q;
         DecomposeIndex_(idx[n], i, j, q);
         data[n] = eris[threadnum]->compute_basisfunction(q, 0, i, j);
