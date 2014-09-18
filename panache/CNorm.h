@@ -23,8 +23,8 @@ class CNorm
 {
 private:
     // we keep a vector so we can have a homogeneous container
-    array<vector<double>, MAX_CNORM_AM > cart_cnorm_;
-    array<vector<double>, MAX_CNORM_AM > sph_cnorm_;
+    array<vector<double>, MAX_CNORM_AM+1 > cart_cnorm_;
+    array<vector<double>, MAX_CNORM_AM+1 > sph_cnorm_;
 
     void CheckAM(int am, const char * func) const
     {
@@ -38,14 +38,12 @@ public:
     void SetCartCNorm(int am, vector<double> order)
     {
         CheckAM(am, __FUNCTION__);
-
         cart_cnorm_[am].assign(order.begin(), order.end());
     }
 
     void SetSphCNorm(int am, vector<double> order)
     {
         CheckAM(am, __FUNCTION__);
-
         sph_cnorm_[am].assign(order.begin(), order.end());
     }
 
@@ -53,21 +51,18 @@ public:
     vector<double> GetCartCNorm(int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return cart_cnorm_[am];
     }
 
     vector<double> GetSphCNorm(int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return sph_cnorm_[am];
     }
 
     vector<double> GetCNorm(bool ispure, int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return ispure ? sph_cnorm_[am] : cart_cnorm_[am];
     }
 
@@ -75,21 +70,18 @@ public:
     bool NeedsCartCNorm(int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return cart_cnorm_[am].size();
     }
 
     bool NeedsSphCNorm(int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return sph_cnorm_[am].size();
     }
 
     bool NeedsCNorm(bool ispure, int am) const
     {
         CheckAM(am, __FUNCTION__);
-
         return ispure ? sph_cnorm_[am].size() : cart_cnorm_[am].size();
     }
 };
