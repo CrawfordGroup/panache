@@ -40,6 +40,8 @@ def RunTest(mpi, nthreads, nproc, cyclops, disk, blocksize):
 
     cmd.append(args.m)
 
+    print("Command: {}".format(cmd))
+
     outpipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
     output = outpipe.stdout.read().splitlines()
 
@@ -81,13 +83,10 @@ for nproc in range(1,nproc+1):
     for nthread in range(1,args.t+1):
         nthreadres[nthread] = {}
         if nproc == 1:
-            resmem  = RunTest(args.M, nthread, nproc, False, False, 0)
-            resdisk = RunTest(args.M, nthread, nproc, False, True, 0)
-            nthreadres[nthread]['Mem'] = resmem
-            nthreadres[nthread]['Disk'] = resdisk
+            nthreadres[nthread]['Mem'] = RunTest(args.M, nthread, nproc, False, False, 0) 
+            nthreadres[nthread]['Disk'] = RunTest(args.M, nthread, nproc, False, True, 0)
         if args.c:
-            rescyc  = RunTest(args.M, nthread, nproc, True, False, 0)
-            nthreadres[nthread]['Cyclops'] = rescyc
+            nthreadres[nthread]['Cyclops'] = RunTest(args.M, nthread, nproc, True, False, 0)
 
     results[nproc] = nthreadres
 
@@ -96,9 +95,13 @@ for nproc in range(1,nproc+1):
 # Generation of Qso
 column1 = '{:<12} '
 datacolumn = ' {:>13} '
-for nproc in range(1,nproc+1):
-    headstr = column1.format('Type')
 
+# set up header column
+headstr = column1.format('Type')
+for nthread in range(1,args.t+1):
+    headstr += datacolumn.format('{}_Threads'.format(nthread))
+
+for nproc in range(1,nproc+1):
     if args.c:
         cycstr = column1.format('Cyclops_{}'.format(nproc))
 
@@ -107,8 +110,6 @@ for nproc in range(1,nproc+1):
         diskstr = column1.format('Disk'.format(nproc))
 
     for nthread in range(1,args.t+1):
-        headstr += datacolumn.format('{}_Threads'.format(nthread))
-
         if args.c:
             cycstr += datacolumn.format(results[nproc][nthread]['Cyclops']['QSO']['Gen'])
 
@@ -116,8 +117,11 @@ for nproc in range(1,nproc+1):
             memstr += datacolumn.format(results[nproc][nthread]['Mem']['QSO']['Gen'])
             diskstr += datacolumn.format(results[nproc][nthread]['Disk']['QSO']['Gen'])
 
-    print(headstr)
-    print(memstr)
-    print(diskstr)
+
+    if nproc == 1:
+        print(headstr)
+        print(memstr)
+        print(diskstr)
+
     if args.c:
         print(cycstr)

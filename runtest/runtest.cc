@@ -608,7 +608,10 @@ int main(int argc, char ** argv)
     int ret = 0;
 
     #ifdef PANACHE_MPI
-    MPI_Init(&argc, &argv);
+    //MPI_Init(&argc, &argv);
+    int threadprov;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &threadprov);
+    //std::cout << "Wanted " << MPI_THREAD_MULTIPLE << " got " << threadprov << "\n";
     #endif
     panache::parallel::Init(&argc, &argv);
 
