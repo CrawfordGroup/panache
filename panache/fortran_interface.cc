@@ -603,7 +603,7 @@ extern "C" {
     void panachef_getqbatch_(int_t  *df_handle, int_t * tensorflag,
                              double * outbuf, int_t * bufsize, int_t * qstart, int_t * nbatch)
     {
-        *nbatch = panache_getbatch(*df_handle, *tensorflag, outbuf, *bufsize, *qstart);
+        *nbatch = panache_getqbatch(*df_handle, *tensorflag, outbuf, *bufsize, *qstart);
     }
 
 
