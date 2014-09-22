@@ -16,6 +16,12 @@ argparser.add_argument("-M", help="Enable testing with MPI", action='store_true'
 argparser.add_argument("-n", help="Max number of processes to use (if using mpi)", type=int)
 args = argparser.parse_args()
 
+nproc = 1
+if (args.M and args.n) and args.c:
+    nproc = args.n
+
+
+
 
 def RunTest(mpi, nthreads, nproc, cyclops, disk, blocksize):
     print("NTHREADS: {} NPROC: {}".format(nthreads, nproc))
@@ -69,59 +75,62 @@ def RunTest(mpi, nthreads, nproc, cyclops, disk, blocksize):
 
 
 
+def PrintRes(tensor, timer):
+    column1 = '{:<12} '
+    datacolumn = ' {:>13} '
+    print("")
+    print("Tensor: {}  Timing: {}".format(tensor, timer))
+
+    headstr = column1.format('Type')
+    for nthread in range(1,args.t+1):
+        headstr += datacolumn.format('{}_Threads'.format(nthread))
+
+    for np in range(1,nproc+1):
+        if args.c:
+            cycstr = column1.format('Cyclops_{}'.format(np))
+    
+        if np == 1:
+            memstr = column1.format('Memory'.format(np))
+            diskstr = column1.format('Disk'.format(np))
+    
+        for nthread in range(1,args.t+1):
+            if args.c:
+                cycstr += datacolumn.format(results[np][nthread]['Cyclops'][tensor][timer])
+    
+            if np == 1:
+                memstr += datacolumn.format(results[np][nthread]['Mem'][tensor][timer])
+                diskstr += datacolumn.format(results[np][nthread]['Disk'][tensor][timer])
+    
+    
+        if np == 1:
+            print(headstr)
+            print(memstr)
+            print(diskstr)
+    
+        if args.c:
+            print(cycstr)
+
+
 
 
 results = {}
 
-nproc = 1
-if (args.M and args.n) and args.c:
-    nproc = args.n
 
 
-for nproc in range(1,nproc+1):
+for np in range(1,nproc+1):
     nthreadres = {}
     for nthread in range(1,args.t+1):
         nthreadres[nthread] = {}
-        if nproc == 1:
-            nthreadres[nthread]['Mem'] = RunTest(args.M, nthread, nproc, False, False, 0) 
-            nthreadres[nthread]['Disk'] = RunTest(args.M, nthread, nproc, False, True, 0)
+        if np == 1:
+            nthreadres[nthread]['Mem'] = RunTest(args.M, nthread, np, False, False, 0) 
+            nthreadres[nthread]['Disk'] = RunTest(args.M, nthread, np, False, True, 0)
         if args.c:
-            nthreadres[nthread]['Cyclops'] = RunTest(args.M, nthread, nproc, True, False, 0)
+            nthreadres[nthread]['Cyclops'] = RunTest(args.M, nthread, np, True, False, 0)
 
-    results[nproc] = nthreadres
+    results[np] = nthreadres
 
-
-
-# Generation of Qso
-column1 = '{:<12} '
-datacolumn = ' {:>13} '
-
-# set up header column
-headstr = column1.format('Type')
-for nthread in range(1,args.t+1):
-    headstr += datacolumn.format('{}_Threads'.format(nthread))
-
-for nproc in range(1,nproc+1):
-    if args.c:
-        cycstr = column1.format('Cyclops_{}'.format(nproc))
-
-    if nproc == 1:
-        memstr = column1.format('Memory'.format(nproc))
-        diskstr = column1.format('Disk'.format(nproc))
-
-    for nthread in range(1,args.t+1):
-        if args.c:
-            cycstr += datacolumn.format(results[nproc][nthread]['Cyclops']['QSO']['Gen'])
-
-        if nproc == 1:
-            memstr += datacolumn.format(results[nproc][nthread]['Mem']['QSO']['Gen'])
-            diskstr += datacolumn.format(results[nproc][nthread]['Disk']['QSO']['Gen'])
+PrintRes('QSO','Gen')
+PrintRes('QMO','Gen')
 
 
-    if nproc == 1:
-        print(headstr)
-        print(memstr)
-        print(diskstr)
 
-    if args.c:
-        print(cycstr)
