@@ -203,10 +203,13 @@ void DFTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
     }
 
 
+    const int nprimshell = primary->nshell();
+    const int nauxshell = auxiliary->nshell();
+
 #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
 #endif
-    for (int M = 0; M < primary->nshell(); M++)
+    for (int M = 0; M < nprimshell; M++)
     {
         int threadnum = 0;
 
@@ -224,7 +227,7 @@ void DFTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
             int nstart = primary->shell(N).function_index();
             //int nend = nstart + nn;
 
-            for (int P = 0; P < auxiliary->nshell(); P++)
+            for (int P = 0; P < nauxshell; P++)
             {
                 int np = auxiliary->shell(P).nfunction();
                 int pstart = auxiliary->shell(P).function_index();
