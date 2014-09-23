@@ -164,12 +164,12 @@ extern "C" {
      * Number of virtual orbitals is taken to be the remainder after the occupied.
      * Used by Qov, etc.
      *
-     * The number of frozen orbitals should be counted in \p nocc as well.
+     * Frozen orbitals should not be counted in \p nocc.
      *
      * \note You must set the C Matrix first before calling (see panache_setcmatrix())
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
-     * \param [in] nocc Number of occupied orbitals. This includes frozen orbitals
+     * \param [in] nocc Number of (non-frozen) occupied orbitals
      * \param [in] nfroz Number of frozen occupied orbitals
      */
      void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz = 0);

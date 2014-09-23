@@ -446,18 +446,19 @@ void DFTensor::SplitCMat(void)
     Cmo_occ_ = std::unique_ptr<double[]>(new double[nso_*nocc_]);
     Cmo_vir_ = std::unique_ptr<double[]>(new double[nso_*nvir_]);
 
-    std::fill(Cmo_occ_.get(), Cmo_occ_.get() + nso_*nocc_, 0.0);
-    std::fill(Cmo_vir_.get(), Cmo_vir_.get() + nso_*nvir_, 0.0);
+    //std::fill(Cmo_occ_.get(), Cmo_occ_.get() + nso_*nocc_, 0.0);
+    //std::fill(Cmo_vir_.get(), Cmo_vir_.get() + nso_*nvir_, 0.0);
 
     // note - Cmo_occ_ and Cmo_vir_ will always be in column major order!
     // Cmo_ is nso * nmo
     //! \todo BLAS call?
     for(int i = 0; i < nso_; i++)
     {
+        // remember to remove the frozen orbitals
         for(int j = 0; j < nocc_; j++)
-            Cmo_occ_[i*nocc_ + j] = Cmo_[i*nmo_+j];
+            Cmo_occ_[i*nocc_ + j] = Cmo_[i*nmo_+(j+nfroz_)];
         for(int j = 0; j < nvir_; j++)
-            Cmo_vir_[i*nvir_ + j] = Cmo_[i*nmo_+(j+nocc_)];
+            Cmo_vir_[i*nvir_ + j] = Cmo_[i*nmo_+(j+nocc_+nfroz_)];
     }
 }
 
@@ -471,7 +472,7 @@ void DFTensor::SetNOcc(int nocc, int nfroz)
 
     nocc_ = nocc;
     nfroz_ = nfroz;
-    nvir_ = nmo_ - nocc;
+    nvir_ = nmo_ - nocc - nfroz;
 
     SplitCMat();
 }

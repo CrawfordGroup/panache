@@ -93,11 +93,11 @@ public:
      * Number of virtual orbitals is taken to be the remainder after the occupied.
      * Used by Qov, etc.
      *
-     * The number of frozen orbitals should be counted in \p nocc as well.
+     * Frozen orbitals should not be counted in \p nocc.
      *
      * \note You must set the C Matrix first before calling (see SetCMatrix())
      *
-     * \param [in] nocc Number of occupied orbitals (including frozen)
+     * \param [in] nocc Number of (non-frozen) occupied orbitals
      * \param [in] nfroz Number of frozen orbitals
      */
     void SetNOcc(int nocc, int nfroz = 0);
@@ -437,7 +437,7 @@ private:
 
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
-    int nocc_; //!< Number of occupied orbitals
+    int nocc_; //!< Number of (non-frozen) occupied orbitals
     int nfroz_; //!< Number of frozen orbitals
     int nvir_; //!< Number of virtual orbitals
     int nsotri_; //!< Packed nso*nso symmetric matrix
