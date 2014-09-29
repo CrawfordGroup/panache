@@ -7,7 +7,7 @@
 #include <utility>
 #include <cmath>
 
-#include "panache/DFTensor.h"
+#include "panache/ThreeIndexTensor.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
@@ -425,7 +425,7 @@ int ReadNocc(const string & filename)
 
 
 
-int RunTestMatrix(DFTensor & dft, const string & title,
+int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
                   int batchsize, int tensorflag,
                   const string & reffile,
                   double sum_threshold, double checksum_threshold, double element_threshold,
@@ -477,7 +477,7 @@ int RunTestMatrix(DFTensor & dft, const string & title,
             ++qi;
         }
 */
-        DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+        ThreeIndexTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
         while(iqtq)
         {
             int curq = iqtq.q();
@@ -544,7 +544,7 @@ int RunTestMatrix(DFTensor & dft, const string & title,
             }
         }
 */
-        DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
+        ThreeIndexTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
         while(iqtij)
         {
             int i = iqtij.i();
@@ -745,7 +745,7 @@ int main(int argc, char ** argv)
         int nocc = ReadNocc(nocc_filename);
         int nmo = nso;
 
-        DFTensor dft(primary, aux, "/tmp", 0);
+        ThreeIndexTensor dft(primary, aux, "/tmp", 0);
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
         dft.SetNOcc(nocc);
 

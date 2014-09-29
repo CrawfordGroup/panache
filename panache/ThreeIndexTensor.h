@@ -32,12 +32,12 @@ class Orderings;
 class CNorm;
 }
 
-class DFTensor
+class ThreeIndexTensor
 {
 public:
-    DFTensor(const DFTensor & other) = delete;
-    DFTensor(const DFTensor && other) = delete;
-    DFTensor & operator=(const DFTensor & other) = delete;
+    ThreeIndexTensor(const ThreeIndexTensor & other) = delete;
+    ThreeIndexTensor(const ThreeIndexTensor && other) = delete;
+    ThreeIndexTensor & operator=(const ThreeIndexTensor & other) = delete;
 
 
 
@@ -52,7 +52,7 @@ public:
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 
-    DFTensor(SharedBasisSet primary,
+    ThreeIndexTensor(SharedBasisSet primary,
              SharedBasisSet auxiliary,
              const std::string & directory,
              int nthreads);
@@ -63,7 +63,7 @@ public:
      *
      * Frees memory and stuff
      */
-    ~DFTensor();
+    ~ThreeIndexTensor();
 
 
 

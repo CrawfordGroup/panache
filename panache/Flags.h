@@ -1,5 +1,5 @@
 /*! \file
- *  \brief Flags for some parameters passed to DFTensor
+ *  \brief Flags for some parameters passed to ThreeIndexTensor
  *  \author Benjamin Pritchard (ben@bennyp.org)
  */
 

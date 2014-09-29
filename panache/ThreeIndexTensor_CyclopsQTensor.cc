@@ -1,7 +1,7 @@
 #include <fstream>
 
 #include "panache/Exception.h"
-#include "panache/DFTensor.h"
+#include "panache/ThreeIndexTensor.h"
 #include "panache/Parallel.h"
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"
@@ -22,12 +22,12 @@ namespace panache
 //////////////////////////////
 // CyclopsQTensor
 //////////////////////////////
-void DFTensor::CyclopsQTensor::Reset_(void)
+void ThreeIndexTensor::CyclopsQTensor::Reset_(void)
 {
     // nothing needed
 }
 
-void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
+void ThreeIndexTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 {
     size_t nelements = nij*naux();
 
@@ -59,7 +59,7 @@ void DFTensor::CyclopsQTensor::Read_(double * data, int nij, int ijstart)
     tensor_->read(nelements, indices.data(), data);
 }
 
-void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
+void ThreeIndexTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
     size_t nelements = nq*ndim12();
 
@@ -96,12 +96,12 @@ void DFTensor::CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
     tensor_->read(nelements, indices.data(), data);
 }
 
-void DFTensor::CyclopsQTensor::Clear_(void)
+void ThreeIndexTensor::CyclopsQTensor::Clear_(void)
 {
     tensor_.release();
 }
 
-void DFTensor::CyclopsQTensor::Init_(void)
+void ThreeIndexTensor::CyclopsQTensor::Init_(void)
 {
     //! \todo Symmetry not implemented
     int dimsIJ[3] = {ndim1(), ndim2(), naux()};
@@ -129,14 +129,14 @@ void DFTensor::CyclopsQTensor::Init_(void)
 }
 
 
-DFTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
+ThreeIndexTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
             : StoredQTensor(naux, ndim1, ndim2, storeflags), name_(name)
 {
 
 }
 
 
-void DFTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, int & q)
+void ThreeIndexTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, int & q)
 {
     if(byq())
     {
@@ -155,7 +155,7 @@ void DFTensor::CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, 
 }
 
 std::unique_ptr<CTF_Matrix>
-DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
+ThreeIndexTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
 {
     std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, parallel::CTFWorld(), name));
 
@@ -184,7 +184,7 @@ DFTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int 
 }
 
 
-void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
                                        const SharedBasisSet primary,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
@@ -257,7 +257,7 @@ void DFTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fi
 }
 
 
-void DFTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left,
+void ThreeIndexTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left,
                                           const std::vector<TransformMat> & right,
                                           std::vector<StoredQTensor *> results,
                                           int nthreads)

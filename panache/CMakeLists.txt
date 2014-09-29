@@ -4,8 +4,8 @@ add_library(panache
             BasisSet.cc
             BasisSetParser.cc
             CartesianIter.cc
-            DFTensor.cc
-            DFTensor_StoredQTensor.cc
+            ThreeIndexTensor.cc
+            ThreeIndexTensor_StoredQTensor.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc

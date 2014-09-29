@@ -1,7 +1,7 @@
 #include <fstream>
 
 #include "panache/Exception.h"
-#include "panache/DFTensor.h"
+#include "panache/ThreeIndexTensor.h"
 #include "panache/Lapack.h"
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
@@ -20,42 +20,42 @@ namespace panache
 /////////////////////////////
 // STOREDQTENSOR BASE CLASS
 /////////////////////////////
-int DFTensor::StoredQTensor::naux(void) const
+int ThreeIndexTensor::StoredQTensor::naux(void) const
 {
     return naux_;
 }
 
-int DFTensor::StoredQTensor::ndim1(void) const
+int ThreeIndexTensor::StoredQTensor::ndim1(void) const
 {
     return ndim1_;
 }
 
-int DFTensor::StoredQTensor::ndim2(void) const
+int ThreeIndexTensor::StoredQTensor::ndim2(void) const
 {
     return ndim2_;
 }
 
-int DFTensor::StoredQTensor::ndim12(void) const
+int ThreeIndexTensor::StoredQTensor::ndim12(void) const
 {
     return ndim12_;
 }
 
-int DFTensor::StoredQTensor::storesize(void) const
+int ThreeIndexTensor::StoredQTensor::storesize(void) const
 {
     return ndim12_*naux_;
 }
 
-int DFTensor::StoredQTensor::packed(void) const
+int ThreeIndexTensor::StoredQTensor::packed(void) const
 {
     return (storeflags_ & QSTORAGE_PACKED);
 }
 
-int DFTensor::StoredQTensor::byq(void) const
+int ThreeIndexTensor::StoredQTensor::byq(void) const
 {
     return (storeflags_ & QSTORAGE_BYQ);
 }
 
-int DFTensor::StoredQTensor::calcindex(int i, int j) const
+int ThreeIndexTensor::StoredQTensor::calcindex(int i, int j) const
 {
     if(!packed())
         return (i*ndim2_+j);
@@ -65,7 +65,7 @@ int DFTensor::StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-DFTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, int storeflags)
+ThreeIndexTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, int storeflags)
 {
     naux_ = naux;
     ndim1_ = ndim1;
@@ -78,16 +78,16 @@ DFTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, int store
     ndim12_ = (packed() ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
 }
 
-DFTensor::StoredQTensor::~StoredQTensor()
+ThreeIndexTensor::StoredQTensor::~StoredQTensor()
 {
 }
 
-int DFTensor::StoredQTensor::StoreFlags(void) const
+int ThreeIndexTensor::StoredQTensor::StoreFlags(void) const
 {
     return storeflags_;
 }
 
-int DFTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
+int ThreeIndexTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
 {
     if(ijstart + nij >= ndim12())
         nij = ndim12() - ijstart;
@@ -96,7 +96,7 @@ int DFTensor::StoredQTensor::Read(double * data, int nij, int ijstart)
     return nij;
 }
 
-int DFTensor::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
+int ThreeIndexTensor::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
 {
     if(qstart + nq >= naux_)
         nq = naux_-qstart;
@@ -105,38 +105,38 @@ int DFTensor::StoredQTensor::ReadByQ(double * data, int nq, int qstart)
     return nq;
 }
 
-void DFTensor::StoredQTensor::Reset(void)
+void ThreeIndexTensor::StoredQTensor::Reset(void)
 {
     Reset_();
 }
 
-void DFTensor::StoredQTensor::Clear(void)
+void ThreeIndexTensor::StoredQTensor::Clear(void)
 {
     Clear_();
 }
 
-void DFTensor::StoredQTensor::Init(void)
+void ThreeIndexTensor::StoredQTensor::Init(void)
 {
     Init_();
 }
 
 
-CumulativeTime & DFTensor::StoredQTensor::GenTimer(void)
+CumulativeTime & ThreeIndexTensor::StoredQTensor::GenTimer(void)
 {
     return gen_timer_;
 }
 
-CumulativeTime & DFTensor::StoredQTensor::GetQBatchTimer(void)
+CumulativeTime & ThreeIndexTensor::StoredQTensor::GetQBatchTimer(void)
 {
     return getqbatch_timer_;
 }
 
-CumulativeTime & DFTensor::StoredQTensor::GetBatchTimer(void)
+CumulativeTime & ThreeIndexTensor::StoredQTensor::GetBatchTimer(void)
 {
     return getijbatch_timer_;
 }
 
-void DFTensor::StoredQTensor::GenQso(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::StoredQTensor::GenQso(const std::shared_ptr<FittingMetric> & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
@@ -145,7 +145,7 @@ void DFTensor::StoredQTensor::GenQso(const std::shared_ptr<FittingMetric> & fit,
 }
 
 
-void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
+void ThreeIndexTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
                                         const std::vector<TransformMat> & right,
                                         std::vector<StoredQTensor *> results,
                                         int nthreads)
@@ -161,14 +161,14 @@ void DFTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
 //////////////////////////////
 
 
-DFTensor::LocalQTensor::LocalQTensor(int naux, int ndim1, int ndim2, int storeflags)
-            : DFTensor::StoredQTensor(naux, ndim1, ndim2, storeflags)
+ThreeIndexTensor::LocalQTensor::LocalQTensor(int naux, int ndim1, int ndim2, int storeflags)
+            : ThreeIndexTensor::StoredQTensor(naux, ndim1, ndim2, storeflags)
 {
 }
 
 
 
-void DFTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
@@ -285,7 +285,7 @@ void DFTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
 
 }
 
-void DFTensor::LocalQTensor::Transform_(const std::vector<TransformMat> & left,
+void ThreeIndexTensor::LocalQTensor::Transform_(const std::vector<TransformMat> & left,
                                         const std::vector<TransformMat> & right,
                                         std::vector<StoredQTensor *> results,
                                         int nthreads)
@@ -408,7 +408,7 @@ void DFTensor::LocalQTensor::Transform_(const std::vector<TransformMat> & left,
 //////////////////////////////
 // DiskQTensor
 //////////////////////////////
-void DFTensor::DiskQTensor::OpenFile_(void)
+void ThreeIndexTensor::DiskQTensor::OpenFile_(void)
 {
     if(file_ && file_->is_open())
         return;
@@ -425,7 +425,7 @@ void DFTensor::DiskQTensor::OpenFile_(void)
     file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
 }
 
-void DFTensor::DiskQTensor::CloseFile_(void)
+void ThreeIndexTensor::DiskQTensor::CloseFile_(void)
 {
     if(file_ && file_->is_open())
     {
@@ -434,13 +434,13 @@ void DFTensor::DiskQTensor::CloseFile_(void)
     }
 }
 
-void DFTensor::DiskQTensor::Reset_(void)
+void ThreeIndexTensor::DiskQTensor::Reset_(void)
 {
     file_->seekg(0);
     file_->seekp(0);
 }
 
-void DFTensor::DiskQTensor::Write_(double * data, int nij, int ijstart)
+void ThreeIndexTensor::DiskQTensor::Write_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -464,7 +464,7 @@ void DFTensor::DiskQTensor::Write_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
+void ThreeIndexTensor::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -489,7 +489,7 @@ void DFTensor::DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::DiskQTensor::Read_(double * data, int nij, int ijstart)
+void ThreeIndexTensor::DiskQTensor::Read_(double * data, int nij, int ijstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -513,7 +513,7 @@ void DFTensor::DiskQTensor::Read_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
+void ThreeIndexTensor::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
     #ifdef _OPENMP
     #pragma omp critical
@@ -537,19 +537,19 @@ void DFTensor::DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::DiskQTensor::Clear_(void)
+void ThreeIndexTensor::DiskQTensor::Clear_(void)
 {
     //! \todo Erase file
     CloseFile_();
 }
 
-void DFTensor::DiskQTensor::Init_(void)
+void ThreeIndexTensor::DiskQTensor::Init_(void)
 {
     OpenFile_();
 }
 
 
-DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename)
+ThreeIndexTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename)
             : LocalQTensor(naux, ndim1, ndim2, storeflags)
 {
     filename_ = filename;
@@ -560,13 +560,13 @@ DFTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflag
 //////////////////////////////
 // MemoryQTensor
 //////////////////////////////
-void DFTensor::MemoryQTensor::Reset_(void)
+void ThreeIndexTensor::MemoryQTensor::Reset_(void)
 {
     // nothing needed
 }
 
 
-void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
+void ThreeIndexTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
 {
     if(byq())
     {
@@ -582,7 +582,7 @@ void DFTensor::MemoryQTensor::Write_(double * data, int nij, int ijstart)
 }
 
 
-void DFTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
+void ThreeIndexTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
 {
     if(byq())
     {
@@ -600,7 +600,7 @@ void DFTensor::MemoryQTensor::WriteByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
+void ThreeIndexTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
 {
     // index ij is given by calling function and takes into account packing
     if(byq())
@@ -616,7 +616,7 @@ void DFTensor::MemoryQTensor::Read_(double * data, int nij, int ijstart)
     }
 }
 
-void DFTensor::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
+void ThreeIndexTensor::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
 {
     if(byq())
     {
@@ -633,18 +633,18 @@ void DFTensor::MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DFTensor::MemoryQTensor::Clear_(void)
+void ThreeIndexTensor::MemoryQTensor::Clear_(void)
 {
     data_.reset();
 }
 
-void DFTensor::MemoryQTensor::Init_(void)
+void ThreeIndexTensor::MemoryQTensor::Init_(void)
 {
     if(!data_)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags)
+ThreeIndexTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags)
     : LocalQTensor(naux, ndim1, ndim2, storeflags)
 {
 }
@@ -652,7 +652,7 @@ DFTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int store
 
 
 
-std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
+std::unique_ptr<ThreeIndexTensor::StoredQTensor> ThreeIndexTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                                         int storeflags, const std::string & name)
 {
     if(name == "")
@@ -663,16 +663,16 @@ std::unique_ptr<DFTensor::StoredQTensor> DFTensor::StoredQTensorFactory(int naux
         std::string filename(directory_);
         filename.append("/");
         filename.append(name);
-        return std::unique_ptr<DFTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
     }
 
     #ifdef PANACHE_CYCLOPS
     else if(storeflags & QSTORAGE_CYCLOPS)
-        return std::unique_ptr<DFTensor::StoredQTensor>(new CyclopsQTensor(naux, ndim1, ndim2, storeflags, name));
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new CyclopsQTensor(naux, ndim1, ndim2, storeflags, name));
     #endif
 
     else
-        return std::unique_ptr<DFTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
 }
 
 

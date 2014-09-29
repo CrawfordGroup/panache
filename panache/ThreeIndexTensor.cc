@@ -7,7 +7,7 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include "panache/DFTensor.h"
+#include "panache/ThreeIndexTensor.h"
 #include "panache/FittingMetric.h"
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
@@ -28,7 +28,7 @@
 namespace panache
 {
 
-DFTensor::DFTensor(SharedBasisSet primary,
+ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
                      SharedBasisSet auxiliary,
                      const std::string & directory,
                      int nthreads)
@@ -66,7 +66,7 @@ DFTensor::DFTensor(SharedBasisSet primary,
 }
 
 
-int DFTensor::SetNThread(int nthread)
+int ThreeIndexTensor::SetNThread(int nthread)
 {
 #ifdef _OPENMP
     if(nthread <= 0)
@@ -82,11 +82,11 @@ int DFTensor::SetNThread(int nthread)
 
 
 
-DFTensor::~DFTensor()
+ThreeIndexTensor::~ThreeIndexTensor()
 {
 }
 
-void DFTensor::GenQso(int storeflags)
+void ThreeIndexTensor::GenQso(int storeflags)
 {
     if(qso_)
         return; // already created!
@@ -96,7 +96,7 @@ void DFTensor::GenQso(int storeflags)
     qso_->GenQso(fittingmetric_, primary_, auxiliary_, nthreads_);
 }
 
-void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
+void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
                            int order)
 {
     nmo_ = nmo;
@@ -138,7 +138,7 @@ void DFTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
 }
 
 
-void DFTensor::GenQTensors(int qflags, int storeflags)
+void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 {
 
 #ifdef PANACHE_TIMING
@@ -212,7 +212,7 @@ void DFTensor::GenQTensors(int qflags, int storeflags)
 }
 
 
-int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
+int ThreeIndexTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
@@ -237,7 +237,7 @@ int DFTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
 }
 
 
-int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
+int ThreeIndexTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
                              StoredQTensor * qt)
 {
 #ifdef PANACHE_TIMING
@@ -262,7 +262,7 @@ int DFTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
 }
 
 
-std::unique_ptr<DFTensor::StoredQTensor> & DFTensor::ResolveTensorFlag(int tensorflag)
+std::unique_ptr<ThreeIndexTensor::StoredQTensor> & ThreeIndexTensor::ResolveTensorFlag(int tensorflag)
 {
     switch(tensorflag)
     {
@@ -282,18 +282,18 @@ std::unique_ptr<DFTensor::StoredQTensor> & DFTensor::ResolveTensorFlag(int tenso
 }
 
 
-int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, int qstart)
+int ThreeIndexTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, int qstart)
 {
     return GetQBatch_Base(outbuf, bufsize, qstart, ResolveTensorFlag(tensorflag).get());
 }
 
-int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart)
+int ThreeIndexTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart)
 {
     return GetBatch_Base(outbuf, bufsize, ijstart, ResolveTensorFlag(tensorflag).get());
 }
 
 
-int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart)
+int ThreeIndexTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart)
 {
     if(qstart)
         return GetQBatch_Base(outbuf, bufsize, qstart.Index(), ResolveTensorFlag(tensorflag).get());
@@ -301,7 +301,7 @@ int DFTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator 
         return 0;
 }
 
-int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart)
+int ThreeIndexTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart)
 {
     if(ijstart)
         return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag).get());
@@ -310,18 +310,18 @@ int DFTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator 
 }
 
 
-int DFTensor::QBatchSize(int tensorflag)
+int ThreeIndexTensor::QBatchSize(int tensorflag)
 {
     return ResolveTensorFlag(tensorflag)->ndim12();
 }
 
 
-int DFTensor::BatchSize(int tensorflag)
+int ThreeIndexTensor::BatchSize(int tensorflag)
 {
     return naux_;
 }
 
-int DFTensor::TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2)
+int ThreeIndexTensor::TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2)
 {
     auto & qt = ResolveTensorFlag(tensorflag);
     naux = qt->naux();
@@ -331,7 +331,7 @@ int DFTensor::TensorDimensions(int tensorflag, int & naux, int & ndim1, int & nd
 }
 
 
-bool DFTensor::IsPacked(int tensorflag)
+bool ThreeIndexTensor::IsPacked(int tensorflag)
 {
     return ResolveTensorFlag(tensorflag)->packed();
 }
@@ -387,7 +387,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void DFTensor::ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm)
+void ThreeIndexTensor::ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm)
 {
     using namespace reorder;
     using std::placeholders::_1;
@@ -441,7 +441,7 @@ void DFTensor::ReorderCMat(const reorder::Orderings & order, const reorder::CNor
     }
 }
 
-void DFTensor::SplitCMat(void)
+void ThreeIndexTensor::SplitCMat(void)
 {
     Cmo_occ_ = std::unique_ptr<double[]>(new double[nso_*nocc_]);
     Cmo_vir_ = std::unique_ptr<double[]>(new double[nso_*nvir_]);
@@ -462,7 +462,7 @@ void DFTensor::SplitCMat(void)
     }
 }
 
-void DFTensor::SetNOcc(int nocc, int nfroz)
+void ThreeIndexTensor::SetNOcc(int nocc, int nfroz)
 {
     if(nocc <= 0)
         throw RuntimeError("Error - nocc <= 0!");
@@ -478,7 +478,7 @@ void DFTensor::SetNOcc(int nocc, int nfroz)
 }
 
 
-void DFTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
+void ThreeIndexTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
 {
     if(q)
     {
@@ -499,7 +499,7 @@ void DFTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor
         output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
 }
 
-void DFTensor::PrintTimings(void) const
+void ThreeIndexTensor::PrintTimings(void) const
 {
     #ifdef PANACHE_TIMING
 
@@ -528,13 +528,13 @@ void DFTensor::PrintTimings(void) const
 }
 
 
-DFTensor::IteratedQTensorByQ DFTensor::IterateByQ(int tensorflag, double * buf, int bufsize)
+ThreeIndexTensor::IteratedQTensorByQ ThreeIndexTensor::IterateByQ(int tensorflag, double * buf, int bufsize)
 {
     using std::placeholders::_1;
 
     // ugly
     IteratedQTensorByQ::GetBatchFunc gbf(std::bind(
-                                   static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetQBatch),
+                                   static_cast<int(ThreeIndexTensor::*)(int, double *, int, int)>(&ThreeIndexTensor::GetQBatch),
                                    this, tensorflag, buf, bufsize, _1));
 
     int ndim1, ndim2, naux;
@@ -549,13 +549,13 @@ DFTensor::IteratedQTensorByQ DFTensor::IterateByQ(int tensorflag, double * buf, 
 }
 
 
-DFTensor::IteratedQTensorByIJ DFTensor::IterateByIJ(int tensorflag, double * buf, int bufsize)
+ThreeIndexTensor::IteratedQTensorByIJ ThreeIndexTensor::IterateByIJ(int tensorflag, double * buf, int bufsize)
 {
     using std::placeholders::_1;
 
     // ugly
     IteratedQTensorByIJ::GetBatchFunc gbf(std::bind(
-                                   static_cast<int(DFTensor::*)(int, double *, int, int)>(&DFTensor::GetBatch),
+                                   static_cast<int(ThreeIndexTensor::*)(int, double *, int, int)>(&ThreeIndexTensor::GetBatch),
                                    this, tensorflag, buf, bufsize, _1));
 
     int ndim1, ndim2, naux;
