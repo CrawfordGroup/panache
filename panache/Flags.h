@@ -10,11 +10,12 @@
 
     /*! \name Flags specifing which tensors to calculate */
     ///@{
-    #define QGEN_QSO 1 //!< Generate Qso
-    #define QGEN_QMO 2 //!< Generate Qmo
-    #define QGEN_QOO 4 //!< Generate Qoo
-    #define QGEN_QOV 8 //!< Generate Qov
-    #define QGEN_QVV 16 //!< Generate Qvv
+    #define QGEN_DFQSO 1 //!< Generate DF-based so tensor
+    #define QGEN_CHQSO 2 //!< Generate Cholesky-based so tensor
+    #define QGEN_QMO   4 //!< Generate Qmo
+    #define QGEN_QOO   8 //!< Generate Qoo
+    #define QGEN_QOV   16 //!< Generate Qov
+    #define QGEN_QVV   32 //!< Generate Qvv
     ///@}
 
     /*! \name Flags specifing how tensors should be stored */

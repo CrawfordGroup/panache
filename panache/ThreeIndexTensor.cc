@@ -86,14 +86,20 @@ ThreeIndexTensor::~ThreeIndexTensor()
 {
 }
 
-void ThreeIndexTensor::GenQso(int storeflags)
+void ThreeIndexTensor::GenQso(int qflags, int storeflags)
 {
     if(qso_)
         return; // already created!
 
     qso_ = StoredQTensorFactory(naux_, nso_, nso_, storeflags, "qso");
     qso_->Init();
-    qso_->GenQso(fittingmetric_, primary_, auxiliary_, nthreads_);
+
+    if(qflags & QGEN_DFQSO) 
+        qso_->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
+//    else if(qflags & QGEN_CHQSO)
+//        qso_->GenCHQso(fittingmetric_, primary_, auxiliary_, nthreads_);
+    else
+        throw RuntimeError("Error - unknown QSO type!");
 }
 
 void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
@@ -146,12 +152,16 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     tim.Start();
 #endif
 
+    // Make sure one of QGEN_CHQSO or QGEN_CHQSO is specified, but not both
+    if(((qflags & QGEN_DFQSO) && (qflags & QGEN_CHQSO))
+        || !((qflags & QGEN_DFQSO) || (qflags & QGEN_CHQSO)))
+        throw RuntimeError("Set one and only one of QGEN_DFQSO or QGEN_CHQSO!");
+
     // Remove QSTORAGE_PACKED if specified
     storeflags &= ~(QSTORAGE_PACKED);
 
-
     // Always gen qso as packed and by q
-    GenQso(storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ);
+    GenQso(qflags, storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ);
 
 
     if((qflags & (15)) == 0)
@@ -266,7 +276,9 @@ std::unique_ptr<ThreeIndexTensor::StoredQTensor> & ThreeIndexTensor::ResolveTens
 {
     switch(tensorflag)
     {
-        case QGEN_QSO:
+        case QGEN_DFQSO:
+            return qso_;
+        case QGEN_CHQSO:  // Stored in the same place as DFQSO
             return qso_;
         case QGEN_QMO:
             return qmo_;

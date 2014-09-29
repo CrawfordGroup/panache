@@ -184,7 +184,7 @@ ThreeIndexTensor::CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int nc
 }
 
 
-void ThreeIndexTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                        const SharedBasisSet primary,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
@@ -235,7 +235,7 @@ void ThreeIndexTensor::CyclopsQTensor::GenQso_(const std::shared_ptr<FittingMetr
     unsigned long bmiss = 0;
     for(const auto & it : eris)
         bmiss += it->BMiss();
-    output::printf("\n\n***Cyclops GenQso : compute_basisfunction misses = %lu\n\n", bmiss);
+    output::printf("\n\n***Cyclops GenDFQso : compute_basisfunction misses = %lu\n\n", bmiss);
     #endif
 
     base.write(np, idx, data);

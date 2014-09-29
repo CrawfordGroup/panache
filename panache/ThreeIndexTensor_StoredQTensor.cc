@@ -136,12 +136,12 @@ CumulativeTime & ThreeIndexTensor::StoredQTensor::GetBatchTimer(void)
     return getijbatch_timer_;
 }
 
-void ThreeIndexTensor::StoredQTensor::GenQso(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetric> & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
 {
-    GenQso_(fit, primary, auxiliary, nthreads);
+    GenDFQso_(fit, primary, auxiliary, nthreads);
 }
 
 
@@ -168,7 +168,7 @@ ThreeIndexTensor::LocalQTensor::LocalQTensor(int naux, int ndim1, int ndim2, int
 
 
 
-void ThreeIndexTensor::LocalQTensor::GenQso_(const std::shared_ptr<FittingMetric> & fit,
+void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)

@@ -749,7 +749,7 @@ int main(int argc, char ** argv)
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
         dft.SetNOcc(nocc);
 
-        int qflags = (QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+        int qflags = (QGEN_DFQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
 
         int qstore = 0;
         if(byq)
@@ -774,7 +774,7 @@ int main(int argc, char ** argv)
         // Test Qso
         ///////////
         ret += RunTestMatrix(dft, "QSO",
-                             batchsize, QGEN_QSO,
+                             batchsize, QGEN_DFQSO,
                              qso_filename, 
                              QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                              verbose);

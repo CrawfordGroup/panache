@@ -481,10 +481,10 @@ private:
         void Clear(void);
         void Init(void);
 
-        void GenQso(const std::shared_ptr<FittingMetric> & fit,
-                    const SharedBasisSet primary,
-                    const SharedBasisSet auxiliary,
-                    int nthreads);
+        void GenDFQso(const std::shared_ptr<FittingMetric> & fit,
+                      const SharedBasisSet primary,
+                      const SharedBasisSet auxiliary,
+                      int nthreads);
 
         typedef std::pair<double *, int> TransformMat;
 
@@ -512,10 +512,10 @@ private:
         virtual void Read_(double * data, int nij, int ijstart) = 0;
         virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
 
-        virtual void GenQso_(const std::shared_ptr<FittingMetric> & fit,
-                             const SharedBasisSet primary,
-                             const SharedBasisSet auxiliary,
-                             int nthreads) = 0;
+        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+                               const SharedBasisSet primary,
+                               const SharedBasisSet auxiliary,
+                               int nthreads) = 0;
 
          
         virtual void Transform_(const std::vector<TransformMat> & left,
@@ -551,7 +551,7 @@ private:
         virtual void Write_(double * data, int nij, int ijstart) = 0;
         virtual void WriteByQ_(double * data, int nij, int ijstart) = 0;
 
-        virtual void GenQso_(const std::shared_ptr<FittingMetric> & fit,
+        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                              const SharedBasisSet primary,
                              const SharedBasisSet auxiliary,
                              int nthreads);
@@ -623,10 +623,10 @@ private:
         virtual void Clear_(void);
         virtual void Init_(void);
 
-        virtual void GenQso_(const std::shared_ptr<FittingMetric> & fit,
-                             const SharedBasisSet primary,
-                             const SharedBasisSet auxiliary,
-                             int nthreads);
+        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+                               const SharedBasisSet primary,
+                               const SharedBasisSet auxiliary,
+                               int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
                                 const std::vector<TransformMat> & right,
@@ -675,9 +675,10 @@ private:
      * See \ref theory_page for what Qso actually is, and memory_sec for more information
      * about memory.
      *
+     * \param [in] qflags How to generate QSO (DF, Cholesky) (see Flags.h)
      * \param [in] storeflags How to store the matrix (see Flags.h)
      */
-    void GenQso(int storeflags);
+    void GenQso(int qflags, int storeflags);
 
 
     /*!
