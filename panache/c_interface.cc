@@ -8,7 +8,8 @@
 
 #include "panache/c_interface.h"
 #include "panache/c_convert.h"
-#include "panache/ThreeIndexTensor.h"
+#include "panache/DFTensor.h"
+#include "panache/CHTensor.h"
 #include "panache/Output.h"
 #include "panache/Exception.h"
 #include "panache/BasisSetParser.h"
@@ -18,6 +19,8 @@ using panache::BasisSet;
 using panache::Gaussian94BasisSetParser;
 using panache::SharedBasisSet;
 using panache::ThreeIndexTensor;
+using panache::DFTensor;
+using panache::CHTensor;
 using panache::Molecule;
 using panache::SharedMolecule;
 
@@ -62,7 +65,7 @@ extern "C" {
         auto auxBasis = BasisSetFromArrays(molecule, ncenters,
                         aux_nshellspercenter, aux_shells, normalized);
 
-        ThreeIndexTensor * dft = new ThreeIndexTensor(primaryBasis, auxBasis, directory, nthreads);
+        ThreeIndexTensor * dft = new DFTensor(primaryBasis, auxBasis, directory, nthreads);
         xtensors_[tensor_index_] = dft;
 
         return tensor_index_++;
@@ -87,7 +90,7 @@ extern "C" {
         std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
         SharedBasisSet auxBasis(new BasisSet(parser, molecule, auxfilename));
 
-        ThreeIndexTensor * dft = new ThreeIndexTensor(primaryBasis, auxBasis, directory, nthreads);
+        ThreeIndexTensor * dft = new DFTensor(primaryBasis, auxBasis, directory, nthreads);
         xtensors_[tensor_index_] = dft;
 
         return tensor_index_++;
@@ -154,8 +157,6 @@ extern "C" {
         CheckHandle(df_handle, __FUNCTION__);
         return xtensors_[df_handle]->GenQTensors(qflags, storeflags); 
     }
-
-
 
     void panache_output(FILE * out)
     {

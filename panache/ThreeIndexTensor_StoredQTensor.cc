@@ -144,11 +144,11 @@ void ThreeIndexTensor::StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetr
     GenDFQso_(fit, primary, auxiliary, nthreads);
 }
 
-void ThreeIndexTensor::StoredQTensor::GenCHQso(const std::shared_ptr<FittingMetric> & fit,
-                                     const SharedBasisSet primary,
+void ThreeIndexTensor::StoredQTensor::GenCHQso(const SharedBasisSet primary,
+                                     double delta,
                                      int nthreads)
 {
-    GenCHQso_(fit, primary, nthreads);
+    GenCHQso_(primary, delta, nthreads);
 }
 
 
@@ -293,8 +293,8 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
 }
 
 
-void ThreeIndexTensor::LocalQTensor::GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
-                                     const SharedBasisSet primary,
+void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
+                                     double delta,
                                      int nthreads)
 {
     throw RuntimeError("NYI");
@@ -565,7 +565,8 @@ void ThreeIndexTensor::DiskQTensor::Init_(void)
 }
 
 
-ThreeIndexTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename)
+ThreeIndexTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags,
+                                           const std::string & filename)
             : LocalQTensor(naux, ndim1, ndim2, storeflags)
 {
     filename_ = filename;
@@ -668,8 +669,9 @@ ThreeIndexTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, i
 
 
 
-std::unique_ptr<ThreeIndexTensor::StoredQTensor> ThreeIndexTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
-                                                                        int storeflags, const std::string & name)
+std::unique_ptr<ThreeIndexTensor::StoredQTensor> 
+ThreeIndexTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
+                                       int storeflags, const std::string & name) const
 {
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");

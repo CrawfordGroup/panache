@@ -1,5 +1,5 @@
 /*! \file
- * \brief Density fitting tensor generation and manipulation (source)
+ * \brief Generic three-index tensor generation and manipulation (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -29,39 +29,26 @@ namespace panache
 {
 
 ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
-                     SharedBasisSet auxiliary,
                      const std::string & directory,
+                     int qtype,
                      int nthreads)
-    : primary_(primary), auxiliary_(auxiliary), nthreads_(nthreads), directory_(directory)
+    : primary_(primary), nthreads_(nthreads), qtype_(qtype), directory_(directory)
 {
-    output::printf("  ==> LibPANACHE DF Tensor <==\n\n");
-
-    output::printf(" => Primary Basis Set <= \n\n");
-    primary_->print_detail();
-
-    output::printf(" => Auxiliary Basis Set <= \n\n");
-    auxiliary_->print_detail();
-
 #ifdef _OPENMP
     if(nthreads_ <= 0)
         nthreads_ = omp_get_max_threads();
 #else
     nthreads_ = 1;
 #endif
-
-    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_, nthreads_));
-    fittingmetric_->form_eig_inverse();
-
     //remove trailing slashes
     while(directory_.size() > 1 && directory_.back() == '/')
         directory_ = directory_.substr(0, directory_.size()-1);
 
-    Cmo_ = nullptr;
     nmo_ = 0;
     nmo2_ = 0;
+    nocc_ = nfroz_ = nvir_ = 0;
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
-    naux_ = auxiliary_->nbf();
     nsotri_ = (nso_*(nso_+1))/2;
 }
 
@@ -84,22 +71,6 @@ int ThreeIndexTensor::SetNThread(int nthread)
 
 ThreeIndexTensor::~ThreeIndexTensor()
 {
-}
-
-void ThreeIndexTensor::GenQso(int qflags, int storeflags)
-{
-    if(qso_)
-        return; // already created!
-
-    qso_ = StoredQTensorFactory(naux_, nso_, nso_, storeflags, "qso");
-    qso_->Init();
-
-    if(qflags & QGEN_DFQSO) 
-        qso_->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
-    else if(qflags & QGEN_CHQSO)
-        qso_->GenCHQso(fittingmetric_, primary_, nthreads_);
-    else
-        throw RuntimeError("Error - unknown QSO type!");
 }
 
 void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
@@ -152,32 +123,26 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     tim.Start();
 #endif
 
-    // Make sure one of QGEN_CHQSO or QGEN_CHQSO is specified, but not both
-    if(((qflags & QGEN_DFQSO) && (qflags & QGEN_CHQSO))
-        || !((qflags & QGEN_DFQSO) || (qflags & QGEN_CHQSO)))
-        throw RuntimeError("Set one and only one of QGEN_DFQSO or QGEN_CHQSO!");
+    // remove packed setting
+    storeflags &= ~QSTORAGE_PACKED;
 
-    // Remove QSTORAGE_PACKED if specified
-    storeflags &= ~(QSTORAGE_PACKED);
-
-    // Always gen qso as packed and by q
-    GenQso(qflags, storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ);
-
-
-    if((qflags & (15)) == 0)
-        return; //?
 
     if(!Cmo_)
         throw RuntimeError("Set the c-matrix first!");
+
+    if(!qso_)
+        qso_ = GenQso(storeflags); // calls the virtual function
 
     std::vector<StoredQTensor::TransformMat> lefts;
     std::vector<StoredQTensor::TransformMat> rights;
     std::vector<StoredQTensor *> qouts;
 
+    int naux = qso_->naux();
+
     if(qflags & QGEN_QMO)
     {
         // generate Qmo
-        qmo_ = StoredQTensorFactory(naux_, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo");
+        qmo_ = StoredQTensorFactory(naux, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo");
         qmo_->Init();
         qouts.push_back(qmo_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
@@ -186,7 +151,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QOO)
     {
         // generate Qoo
-        qoo_ = StoredQTensorFactory(naux_, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo");
+        qoo_ = StoredQTensorFactory(naux, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo");
         qoo_->Init();
         qouts.push_back(qoo_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
@@ -195,7 +160,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QOV)
     {
         // generate Qov
-        qov_ = StoredQTensorFactory(naux_, nocc_, nvir_, storeflags, "qov");
+        qov_ = StoredQTensorFactory(naux, nocc_, nvir_, storeflags, "qov");
         qov_->Init();
         qouts.push_back(qov_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
@@ -204,15 +169,16 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QVV)
     {
         // generate Qvv
-        qvv_ = StoredQTensorFactory(naux_, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv");
+        qvv_ = StoredQTensorFactory(naux, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv");
         qvv_->Init();
         qouts.push_back(qvv_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
         rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
     }
 
-    // actually do the transformation
-    qso_->Transform(lefts, rights, qouts, nthreads_);
+    // actually do the transformation (if necessary)
+    if(lefts.size() > 0)
+        qso_->Transform(lefts, rights, qouts, nthreads_);
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -220,6 +186,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 #endif
 
 }
+
 
 
 int ThreeIndexTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
@@ -330,7 +297,7 @@ int ThreeIndexTensor::QBatchSize(int tensorflag)
 
 int ThreeIndexTensor::BatchSize(int tensorflag)
 {
-    return naux_;
+    return ResolveTensorFlag(tensorflag)->naux();
 }
 
 int ThreeIndexTensor::TensorDimensions(int tensorflag, int & naux, int & ndim1, int & ndim2)

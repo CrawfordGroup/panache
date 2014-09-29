@@ -1,10 +1,10 @@
 /*! \file
- * \brief Density fitting tensor generation and manipulation (header)
+ * \brief Generic three-index tensor generation and manipulation (header)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_DFTENSOR_H
-#define PANACHE_DFTENSOR_H
+#ifndef PANACHE_THREEINDEXTENSOR_H
+#define PANACHE_THREEINDEXTENSOR_H
 
 #include <vector>
 #include <memory>
@@ -20,11 +20,10 @@
 namespace panache
 {
 
+class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
-class FittingMetric;
-class TwoBodyAOInt;
 
 namespace reorder
 {
@@ -35,27 +34,20 @@ class CNorm;
 class ThreeIndexTensor
 {
 public:
-    ThreeIndexTensor(const ThreeIndexTensor & other) = delete;
-    ThreeIndexTensor(const ThreeIndexTensor && other) = delete;
-    ThreeIndexTensor & operator=(const ThreeIndexTensor & other) = delete;
-
-
-
     /*!
      * \brief Constructor
      *
-     * Initializes the basis set members, and constructs the creates the
-     * FittingMetric
+     * Initializes the basis set members
      *
      * \param [in] primary The primary basis set
-     * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 
     ThreeIndexTensor(SharedBasisSet primary,
-             SharedBasisSet auxiliary,
              const std::string & directory,
+             int qtype,
              int nthreads);
+
 
 
     /*!
@@ -63,8 +55,13 @@ public:
      *
      * Frees memory and stuff
      */
-    ~ThreeIndexTensor();
+    virtual ~ThreeIndexTensor();
 
+
+    // Don't need these
+    ThreeIndexTensor(const ThreeIndexTensor & other) = delete;
+    ThreeIndexTensor(const ThreeIndexTensor && other) = delete;
+    ThreeIndexTensor & operator=(const ThreeIndexTensor & other) = delete;
 
 
     /*!
@@ -404,68 +401,8 @@ public:
     IteratedQTensorByIJ IterateByIJ(int tensorflag, double * buf, int bufsize);
 
 
-private:
+protected:
 
-    /*! \name Basis set and matrix dimensions */
-    ///@{  
-
-    SharedBasisSet primary_;   //!< Primary basis set
-    SharedBasisSet auxiliary_; //!< Auxiliary (DF) basis set
-
-    int nso_;    //!< Number of SO (rows of Cmo_, number of primary basis functions)
-    int naux_;   //!< Number of auxiliary basis functions
-    int nso2_;   //!< Number of SO squared
-
-    ///@}
-
-
-    /*! \name Metric generation */
-    ///@{
-
-    std::shared_ptr<FittingMetric> fittingmetric_; //!< Fitting metric J
-
-    ///@}
-
-
-
-    /*! \name C matrix and dimensions */
-    ///@{  
-
-    std::unique_ptr<double[]> Cmo_;  //!< C matrix (nso x nmo)
-    std::unique_ptr<double[]> Cmo_occ_;  //!< C matrix (occupied part, nso*nocc)
-    std::unique_ptr<double[]> Cmo_vir_;  //!< C matrix (virtual part, nso*nvir)
-
-    int nmo_;  //!< Number of MO (columns of Cmo_)
-    int nmo2_; //!< Number of MO squared
-    int nocc_; //!< Number of (non-frozen) occupied orbitals
-    int nfroz_; //!< Number of frozen orbitals
-    int nvir_; //!< Number of virtual orbitals
-    int nsotri_; //!< Packed nso*nso symmetric matrix
-
-
-    /*!
-     * \brief Splits the C matrix into occupied and virtual matrices
-     *
-     * Fills in Cmo_occ_ and Cmo_vir_
-     *
-     * nocc_, nvir_ nmo_, and nso_ must be set first!
-     */
-    void SplitCMat(void);
-
-
-    /*!
-     * \brief Reorders the whole C matrix into the specified ordering, including
-     *        some renormalization if needed
-     * 
-     * \param [in] order The order to use
-     * \param [in] cnorm Normalization factors to multiply by
-     */
-    void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
-    ///@}
-
-
-
-    /*! \brief Storage of the 3-index tensors */
     ///@{ Storage of the 3-index tensors
 
     class StoredQTensor
@@ -486,8 +423,8 @@ private:
                       const SharedBasisSet auxiliary,
                       int nthreads);
 
-        void GenCHQso(const std::shared_ptr<FittingMetric> & fit,
-                      const SharedBasisSet primary,
+        void GenCHQso(const SharedBasisSet primary,
+                      double delta,
                       int nthreads);
 
         typedef std::pair<double *, int> TransformMat;
@@ -521,8 +458,8 @@ private:
                                const SharedBasisSet auxiliary,
                                int nthreads) = 0;
 
-        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
-                               const SharedBasisSet primary,
+        virtual void GenCHQso_(const SharedBasisSet primary,
+                               double delta,
                                int nthreads) = 0;
 
          
@@ -564,8 +501,8 @@ private:
                              const SharedBasisSet auxiliary,
                              int nthreads);
 
-        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
-                               const SharedBasisSet primary,
+        virtual void GenCHQso_(const SharedBasisSet primary,
+                               double delta,
                                int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
@@ -640,8 +577,8 @@ private:
                                const SharedBasisSet auxiliary,
                                int nthreads);
 
-        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
-                               const SharedBasisSet primary,
+        virtual void GenCHQso_(const SharedBasisSet primary,
+                               double delta,
                                int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
@@ -666,35 +603,84 @@ private:
      */
     std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                         int storeflags,
-                                                        const std::string & name);
+                                                        const std::string & name) const;
 
+    /*!
+     * \brief Generate the base Qso tensor
+     * \param [in] storeflags How to store (disk, memory, packed, etc)
+     */
+    virtual std::unique_ptr<StoredQTensor> GenQso(int storeflags) const = 0;
+
+    ///@}
+
+
+    /*! \name Basis set and matrix dimensions */
+    ///@{  
+
+    SharedBasisSet primary_;   //!< Primary basis set
+    SharedBasisSet auxiliary_; //!< Auxiliary (DF) basis set
+
+    int nso_;    //!< Number of SO (rows of Cmo_, number of primary basis functions)
+    int nso2_;   //!< Number of SO squared
+
+    ///@}
+
+
+    /*! \name C matrix and dimensions */
+    ///@{  
+    std::unique_ptr<double[]> Cmo_;  //!< C matrix (nso x nmo)
+    std::unique_ptr<double[]> Cmo_occ_;  //!< C matrix (occupied part, nso*nocc)
+    std::unique_ptr<double[]> Cmo_vir_;  //!< C matrix (virtual part, nso*nvir)
+
+    int nmo_;  //!< Number of MO (columns of Cmo_)
+    int nmo2_; //!< Number of MO squared
+    int nocc_; //!< Number of (non-frozen) occupied orbitals
+    int nfroz_; //!< Number of frozen orbitals
+    int nvir_; //!< Number of virtual orbitals
+    int nsotri_; //!< Packed nso*nso symmetric matrix
+    ///@}
+
+    int nthreads_;  //!< Number of threads to use
+
+
+
+private:
+    int qtype_;  //!< Type of tensor (DF, CH, etc. See Flags.h)
+
+
+    /*!
+     * \brief Splits the C matrix into occupied and virtual matrices
+     *
+     * Fills in Cmo_occ_ and Cmo_vir_
+     *
+     * nocc_, nvir_ nmo_, and nso_ must be set first!
+     */
+    void SplitCMat(void);
+
+
+    /*!
+     * \brief Reorders the whole C matrix into the specified ordering, including
+     *        some renormalization if needed
+     * 
+     * \param [in] order The order to use
+     * \param [in] cnorm Normalization factors to multiply by
+     */
+    void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
+
+
+    ///@{ \name Q Tensor Storage
     std::unique_ptr<StoredQTensor> qso_;  //!< Qso matrix
     std::unique_ptr<StoredQTensor> qmo_;  //!< Qmo matrix
     std::unique_ptr<StoredQTensor> qoo_;  //!< Qoo matrix
     std::unique_ptr<StoredQTensor> qov_;  //!< Qov matrix
     std::unique_ptr<StoredQTensor> qvv_;  //!< Qvv matrix
-
     ///@}
-
 
     CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()
 
-    int nthreads_;  //!< Number of threads to use
 
     std::string directory_;  //!< Directory to use to store matrices on disk (if requested)
 
-
-
-    /*!
-     * \brief Generates the basic Qso matrix
-     *
-     * See \ref theory_page for what Qso actually is, and memory_sec for more information
-     * about memory.
-     *
-     * \param [in] qflags How to generate QSO (DF, Cholesky) (see Flags.h)
-     * \param [in] storeflags How to store the matrix (see Flags.h)
-     */
-    void GenQso(int qflags, int storeflags);
 
 
     /*!
@@ -740,7 +726,7 @@ private:
 
 };
 
-}
+} // close namespace panache
 
 #endif //PANACHE_DFTENSOR_H
 

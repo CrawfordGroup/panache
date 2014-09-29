@@ -257,9 +257,9 @@ void ThreeIndexTensor::CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMe
 }
 
 
-void ThreeIndexTensor::CyclopsQTensor::GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
-                                       const SharedBasisSet primary,
-                                       int nthreads)
+void ThreeIndexTensor::CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
+                                                 double delta,
+                                                 int nthreads)
 {
     throw RuntimeError("NYI");
 }
