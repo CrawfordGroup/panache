@@ -96,8 +96,8 @@ void ThreeIndexTensor::GenQso(int qflags, int storeflags)
 
     if(qflags & QGEN_DFQSO) 
         qso_->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
-//    else if(qflags & QGEN_CHQSO)
-//        qso_->GenCHQso(fittingmetric_, primary_, auxiliary_, nthreads_);
+    else if(qflags & QGEN_CHQSO)
+        qso_->GenCHQso(fittingmetric_, primary_, nthreads_);
     else
         throw RuntimeError("Error - unknown QSO type!");
 }

@@ -144,6 +144,13 @@ void ThreeIndexTensor::StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetr
     GenDFQso_(fit, primary, auxiliary, nthreads);
 }
 
+void ThreeIndexTensor::StoredQTensor::GenCHQso(const std::shared_ptr<FittingMetric> & fit,
+                                     const SharedBasisSet primary,
+                                     int nthreads)
+{
+    GenCHQso_(fit, primary, nthreads);
+}
+
 
 void ThreeIndexTensor::StoredQTensor::Transform(const std::vector<TransformMat> & left,
                                         const std::vector<TransformMat> & right,
@@ -284,6 +291,15 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
 #endif
 
 }
+
+
+void ThreeIndexTensor::LocalQTensor::GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
+                                     const SharedBasisSet primary,
+                                     int nthreads)
+{
+    throw RuntimeError("NYI");
+}
+
 
 void ThreeIndexTensor::LocalQTensor::Transform_(const std::vector<TransformMat> & left,
                                         const std::vector<TransformMat> & right,

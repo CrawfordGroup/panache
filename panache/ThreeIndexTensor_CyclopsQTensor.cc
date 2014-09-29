@@ -257,6 +257,14 @@ void ThreeIndexTensor::CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMe
 }
 
 
+void ThreeIndexTensor::CyclopsQTensor::GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
+                                       const SharedBasisSet primary,
+                                       int nthreads)
+{
+    throw RuntimeError("NYI");
+}
+
+
 void ThreeIndexTensor::CyclopsQTensor::Transform_(const std::vector<TransformMat> & left,
                                           const std::vector<TransformMat> & right,
                                           std::vector<StoredQTensor *> results,

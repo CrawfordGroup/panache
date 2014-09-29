@@ -486,6 +486,10 @@ private:
                       const SharedBasisSet auxiliary,
                       int nthreads);
 
+        void GenCHQso(const std::shared_ptr<FittingMetric> & fit,
+                      const SharedBasisSet primary,
+                      int nthreads);
+
         typedef std::pair<double *, int> TransformMat;
 
         void Transform(const std::vector<TransformMat> & left,
@@ -515,6 +519,10 @@ private:
         virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                const SharedBasisSet primary,
                                const SharedBasisSet auxiliary,
+                               int nthreads) = 0;
+
+        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
+                               const SharedBasisSet primary,
                                int nthreads) = 0;
 
          
@@ -555,6 +563,10 @@ private:
                              const SharedBasisSet primary,
                              const SharedBasisSet auxiliary,
                              int nthreads);
+
+        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
+                               const SharedBasisSet primary,
+                               int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
                                 const std::vector<TransformMat> & right,
@@ -626,6 +638,10 @@ private:
         virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                const SharedBasisSet primary,
                                const SharedBasisSet auxiliary,
+                               int nthreads);
+
+        virtual void GenCHQso_(const std::shared_ptr<FittingMetric> & fit,
+                               const SharedBasisSet primary,
                                int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
