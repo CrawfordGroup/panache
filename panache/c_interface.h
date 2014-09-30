@@ -65,7 +65,7 @@ extern "C" {
      *
      * \return A handle representing this particular density-fitting calculation.
      */
-    int_t panache_init(int_t ncenters,
+    int_t panache_dfinit(int_t ncenters,
                        C_AtomCenter * atoms, int_t normalized,
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
@@ -98,10 +98,39 @@ extern "C" {
      *
      * \return A handle representing this particular density-fitting calculation.
      */
-    int_t panache_init2(int_t ncenters,
+    int_t panache_dfinit2(int_t ncenters,
                         C_AtomCenter * atoms, int_t normalized,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                         const char * auxfilename, const char * directory, int_t nthreads);
+
+
+    /*!
+     * \brief Initializes a new cholesky calculation using an auxiliary basis set file
+     *
+     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * is used to identify this particular calculation.
+     *
+     * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \param [in] ncenters    The number of basis function centers
+     * \param [in] atoms       Information about the centers. This is expected to be of length \p ncenters.
+     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
+     * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+     *                                       Expected to be of length \p ncenters.
+     * \param [in] primary_shells  Information about each shell in the primary basis.
+     *                             Length should be the sum of \p primary_nshellspercenter.
+     * \param [in] directory A full path to a file to be used for storing matrices to disk.
+     *                       Not referenced if the disk is not used. Should not be set to "NULL", but
+     *                       may be set to an empty string if disk is not to be used.
+     *                       If used, any existing files will be overwritten.
+     * \param [in] nthreads Max number of threads to use
+     *
+     * \return A handle representing this particular density-fitting calculation.
+     */
+    int_t panache_chinit(int_t ncenters,
+                        C_AtomCenter * atoms, int_t normalized,
+                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                        double delta, const char * directory, int_t nthreads);
 
 
 
