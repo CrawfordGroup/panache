@@ -15,7 +15,7 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
                    int nthreads) : ThreeIndexTensor(primary, directory, QGEN_CHQSO, nthreads), delta_(delta)
 {
     output::printf("  ==> LibPANACHE CH Tensor <==\n\n");
-    output::printf("  delta: %d", delta_);
+    output::printf("  delta: %f", delta_);
 
     output::printf(" => Primary Basis Set <= \n\n");
     primary_->print_detail();
