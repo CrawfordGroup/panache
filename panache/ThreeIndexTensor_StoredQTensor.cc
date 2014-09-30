@@ -55,6 +55,10 @@ int ThreeIndexTensor::StoredQTensor::byq(void) const
     return (storeflags_ & QSTORAGE_BYQ);
 }
 
+const std::string & ThreeIndexTensor::StoredQTensor::name(void) const
+{
+    return name_;
+}
 int ThreeIndexTensor::StoredQTensor::calcindex(int i, int j) const
 {
     if(!packed())
@@ -65,7 +69,7 @@ int ThreeIndexTensor::StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-ThreeIndexTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, int storeflags)
+void ThreeIndexTensor::StoredQTensor::Init(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
 {
     naux_ = naux;
     ndim1_ = ndim1;
@@ -76,6 +80,9 @@ ThreeIndexTensor::StoredQTensor::StoredQTensor(int naux, int ndim1, int ndim2, i
         throw RuntimeError("non square packed matrices?");
 
     ndim12_ = (packed() ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
+    name_ = name;
+
+    Init_();
 }
 
 ThreeIndexTensor::StoredQTensor::~StoredQTensor()
@@ -115,9 +122,8 @@ void ThreeIndexTensor::StoredQTensor::Clear(void)
     Clear_();
 }
 
-void ThreeIndexTensor::StoredQTensor::Init(void)
+ThreeIndexTensor::StoredQTensor::StoredQTensor(void)
 {
-    Init_();
 }
 
 
@@ -168,8 +174,7 @@ void ThreeIndexTensor::StoredQTensor::Transform(const std::vector<TransformMat> 
 //////////////////////////////
 
 
-ThreeIndexTensor::LocalQTensor::LocalQTensor(int naux, int ndim1, int ndim2, int storeflags)
-            : ThreeIndexTensor::StoredQTensor(naux, ndim1, ndim2, storeflags)
+ThreeIndexTensor::LocalQTensor::LocalQTensor()
 {
 }
 
@@ -293,11 +298,97 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
 }
 
 
+void ThreeIndexTensor::ComputeDiagonal_(TwoBodyAOInt * integral, double * target)
+{
+}
+
 void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                                      double delta,
                                      int nthreads)
 {
-    throw RuntimeError("NYI");
+/*
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
+
+    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<const double *> eribuffers;
+
+    int naux = StoredQTensor::naux();
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        eris.push_back(GetERI(auxiliary, zero, primary, primary));
+        eribuffers.push_back(eris[eris.size()-1]->buffer());
+    }
+
+    naux_ = 0;
+    int n = ndim1_*ndim2_;
+
+    double * diag = new double[n];
+    ComputeDiagonal_(eris[0].get(), diag);
+
+
+    // Temporary cholesky factor
+    std::vector<double*> L;
+
+    // List of selected pivots
+    std::vector<int> pivots;
+ 
+    while(naux_ < n)
+    {
+        int pivot = 0;
+        double Dmax = diag[0];
+        for(int P = 0; P < n; P++)
+        {
+            if(Dmax < diag[P])
+            {
+                Dmax = diag[P];
+                pivot = P;
+            }
+        }
+
+        if(Dmax < delta_ || Dmax < 0.0) break;
+
+        pivots.push_back(pivot);
+        double L_QQ = sqrt(Dmax);
+
+        L.push_back(new double[n]);
+        compute_row(pivot, L[naux_]);
+
+        // [(m|Q) - L_m^P L_Q^P]
+        for (int P = 0; P < naux_; P++) {
+            C_DAXPY(n,-L[P][pivots[naux_]],L[P],1,L[naux_],1);
+        }
+
+        // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
+        C_DSCAL(n, 1.0 / L_QQ, L[naux_], 1);
+
+        // Zero the upper triangle
+        for (int P = 0; P < pivots.size(); P++) {
+            L[naux_][pivots[P]] = 0.0;
+        }
+
+        // Set the pivot factor
+        L[naux_][pivot] = L_QQ;
+
+        // Update the Schur complement diagonal
+        for (int P = 0; P < n; P++) {
+            diag[P] -= L[naux_][P] * L[naux_][P];
+        }
+
+        // Force truly zero elements to zero
+        for (int P = 0; P < pivots.size(); P++) {
+            diag[pivots[P]] = 0.0;
+        }
+
+        naux_++;
+    }
+
+    // copy to memory
+     
+*/
 }
 
 
@@ -429,14 +520,14 @@ void ThreeIndexTensor::DiskQTensor::OpenFile_(void)
     if(file_ && file_->is_open())
         return;
 
-    if(filename_.length() == 0)
+    if(name().length() == 0)
         throw RuntimeError("Error - no file specified!");
 
-    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
+    file_ = std::unique_ptr<std::fstream>(new std::fstream(name().c_str(),
                                           std::fstream::in | std::fstream::out |
                                           std::fstream::binary | std::fstream::trunc ));
     if(!file_->is_open())
-        throw RuntimeError(filename_);
+        throw RuntimeError(name());
 
     file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
 }
@@ -565,11 +656,8 @@ void ThreeIndexTensor::DiskQTensor::Init_(void)
 }
 
 
-ThreeIndexTensor::DiskQTensor::DiskQTensor(int naux, int ndim1, int ndim2, int storeflags,
-                                           const std::string & filename)
-            : LocalQTensor(naux, ndim1, ndim2, storeflags)
+ThreeIndexTensor::DiskQTensor::DiskQTensor()
 {
-    filename_ = filename;
 }
 
 
@@ -661,13 +749,26 @@ void ThreeIndexTensor::MemoryQTensor::Init_(void)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-ThreeIndexTensor::MemoryQTensor::MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags)
-    : LocalQTensor(naux, ndim1, ndim2, storeflags)
+ThreeIndexTensor::MemoryQTensor::MemoryQTensor()
 {
 }
 
 
 
+std::unique_ptr<ThreeIndexTensor::StoredQTensor> 
+ThreeIndexTensor::StoredQTensorFactory(int storeflags) const
+{
+    if(storeflags & QSTORAGE_ONDISK)
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new DiskQTensor());
+
+    #ifdef PANACHE_CYCLOPS
+    else if(storeflags & QSTORAGE_CYCLOPS)
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new CyclopsQTensor());
+    #endif
+
+    else
+        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new MemoryQTensor());
+}
 
 std::unique_ptr<ThreeIndexTensor::StoredQTensor> 
 ThreeIndexTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
@@ -676,21 +777,20 @@ ThreeIndexTensor::StoredQTensorFactory(int naux, int ndim1, int ndim2,
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
+    auto ptr = StoredQTensorFactory(storeflags);
+
+    // convert name to filename if on disk
     if(storeflags & QSTORAGE_ONDISK)
     {
         std::string filename(directory_);
         filename.append("/");
         filename.append(name);
-        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new DiskQTensor(naux, ndim1, ndim2, storeflags, filename));
+        ptr->Init(naux, ndim1, ndim2, storeflags, filename);
     }
-
-    #ifdef PANACHE_CYCLOPS
-    else if(storeflags & QSTORAGE_CYCLOPS)
-        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new CyclopsQTensor(naux, ndim1, ndim2, storeflags, name));
-    #endif
-
     else
-        return std::unique_ptr<ThreeIndexTensor::StoredQTensor>(new MemoryQTensor(naux, ndim1, ndim2, storeflags));
+        ptr->Init(naux, ndim1, ndim2, storeflags, name);
+
+    return ptr;
 }
 
 

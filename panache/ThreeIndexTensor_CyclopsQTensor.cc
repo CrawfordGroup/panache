@@ -125,12 +125,11 @@ void ThreeIndexTensor::CyclopsQTensor::Init_(void)
     }
 */
 
-    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, parallel::CTFWorld(), name_.c_str()));
+    tensor_ = std::unique_ptr<CTF_Tensor>(new CTF_Tensor(3, dims, syms, parallel::CTFWorld(), name().c_str()));
 }
 
 
-ThreeIndexTensor::CyclopsQTensor::CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
-            : StoredQTensor(naux, ndim1, ndim2, storeflags), name_(name)
+ThreeIndexTensor::CyclopsQTensor::CyclopsQTensor()
 {
 
 }

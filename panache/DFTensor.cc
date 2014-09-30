@@ -36,7 +36,6 @@ std::unique_ptr<ThreeIndexTensor::StoredQTensor> DFTensor::GenQso(int storeflags
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
                                     storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso");
 
-    qso->Init();
     qso->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
     return qso;
 }

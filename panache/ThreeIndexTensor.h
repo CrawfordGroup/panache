@@ -23,7 +23,7 @@ namespace panache
 class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
-
+class TwoBodyAOInt;
 
 namespace reorder
 {
@@ -409,14 +409,14 @@ protected:
     {
 
     public:
-        StoredQTensor(int naux, int ndim1, int ndim2, int storeflags);
+        StoredQTensor();
         virtual ~StoredQTensor();
         int StoreFlags(void) const;
         int Read(double * data, int nij, int ijstart);
         int ReadByQ(double * data, int nq, int qstart);
         void Reset(void);
         void Clear(void);
-        void Init(void);
+        void Init(int naux, int ndim1, int ndim2, int storeflags, const std::string & name);
 
         void GenDFQso(const std::shared_ptr<FittingMetric> & fit,
                       const SharedBasisSet primary,
@@ -445,6 +445,7 @@ protected:
         int packed(void) const;
         int byq(void) const;
         int calcindex(int i, int j) const;
+        const std::string & name(void) const;
 
     protected:
         virtual void Init_(void) = 0;
@@ -476,6 +477,7 @@ protected:
         int ndim2_;  //!< Length of index 2
         int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
         int storeflags_; //!< How is this tensor stored
+        std::string name_;
         CumulativeTime gen_timer_; //!< Timer for the generation of this tensor
         CumulativeTime getijbatch_timer_; //!< Timer for getting batch by orbital index
         CumulativeTime getqbatch_timer_; //!< Timer for getting batch by q index
@@ -490,7 +492,7 @@ protected:
     class LocalQTensor : public StoredQTensor
     {
     public:
-        LocalQTensor(int naux, int ndim1, int ndim2, int storeflags);
+        LocalQTensor();
 
     protected:
         virtual void Write_(double * data, int nij, int ijstart) = 0;
@@ -514,7 +516,7 @@ protected:
     class DiskQTensor : public LocalQTensor
     {
     public:
-        DiskQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & filename);
+        DiskQTensor();
 
     protected:
         virtual void Reset_(void);
@@ -527,7 +529,6 @@ protected:
 
     private:
         std::unique_ptr<std::fstream> file_;
-        std::string filename_;
 
         void OpenFile_(void);
         void CloseFile_(void);
@@ -537,7 +538,7 @@ protected:
     class MemoryQTensor : public LocalQTensor
     {
     public:
-        MemoryQTensor(int naux, int ndim1, int ndim2, int storeflags);
+        MemoryQTensor();
 
     protected:
         virtual void Reset_(void);
@@ -558,7 +559,6 @@ protected:
     class CyclopsQTensor : public StoredQTensor
     {
     private:
-        std::string name_;
         std::unique_ptr<CTF_Tensor> tensor_;
 
         void DecomposeIndex_(int64_t index, int & i, int & j, int & q);
@@ -587,7 +587,7 @@ protected:
                                 int nthreads);
 
     public:
-        CyclopsQTensor(int naux, int ndim1, int ndim2, int storeflags, const std::string & name);
+        CyclopsQTensor();
     };
     #endif
 
@@ -604,6 +604,8 @@ protected:
     std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
                                                         int storeflags,
                                                         const std::string & name) const;
+
+    std::unique_ptr<StoredQTensor> StoredQTensorFactory(int storeflags) const;
 
     /*!
      * \brief Generate the base Qso tensor
@@ -666,6 +668,10 @@ private:
      * \param [in] cnorm Normalization factors to multiply by
      */
     void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
+
+
+    // for cholesky
+    void ComputeDiagonal_(TwoBodyAOInt * integral, double * target);
 
 
     ///@{ \name Q Tensor Storage

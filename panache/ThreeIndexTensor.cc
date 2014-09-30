@@ -127,7 +127,11 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     storeflags &= ~QSTORAGE_PACKED;
 
 
-    if(!Cmo_)
+    if( !Cmo_ && 
+        ((qflags & QGEN_QMO) || 
+         (qflags & QGEN_QOO) || 
+         (qflags & QGEN_QOV) || 
+         (qflags & QGEN_QVV)) )
         throw RuntimeError("Set the c-matrix first!");
 
     if(!qso_)
@@ -143,7 +147,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     {
         // generate Qmo
         qmo_ = StoredQTensorFactory(naux, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo");
-        qmo_->Init();
         qouts.push_back(qmo_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
         rights.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
@@ -152,7 +155,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     {
         // generate Qoo
         qoo_ = StoredQTensorFactory(naux, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo");
-        qoo_->Init();
         qouts.push_back(qoo_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
         rights.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
@@ -161,7 +163,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     {
         // generate Qov
         qov_ = StoredQTensorFactory(naux, nocc_, nvir_, storeflags, "qov");
-        qov_->Init();
         qouts.push_back(qov_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
         rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
@@ -170,7 +171,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     {
         // generate Qvv
         qvv_ = StoredQTensorFactory(naux, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv");
-        qvv_->Init();
         qouts.push_back(qvv_.get());
         lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
         rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
