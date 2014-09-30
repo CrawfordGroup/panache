@@ -17,6 +17,8 @@ void C_DSCAL(lapack_int_t length, double alpha, double *vec, lapack_int_t inc);
 
 void C_DSWAP(lapack_int_t length, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y);
 
+void C_DAXPY(lapack_int_t length, double a, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y);
+
 
 // BLAS 2/3
 void C_DGEMM(char transa, char transb, lapack_int_t m, lapack_int_t n, lapack_int_t k, 

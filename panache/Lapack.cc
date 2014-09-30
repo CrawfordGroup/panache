@@ -3,6 +3,7 @@
 
 #if FC_SYMBOL==1
 #define F_DCOPY  dcopy
+#define F_DAXPY  daxpy
 #define F_DDOT   ddot
 #define F_DSCAL  dscal
 #define F_DSWAP  dswap
@@ -20,6 +21,7 @@
 
 #elif FC_SYMBOL==2
 #define F_DCOPY  dcopy_
+#define F_DAXPY  daxpy_
 #define F_DDOT   ddot_
 #define F_DSCAL  dscal_
 #define F_DSWAP  dswap_
@@ -37,6 +39,7 @@
 
 #elif FC_SYMBOL==3
 #define F_DCOPY  DCOPY
+#define F_DAXPY  DAXPY
 #define F_DDOT   DDOT
 #define F_DSCAL  DSCAL
 #define F_DSWAP  DSWAP
@@ -54,6 +57,7 @@
 
 #elif FC_SYMBOL==4
 #define F_DCOPY  DCOPY_
+#define F_DAXPY  DAXPY_
 #define F_DDOT   DDOT_
 #define F_DSCAL  DSCAL_
 #define F_DSWAP  DSWAP_
@@ -78,6 +82,7 @@ extern "C"
 
 // Blas
 extern void F_DCOPY(int_t *length, double *x, int_t *inc_x,  double *y, int_t *inc_y);
+extern void F_DAXPY(int_t *length, double *a, double *x, int_t *inc_x,  double *y, int_t *inc_y);
 extern double F_DDOT(int_t *n, double *x, int_t *inc_x, double *y, int_t *inc_y);
 extern void F_DSCAL(int_t *n, double *alpha, double *vec, int_t *inc);
 extern void F_DSWAP(int_t *length, double *x, int_t *inc_x, double *y, int_t *inc_y);
@@ -106,6 +111,11 @@ void C_DCOPY(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
         ::F_DCOPY(&length, x, &inc_x, y, &inc_y);
 }
 
+
+void C_DAXPY(int_t length, double a, double *x, int_t inc_x, double *y, int_t inc_y)
+{
+        ::F_DAXPY(&length, &a, x, &inc_x, y, &inc_y);
+}
 
 
 double C_DDOT(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)

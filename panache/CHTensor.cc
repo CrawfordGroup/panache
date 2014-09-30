@@ -26,16 +26,11 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 
 std::unique_ptr<ThreeIndexTensor::StoredQTensor> CHTensor::GenQso(int storeflags) const
 {
-    throw RuntimeError("NYI");
-/*
-    // Always gen qso as packed and by q
-    auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
-                                    storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso");
+    auto qso = StoredQTensorFactory(storeflags);
 
-    qso->Init();
-    qso->GenCHQso(primary_, delta_, nthreads_);
+    // will be initialized in here
+    qso->GenCHQso(primary_, delta_, storeflags, nthreads_);
     return qso;
-*/
 }
 
 } // close namespace panache

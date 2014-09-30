@@ -6,7 +6,7 @@
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
 #include "panache/Timing.h"
-
+#include "panache/Lapack.h"
 #include "panache/ERI.h"
 
 #ifdef _OPENMP
@@ -152,9 +152,10 @@ void ThreeIndexTensor::StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetr
 
 void ThreeIndexTensor::StoredQTensor::GenCHQso(const SharedBasisSet primary,
                                      double delta,
+                                     int storeflags,
                                      int nthreads)
 {
-    GenCHQso_(primary, delta, nthreads);
+    GenCHQso_(primary, delta, storeflags, nthreads);
 }
 
 
@@ -298,35 +299,92 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
 }
 
 
-void ThreeIndexTensor::ComputeDiagonal_(TwoBodyAOInt * integral, double * target)
+void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, double * target)
 {
+    const double* buffer = integral->buffer();
+    SharedBasisSet basis = integral->basis();
+
+    for (int M = 0; M < basis->nshell(); M++) {
+        for (int N = 0; N < basis->nshell(); N++) {
+
+            integral->compute_shell(M,N,M,N);
+
+            int nM = basis->shell(M).nfunction();
+            int nN = basis->shell(N).nfunction();
+            int mstart = basis->shell(M).function_index();
+            int nstart = basis->shell(N).function_index();
+
+            for (int om = 0; om < nM; om++) {
+                for (int on = 0; on < nN; on++) {
+                    target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                        buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                }
+            }
+        }
+    }
 }
 
-void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
-                                     double delta,
-                                     int nthreads)
+
+void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int row, double* target)
 {
-/*
+    const double* buffer = integral->buffer();
+    SharedBasisSet basis = integral->basis();
+
+    int r = row / basis->nbf();
+    int s = row % basis->nbf();
+    int R = basis->function_to_shell(r);
+    int S = basis->function_to_shell(s);
+
+    int nR = basis->shell(R).nfunction();
+    int nS = basis->shell(S).nfunction();
+    int rstart = basis->shell(R).function_index();
+    int sstart = basis->shell(S).function_index();
+
+    int oR = r - rstart;
+    int os = s - sstart;
+
+    for (int M = 0; M < basis->nshell(); M++) {
+        for (int N = 0; N < basis->nshell(); N++) {
+
+            integral->compute_shell(M,N,R,S);
+
+            int nM = basis->shell(M).nfunction();
+            int nN = basis->shell(N).nfunction();
+            int mstart = basis->shell(M).function_index();
+            int nstart = basis->shell(N).function_index();
+
+            for (int om = 0; om < nM; om++) {
+                for (int on = 0; on < nN; on++) {
+                    target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                        buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+                }
+            }
+        }
+    }
+}
+
+
+
+void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
+                                               double delta,
+                                               int storeflags,
+                                               int nthreads)
+{
 #ifdef PANACHE_TIMING
     Timer tim;
     tim.Start();
 #endif
 
     std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
-    std::vector<const double *> eribuffers;
-
-    int naux = StoredQTensor::naux();
 
     for(int i = 0; i < nthreads; i++)
-    {
-        eris.push_back(GetERI(auxiliary, zero, primary, primary));
-        eribuffers.push_back(eris[eris.size()-1]->buffer());
-    }
+        eris.push_back(GetERI(primary, primary, primary, primary));
 
-    naux_ = 0;
-    int n = ndim1_*ndim2_;
+    int nQ = 0;
+    int n = primary->nbf();
+    int n2 = ndim1()*ndim2();
 
-    double * diag = new double[n];
+    double * diag = new double[n2];
     ComputeDiagonal_(eris[0].get(), diag);
 
 
@@ -336,11 +394,11 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     // List of selected pivots
     std::vector<int> pivots;
  
-    while(naux_ < n)
+    while(nQ < n2)
     {
         int pivot = 0;
         double Dmax = diag[0];
-        for(int P = 0; P < n; P++)
+        for(int P = 0; P < n2; P++)
         {
             if(Dmax < diag[P])
             {
@@ -349,46 +407,52 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
             }
         }
 
-        if(Dmax < delta_ || Dmax < 0.0) break;
+        if(Dmax < delta || Dmax < 0.0) break;
 
         pivots.push_back(pivot);
         double L_QQ = sqrt(Dmax);
 
-        L.push_back(new double[n]);
-        compute_row(pivot, L[naux_]);
+        L.push_back(new double[n2]);
+        ComputeRow_(eris[0].get(), pivot, L[nQ]);
 
         // [(m|Q) - L_m^P L_Q^P]
-        for (int P = 0; P < naux_; P++) {
-            C_DAXPY(n,-L[P][pivots[naux_]],L[P],1,L[naux_],1);
+        for (int P = 0; P < nQ; P++) {
+            C_DAXPY(n2,-L[P][pivots[nQ]],L[P],1,L[nQ],1);
         }
 
         // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
-        C_DSCAL(n, 1.0 / L_QQ, L[naux_], 1);
+        C_DSCAL(n2, 1.0 / L_QQ, L[nQ], 1);
 
         // Zero the upper triangle
-        for (int P = 0; P < pivots.size(); P++) {
-            L[naux_][pivots[P]] = 0.0;
+        for (size_t P = 0; P < pivots.size(); P++) {
+            L[nQ][pivots[P]] = 0.0;
         }
 
         // Set the pivot factor
-        L[naux_][pivot] = L_QQ;
+        L[nQ][pivot] = L_QQ;
 
         // Update the Schur complement diagonal
-        for (int P = 0; P < n; P++) {
-            diag[P] -= L[naux_][P] * L[naux_][P];
+        for (int P = 0; P < n2; P++) {
+            diag[P] -= L[nQ][P] * L[nQ][P];
         }
 
         // Force truly zero elements to zero
-        for (int P = 0; P < pivots.size(); P++) {
+        for (size_t P = 0; P < pivots.size(); P++) {
             diag[pivots[P]] = 0.0;
         }
 
-        naux_++;
+        nQ++;
     }
 
-    // copy to memory
+    // copy to memory now that we have the sizes
+    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ, "qso");
+
+    for(int i = 0; i < nQ; i++)
+    {
+        WriteByQ_(L[i], 1, i);
+        delete [] L[i];
+    }
      
-*/
 }
 
 

@@ -425,6 +425,7 @@ protected:
 
         void GenCHQso(const SharedBasisSet primary,
                       double delta,
+                      int storeflags,
                       int nthreads);
 
         typedef std::pair<double *, int> TransformMat;
@@ -461,6 +462,7 @@ protected:
 
         virtual void GenCHQso_(const SharedBasisSet primary,
                                double delta,
+                               int storeflags,
                                int nthreads) = 0;
 
          
@@ -505,12 +507,18 @@ protected:
 
         virtual void GenCHQso_(const SharedBasisSet primary,
                                double delta,
+                               int storeflags,
                                int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
                                 const std::vector<TransformMat> & right,
                                 std::vector<StoredQTensor *> results,
                                 int nthreads);
+
+    private:
+        // for cholesky
+        void ComputeDiagonal_(TwoBodyAOInt * integral, double * target);
+        void ComputeRow_(TwoBodyAOInt * integral, int row, double* target);
     };
 
     class DiskQTensor : public LocalQTensor
@@ -579,6 +587,7 @@ protected:
 
         virtual void GenCHQso_(const SharedBasisSet primary,
                                double delta,
+                               int storeflags,
                                int nthreads);
 
         virtual void Transform_(const std::vector<TransformMat> & left,
@@ -670,8 +679,6 @@ private:
     void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
 
 
-    // for cholesky
-    void ComputeDiagonal_(TwoBodyAOInt * integral, double * target);
 
 
     ///@{ \name Q Tensor Storage
