@@ -304,15 +304,17 @@ void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, d
     const double* buffer = integral->buffer();
     SharedBasisSet basis = integral->basis();
 
-    for (int M = 0; M < basis->nshell(); M++) {
-        for (int N = 0; N < basis->nshell(); N++) {
+    for (int M = 0; M < basis->nshell(); M++) 
+    {
+        int nM = basis->shell(M).nfunction();
+        int mstart = basis->shell(M).function_index();
+
+        for (int N = 0; N < basis->nshell(); N++) 
+        {
+            int nN = basis->shell(N).nfunction();
+            int nstart = basis->shell(N).function_index();
 
             integral->compute_shell(M,N,M,N);
-
-            int nM = basis->shell(M).nfunction();
-            int nN = basis->shell(N).nfunction();
-            int mstart = basis->shell(M).function_index();
-            int nstart = basis->shell(N).function_index();
 
             for (int om = 0; om < nM; om++) {
                 for (int on = 0; on < nN; on++) {

@@ -19,8 +19,6 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 
     output::printf(" => Primary Basis Set <= \n\n");
     primary_->print_detail();
-
-    throw RuntimeError("NYI");
 }
 
 
