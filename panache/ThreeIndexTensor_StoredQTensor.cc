@@ -448,6 +448,8 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         nQ++;
     }
 
+    delete [] diag;
+
     // copy to memory now that we have the sizes
     StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ, "qso");
 
