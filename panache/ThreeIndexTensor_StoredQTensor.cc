@@ -345,14 +345,16 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
     int oR = r - rstart;
     int os = s - sstart;
 
-    for (int M = 0; M < basis->nshell(); M++) {
-        for (int N = 0; N < basis->nshell(); N++) {
+    for (int M = 0; M < basis->nshell(); M++)
+    {
+        int nM = basis->shell(M).nfunction();
+        int mstart = basis->shell(M).function_index();
 
+        for (int N = 0; N < basis->nshell(); N++)
+        {
             integral->compute_shell(M,N,R,S);
 
-            int nM = basis->shell(M).nfunction();
             int nN = basis->shell(N).nfunction();
-            int mstart = basis->shell(M).function_index();
             int nstart = basis->shell(N).function_index();
 
             for (int om = 0; om < nM; om++) {
@@ -384,7 +386,7 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
 
     int nQ = 0;
     int n = primary->nbf();
-    int n2 = ndim1()*ndim2();
+    int n2 = n*n;
 
     double * diag = new double[n2];
     ComputeDiagonal_(eris[0].get(), diag);

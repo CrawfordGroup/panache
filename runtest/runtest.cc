@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "panache/DFTensor.h"
+#include "panache/CHTensor.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
 #include "panache/c_convert.h" // int_t comes in through here
@@ -449,34 +450,7 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
 
-        /////////////////////////////////////
-        // NOTE - Testing always done by q //
-        /////////////////////////////////////
-/*
         // First, do by q
-        QIterator qi(naux, dft.IsPacked(tensorflag));
-
-        while(qi)
-        {
-            int n = dft.GetQBatch(tensorflag, outbuf.get(), bufsize, qi);
-            int curq = qi.q();
-
-            if(dft.IsPacked(tensorflag))
-            {
-                // expand
-                for(int q = 0; q < n; q++)
-                for(int i = 0; i < ndim1; i++)
-                for(int j = 0; j <= i; j++)
-                    mat[(curq+q)*ndim1*ndim2+i*ndim2+j] 
-                  = mat[(curq+q)*ndim1*ndim2+j*ndim1+i] 
-                  = outbuf[q*ndim12+i*(i+1)/2+j];
-            }
-            else
-                std::copy(outbuf.get(), outbuf.get() + n*ndim12, mat.get() + curq*ndim12);
-
-            ++qi;
-        }
-*/
         DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
         while(iqtq)
         {
@@ -513,37 +487,6 @@ int RunTestMatrix(DFTensor & dft, const string & title,
         std::fill(mat.get(), mat.get()+matsize, 0.0);
         std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
-/*
-        IJIterator iji(ndim1, ndim2, dft.IsPacked(tensorflag));
-
-        while(iji)
-        {
-            int n = dft.GetBatch(tensorflag, outbuf.get(), bufsize, iji);
-
-            // matrix testing is done by q
-            for(int ni = 0; ni < n; ni++)
-            {
-                int i = iji.i();
-                int j = iji.j();
-   
-                if(dft.IsPacked(tensorflag))
-                {
-                    // expand
-                    for(int q = 0; q < naux; q++)
-                        mat[q*ndim1*ndim2 + i * ndim2 + j]
-                      = mat[q*ndim1*ndim2 + j * ndim1 + i]
-                      = outbuf[ni*naux+q];
-                }
-                else
-                {
-                    for(int q = 0; q < naux; q++)
-                        mat[q*ndim1*ndim2 + i * ndim2 + j] = outbuf[ni*naux+q];
-                }
-
-                ++iji;
-            }
-        }
-*/
         DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
         while(iqtij)
         {
@@ -745,9 +688,13 @@ int main(int argc, char ** argv)
         int nocc = ReadNocc(nocc_filename);
         int nmo = nso;
 
-        DFTensor dft(primary, aux, "/tmp", 0);
+        DFTensor dft(primary, aux, "/tmp/df", 0);
+        CHTensor cht(primary, 1e-11, "/tmp/ch", 0);
+
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
+        cht.SetCMatrix(cmat->pointer(), nmo, transpose);
         dft.SetNOcc(nocc);
+        cht.SetNOcc(nocc);
 
         int qflags = (QGEN_DFQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
 
@@ -755,19 +702,17 @@ int main(int argc, char ** argv)
         if(byq)
             qstore |= QSTORAGE_BYQ;
 
-
         if(disk)
-            dft.GenQTensors(qflags, qstore | QSTORAGE_ONDISK);
-
+            qstore |= QSTORAGE_ONDISK;
         #ifdef PANACHE_CYCLOPS
         else if(cyclops)
-            dft.GenQTensors(qflags, qstore | QSTORAGE_CYCLOPS);
+            qstore |= QSTORAGE_CYCLOPS;
         #endif
-
         else
-            dft.GenQTensors(qflags, qstore | QSTORAGE_INMEM);
+            qstore |= QSTORAGE_INMEM;
 
-
+        dft.GenQTensors(qflags, qstore);
+        cht.GenQTensors(qflags, qstore);
 
 
         ///////////
