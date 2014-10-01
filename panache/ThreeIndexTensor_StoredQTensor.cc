@@ -312,15 +312,19 @@ void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, d
 
         for (int N = 0; N < basis->nshell(); N++) 
         {
-            int nN = basis->shell(N).nfunction();
-            int nstart = basis->shell(N).function_index();
+            int nint = integral->compute_shell(M,N,M,N);
 
-            integral->compute_shell(M,N,M,N);
-
-            for (int om = 0; om < nM; om++) {
-                for (int on = 0; on < nN; on++) {
-                    target[(om + mstart) * basis->nbf() + (on + nstart)] =
-                        buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+            if(nint)
+            {
+                int nN = basis->shell(N).nfunction();
+                int nstart = basis->shell(N).function_index();
+    
+    
+                for (int om = 0; om < nM; om++) {
+                    for (int on = 0; on < nN; on++) {
+                        target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                            buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                    }
                 }
             }
         }
@@ -353,15 +357,18 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
 
         for (int N = 0; N < basis->nshell(); N++)
         {
-            integral->compute_shell(M,N,R,S);
+            int nint = integral->compute_shell(M,N,R,S);
 
-            int nN = basis->shell(N).nfunction();
-            int nstart = basis->shell(N).function_index();
-
-            for (int om = 0; om < nM; om++) {
-                for (int on = 0; on < nN; on++) {
-                    target[(om + mstart) * basis->nbf() + (on + nstart)] =
-                        buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+            if(nint)
+            {
+                int nN = basis->shell(N).nfunction();
+                int nstart = basis->shell(N).function_index();
+    
+                for (int om = 0; om < nM; om++) {
+                    for (int on = 0; on < nN; on++) {
+                        target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+                    }
                 }
             }
         }
@@ -390,6 +397,8 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     int n2 = n*n;
 
     double * diag = new double[n2];
+    std::fill(diag, diag + n2, 0.0);
+
     ComputeDiagonal_(eris[0].get(), diag);
 
 
@@ -418,6 +427,8 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         double L_QQ = sqrt(Dmax);
 
         L.push_back(new double[n2]);
+        std::fill(L.back(), L.back()+n2, 0.0);
+
         ComputeRow_(eris[0].get(), pivot, L[nQ]);
 
         // [(m|Q) - L_m^P L_Q^P]
