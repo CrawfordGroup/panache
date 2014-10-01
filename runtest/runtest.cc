@@ -15,6 +15,8 @@
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
+#define CHOLESKY_DELTA 1e-5
+
 #define QSO_ELEMENT_THRESHOLD 1e-11
 #define QSO_SUM_THRESHOLD 1e-8
 #define QSO_CHECKSUM_THRESHOLD 1.0
@@ -426,7 +428,7 @@ int ReadNocc(const string & filename)
 
 
 
-int RunTestMatrix(DFTensor & dft, const string & title,
+int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
                   int batchsize, int tensorflag,
                   const string & reffile,
                   double sum_threshold, double checksum_threshold, double element_threshold,
@@ -646,32 +648,10 @@ int main(int argc, char ** argv)
         *out << "Results for test: " << desc_str << "\n";
         *out << "--------------------------------------\n";
 
-        string primary_basis_filename(dir);
-        string aux_basis_filename(dir);
-        string molecule_filename(dir);
-        string nocc_filename(dir);
-        string qso_filename(dir);
-        string qov_filename(dir);
-        string qoo_filename(dir);
-        string qvv_filename(dir);
-        string qmo_filename(dir);
-        string cmo_filename(dir);
-
-        primary_basis_filename.append("basis.primary");
-        aux_basis_filename.append("basis.aux");
-        molecule_filename.append("geometry");
-        nocc_filename.append("nocc");
-        qso_filename.append("qso");
-        qmo_filename.append("qmo");
-        qov_filename.append("qov");
-        qoo_filename.append("qoo");
-        qvv_filename.append("qvv");
-        cmo_filename.append("cmat");
-
-        auto mol = ReadMoleculeFile(molecule_filename);
-        auto primary = ReadBasisFile(mol, primary_basis_filename);
-        auto aux = ReadBasisFile(mol, aux_basis_filename);
-        auto cmat = ReadCMatrixFile(cmo_filename);
+        auto mol = ReadMoleculeFile(dir + "geometry");
+        auto primary = ReadBasisFile(mol, dir + "basis.primary");
+        auto aux = ReadBasisFile(mol, dir + "basis.aux");
+        auto cmat = ReadCMatrixFile(dir + "cmat");
 
         if(transpose)
         {
@@ -685,11 +665,14 @@ int main(int argc, char ** argv)
         }
 
         int nso = primary->nbf();
-        int nocc = ReadNocc(nocc_filename);
+        int nocc = ReadNocc(dir + "nocc");
         int nmo = nso;
 
         DFTensor dft(primary, aux, "/tmp/df", 0);
-        CHTensor cht(primary, 1e-11, "/tmp/ch", 0);
+
+        // *** We are only testing Qso from CHTensor              *** //
+        // *** But generating them all (to test for memory issues *** //
+        CHTensor cht(primary, CHOLESKY_DELTA, "/tmp/ch", 0);
 
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
         cht.SetCMatrix(cmat->pointer(), nmo, transpose);
@@ -720,7 +703,7 @@ int main(int argc, char ** argv)
         ///////////
         ret += RunTestMatrix(dft, "QSO",
                              batchsize, QGEN_DFQSO,
-                             qso_filename, 
+                             dir + "qso", 
                              QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                              verbose);
 
@@ -729,7 +712,7 @@ int main(int argc, char ** argv)
         ///////////
         ret += RunTestMatrix(dft, "QMO",
                              batchsize, QGEN_QMO,
-                             qmo_filename, 
+                             dir + "qmo", 
                              QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
                              verbose);
 
@@ -738,7 +721,7 @@ int main(int argc, char ** argv)
         ///////////
         ret += RunTestMatrix(dft, "QOO",
                              batchsize, QGEN_QOO,
-                             qoo_filename, 
+                             dir + "qoo", 
                              QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
                              verbose);
 
@@ -747,7 +730,7 @@ int main(int argc, char ** argv)
         ///////////
         ret += RunTestMatrix(dft, "QOV",
                              batchsize, QGEN_QOV,
-                             qov_filename, 
+                             dir + "qov",
                              QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
                              verbose);
 
@@ -756,8 +739,17 @@ int main(int argc, char ** argv)
         ///////////
         ret += RunTestMatrix(dft, "QVV",
                              batchsize, QGEN_QVV,
-                             qvv_filename, 
+                             dir + "qvv",
                              QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                             verbose);
+
+        ///////////////////////
+        // Test Cholesky QSO
+        ///////////////////////
+        ret += RunTestMatrix(cht, "CHQSO",
+                             batchsize, QGEN_CHQSO,
+                             dir + "chqso",
+                             QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                              verbose);
 
 
