@@ -1,4 +1,5 @@
 #include <fstream>
+#include <cmath>
 
 #include "panache/Exception.h"
 #include "panache/ThreeIndexTensor.h"
