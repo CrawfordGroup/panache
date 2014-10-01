@@ -32,14 +32,8 @@ ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
                      const std::string & directory,
                      int qtype,
                      int nthreads)
-    : primary_(primary), nthreads_(nthreads), qtype_(qtype), directory_(directory)
+    : primary_(primary), qtype_(qtype), directory_(directory)
 {
-#ifdef _OPENMP
-    if(nthreads_ <= 0)
-        nthreads_ = omp_get_max_threads();
-#else
-    nthreads_ = 1;
-#endif
     //remove trailing slashes
     while(directory_.size() > 1 && directory_.back() == '/')
         directory_ = directory_.substr(0, directory_.size()-1);
@@ -50,6 +44,8 @@ ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
     nsotri_ = (nso_*(nso_+1))/2;
+
+    SetNThread(nthreads);
 }
 
 
