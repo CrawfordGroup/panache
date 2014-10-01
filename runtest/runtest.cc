@@ -329,7 +329,7 @@ int TestMatrix(const string & title, const string & reffile,
     // DON'T TEST ELEMENTS IF DIMENSIONS ARE WRONG
     if(nfailures > 0)
     {
-        *out << "... not continuing with matrix test since dimensions are wrong!\n";
+        *out << "... not continuing with matrix test since dimensions are wrong!\n\n\n\n\n\n";
         return nfailures;
     }
 
