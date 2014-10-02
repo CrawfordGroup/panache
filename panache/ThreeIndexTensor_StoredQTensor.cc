@@ -309,15 +309,29 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
 }
 
 
-void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, double * target)
+void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, 
+                                                      double * target)
 {
-    const double* buffer = integral->buffer();
-    SharedBasisSet basis = integral->basis();
+    SharedBasisSet basis = eris[0]->basis();
 
     const int nbf = basis->nbf();
 
+    size_t nthreads = eris.size();
+
+
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+#endif
     for (int M = 0; M < basis->nshell(); M++) 
     {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+        TwoBodyAOInt * integral = eris[threadnum].get();
+        const double* buffer = integral->buffer();
+
         int nM = basis->shell(M).nfunction();
         int mstart = basis->shell(M).function_index();
 
@@ -344,10 +358,10 @@ void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, d
 }
 
 
-void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int row, double* target)
+void ThreeIndexTensor::LocalQTensor::ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, 
+                                                 int row, double* target)
 {
-    const double* buffer = integral->buffer();
-    SharedBasisSet basis = integral->basis();
+    SharedBasisSet basis = eris[0]->basis();
 
     const int nbf = basis->nbf();
 
@@ -364,9 +378,23 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
     int oR = r - rstart;
     int os = s - sstart;
 
+    size_t nthreads = eris.size();
 
+    
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+#endif
     for (int M = 0; M < basis->nshell(); M++)
     {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+
+        TwoBodyAOInt * integral = eris[threadnum].get();
+        const double* buffer = integral->buffer();
+
         int nM = basis->shell(M).nfunction();
         int mstart = basis->shell(M).function_index();
 
@@ -410,7 +438,7 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     double * diag = new double[n2];
     std::fill(diag, diag + n2, 0.0);
 
-    ComputeDiagonal_(eris[0].get(), diag);
+    ComputeDiagonal_(eris, diag);
 
 
     // Temporary cholesky factor
@@ -440,33 +468,29 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         L.push_back(new double[n2]);
         std::fill(L.back(), L.back()+n2, 0.0);
 
-        ComputeRow_(eris[0].get(), pivot, L[nQ]);
+        ComputeRow_(eris, pivot, L[nQ]);
 
         // [(m|Q) - L_m^P L_Q^P]
-        for (int P = 0; P < nQ; P++) {
+        for (int P = 0; P < nQ; P++)
             C_DAXPY(n2,-L[P][pivots[nQ]],L[P],1,L[nQ],1);
-        }
 
         // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
         C_DSCAL(n2, 1.0 / L_QQ, L[nQ], 1);
 
         // Zero the upper triangle
-        for (size_t P = 0; P < pivots.size(); P++) {
+        for (size_t P = 0; P < pivots.size(); P++)
             L[nQ][pivots[P]] = 0.0;
-        }
 
         // Set the pivot factor
         L[nQ][pivot] = L_QQ;
 
         // Update the Schur complement diagonal
-        for (int P = 0; P < n2; P++) {
+        for (int P = 0; P < n2; P++)
             diag[P] -= L[nQ][P] * L[nQ][P];
-        }
 
         // Force truly zero elements to zero
-        for (size_t P = 0; P < pivots.size(); P++) {
+        for (size_t P = 0; P < pivots.size(); P++)
             diag[pivots[P]] = 0.0;
-        }
 
         nQ++;
     }

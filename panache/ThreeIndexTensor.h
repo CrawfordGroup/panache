@@ -517,8 +517,8 @@ protected:
 
     private:
         // for cholesky
-        void ComputeDiagonal_(TwoBodyAOInt * integral, double * target);
-        void ComputeRow_(TwoBodyAOInt * integral, int row, double* target);
+        void ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, double * target);
+        void ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, int row, double* target);
     };
 
     class DiskQTensor : public LocalQTensor
