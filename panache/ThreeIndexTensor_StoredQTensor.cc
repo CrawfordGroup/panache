@@ -314,12 +314,14 @@ void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, d
     const double* buffer = integral->buffer();
     SharedBasisSet basis = integral->basis();
 
+    const int nbf = basis->nbf();
+
     for (int M = 0; M < basis->nshell(); M++) 
     {
         int nM = basis->shell(M).nfunction();
         int mstart = basis->shell(M).function_index();
 
-        for (int N = 0; N < basis->nshell(); N++) 
+        for (int N = 0; N <= M; N++) 
         {
             int nint = integral->compute_shell(M,N,M,N);
 
@@ -331,7 +333,8 @@ void ThreeIndexTensor::LocalQTensor::ComputeDiagonal_(TwoBodyAOInt * integral, d
     
                 for (int om = 0; om < nM; om++) {
                     for (int on = 0; on < nN; on++) {
-                        target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                        target[(om + mstart) * nbf + (on + nstart)] =
+                        target[(on + nstart) * nbf + (om + mstart)] =
                             buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
                     }
                 }
@@ -346,8 +349,10 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
     const double* buffer = integral->buffer();
     SharedBasisSet basis = integral->basis();
 
-    int r = row / basis->nbf();
-    int s = row % basis->nbf();
+    const int nbf = basis->nbf();
+
+    int r = row / nbf;
+    int s = row % nbf;
     int R = basis->function_to_shell(r);
     int S = basis->function_to_shell(s);
 
@@ -359,12 +364,13 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
     int oR = r - rstart;
     int os = s - sstart;
 
+
     for (int M = 0; M < basis->nshell(); M++)
     {
         int nM = basis->shell(M).nfunction();
         int mstart = basis->shell(M).function_index();
 
-        for (int N = 0; N < basis->nshell(); N++)
+        for (int N = 0; N <= M; N++)
         {
             int nint = integral->compute_shell(M,N,R,S);
 
@@ -375,7 +381,8 @@ void ThreeIndexTensor::LocalQTensor::ComputeRow_(TwoBodyAOInt * integral, int ro
     
                 for (int om = 0; om < nM; om++) {
                     for (int on = 0; on < nN; on++) {
-                        target[(om + mstart) * basis->nbf() + (on + nstart)] =
+                        target[(om + mstart) * nbf + (on + nstart)] =
+                        target[(on + nstart) * nbf + (om + mstart)] =
                             buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
                     }
                 }
