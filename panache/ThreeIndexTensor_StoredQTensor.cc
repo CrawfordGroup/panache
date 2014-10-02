@@ -148,7 +148,17 @@ void ThreeIndexTensor::StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetr
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
 {
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
+
     GenDFQso_(fit, primary, auxiliary, nthreads);
+
+#ifdef PANACHE_TIMING
+    tim.Stop();
+    GenTimer().AddTime(tim);
+#endif
 }
 
 void ThreeIndexTensor::StoredQTensor::GenCHQso(const SharedBasisSet primary,
@@ -156,7 +166,17 @@ void ThreeIndexTensor::StoredQTensor::GenCHQso(const SharedBasisSet primary,
                                      int storeflags,
                                      int nthreads)
 {
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
+
     GenCHQso_(primary, delta, storeflags, nthreads);
+
+#ifdef PANACHE_TIMING
+    tim.Stop();
+    GenTimer().AddTime(tim);
+#endif
 }
 
 
@@ -187,11 +207,6 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
 {
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-
     int maxpershell = primary->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
@@ -291,12 +306,6 @@ void ThreeIndexTensor::LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetr
         delete [] A[i];
         delete [] B[i];
     }
-
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    GenTimer().AddTime(tim);
-#endif
-
 }
 
 
@@ -382,11 +391,6 @@ void ThreeIndexTensor::LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                                                int storeflags,
                                                int nthreads)
 {
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-
     std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
 
     for(int i = 0; i < nthreads; i++)

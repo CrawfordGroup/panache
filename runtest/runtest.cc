@@ -764,6 +764,7 @@ int main(int argc, char ** argv)
 
 
         dft.PrintTimings();
+        cht.PrintTimings();
 
     }
     catch(const exception & ex)

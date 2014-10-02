@@ -478,7 +478,24 @@ void ThreeIndexTensor::PrintTimings(void) const
 {
     #ifdef PANACHE_TIMING
 
-    output::printf("\n\n  ==> LibPANACHE DF Tensor Timings <==\n\n");
+    const char * name = "??";
+    switch (qtype_)
+    {
+        case QGEN_DFQSO:
+        {
+            name = "DF";
+            break;
+        }
+        case QGEN_CHQSO:
+        {
+            name = "Cholesky";
+            break;
+        }
+        default:
+            break;
+    }
+
+    output::printf("\n\n  ==> LibPANACHE %s Tensor Timings <==\n\n", name);
     output::printf("*Time (in microseconds), followed by number of times called in parentheses*\n");
     //output::printf(std::string(80, '-').c_str());
     output::printf("\n");
