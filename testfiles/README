@@ -1,0 +1,3 @@
+H2O is not a good test molecule for cholesky because of the degeneracy
+caused by the equivalent hydrogens. This causes random pivot point that
+in the end don't really matter but will cause the strict tests to fail.
