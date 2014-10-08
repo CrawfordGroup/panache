@@ -7,7 +7,6 @@ add_library(panache
             ThreeIndexTensor.cc
             DFTensor.cc
             CHTensor.cc
-            ThreeIndexTensor_StoredQTensor.cc
             FittingMetric.cc
             Fjt.cc
             GaussianShell.cc
@@ -22,6 +21,11 @@ add_library(panache
             fortran_interface.cc
             c_convert.cc
             Lapack.cc
+            storedqtensor/StoredQTensor.cc
+            storedqtensor/LocalQTensor.cc
+            storedqtensor/MemoryQTensor.cc
+            storedqtensor/DiskQTensor.cc
+            storedqtensor/StoredQTensorFactory.cc
             ${LIBINT_FILES}
             ${PARALLEL_FILES}
             ${CYCLOPS_FILES}

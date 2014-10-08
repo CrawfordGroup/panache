@@ -7,6 +7,8 @@
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
 #include "panache/Output.h"
+#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensorFactory.h"
 
 namespace panache {
 
@@ -22,7 +24,7 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 }
 
 
-std::unique_ptr<ThreeIndexTensor::StoredQTensor> CHTensor::GenQso(int storeflags) const
+std::unique_ptr<StoredQTensor> CHTensor::GenQso(int storeflags) const
 {
     auto qso = StoredQTensorFactory(storeflags);
 

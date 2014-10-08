@@ -13,10 +13,6 @@
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
-#ifdef PANACHE_CYCLOPS
-#include <ctf.hpp>
-#endif
-
 namespace panache
 {
 
@@ -24,6 +20,7 @@ class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class TwoBodyAOInt;
+class StoredQTensor;
 
 namespace reorder
 {
@@ -384,218 +381,6 @@ public:
 
 protected:
 
-    ///@{ Storage of the 3-index tensors
-
-    class StoredQTensor
-    {
-
-    public:
-        StoredQTensor();
-        virtual ~StoredQTensor();
-        int StoreFlags(void) const;
-        int Read(double * data, int nij, int ijstart);
-        int ReadByQ(double * data, int nq, int qstart);
-        void Reset(void);
-        void Clear(void);
-        void Init(int naux, int ndim1, int ndim2, int storeflags, const std::string & name);
-
-        void GenDFQso(const std::shared_ptr<FittingMetric> & fit,
-                      const SharedBasisSet primary,
-                      const SharedBasisSet auxiliary,
-                      int nthreads);
-
-        void GenCHQso(const SharedBasisSet primary,
-                      double delta,
-                      int storeflags,
-                      int nthreads);
-
-        typedef std::pair<double *, int> TransformMat;
-
-        void Transform(const std::vector<TransformMat> & left,
-                       const std::vector<TransformMat> & right,
-                       std::vector<StoredQTensor *> results,
-                       int nthreads);
-
-        CumulativeTime & GenTimer(void);
-        CumulativeTime & GetBatchTimer(void);
-        CumulativeTime & GetQBatchTimer(void);
-
-        int naux(void) const;
-        int ndim1(void) const;
-        int ndim2(void) const;
-        int ndim12(void) const;
-        int packed(void) const;
-        int byq(void) const;
-        int calcindex(int i, int j) const;
-        const std::string & name(void) const;
-
-    protected:
-        virtual void Init_(void) = 0;
-        virtual void Reset_(void) = 0;
-        virtual void Clear_() = 0;
-        virtual void Read_(double * data, int nij, int ijstart) = 0;
-        virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
-
-        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
-                               const SharedBasisSet primary,
-                               const SharedBasisSet auxiliary,
-                               int nthreads) = 0;
-
-        virtual void GenCHQso_(const SharedBasisSet primary,
-                               double delta,
-                               int storeflags,
-                               int nthreads) = 0;
-
-         
-        virtual void Transform_(const std::vector<TransformMat> & left,
-                                const std::vector<TransformMat> & right,
-                                std::vector<StoredQTensor *> results,
-                                int nthreads) = 0;
-
-        int storesize(void) const;
-
-    private:
-        int naux_;   //!< Number of auxiliary functions
-        int ndim1_;  //!< Length of index 1
-        int ndim2_;  //!< Length of index 2
-        int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
-        int storeflags_; //!< How is this tensor stored
-        std::string name_;
-        CumulativeTime gen_timer_; //!< Timer for the generation of this tensor
-        CumulativeTime getijbatch_timer_; //!< Timer for getting batch by orbital index
-        CumulativeTime getqbatch_timer_; //!< Timer for getting batch by q index
-
-        // disable copying, etc
-        StoredQTensor & operator=(const StoredQTensor & rhs) = delete;
-        StoredQTensor(const StoredQTensor & rhs) = delete;
-        StoredQTensor(const StoredQTensor && rhs) = delete;
-    };
-
-
-    class LocalQTensor : public StoredQTensor
-    {
-    public:
-        LocalQTensor();
-
-    protected:
-        virtual void Write_(double * data, int nij, int ijstart) = 0;
-        virtual void WriteByQ_(double * data, int nij, int ijstart) = 0;
-
-        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
-                             const SharedBasisSet primary,
-                             const SharedBasisSet auxiliary,
-                             int nthreads);
-
-        virtual void GenCHQso_(const SharedBasisSet primary,
-                               double delta,
-                               int storeflags,
-                               int nthreads);
-
-        virtual void Transform_(const std::vector<TransformMat> & left,
-                                const std::vector<TransformMat> & right,
-                                std::vector<StoredQTensor *> results,
-                                int nthreads);
-
-    private:
-        // for cholesky
-        void ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, double * target);
-        void ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, int row, double* target);
-    };
-
-    class DiskQTensor : public LocalQTensor
-    {
-    public:
-        DiskQTensor();
-
-    protected:
-        virtual void Reset_(void);
-        virtual void Write_(double * data, int nij, int ijstart);
-        virtual void WriteByQ_(double * data, int nij, int ijstart);
-        virtual void Read_(double * data, int nij, int ijstart);
-        virtual void ReadByQ_(double * data, int nq, int qstart);
-        virtual void Clear_(void);
-        virtual void Init_(void);
-
-    private:
-        std::unique_ptr<std::fstream> file_;
-
-        void OpenFile_(void);
-        void CloseFile_(void);
-    };
-
-    
-    class MemoryQTensor : public LocalQTensor
-    {
-    public:
-        MemoryQTensor();
-
-    protected:
-        virtual void Reset_(void);
-        virtual void Write_(double * data, int nij, int ijstart);
-        virtual void WriteByQ_(double * data, int nij, int ijstart);
-        virtual void Read_(double * data, int nij, int ijstart);
-        virtual void ReadByQ_(double * data, int nq, int qstart);
-        virtual void Clear_(void);
-        virtual void Init_(void);
-
-    private:
-        std::unique_ptr<double[]> data_;
-
-    };
-
-
-    #ifdef PANACHE_CYCLOPS
-    class CyclopsQTensor : public StoredQTensor
-    {
-    private:
-        std::unique_ptr<CTF_Tensor> tensor_;
-
-        void DecomposeIndex_(int64_t index, int & i, int & j, int & q);
-        std::unique_ptr<CTF_Matrix> FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name);
- 
-
-    protected:
-        virtual void Reset_(void);
-        virtual void Read_(double * data, int nij, int ijstart);
-        virtual void ReadByQ_(double * data, int nq, int qstart);
-        virtual void Clear_(void);
-        virtual void Init_(void);
-
-        virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
-                               const SharedBasisSet primary,
-                               const SharedBasisSet auxiliary,
-                               int nthreads);
-
-        virtual void GenCHQso_(const SharedBasisSet primary,
-                               double delta,
-                               int storeflags,
-                               int nthreads);
-
-        virtual void Transform_(const std::vector<TransformMat> & left,
-                                const std::vector<TransformMat> & right,
-                                std::vector<StoredQTensor *> results,
-                                int nthreads);
-
-    public:
-        CyclopsQTensor();
-    };
-    #endif
-
-    /*!
-     * \brief Create a StoredQTensor object
-     *
-     * \param [in] naux Number of auxiliary functions
-     * \param [in] ndim1 Length along dimension 1
-     * \param [in] ndim2 Length along dimension 2
-     * \param [in] storeflags How to store (disk, memory, packed, etc)
-     * \param [in] name Name of the tensor
-     * \return Pointer to a an object derived from StoredQTensor
-     */
-    std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2,
-                                                        int storeflags,
-                                                        const std::string & name) const;
-
-    std::unique_ptr<StoredQTensor> StoredQTensorFactory(int storeflags) const;
 
     /*!
      * \brief Generate the base Qso tensor
@@ -634,6 +419,7 @@ protected:
 
     int nthreads_;  //!< Number of threads to use
 
+    std::string directory_;  //!< Directory to use to store matrices on disk (if requested)
 
 
 private:
@@ -673,7 +459,6 @@ private:
     CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()
 
 
-    std::string directory_;  //!< Directory to use to store matrices on disk (if requested)
 
 
 

@@ -8,6 +8,8 @@
 #include "panache/Output.h"
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
+#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensorFactory.h"
 
 namespace panache {
 
@@ -30,11 +32,11 @@ DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
 
 }
 
-std::unique_ptr<ThreeIndexTensor::StoredQTensor> DFTensor::GenQso(int storeflags) const
+std::unique_ptr<StoredQTensor> DFTensor::GenQso(int storeflags) const
 {
     // Always gen qso as packed and by q
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
-                                    storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso");
+                                    storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso", directory_);
 
     qso->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
     return qso;
