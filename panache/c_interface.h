@@ -119,6 +119,7 @@ extern "C" {
      *                                       Expected to be of length \p ncenters.
      * \param [in] primary_shells  Information about each shell in the primary basis.
      *                             Length should be the sum of \p primary_nshellspercenter.
+     * \param [in] delta     Maximum error in the Cholesky procedure                            
      * \param [in] directory A full path to a file to be used for storing matrices to disk.
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.

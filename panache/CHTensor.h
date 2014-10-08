@@ -25,6 +25,7 @@ public:
      * FittingMetric
      *
      * \param [in] primary The primary basis set
+     * \param [in] delta Maximum error in the Cholesky procedure
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 

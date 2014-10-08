@@ -299,10 +299,10 @@ public:
     /*!
      * \brief Compute the integrals between 4 (contracted) basis functions 
      *
-     * \param [in] sh1 First basis function
-     * \param [in] sh2 Second basis function
-     * \param [in] sh3 Third basis function
-     * \param [in] sh4 Fourth basis function
+     * \param [in] bf1 First basis function
+     * \param [in] bf2 Second basis function
+     * \param [in] bf3 Third basis function
+     * \param [in] bf4 Fourth basis function
      * \return The integral ( bf1 bf2 | bf3 bf4 )
      */
     virtual double compute_basisfunction(int bf1, int bf2, int bf3, int bf4);

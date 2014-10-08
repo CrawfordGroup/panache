@@ -394,9 +394,8 @@ extern "C" {
      * \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
      *                          Length should be the sum of primary_nprimpershell, with grouping
      *                          by shell.
-     * \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
-     * \param [in] auxfilenamelen Actual length of \p auxfilename
      *
+     * \param [in] delta     Maximum error in the Cholesky procedure
      * \param [in] directory A full path to a file to be used if storing matrices to disk.
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.

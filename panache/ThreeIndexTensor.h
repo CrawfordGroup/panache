@@ -48,6 +48,7 @@ public:
      *
      * \param [in] primary The primary basis set
      * \param [in] directory Full path to a directory to put scratch files
+     * \param [in] qtype The type of tensor stored (Cholesky, DF)
      * \param [in] nthreads Max number of threads to use
      */ 
     ThreeIndexTensor(SharedBasisSet primary,
@@ -279,13 +280,36 @@ public:
 
 
 
-
+    /*!
+     * \brief A class for iterating over a three-index tensor
+     *
+     * Iteration can happen "by Q" or "by IJ", depending on ITTYPE
+     *
+     * This class is not meant to be used directly, but through 
+     * IteratedQTensorByQ and IteratedQTensorByIJ
+     *
+     * Incrementing can only be done with a prefix ++ (ie, ++it, not it++)
+     *
+     * Use Get() to get a pointer to the current data for the indices stored in the
+     * iterator.
+     **/
     template<typename ITTYPE>
     class IteratedQTensor
     {
         public:
+            /// A function that takes an index, and returns the size of the batch retrieved 
             typedef std::function<int(int)> GetBatchFunc;
 
+            /*!
+             * \brief Constructor
+             *
+             * \param [in] tensorflag Which tensor to iterator over
+             * \param [in] buf Where to place the retrieved batches
+             * \param [in] bufsize The size of the buffer \p buf (in number of doubles)
+             * \param [in] batchsize The size of a batch of the tensor
+             * \param [in] it Base iterator
+             * \param [in] gbf Function to obtain the batches
+             */
             IteratedQTensor(int tensorflag, double * buf, int bufsize,
                             int batchsize, const ITTYPE & it, GetBatchFunc gbf)
                 : gbf_(gbf),it_(it),buf_(buf),bufsize_(bufsize),batchsize_(batchsize)
@@ -297,10 +321,24 @@ public:
             // so no need to deep copy
             IteratedQTensor(const IteratedQTensor & rhs) = default;
 
+            /*!
+             *  \brief Is the iterator in a valid state or not
+             */ 
             operator bool() const { return nbatch_ > 0 && it_; }
+
+            /*!
+             *  \brief Is the iterator in a valid state or not
+             */
             bool Valid(void) const { return nbatch_ > 0 && it_; }
 
+
             // Prefix increments only
+            /*!
+             *  \brief Increment and obtain the next batch of the three-index tensor
+             *
+             *  If there is no more batches when this is called, the iterator will be
+             *  placed in the 'invalid' state (and Valid() and bool() will return false).
+             */
             IteratedQTensor & operator++()
             {
                 ++it_;
@@ -316,29 +354,50 @@ public:
                 return *this;
             }
 
+            /*!
+             * \brief Pointer to the data for the given indices
+             */
             double * Get(void) { return curptr_; }
 
+
+            /*!
+             * \brief Obtain data stored in a batch
+             */
             double operator[](int i) { return curptr_[i]; }
 
+            /*!
+             * \brief Obtain the size of a batch
+             */
             int Batchsize(void) const { return batchsize_; }
 
+            /*!
+             * \brief Get the current (flattened) index for the current batch
+             */ 
             int Index(void) const { return it_.Index(); }
 
         protected:
+
+            /*!
+             * \brief Get the stored iterator
+             */
             const ITTYPE & Iterator(void) const { return it_; }
 
         private:
-            GetBatchFunc gbf_;
+            GetBatchFunc gbf_;  //!< Function pointer to get batches
 
-            ITTYPE it_;
-            double * curptr_;
-            int nbatch_;   //!< Number of batches currently in the buffer
-            int curbatch_; //!< The one I'm currently on
+            ITTYPE it_;         //!< Stored iterator object
+            double * curptr_;   //!< Pointer to data corresponding to the current iterator value
+            int nbatch_;        //!< Number of batches currently in the buffer
+            int curbatch_;      //!< The batch I'm currently on
 
-            double * buf_;
-            int bufsize_;
-            int batchsize_;
+            double * buf_;      //!< Where to store the data
+            int bufsize_;       //!< Size of the buffer
+            int batchsize_;     //!< Size of a single batch
 
+
+            /*!
+             * \brief Actually Get a batch (through gbf_)
+             */
             void GetBatch(void)
             {
                 nbatch_ = gbf_(it_.Index());
@@ -348,34 +407,84 @@ public:
 
     };
 
+
+    /*!
+     * \brief Iterate over a three-index tensor by Q
+     */ 
     class IteratedQTensorByQ : public IteratedQTensor<QIterator>
     {
         public:
+            /*!
+             * \brief Constructor
+             *
+             * \param [in] tensorflag Which tensor to iterator over
+             * \param [in] buf Where to place the retrieved batches
+             * \param [in] bufsize The size of the buffer \p buf (in number of doubles)
+             * \param [in] batchsize The size of a batch of the tensor
+             * \param [in] it Base iterator
+             * \param [in] gbf Function to obtain the batches
+             */
             IteratedQTensorByQ(int tensorflag, double * buf, int bufsize,
                                int batchsize, const QIterator & it, GetBatchFunc gbf)
                     : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
 
 
+            /*!
+             * \brief Get the current value of the auxiliary index
+             */ 
             int q(void) const { return Iterator().q(); } 
     };
+
 
     class IteratedQTensorByIJ : public IteratedQTensor<IJIterator>
     {
         public:
+            /*!
+             * \brief Constructor
+             *
+             * \param [in] tensorflag Which tensor to iterator over
+             * \param [in] buf Where to place the retrieved batches
+             * \param [in] bufsize The size of the buffer \p buf (in number of doubles)
+             * \param [in] batchsize The size of a batch of the tensor
+             * \param [in] it Base iterator
+             * \param [in] gbf Function to obtain the batches
+             */
             IteratedQTensorByIJ(int tensorflag, double * buf, int bufsize,
                                 int batchsize, const IJIterator & it, GetBatchFunc gbf)
                     : IteratedQTensor(tensorflag, buf, bufsize, batchsize, it, gbf) { }
 
 
+            /*!
+             * \brief Get the current value of the first index
+             */ 
             int i(void) const { return Iterator().i(); }
+
+            /*!
+             * \brief Get the current value of the second index
+             */ 
             int j(void) const { return Iterator().j(); }
+
+            /*!
+             * \brief Get the current value of the combined orbital index
+             */ 
             int ij(void) const { return Iterator().ij(); }
     };
 
 
 
+    /*!
+     * \brief Obtain an iterator to a specific stored three-index tensor
+     *
+     * Iteration will happen over the auxiliary index
+     */
     IteratedQTensorByQ IterateByQ(int tensorflag, double * buf, int bufsize);
 
+
+    /*!
+     * \brief Obtain an iterator to a specific stored three-index tensor
+     *
+     * Iteration will happen over the combined orbital index
+     */
     IteratedQTensorByIJ IterateByIJ(int tensorflag, double * buf, int bufsize);
 
 
@@ -456,10 +565,8 @@ private:
     std::unique_ptr<StoredQTensor> qvv_;  //!< Qvv matrix
     ///@}
 
+
     CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()
-
-
-
 
 
     /*!
