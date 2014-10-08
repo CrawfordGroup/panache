@@ -34,7 +34,7 @@ ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
                      const std::string & directory,
                      int qtype,
                      int nthreads)
-    : primary_(primary), qtype_(qtype), directory_(directory)
+    : primary_(primary), directory_(directory), qtype_(qtype)
 {
     //remove trailing slashes
     while(directory_.size() > 1 && directory_.back() == '/')
