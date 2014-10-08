@@ -31,13 +31,23 @@ class Orderings;
 class CNorm;
 }
 
+
+/*!
+ *   \brief A generic three-index tensor
+ *
+ *   Specific 3-index tensors (Cholesky, Density-fitted) are
+ *   generated through derived classes. The members of this class are
+ *   used to store and transorm those tensors.
+ *
+ *   This class also stores the MO coefficient matrix and threading information.
+ */
 class ThreeIndexTensor
 {
 public:
     /*!
      * \brief Constructor
      *
-     * Initializes the basis set members
+     * Initializes the basis set shared pointer and other information
      *
      * \param [in] primary The primary basis set
      * \param [in] directory Full path to a directory to put scratch files
@@ -153,8 +163,13 @@ public:
     /*!
      * \brief Obtain the dimensions of a tensor
      *
+     * The 3-index tensor is accessed in row-major order
+     * and has dimensions of (naux, ndim1, ndim2) if storage is
+     * QSTORAGE_BYQ or (ndim1, ndim2, naux) otherwise.
+     *
+     *
      * \param [in] tensorflag Which tensor to query (see Flags.h)
-     * \param [out] naux Number of auxiliary basis functions
+     * \param [out] naux Number of auxiliary index elements
      * \param [out] ndim1 First dimension
      * \param [out] ndim2 Second dimension
      * \return Total tensor size (depends on packing)
@@ -229,6 +244,13 @@ public:
 
 
     /*!
+     * \copybrief   GetQBatch
+     * \copydetails GetQBatch
+     */
+    int GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart);
+
+
+    /*!
      * \brief Retrieves a batch of a 3-index tensor 
      *
      * See \ref theory_page for what these tensors actually are, and memory_sec for more information
@@ -253,49 +275,8 @@ public:
 
 
     /*!
-     * \brief Retrieves a batch of a 3-index tensor 
-     *
-     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*batchsize elements with
-     * the index of the auxiliary basis function as the slowest index.
-     *
-     * The batchsize can be obtained using QBatchSize()
-     *
-     * Call this and process the batches, incrementing qstart by the return value,
-     * until this function returns zero.
-     *
-     * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] outbuf Memory location to store the batch of tensors
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart Iterator representing where to start
-     * \return The number of batches actually stored in the buffer.
-     */
-    int GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart);
-
-
-    /*!
-     * \brief Retrieves a batch of a 3-index tensor 
-     *
-     * See \ref theory_page for what these tensors actually are, and memory_sec for more information
-     * about memory.
-     *
-     * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*naux elements with the combined orbital index
-     * as the slowest index.
-     *
-     * The batchsize can be obtained using BatchSize()
-     *
-     * Call this and process the batches, incrementing qstart by the return value,
-     * until this function returns zero.
-     *
-     * \param [in] outbuf Memory location to store the tensor
-     * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] bufsize The size of \p outbuf (in number of doubles)
-     * \param [in] qstart Iterator representing where to start
-     * \return The number of batches actually stored in the buffer.
+     * \copybrief   GetBatch
+     * \copydetails GetBatch
      */
     int GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart);
 
