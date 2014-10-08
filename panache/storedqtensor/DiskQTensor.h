@@ -1,5 +1,6 @@
 /*! \file
  * \brief Three-index tensor storage on disk (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -15,6 +16,7 @@ namespace panache
 
 /*!
  *  \brief Class for storing a 3-index tensor on disk
+ *  \ingroup storedqgroup
  */
 class DiskQTensor : public LocalQTensor
 {

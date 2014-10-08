@@ -1,0 +1,4 @@
+/** \defgroup storedqgroup 3-Index Tensor Storage
+ *
+ *  Storage of the 3-Index tensors in various ways
+ */

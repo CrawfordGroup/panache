@@ -1,5 +1,6 @@
 /*! \file
  * \brief Create a three-index tensor storage object (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -16,6 +17,7 @@ class StoredQTensor;
 
 /*!
  * \brief Create and initialize a StoredQTensor object
+ * \ingroup storedqgroup
  *
  *
  * \param [in] naux Number of auxiliary functions
@@ -32,6 +34,7 @@ std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndi
 
 /*!
  * \brief Create a StoredQTensor object
+ * \ingroup storedqgroup
  *
  *  This does not initialize the object since it isn't passed the sizes.
  *

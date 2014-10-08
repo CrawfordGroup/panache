@@ -1,23 +1,6 @@
-/*
- *@BEGIN LICENSE
- *
- * PSI4: an ab initio quantum chemistry software package
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *@END LICENSE
+/*! \file
+ * \brief Iterator over cartesian basis functions (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_CARTESIANITER_H
@@ -27,8 +10,9 @@
 
 namespace panache {
 
-/** CartesianIter gives the ordering of the Cartesian functions
-    that is used in PSI4. */
+/*!
+ * \brief Iterate over cartesian basis functions in PSI4 ordering.
+ */
 class CartesianIter
 {
 private:
@@ -81,10 +65,14 @@ public:
 };
 
 
-/** RedundantCartesianIter objects loop through all possible combinations
-    of a given number of axes.  This is used to compute the transformation
-    matrices that maps a set of Cartesian functions to another set of
-    Cartesian functions in a rotated coordinate system. */
+/*!
+ * \brief Iterate over all possible combinations
+ *
+ *  RedundantCartesianIter objects loop through all possible combinations
+ *  of a given number of axes.  This is used to compute the transformation
+ *  matrices that maps a set of Cartesian functions to another set of
+ *  Cartesian functions in a rotated coordinate system.
+ */
 class RedundantCartesianIter {
 private:
     int done_;
@@ -127,8 +115,9 @@ public:
 };
 
 
-/** Like RedundantCartesianIter, except a, b, and c are fixed to a given
-    value. */
+/*
+ * \brief Like RedundantCartesianIter, except a, b, and c are fixed to a given value.
+ */
 class RedundantCartesianSubIter {
 private:
     int done_;

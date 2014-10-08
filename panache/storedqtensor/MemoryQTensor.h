@@ -1,5 +1,6 @@
 /*! \file
  * \brief Three-index tensor storage in memory (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -13,6 +14,7 @@ namespace panache
 
 /*!
  *  \brief Class for storing a 3-index tensor in memory
+ *  \ingroup storedqgroup
  */
 class MemoryQTensor : public LocalQTensor
 {

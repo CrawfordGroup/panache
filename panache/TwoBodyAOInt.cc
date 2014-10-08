@@ -1,5 +1,5 @@
 /*! \file
- * \brief Base class for two-body AO integrals (header)
+ * \brief Base class for two-body AO integrals (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 

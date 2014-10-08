@@ -1,7 +1,9 @@
 /*! \file
  * \brief Generic three-index tensor storage (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
+
 
 #ifndef PANACHE_STOREDQTENSOR_H
 #define PANACHE_STOREDQTENSOR_H
@@ -22,6 +24,7 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 /*!
  *  \brief Generic/Abstract interface for storing a 3-index tensor
+ *  \ingroup storedqgroup
  */
 class StoredQTensor
 {

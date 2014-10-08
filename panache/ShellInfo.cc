@@ -1,5 +1,5 @@
 /*! \file
- * \brief Holds information about a basis set shell (header)
+ * \brief Holds information about a basis set shell (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 

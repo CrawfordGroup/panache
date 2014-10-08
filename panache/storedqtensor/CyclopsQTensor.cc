@@ -1,5 +1,5 @@
 /*! \file
- * \brief Three-index tensor storage/manipulation with Cyclops (header)
+ * \brief Three-index tensor storage/manipulation with Cyclops (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 

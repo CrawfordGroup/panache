@@ -1,5 +1,6 @@
 /*! \file
  * \brief Generic, local three-index tensor storage (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -19,6 +20,7 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 /*!
  *  \brief Generic/Abstract interface for locally storing a 3-index tensor
+ *  \ingroup storedqgroup
  *
  *  Classes for storing in memory or on disk are derived from this. This class
  *  handles all the transformations, however.

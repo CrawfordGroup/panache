@@ -1,5 +1,5 @@
 /*! \file
- * \brief Create a three-index tensor storage object (header)
+ * \brief Create a three-index tensor storage object (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 

@@ -9,7 +9,9 @@
 #define MAXFAC 100
 #define EPS 1.0E-17
 
-
+/*!
+ * \brief Base class for calculating ERIs the slow way
+ */
 class SlowERIBase
 {
 private:

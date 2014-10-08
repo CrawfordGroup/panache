@@ -1,5 +1,6 @@
 /*! \file
  * \brief Three-index tensor storage/manipulation with Cyclops (header)
+ * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
@@ -20,6 +21,7 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 /*!
  *  \brief Class for tensor manipulation using the Cyclops library
+ *  \ingroup storedqgroup
  */
 class CyclopsQTensor : public StoredQTensor
 {

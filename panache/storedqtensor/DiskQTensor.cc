@@ -1,5 +1,5 @@
 /*! \file
- * \brief Three-index tensor storage on disk (header)
+ * \brief Three-index tensor storage on disk (source)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
