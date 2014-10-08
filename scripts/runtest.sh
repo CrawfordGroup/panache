@@ -7,7 +7,7 @@ echo "===================================================================="
 echo "Testing ${RUNTEST}"
 echo "===================================================================="
 
-for T in ${TESTDIR}/*
+for T in ${TESTDIR}/dmo-*
 do
   for N in `seq 1 4`; do
   for B in `seq 0 5`; do
