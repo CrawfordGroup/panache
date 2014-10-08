@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Three-index tensor storage in memory (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "panache/storedqtensor/MemoryQTensor.h"
 
 namespace panache

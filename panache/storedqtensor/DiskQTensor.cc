@@ -1,3 +1,8 @@
+/*! \file
+ * \brief Three-index tensor storage on disk (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
+
 #include "panache/Exception.h"
 #include "panache/storedqtensor/DiskQTensor.h"
 

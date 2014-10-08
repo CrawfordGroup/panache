@@ -7,7 +7,6 @@
 #define PANACHE_DISKQTENSOR_H
 
 #include <fstream>
-#include <memory>
 
 #include "panache/storedqtensor/LocalQTensor.h"
 

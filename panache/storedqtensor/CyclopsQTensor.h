@@ -1,13 +1,10 @@
 /*! \file
- * \brief Three-index tensor storage in memory (header)
+ * \brief Three-index tensor storage/manipulation with Cyclops (header)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
 #ifndef PANACHE_CYCLOPSQTENSOR_H
 #define PANACHE_CYCLOPSQTENSOR_H
-
-#include <memory>
-#include <vector>
 
 #include <ctf.hpp>
 
@@ -22,7 +19,7 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 
 /*!
- *  \brief Class for itensor manipulation using the Cyclops library
+ *  \brief Class for tensor manipulation using the Cyclops library
  */
 class CyclopsQTensor : public StoredQTensor
 {

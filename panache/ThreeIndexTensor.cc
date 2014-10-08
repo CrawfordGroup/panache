@@ -4,24 +4,20 @@
  */
 
 
-#include <fstream>
-#include <algorithm>
-#include <iostream>
 #include "panache/ThreeIndexTensor.h"
 #include "panache/storedqtensor/StoredQTensor.h"
 #include "panache/storedqtensor/StoredQTensorFactory.h"
-#include "panache/FittingMetric.h"
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
-#include "panache/Lapack.h"
 #include "panache/Exception.h"
+#include "panache/Output.h"
+
 
 // for reordering
 #include "panache/MemorySwapper.h"
 #include "panache/CNorm.h"
 #include "panache/Orderings.h"
 
-#include "panache/Output.h"
 
 #ifdef _OPENMP
 #include <omp.h>

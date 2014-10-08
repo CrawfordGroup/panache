@@ -1,10 +1,10 @@
 /*! \file
- * \brief Three-index tensor storage in memory (header)
+ * \brief Create a three-index tensor storage object (header)
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_CYCLOPSQTENSOR_H
-#define PANACHE_CYCLOPSQTENSOR_H
+#ifndef PANACHE_STOREDQTENSORFACTORY_H
+#define PANACHE_STOREDQTENSORFACTORY_H
 
 #include <memory>
 #include <string>

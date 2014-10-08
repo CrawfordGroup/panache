@@ -6,10 +6,6 @@
 #ifndef PANACHE_LOCALQTENSOR_H
 #define PANACHE_LOCALQTENSOR_H
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "panache/storedqtensor/StoredQTensor.h"
 
 namespace panache

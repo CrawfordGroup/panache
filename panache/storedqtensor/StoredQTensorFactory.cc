@@ -1,8 +1,12 @@
-#include <memory>
-#include <string>
+/*! \file
+ * \brief Create a three-index tensor storage object (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
 
 #include "panache/Flags.h"
 #include "panache/Exception.h"
+
+// All the different StoredQTensor types
 #include "panache/storedqtensor/MemoryQTensor.h"
 #include "panache/storedqtensor/DiskQTensor.h"
 

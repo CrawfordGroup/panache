@@ -3,14 +3,9 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include <fstream>
-#include <cmath>
-
 #include "panache/storedqtensor/LocalQTensor.h"
-//#include "panache/Exception.h"
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
-#include "panache/Timing.h"
 #include "panache/Lapack.h"
 #include "panache/ERI.h"
 #include "panache/Flags.h"

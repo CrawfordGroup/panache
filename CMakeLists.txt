@@ -41,6 +41,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
 # -DFC_SYMBOL - what fortran symbols to use in libqt
+#
+# Note that paths should probably be relative to the panache/ subdirectory
+# (since that is where add_library() is
 list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
@@ -89,7 +92,7 @@ if(PANACHE_CYCLOPS)
     list(APPEND RUNTEST_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
     list(APPEND RUNTEST_LINK_LIBRARIES "${CYCLOPS_PATH}/lib/libctf.a")
     set(PARALLEL_FILES MPI.cc)
-    set(CYCLOPS_FILES ThreeIndexTensor_CyclopsQTensor.cc)
+    set(CYCLOPS_FILES storedqtensor/CyclopsQTensor.cc)
   else(MPI_CXX_FOUND)
     message(ERROR "MPI was not found! This is required for Cyclops")
   endif(MPI_CXX_FOUND)

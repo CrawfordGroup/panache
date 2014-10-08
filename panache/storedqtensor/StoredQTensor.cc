@@ -3,14 +3,8 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include <string>
-#include <memory>
-
 #include "panache/storedqtensor/StoredQTensor.h"
-#include "panache/FittingMetric.h"
 #include "panache/Exception.h"
-#include "panache/BasisSet.h"
-#include "panache/Timing.h"
 #include "panache/Flags.h"
 
 namespace panache

@@ -1,26 +1,28 @@
-#include <fstream>
+/*! \file
+ * \brief Three-index tensor storage/manipulation with Cyclops (header)
+ * \author Benjamin Pritchard (ben@bennyp.org)
+ */
 
-#include "panache/Exception.h"
+#include "panache/storedqtensor/CyclopsQTensor.h"
 #include "panache/Parallel.h"
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"
 #include "panache/BasisSet.h"
-    
+#include "panache/Iterator.h"
+ 
 #ifdef PANACHE_PROFILE
 #include "panache/Output.h"
 #endif
 
-#ifdef _OPENMP
+// Using this file requires cyclops & openmp
+#include <ctf.hpp>
 #include <omp.h>
-#endif
+
 
 namespace panache
 {
 
 
-//////////////////////////////
-// CyclopsQTensor
-//////////////////////////////
 void CyclopsQTensor::Reset_(void)
 {
     // nothing needed
