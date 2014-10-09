@@ -736,15 +736,17 @@ extern "C" {
      *
      * Depends on packing
      * 
+     * \note This function takes into account 1-based indexing from fortran, so you don't
+     *       have to (ie this function subtracts 1 from *i and *j)
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \param [in] i First orbital index
      * \param [in] j Second orbital index
      * \param [out] ij Combined orbital index, depending on packing
      */
-    void panachef_calcindex(int_t * df_handle, int_t * tensorflag, int_t * i, int_t * j, int_t * ij)
+    void panachef_calcindex_(int_t * df_handle, int_t * tensorflag, int_t * i, int_t * j, int_t * ij)
     {
-        *ij = panache_calcindex(*df_handle, *tensorflag, *i, *j);
+        *ij = panache_calcindex(*df_handle, *tensorflag, (*i)-1, (*j)-1);
     }
 
 

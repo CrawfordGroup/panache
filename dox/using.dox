@@ -14,13 +14,16 @@ The page uses the following definitions:
  | Term    | Description                                                             |
  |---------|-------------------------------------------------------------------------|
  | nso     | Number of \b primary basis functions (spherical or cartesian)           |
- | naux    | Number of \b auxiliary basis functions (spherical or cartesian)         |
+ | naux    | Number of \b auxiliary basis functions                                  |
  | nmo     | Number of molecular orbitals                                            |
  | nocc    | Number of occupied molecular orbitals                                   |
  | nvir    | Number of virtual molecular orbitals                                    |
+ | q       | An auxiliary index                                                      |
+ | i, j    | Generic orbital indices                                                 |
+ | ij      | Combined orbital index (if packed, i*(i+1)/2+j, else i*ndim2 + j        |
 
 The total size of a 3-index "Q" tensor is the number of auxiliary indices times
-the number of combined orbital indices. 
+the number of combined orbital indices ("ij"). 
 
 The number of combined orbital indices depends on the type of tensor (ie mo vs. occupied-occupied, etc)
 and the packing. The following table shows the number of combined orbital indices for a given tensor
@@ -28,11 +31,11 @@ and the packing. The following table shows the number of combined orbital indice
 
  | Tensor | Packed Size      | Unpacked Size |
  |--------|------------------|---------------|
- | Qso    | nso*(nso+1)/2    |               |
- | Qmo    | nmo*(nmo+1)/2    |               |
- | Qoo    | nocc*(nocc+1)/2  |               |
+ | Qso    | nso*(nso+1)/2    | nso*nso       |
+ | Qmo    | nmo*(nmo+1)/2    | nmo*nmo       |
+ | Qoo    | nocc*(nocc+1)/2  | nocc*nocc     |
  | Qov    |                  | nocc*nvir     |
- | Qvv    | nvir*(nvir+1)/2  |               |
+ | Qvv    | nvir*(nvir+1)/2  | nvir*nvir     |
 
 
 
@@ -52,11 +55,17 @@ DFTensor::GetQBatch() or panache_getqbatch() corresponds to a row for the
 
 
 
+\subsection frozen Frozen orbitals
+
+PANACHE supports frozen occupied orbitals. These are set with 
+ThreeIndexTensor::SetNOcc(), panache_setnocc, panachef_setnocc.
+In this case, orbital counting for Qmo, Qoo, and Qov start
+at the first non-frozen orbital.
 
 
 \section usage_sec Typical Workflow
 
-\subsection usage_c_sec C Interface
+\subsection usage_c_sec Density Fitting C Interface
 
 Include file:
 
@@ -85,17 +94,24 @@ C_ShellInfo * primary_shells;   // Primary shell info (length = sum of primary_n
 int * aux_nshellspercenter;     // Number of aux shells on each center (length = ncenters)
 C_ShellInfo * aux_shells;       // Aux shell info (length = sum of aux_nshellspercenter)
 
-char * df_filename;             // Where to store matrices if disk is used. Can be empty (""),
-                                // but not NULL. Will be overwritten if used and file exists
+char * df_dir;                  // Where to store matrices if disk is used. Can be empty (""),
+                                // but not NULL. Will be overwritten if used and files exist
+
+int nthreads;                   // Number of OpenMP threads to use
 
 
 /*.... fill in the above information ...*/
 
 
-int dfhandle = panache_init(ncenters, atoms, normalized,
-                            primary_nshellspercenter, primary_shells,
-                            aux_nshellspercenter, aux_shells,
-                            filename);
+int dfhandle = panache_dfinit(ncenters, atoms, normalized,
+                              primary_nshellspercenter, primary_shells,
+                              aux_nshellspercenter, aux_shells,
+                              filename, nthreads);
+
+/************************************************/
+/* You can also use panache_dfinit2() and give  */
+/*  it a file for the auxiliary basis!          */
+/************************************************/
 
 // panache makes copies of all this information, so it can be safely deleted
 delete [] atoms;
@@ -105,14 +121,6 @@ delete [] aux_nshellspercenter;
 delete [] aux_shells;
 \endcode
 
-Optionally, set the number of threads used by the this instance of the library. Default
-is to use as many threads as there are cores or the number specified by the
-environment variable OMP_NUM_THREADS.
-
-\code{.c}
-panache_setnthread(dfhandle, <some_number>);
-\endcode
-
 If needed, we need to set the C matrix (MO coefficient matrix) to be used in calculating Qmo, etc.
 This is not needed if you are only generating/using Qso
 
@@ -120,9 +128,10 @@ This is not needed if you are only generating/using Qso
 double * cmat;
 int nmo;
 
-/*... get cmat & number of MOs ...*/
+/*... fill in cmat & number of MOs ...*/
 
-panache_setcmatrix(dfhandle, cmat, nmo, 0);  // last argument: 0 = normal, 1 = this is C-transpose
+/* Next to last argument: 0 = normal, 1 = this is C-transpose */
+panache_setcmatrix(dfhandle, cmat, nmo, 0, BSORDER_PSI4);
 
 // PANACHE makes a copy, so it can be deleted here if needed
 delete [] cmat;
@@ -133,36 +142,114 @@ The second and third parameters of panache_genqtensors() are a set of flags (giv
 The second specifies which tensors to build and the third how to store them. For example,
 
 \code{.c}
-panache_genqtensors(dfhandle, QFLAGS_QMO | QFLAGS_QOV | QSTORAGE_INMEM);
+panache_genqtensors(dfhandle, QFLAGS_QMO | QFLAGS_QOV, QSTORAGE_INMEM);
 \endcode
 
-To read Qso or Qmo, we need to create a buffer where the library will place the data.
-We can query for nso (although the calling code should know this).
+To read the three-index tensors, we need to create a buffer where the library will place the data.
+We can query for the sizes of batches/
 
 \code{.c}
-int nso2, naux;    // number of primary basis functions squared, number of auxiliary basis functions
+int qbatchsize;            // Batch size if reading by q
 
-panache_qsodimensions(dfhandle, &naux, &nso2);
+qbatchsize = panache_qbatchsize(dfhandle, QGEN_QSO);
 
-double outbuffer[4*nso2];  // usually best to be some multiple of nso2,
-                           // but can be anything greater than nso2.
+/* In this case, qbatchsize = nso*nso if not packed, (nso*(nso+1))/2 if packed */
+/* and batchsize = number of auxiliary basis functions */
 
+double outbuffer[4*qbatchsize];  // anything > qbatchsize is ok
 \endcode
 
 
-To obtain the tensors, we use repeated calls to panache_getbatch_q**. These functions
-return the number of blocks, and is called until it returns zero.
+To obtain the tensors, we use repeated calls to panache_getbatch. These functions
+return the number of batches obtained, and is called until it returns zero.
+
+Note that the resulting data may be in packed storage. This can be determined by
+calling panache_ispacked()
 
 \code{.c}
 int curq = 0;
 int nbatch = 0;
-while((nbatch = panache_getbatch_qmo(dfhandle, outbuffer, 4*nso2, curq))
+int ispacked = panache_ispacked(QGEN_QSO);
+
+while((nbatch = panache_getqbatch(dfhandle, QGEN_QSO, outbuffer, 4*qbatchsize, curq))
 {
-    // output will be nbatch blocks of size nso2 in outbuffer
-    // ... do something with it!
+    if(ispacked)
+    {    
+        // output will be nbatch blocks of size nso2 in outbuffer
+        // ... do something with it!
+    }
+    else
+    {
+        // output will be nbatch blocks of size nso2 in outbuffer
+        // ... do something with it!
+    }
     curq += nbatch;
 }
 \endcode
+
+
+You can also obtain the tensor "by ij", although loops will usually be set up manually.
+We can get the tensor dimensions, although the calling code would know this.
+For example, for MP2
+
+\code{.c}
+
+double e2s = 0;
+double e2t = 0;
+
+int batchsize;             // Batch size if reading by ij
+batchsize = panache_batchsize(dfhandle, QGEN_QOV);
+
+/* ndim12 will depend on packing */
+int ndim1, ndim2, naux;
+int ndim12 = panache_tensordimensions(dfhandle, QGEN_QOV, &naux, &ndim1, &ndim2);
+
+double iabuff[batchsize];
+double jbbuff[batchsize];
+double ibbuff[batchsize];
+double jabuff[batchsize];
+
+for(int i = 0; i < ndim1; i++)
+for(int j = 0; j <= i; j++)
+for(int a = 0; a < ndim2; a++)
+for(int b = 0; b <= a; b++)
+{
+    // this isn't really necessary in this case, since Qov is
+    // guarenteed to not be stored packed
+    int ia = panache_calcindex(dfhandle, QGEN_QOV, i, a);
+    int jb = panache_calcindex(dfhandle, QGEN_QOV, j, b);
+    int ib = panache_calcindex(dfhandle, QGEN_QOV, i, b);
+    int ja = panache_calcindex(dfhandle, QGEN_QOV, j, a);
+
+
+    // nbatch in all these cases should be 1 (since batchsize will only hold 1)
+    nbatch = panache_getbatch(dfhandle, QGEN_QOV, iabuff, batchsize, ia); 
+    nbatch = panache_getbatch(dfhandle, QGEN_QOV, jbbuff, batchsize, jb); 
+    nbatch = panache_getbatch(dfhandle, QGEN_QOV, ibbuff, batchsize, ib); 
+    nbatch = panache_getbatch(dfhandle, QGEN_QOV, jabuff, batchsize, ia);
+
+
+    double iajb = 0;
+    double ibja = 0;
+
+    // loop over auxiliary index
+    for(int q = 0; q < naux; i++)
+    {
+        iajb += iabuff[q] * jbbuff[q];        
+        ibja += ibbuff[q] * jabuff[q];        
+    }
+
+    // NOTE: Remeber to take into account frozen orbitals if
+    //       they are used! Ie, you probably want evec[i+nfroz] and
+    //       evec[j+nfroz]
+    double denom = (evec[i] + evec[j] - evec[a] - evec[b]);
+
+    // evec contains the eigenvalues
+    e2s += (iajb*iajb)/denom;
+    e2t += (iajb * (iajb - ibja))/denom;
+}
+\endcode
+
 
 When all done, cleanup this handle
 
@@ -177,6 +264,25 @@ panache_cleanup_all(); // if you have multiple handles and are done with all of 
 \endcode
 
 That's it!
+
+
+
+\subsection usage_c_ch_sec Cholesky C Interface
+
+The Cholesky interface is almost entirely identical to the density fitting interface.
+The only difference is a call to panache_chinit() rather than panache_dfinit().
+
+\code{.c}
+double delta = 1.0d-5;  // or whatever
+
+int dfhandle = panache_chinit(ncenters, atoms, normalized,
+                              primary_nshellspercenter, primary_shells,
+                              delta,
+                              filename, nthreads);
+\endcode
+
+The rest is completely identical to the density fitting interface.
+
 
 
 \subsection usage_f_sec Fortran Interface
