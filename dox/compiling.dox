@@ -256,12 +256,4 @@ usual output (see Output.h)
 Use 64-bit C/Fortran interfaces to libpanache. May be required if
 compiling the Fortran code with 64-bit integers.
 
-
-\subsection PANACHE_DISKPREFETCH_sec PANACHE_DISKPREFETCH
-Prefetching of the next batch from disk.
-
-\warning Highly experimental, and requires a very new compiler (GCC 4.8 or Intel 15 [beta]).
-
-
-
- */
+*/
