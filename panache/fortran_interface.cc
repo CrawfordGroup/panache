@@ -731,6 +731,21 @@ extern "C" {
         *ispacked = panache_ispacked(*df_handle, *tensorflag);
     }
 
+    /*!
+     * \brief Calculate a combined orbital index
+     *
+     * Depends on packing
+     * 
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [in] i First orbital index
+     * \param [in] j Second orbital index
+     * \param [out] ij Combined orbital index, depending on packing
+     */
+    void panachef_calcindex(int_t * df_handle, int_t * tensorflag, int_t * i, int_t * j, int_t * ij)
+    {
+        *ij = panache_calcindex(*df_handle, *tensorflag, *i, *j);
+    }
 
 
     /*!
@@ -747,7 +762,7 @@ extern "C" {
                                    int_t * naux, int_t * ndim1, int_t * ndim2, int_t * total)
     {
         *total = panache_tensordimensions(*df_handle, *tensorflag,
-                                          *naux, *ndim1, *ndim2);
+                                          naux, ndim1, ndim2);
     }
 
 

@@ -262,11 +262,11 @@ extern "C" {
      *
      * | Tensor | Packed Size      | Unpacked Size |
      * |--------|------------------|---------------|
-     * | Qso    | nso*(nso+1)/2    |               |
-     * | Qmo    | nmo*(nmo+1)/2    |               |
-     * | Qoo    | nocc*(nocc+1)/2  |               |
+     * | Qso    | nso*(nso+1)/2    | nso*nso       |
+     * | Qmo    | nmo*(nmo+1)/2    | nmo*nmo       |
+     * | Qoo    | nocc*(nocc+1)/2  | nocc*nocc     |
      * | Qov    |                  | nocc*nvir     |
-     * | Qvv    | nvir*(nvir+1)/2  |               |
+     * | Qvv    | nvir*(nvir+1)/2  | nvir*nvir     |
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
@@ -297,6 +297,20 @@ extern "C" {
      */
     int_t panache_ispacked(int_t df_handle, int_t tensorflag);
 
+    /*!
+     * \brief Calculate a combined orbital index
+     *
+     * Depends on packing
+     * 
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [in] i First orbital index
+     * \param [in] j Second orbital index
+     * \return ij, depending on packing
+     */
+    int_t panache_calcindex(int_t df_handle, int_t tensorflag, int_t i, int_t j);
+    
+
 
     /*!
      * \brief Obtain the dimensions of a tensor
@@ -309,7 +323,7 @@ extern "C" {
      * \return Total tensor size (depends on packing)
      */
     int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
-                                 int_t & naux, int_t & ndim1, int_t & ndim2);
+                                   int_t * naux, int_t * ndim1, int_t * ndim2);
 
 
 
@@ -323,7 +337,7 @@ extern "C" {
      * about memory.
      *
      * This function returns the number of batches it has stored in the buffer. The buffer
-     * will contain (number of batches)*batchsize elements with
+     * will contain (number of batches)*qbatchsize elements with
      * the index of the auxiliary basis function as the slowest index.
      *
      * The batchsize can be obtained using QBatchSize()

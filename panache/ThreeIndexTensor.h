@@ -183,11 +183,11 @@ public:
      *
      * | Tensor | Packed Size      | Unpacked Size |
      * |--------|------------------|---------------|
-     * | Qso    | nso*(nso+1)/2    |               |
-     * | Qmo    | nmo*(nmo+1)/2    |               |
-     * | Qoo    | nocc*(nocc+1)/2  |               |
+     * | Qso    | nso*(nso+1)/2    | nso*nso       |
+     * | Qmo    | nmo*(nmo+1)/2    | nmo*nmo       |
+     * | Qoo    | nocc*(nocc+1)/2  | nocc*nocc     |
      * | Qov    |                  | nocc*nvir     |
-     * | Qvv    | nvir*(nvir+1)/2  |               |
+     * | Qvv    | nvir*(nvir+1)/2  | nvir*nvir     |
      *
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \return Size of batches returned by GetQBatch
@@ -215,6 +215,20 @@ public:
      * \return True if the tensor is in packed storage
      */
     bool IsPacked(int tensorflag);
+
+
+
+    /*!
+     * \brief Calculate a combined orbital index
+     *
+     * Depends on packing
+     * 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [in] i First orbital index
+     * \param [in] j Second orbital index
+     * \return ij, depending on packing
+     */
+    int CalcIndex(int tensorflag, int i, int j);
 
 
     /*!

@@ -135,15 +135,21 @@ extern "C" {
         return xtensors_[df_handle]->IsPacked(tensorflag); 
     }
 
+    int_t panache_calcindex(int_t df_handle, int_t tensorflag, int_t i, int_t j)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return xtensors_[df_handle]->CalcIndex(tensorflag, i, j); 
+    }
+
     int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
-                                 int_t & naux, int_t & ndim1, int_t & ndim2)
+                                   int_t * naux, int_t * ndim1, int_t * ndim2)
     {
         CheckHandle(df_handle, __FUNCTION__);
         int nauxtmp, ndim1tmp, ndim2tmp;
         int ret = xtensors_[df_handle]->TensorDimensions(tensorflag, nauxtmp, ndim1tmp, ndim2tmp);
-        naux = nauxtmp;
-        ndim1 = ndim1tmp;
-        ndim2 = ndim2tmp;
+        *naux = nauxtmp;
+        *ndim1 = ndim1tmp;
+        *ndim2 = ndim2tmp;
         return ret;
     }
 

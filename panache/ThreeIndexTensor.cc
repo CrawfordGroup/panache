@@ -309,6 +309,11 @@ bool ThreeIndexTensor::IsPacked(int tensorflag)
     return ResolveTensorFlag(tensorflag)->packed();
 }
 
+int ThreeIndexTensor::CalcIndex(int tensorflag, int i, int j)
+{
+    return ResolveTensorFlag(tensorflag)->calcindex(i, j);
+}
+
 // note - passing by value for the vector
 static void Reorder(std::vector<unsigned short> order, std::vector<double *> pointers,
                     reorder::MemorySwapper & sf)
