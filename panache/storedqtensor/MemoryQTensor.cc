@@ -9,12 +9,6 @@ namespace panache
 {
 
 
-void MemoryQTensor::Reset_(void)
-{
-    // nothing needed
-}
-
-
 void MemoryQTensor::Write_(double * data, int nij, int ijstart)
 {
     if(byq())

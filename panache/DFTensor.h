@@ -14,7 +14,9 @@ class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
-
+/*!
+ * \brief Generating and manipulation of a density-fitted 3-index tensor
+ */
 class DFTensor : public ThreeIndexTensor
 {
 public:

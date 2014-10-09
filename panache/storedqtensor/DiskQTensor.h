@@ -24,7 +24,6 @@ public:
     DiskQTensor();
 
 protected:
-    virtual void Reset_(void);
     virtual void Write_(double * data, int nij, int ijstart);
     virtual void WriteByQ_(double * data, int nij, int ijstart);
     virtual void Read_(double * data, int nij, int ijstart);

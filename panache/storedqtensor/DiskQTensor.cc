@@ -39,11 +39,6 @@ void DiskQTensor::CloseFile_(void)
     }
 }
 
-void DiskQTensor::Reset_(void)
-{
-    file_->seekg(0);
-    file_->seekp(0);
-}
 
 void DiskQTensor::Write_(double * data, int nij, int ijstart)
 {

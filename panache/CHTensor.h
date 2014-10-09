@@ -15,6 +15,9 @@ class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
+/*!
+ * \brief Generating and manipulation of a Cholesky 3-index tensor
+ */
 class CHTensor : public ThreeIndexTensor
 {
 public:

@@ -31,7 +31,24 @@ public:
     LocalQTensor();
 
 protected:
+
+    /*!
+     * \brief Write data with the orbital index as the slowest index
+     *
+     * \param [in] data Pointer to memory location to put the data
+     * \param [in] nq Number of auxiliary indices to obtain
+     * \param [in] qstart Starting auxiliary index
+     */
     virtual void Write_(double * data, int nij, int ijstart) = 0;
+
+
+    /*!
+     * \brief Write data with the auxiliary index as the slowest index
+     *
+     * \param [in] data Pointer to memory location to put the data
+     * \param [in] nq Number of auxiliary indices to obtain
+     * \param [in] qstart Starting auxiliary index
+     */
     virtual void WriteByQ_(double * data, int nij, int ijstart) = 0;
 
     virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
@@ -50,8 +67,26 @@ protected:
                             int nthreads);
 
 private:
-    // for cholesky
+    /*!
+     * \brief Compute the cholesky diagonal
+     *
+     * The size of the \p eris vector is taken to be the number of threads this
+     * function can use, which each thread using one TwoBodyAOInt from the vector.
+     *
+     * \param [in] eris Objects to calculate 4-center integrals
+     * \param [in] target Where to put the diagonal information. Should be nso*nso sized
+     */
     void ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, double * target);
+
+    /*!
+     * \brief Compute a row for the cholesky Qso
+     *
+     * The size of the \p eris vector is taken to be the number of threads this
+     * function can use, which each thread using one TwoBodyAOInt from the vector.
+     *
+     * \param [in] eris Objects to calculate 4-center integrals
+     * \param [in] target Where to put the row. Should be nso*nso sized
+     */
     void ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, int row, double* target);
 };
 

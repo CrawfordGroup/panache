@@ -26,14 +26,37 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class CyclopsQTensor : public StoredQTensor
 {
 private:
+    /// Actual tensor data
     std::unique_ptr<CTF_Tensor> tensor_;
 
+    /*!
+     * \brief Decompose a flattened index into the 3 indicies for a 3-index tensor
+     *
+     * \param [in] index The flattened (global) index
+     * \param [out] i The first orbital index 
+     * \param [out] i The second orbital index 
+     * \param [out] q The auxiliary index 
+     */
     void DecomposeIndex_(int64_t index, int & i, int & j, int & q);
-    std::unique_ptr<CTF_Matrix> FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name);
+
+    /*!
+     * \brief Convert a locally-stored matrix into a CTF matrix
+     *
+     * The matrix should be row-major ordered.
+     *
+     * \note Unsure about AS in \p sym parameter
+     *
+     * \param [in] mat The matrix to convert
+     * \param [in] nrow Number of rows in the matrix
+     * \param [in] ncol Number of columns in the matrix
+     * \param [in] sym NS for non-symmetric, SY for symmetric, AS for antisymmetric.
+     *
+     * \param [in] name Some descriptive name
+     */
+    std::unique_ptr<CTF_Matrix> FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name);
 
 
 protected:
-    virtual void Reset_(void);
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
     virtual void Clear_(void);

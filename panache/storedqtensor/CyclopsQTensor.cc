@@ -23,11 +23,6 @@ namespace panache
 {
 
 
-void CyclopsQTensor::Reset_(void)
-{
-    // nothing needed
-}
-
 void CyclopsQTensor::Read_(double * data, int nij, int ijstart)
 {
     size_t nelements = nij*naux();
@@ -155,7 +150,7 @@ void CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, int & q)
 }
 
 std::unique_ptr<CTF_Matrix>
-CyclopsQTensor::FillWithMatrix_(double * mat, int nrow, int ncol, int sym, const char * name)
+CyclopsQTensor::FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name)
 {
     std::unique_ptr<CTF_Matrix> ret(new CTF_Matrix(nrow, ncol, sym, parallel::CTFWorld(), name));
 

@@ -436,6 +436,9 @@ public:
     };
 
 
+    /*!
+     * \brief Iterate over a three-index tensor by orbital index
+     */ 
     class IteratedQTensorByIJ : public IteratedQTensor<IJIterator>
     {
         public:
