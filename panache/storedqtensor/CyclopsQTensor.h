@@ -30,16 +30,6 @@ private:
     std::unique_ptr<CTF_Tensor> tensor_;
 
     /*!
-     * \brief Decompose a flattened index into the 3 indicies for a 3-index tensor
-     *
-     * \param [in] index The flattened (global) index
-     * \param [out] i The first orbital index 
-     * \param [out] j The second orbital index 
-     * \param [out] q The auxiliary index 
-     */
-    void DecomposeIndex_(int64_t index, int & i, int & j, int & q);
-
-    /*!
      * \brief Convert a locally-stored matrix into a CTF matrix
      *
      * The matrix should be row-major ordered.

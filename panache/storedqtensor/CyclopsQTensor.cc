@@ -9,6 +9,7 @@
 #include "panache/FittingMetric.h"
 #include "panache/BasisSet.h"
 #include "panache/Iterator.h"
+#include "panache/Lapack.h"
  
 #ifdef PANACHE_PROFILE
 #include "panache/Output.h"
@@ -131,24 +132,6 @@ CyclopsQTensor::CyclopsQTensor()
 }
 
 
-void CyclopsQTensor::DecomposeIndex_(int64_t index, int & i, int & j, int & q)
-{
-    if(byq())
-    {
-        j = index / (ndim1() * naux());
-        index -= j * ndim1() * naux();
-        i = index / naux();
-        q = index - i * naux();
-    }
-    else
-    {
-        q = index / (ndim1() * ndim2());
-        index -= q * ndim1() * ndim2();
-        j = index / ndim1();
-        i = index - j * ndim1();
-    }
-}
-
 std::unique_ptr<CTF_Matrix>
 CyclopsQTensor::FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name)
 {
@@ -184,72 +167,156 @@ void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
 {
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
+    int maxpershell = primary->max_function_per_shell();
+    int maxpershell2 = maxpershell*maxpershell;
 
-    // Distributed J matrix
-    std::unique_ptr<CTF_Matrix> ctfj(FillWithMatrix_(fit->get_metric(), naux(), naux(), NS, "Jmat"));
+    double * J = fit->get_metric();
 
-    // Now fill up a base matrix
+    // default constructor = zero basis
     SharedBasisSet zero(new BasisSet);
 
     std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<const double *> eribuffers;
+    std::vector<double *> A, B;
+
+    int naux = StoredQTensor::naux();
+
     for(int i = 0; i < nthreads; i++)
-        eris.push_back(GetERI(auxiliary, zero, primary, primary));
-
-    int64_t np;
-    int64_t *idx;
-    double * data;
-
-    // make a tensor of the same size, but don't copy the data
-    CTF_Tensor base(*tensor_, false);
-
-    base.read_local(&np, &idx, &data);
-
-    //! \todo better scheduling? We want sequential blocks so
-    //        that compute_basisfunction won't miss all the time,
-    //        so dynamic is out
-    #ifdef _OPENMP
-    #pragma omp parallel for num_threads(nthreads)
-    #endif
-    for(int64_t n = 0; n < np; n++)
     {
-        int threadnum = 0;
-        #ifdef _OPENMP
-        threadnum = omp_get_thread_num(); 
-        #endif
+        eris.push_back(GetERI(auxiliary, zero, primary, primary));
+        eribuffers.push_back(eris.back()->buffer());
 
-        int i, j, q;
-        DecomposeIndex_(idx[n], i, j, q);
-        data[n] = eris[threadnum]->compute_basisfunction(q, 0, i, j);
+        // temporary buffers
+        A.push_back(new double[naux*maxpershell2]);
+        B.push_back(new double[naux*maxpershell2]);
     }
 
-    #ifdef PANACHE_PROFILE
-    unsigned long bmiss = 0;
-    for(const auto & it : eris)
-        bmiss += it->BMiss();
-    output::printf("\n\n***Cyclops GenDFQso : compute_basisfunction misses = %lu\n\n", bmiss);
-    #endif
 
-    base.write(np, idx, data);
+    const int nauxshell = auxiliary->nshell();
 
-    free(idx);
-    free(data);
 
-    // contract!
-    //! \todo check RVO
-    if(byq())
-        (*tensor_)["iab"] = (*ctfj)["ij"]*base["jab"];
-    else
-        (*tensor_)["abi"] = (*ctfj)["ij"]*base["abj"];
 
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    GenTimer().AddTime(tim);
+    // Get the begin and end shells for this rank
+    // Parallelization is over primary basis
+    auto range = parallel::MyRange(primary->nshell());
+
+    // allocate
+    size_t nelements = 0;
+
+    // note: We are calculating just the symmetric part
+    // and then applying it to the other triangular part of the
+    // tensor as well. The for loop will calculate the size of
+    // just the part of the lower triangle that we are calculating
+    // on the process, then we double it
+    for(int i = range.first; i < range.second; i++)
+    for(int j = 0; j <= i; j++)
+    {
+        if(i == j)
+            nelements += primary->shell(i).nfunction() * primary->shell(j).nfunction();
+        else
+            nelements += 2*primary->shell(i).nfunction()*primary->shell(j).nfunction();
+    }
+
+    nelements *= naux;
+
+    std::unique_ptr<double[]> data(new double[nelements]);
+    std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
+
+std::cout << parallel::Rank() << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
+std::cout << parallel::Rank() << ": NELEMENTS: " << nelements << "\n";
+std::cout << parallel::Rank() << ": NTHREADS: " << nthreads << "\n";
+
+    int64_t curidx = 0;
+
+    for (int M = range.first; M < range.second; M++)
+    {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
 #endif
+
+        int nm = primary->shell(M).nfunction();
+        int mstart = primary->shell(M).function_index();
+        int mend = mstart + nm;
+
+        for (int N = 0; N <= M; N++)
+        {
+            int nn = primary->shell(N).nfunction();
+            int nstart = primary->shell(N).function_index();
+            int nend = nstart + nn;
+
+            for (int P = 0; P < nauxshell; P++)
+            {
+                int np = auxiliary->shell(P).nfunction();
+                int pstart = auxiliary->shell(P).function_index();
+                int pend = pstart + np;
+
+                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
+
+                if(ncalc)
+                {
+                    for (int p = pstart, index = 0; p < pend; p++)
+                    {
+                        for (int m = 0; m < nm; m++)
+                        {
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // we now have a set of columns of B, although "condensed"
+            // we can do a DGEMM with J
+            // Access to J are only reads, so that is safe in parallel
+            C_DGEMM('T','T',nm*nn, naux, naux, 1.0, B[threadnum], nm*nn, J, naux, 0.0,
+                    A[threadnum], naux);
+
+
+            // write to disk or store in memory
+            //! \todo Symmetry exploitation
+            if(N == M)
+            {
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                for (int n0 = 0, n = nstart; n < nend; n0++, n++)
+                for (int q = 0; q < naux; q++)
+                {
+                    idx[curidx] = n*ndim1()*naux + m*naux + q;
+                    data[curidx] = A[threadnum][m0*naux*nn + n0*naux + q];
+                    curidx++;
+                }
+            }
+            else
+            {
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                for (int n0 = 0, n = nstart; n < nend; n0++, n++)
+                for (int q = 0; q < naux; q++)
+                {
+                    idx[curidx] = n*ndim1()*naux + m*naux + q;
+                    idx[curidx+1] = m*ndim1()*naux + n*naux + q;
+                    data[curidx] = data[curidx+1] = A[threadnum][m0*naux*nn + n0*naux + q];
+                    curidx += 2;
+                }
+            }
+        }
+    }
+
+std::cout << parallel::Rank() << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
+
+    tensor_->write(curidx, idx.get(), data.get());
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        delete [] A[i];
+        delete [] B[i];
+    }
+
+    std::cout << parallel::Rank() << " : Done\n";
 }
+
 
 
 void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
