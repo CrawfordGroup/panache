@@ -474,7 +474,8 @@ void ThreeIndexTensor::PrintTimer(const char * name, const std::unique_ptr<Store
                         getqm, getqt);
     }
     else
-        output::printf("%-6s  %17s  %17s  %17s\n", name, "N/A", "N/A", "N/A"); 
+        output::printf("%-6s  %17s (%7s)  %17s (%7s)  %17s (%7s)\n", name, 
+                              "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"); 
 }
 
 void ThreeIndexTensor::PrintTimings(void) const
