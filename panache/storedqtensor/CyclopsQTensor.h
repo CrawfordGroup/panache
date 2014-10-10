@@ -34,7 +34,7 @@ private:
      *
      * \param [in] index The flattened (global) index
      * \param [out] i The first orbital index 
-     * \param [out] i The second orbital index 
+     * \param [out] j The second orbital index 
      * \param [out] q The auxiliary index 
      */
     void DecomposeIndex_(int64_t index, int & i, int & j, int & q);

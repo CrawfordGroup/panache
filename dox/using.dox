@@ -119,12 +119,4 @@ See \ref usage_cpp_sec
 
 
 
-\subsubsection memory_diskprefetch_sec If using disk storage with prefetching
-
-(see \ref PANACHE_DISKPREFETCH_sec). Same as above, plus
-  
-   | Size             | Use                                   |
-   |------------------|---------------------------------------|
-   | nq  * nsotri     | Prefetched part of (Q\|ab)            |
-
  */
