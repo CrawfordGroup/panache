@@ -1,0 +1,108 @@
+/*! \page usage_cpp_sec C++ Interface
+
+Typical include files:
+
+\code{.cpp}
+#include <panache/DFTensor.h>
+#include <panache/Molecule.h>
+#include <panache/BasisSet.h>
+#include <panache/Output.h>
+
+using namespace panache;
+\endcode
+
+Using the C++ interface involves building BasisSet, Molecule, and DFTensor
+objects, but should be quite simple.
+
+First, set the output (if desired)
+
+\code{.cpp}
+SetOutput(&cout); // or give it address of ofsream object, etc
+\endcode
+
+
+Then, build the molecule
+
+\code{.cpp}
+Molecule mol;
+
+mol.add_atom( x1_cord, y1_cord, z1_cord, symbol1 );
+mol.add_atom( x2_cord, y2_cord, z2_cord, symbol2 );
+//...etc
+
+\endcode
+
+
+Then, a BasisSet object for the primary and auxiliary bases
+
+\code{.cpp}
+// We need a vector of vectors containing ShellInfo objects
+// The first index would represent the center, and the second
+// index would be a shell on that center
+// ie shellmap[0][2] = third basis function, first center
+std::vector<std::vector<ShellInfo> > primary_shellmap, aux_shellmap;
+
+// fill in the information. See documentation for ShellInfo
+
+// Now construct BasisSet objects
+// These should be shared basis set objects
+SharedBasisSet primary_basis(new BasisSet(mol, primary_shellmap));
+SharedBasisSet aux_basis(new BasisSet(mol, aux_shellmap));
+
+
+\endcode
+
+
+Now construct a DFTensor object
+
+\code{.cpp}
+DFTensor dft(primary_basis, aux_basis, "/path/to/somefile.dat");
+\endcode
+
+
+As with the other interfaces, create a buffer and give it to DFTensor
+
+\code{.cpp}
+int naux, nso2, nso;
+dft.QsoDimensions(naux, nso2);
+nso = primary->nbf();
+
+size_t buffsize = 4*nso2; // or something
+
+std::unique_ptr<double[]> outbuf(new double[buffsize]);
+dft.SetOutputBuffer(outbuf.get(), buffsize);
+\endcode
+
+Now get Qso in batches
+
+\code{.cpp}
+int n = 0;
+while((n = dft.GetBatch_Qso()))
+{
+    // do something with it
+}
+
+\endcode
+
+And for Qmo
+
+\code{.cpp}
+
+dft.ResetBatches(); // needed if switching between Qso and Qmo 
+
+
+double * cmat; // your MO coefficient matrix
+
+dft.SetCMatrix(cmat, nmo, false); // see documentation about last parameter
+
+int n = 0;
+while((n = dft.GetBatch_Qmo()))
+{
+    // do something with it
+}
+
+// no cleanup needed!
+
+\endcode
+
+*/
