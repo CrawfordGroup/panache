@@ -720,6 +720,21 @@ extern "C" {
 
 
     /*!
+     * \brief Obtain the batch size for panache_getbatch()
+     *
+     * The size will always be naux (number of auxiliary basis functions)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] tensorflag Which tensor to query (see Flags.h)
+     * \param [out] batchsize Size of batches returned by panache_getbatch()
+     */
+    void panachef_batchsize_(int_t * df_handle, int_t * tensorflag, int_t * batchsize)
+    {
+        *batchsize = panache_batchsize(*df_handle, *tensorflag);
+    }
+
+
+    /*!
      * \brief See if a particular tensor is stored packed
      *
      * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
