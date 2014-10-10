@@ -36,8 +36,8 @@ protected:
      * \brief Write data with the orbital index as the slowest index
      *
      * \param [in] data Pointer to memory location to put the data
-     * \param [in] nq Number of auxiliary indices to obtain
-     * \param [in] qstart Starting auxiliary index
+     * \param [in] nij Number of orbital indices to write
+     * \param [in] ijstart Starting combined orbital index
      */
     virtual void Write_(double * data, int nij, int ijstart) = 0;
 
@@ -46,10 +46,10 @@ protected:
      * \brief Write data with the auxiliary index as the slowest index
      *
      * \param [in] data Pointer to memory location to put the data
-     * \param [in] nq Number of auxiliary indices to obtain
+     * \param [in] nq Number of auxiliary indices to write
      * \param [in] qstart Starting auxiliary index
      */
-    virtual void WriteByQ_(double * data, int nij, int ijstart) = 0;
+    virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
 
     virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                            const SharedBasisSet primary,
@@ -85,6 +85,7 @@ private:
      * function can use, which each thread using one TwoBodyAOInt from the vector.
      *
      * \param [in] eris Objects to calculate 4-center integrals
+     * \param [in] row The row to calculate
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
     void ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, int row, double* target);

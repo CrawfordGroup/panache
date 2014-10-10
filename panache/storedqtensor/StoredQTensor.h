@@ -185,8 +185,14 @@ public:
 
 protected:
 
-    /// \copydoc Init()
-    /// To be implemented by derived classes
+    /*!
+     * \brief Initialize the object
+     *
+     * To be implemented by derived classes
+     *
+     * When this is called, all the dimensions in the base class have
+     * been filled in
+     */
     virtual void Init_(void) = 0;
 
     /// \copydoc Clear()
