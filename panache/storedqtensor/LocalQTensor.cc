@@ -51,7 +51,7 @@ void LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
     for(int i = 0; i < nthreads; i++)
     {
         eris.push_back(GetERI(auxiliary, zero, primary, primary));
-        eribuffers.push_back(eris[eris.size()-1]->buffer());
+        eribuffers.push_back(eris.back()->buffer());
 
         // temporary buffers
         A.push_back(new double[naux*maxpershell2]);
