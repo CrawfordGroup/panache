@@ -49,6 +49,7 @@ void PrintUsage(void)
          << "-c           Use Cyclops Tensor Framework\n"
          << "-b           Get Qso/Qmo in batches\n"
          << "-t           Use transpose of C matrix\n"
+         << "-C           Disable cholesky runs\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
          << "\n\n";
@@ -585,6 +586,7 @@ int main(int argc, char ** argv)
         int batchsize = 0;
         bool cyclops = false;
         bool disk = false;
+        bool docholesky = true;
 
         int i = 1;
         while(i < argc)
@@ -613,6 +615,8 @@ int main(int argc, char ** argv)
                 disk = false;
                 cyclops = true;
             }
+            else if(starg == "-C")
+                docholesky = false;
             else
             {
                 // add trailing slash if needed
@@ -695,7 +699,9 @@ int main(int argc, char ** argv)
             qstore |= QSTORAGE_INMEM;
 
         dft.GenQTensors(qflags, qstore);
-        cht.GenQTensors(qflags, qstore);
+
+        if(docholesky)
+            cht.GenQTensors(qflags, qstore);
 
 
         ///////////
@@ -746,11 +752,14 @@ int main(int argc, char ** argv)
         ///////////////////////
         // Test Cholesky QSO
         ///////////////////////
-        ret += RunTestMatrix(cht, "CHQSO",
-                             batchsize, QGEN_CHQSO,
-                             dir + "chqso",
-                             QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                             verbose);
+        if(docholesky)
+        {
+            ret += RunTestMatrix(cht, "CHQSO",
+                                 batchsize, QGEN_CHQSO,
+                                 dir + "chqso",
+                                 QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
+                                 verbose);
+        }
 
 
         *out << "\n\n";
