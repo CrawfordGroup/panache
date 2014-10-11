@@ -775,7 +775,6 @@ int main(int argc, char ** argv)
 
         auto mol = ReadMoleculeFile(dir + "geometry");
         auto primary = ReadBasisFile(mol, dir + "basis.primary");
-        auto aux = ReadBasisFile(mol, dir + "basis.aux");
         auto cmat = ReadCMatrixFile(dir + "cmat");
 
         if(transpose)
@@ -793,7 +792,7 @@ int main(int argc, char ** argv)
         int nocc = ReadNocc(dir + "nocc");
         int nmo = nso;
 
-        DFTensor dft(primary, aux, "/tmp/df", 0);
+        DFTensor dft(primary, dir + "basis.aux.gbs", "/tmp/df", 0);
 
         // *** We are only testing Qso from CHTensor              *** //
         // *** But generating them all (to test for memory issues *** //
