@@ -52,6 +52,7 @@ void PrintUsage(void)
          << "-t           Use transpose of C matrix\n"
          << "-g           Generate tests from basis/molecule info\n"
          << "-C           Disable cholesky runs\n"
+         << "-S           Skip testing (useful for benchmarking)\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
          << "\n\n";
@@ -434,7 +435,7 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
                   int batchsize, int tensorflag,
                   const string & reffile,
                   double sum_threshold, double checksum_threshold, double element_threshold,
-                  bool verbose)
+                  bool skiptest, bool verbose)
 {
     int ret = 0;
     int naux, ndim1, ndim2;
@@ -476,11 +477,13 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
 
     string titleq(title);
     titleq.append(" (by Q)");
-    ret += TestMatrix(titleq, reffile,
-                      mat.get(), matsize,
-                      sum_threshold, checksum_threshold, element_threshold,
-                      verbose);
-
+    if(skiptest)
+        *out << "** Skipping testing " << titleq << "\n\n";
+    else
+        ret += TestMatrix(titleq, reffile,
+                          mat.get(), matsize,
+                          sum_threshold, checksum_threshold, element_threshold,
+                          verbose);
 
     // Now do by ij
     bufsize = matsize;
@@ -520,10 +523,13 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
 
     string titleij(title);
     titleij.append(" (by IJ)");
-    ret += TestMatrix(titleij, reffile,
-                      mat.get(), matsize,
-                      sum_threshold, checksum_threshold, element_threshold,
-                      verbose);
+    if(skiptest)
+        *out << "** Skipping testing " << titleij << "\n\n";
+    else
+        ret += TestMatrix(titleij, reffile,
+                          mat.get(), matsize,
+                          sum_threshold, checksum_threshold, element_threshold,
+                          verbose);
 
     return ret;
 
@@ -693,6 +699,7 @@ int main(int argc, char ** argv)
         bool disk = false;
         bool docholesky = true;
         bool generate = false;
+        bool skiptest = false;
 
         int i = 1;
         while(i < argc)
@@ -708,6 +715,8 @@ int main(int argc, char ** argv)
                 batchsize = GetIArg(i, argc, argv);
             else if(starg == "-C")
                 docholesky = false;
+            else if(starg == "-S")
+                skiptest = true;
             else if(starg == "-d")
                 disk = true;
             else if(starg == "-c")
@@ -748,6 +757,8 @@ int main(int argc, char ** argv)
         if(generate && !docholesky)
             throw std::runtime_error("Generate must include cholesky!");
 
+        if(generate && skiptest)
+            throw std::runtime_error("Generate and skiptest doesn't make any sense!");
 
         if(verbose)
             panache::output::SetOutput(&*out);
@@ -872,7 +883,7 @@ int main(int argc, char ** argv)
                                  batchsize, QGEN_DFQSO,
                                  dir + "qso", 
                                  QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                                 verbose);
+                                 skiptest, verbose);
     
             ///////////
             // Test Qmo
@@ -881,7 +892,7 @@ int main(int argc, char ** argv)
                                  batchsize, QGEN_QMO,
                                  dir + "qmo", 
                                  QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 verbose);
+                                 skiptest, verbose);
     
             ///////////
             // Test Qoo
@@ -890,7 +901,7 @@ int main(int argc, char ** argv)
                                  batchsize, QGEN_QOO,
                                  dir + "qoo", 
                                  QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 verbose);
+                                 skiptest, verbose);
     
             ///////////
             // Test Qov
@@ -899,7 +910,7 @@ int main(int argc, char ** argv)
                                  batchsize, QGEN_QOV,
                                  dir + "qov",
                                  QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 verbose);
+                                 skiptest, verbose);
     
             ///////////
             // Test Qvv
@@ -908,7 +919,7 @@ int main(int argc, char ** argv)
                                  batchsize, QGEN_QVV,
                                  dir + "qvv",
                                  QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 verbose);
+                                 skiptest, verbose);
     
             ///////////////////////
             // Test Cholesky QSO
@@ -919,29 +930,31 @@ int main(int argc, char ** argv)
                                      batchsize, QGEN_CHQSO,
                                      dir + "chqso",
                                      QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                                     verbose);
+                                     skiptest, verbose);
             }
         }
 
 
-        *out << "\n\n"
-             << "*************************************************\n"
-             << "*************************************************\n";
-
-        if(generate)
+        if(!skiptest)
         {
-            *out << " REFERENCE FILES GENERATED\n";
+            *out << "\n\n"
+                 << "*************************************************\n"
+                 << "*************************************************\n";
+    
+            if(generate)
+            {
+                *out << " REFERENCE FILES GENERATED\n";
+            }
+            else
+            {
+                *out << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
+                if(ret)
+                    *out << "    ( " << ret << " failures)\n";
+            }
+    
+            *out << "*************************************************\n"
+                 << "*************************************************\n";
         }
-        else
-        {
-            *out << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
-            if(ret)
-                *out << "    ( " << ret << " failures)\n";
-        }
-
-        *out << "*************************************************\n"
-             << "*************************************************\n";
-
 
         // even if not verbose, print the timints
         if(!verbose)
