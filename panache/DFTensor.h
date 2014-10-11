@@ -12,7 +12,9 @@ namespace panache {
 
 class FittingMetric;
 class BasisSet;
+class Molecule;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
+typedef std::shared_ptr<Molecule> SharedMolecule;
 
 /*!
  * \brief Generating and manipulation of a density-fitted 3-index tensor
@@ -36,6 +38,22 @@ public:
              const std::string & directory,
              int nthreads);
 
+    /*!
+     * \brief Constructor
+     *
+     * Initializes the basis set members, and constructs the creates the
+     * FittingMetric.
+     *
+     * \param [in] primary The primary basis set
+     * \param [in] auxiliary The auxiliary (DF) basis set
+     * \param [in] directory Full path to a directory to put scratch files
+     * \param [in] nthreads Max number of threads to use
+     */ 
+    DFTensor(SharedBasisSet primary,
+             const std::string & auxpath,
+             const std::string & directory,
+             int nthreads);
+
 protected:
     virtual std::unique_ptr<StoredQTensor> GenQso(int storeflags) const;
 
@@ -43,6 +61,14 @@ private:
     int naux_;   //!< Number of auxiliary basis functions
     SharedBasisSet auxiliary_;
     std::shared_ptr<FittingMetric> fittingmetric_; //!< Fitting metric J
+
+    /// Print the DF tensor information
+    void PrintHeader_(void) const;
+
+    /// Initialize some variables
+    void Init_(void);
+
+    static SharedBasisSet CreateAuxFromFile_(const std::string & auxpath, SharedMolecule mol);
 };
 
 } // close namespace panache

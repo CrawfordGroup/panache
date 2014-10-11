@@ -7,14 +7,14 @@
 #include "panache/FittingMetric.h"
 #include "panache/Output.h"
 #include "panache/BasisSet.h"
+#include "panache/BasisSetParser.h"
 #include "panache/storedqtensor/StoredQTensor.h"
 #include "panache/storedqtensor/StoredQTensorFactory.h"
 
 namespace panache {
 
-DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
-                   const std::string & directory,
-                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_DFQSO, nthreads), auxiliary_(auxiliary)
+
+void DFTensor::PrintHeader_(void) const
 {
     output::printf("  ==> LibPANACHE DF Tensor <==\n\n");
 
@@ -23,12 +23,31 @@ DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
 
     output::printf(" => Auxiliary Basis Set <= \n\n");
     auxiliary_->print_detail();
+}
 
+void DFTensor::Init_(void)
+{
     naux_ = auxiliary_->nbf();
-
     fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_, nthreads_));
     fittingmetric_->form_eig_inverse();
+}
 
+DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
+                   const std::string & directory,
+                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_DFQSO, nthreads), auxiliary_(auxiliary)
+{
+    PrintHeader_();
+    Init_();
+}
+
+DFTensor::DFTensor(SharedBasisSet primary,
+                   const std::string & auxpath,
+                   const std::string & directory,
+                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_DFQSO, nthreads),
+                                   auxiliary_(CreateAuxFromFile_(auxpath, primary->molecule()))
+{
+    PrintHeader_();
+    Init_();
 }
 
 std::unique_ptr<StoredQTensor> DFTensor::GenQso(int storeflags) const
@@ -39,6 +58,14 @@ std::unique_ptr<StoredQTensor> DFTensor::GenQso(int storeflags) const
 
     qso->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
     return qso;
+}
+
+
+SharedBasisSet DFTensor::CreateAuxFromFile_(const std::string & auxpath, SharedMolecule mol)
+{
+    // Gaussian input file parser for the auxiliary basis
+    std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
+    return SharedBasisSet(new BasisSet(parser, mol, auxpath));
 }
 
 } // close namespace panache
