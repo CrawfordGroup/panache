@@ -488,8 +488,8 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
         bufsize = naux * batchsize;
 
     outbuf = unique_ptr<double[]>(new double[bufsize]);
-    std::fill(mat.get(), mat.get()+matsize, 0.0);
-    std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
+    //std::fill(mat.get(), mat.get()+matsize, 0.0);
+    //std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
 
     // Note - The reference matrices are always stored "by q". So some
