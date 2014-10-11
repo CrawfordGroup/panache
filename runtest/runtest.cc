@@ -6,6 +6,7 @@
 #include <memory>
 #include <utility>
 #include <cmath>
+#include <algorithm>
 
 #include "panache/DFTensor.h"
 #include "panache/CHTensor.h"
@@ -318,8 +319,7 @@ int TestMatrix(const string & title, const string & reffile,
     TestMatrixInfo tmi = ReadMatrixInfo(reffile);
     int nfailures = 0;
     *out << "***********************************************************************\n";
-    *out << "Matrix \"" << title << "\"";
-    *out << "\n";
+    *out << "Matrix \"" << title << "\"" << "\n";
     *out << "***********************************************************************\n";
 
     PrintRow("Name", "Reference", "This run", "Diff", "Threshold", "Pass/Fail");
@@ -436,95 +436,198 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
                   double sum_threshold, double checksum_threshold, double element_threshold,
                   bool verbose)
 {
-        int ret = 0;
-        int naux, ndim1, ndim2;
-        dft.TensorDimensions(tensorflag, naux, ndim1, ndim2);
+    int ret = 0;
+    int naux, ndim1, ndim2;
+    dft.TensorDimensions(tensorflag, naux, ndim1, ndim2);
 
-        // may be packed
-        int ndim12 = dft.QBatchSize(tensorflag);
+    // may be packed
+    int ndim12 = dft.QBatchSize(tensorflag);
 
-        int matsize = naux * ndim1 * ndim2; // always expanded
-        int bufsize = ndim12 * naux;
-        if(batchsize)
-            bufsize = ndim12 * batchsize;
-            
-        unique_ptr<double[]> mat(new double[matsize]);
-        unique_ptr<double[]> outbuf(new double[bufsize]);
-        std::fill(mat.get(), mat.get()+matsize, 0.0);
-        std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
+    int matsize = naux * ndim1 * ndim2; // always expanded
+    int bufsize = ndim12 * naux;
+    if(batchsize)
+        bufsize = ndim12 * batchsize;
+        
+    unique_ptr<double[]> mat(new double[matsize]);
+    unique_ptr<double[]> outbuf(new double[bufsize]);
+    //std::fill(mat.get(), mat.get()+matsize, 0.0);
+    //std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
+    // First, do by q
+    DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+    while(iqtq)
+    {
+        int curq = iqtq.q();
 
-        // First, do by q
-        DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
-        while(iqtq)
+        // tests are always done on unpacked matrices
+        if(dft.IsPacked(tensorflag))
         {
-            int curq = iqtq.q();
+            for(int i = 0; i < ndim1; i++)
+            for(int j = 0; j <= i; j++)
+                mat[curq*ndim1*ndim2+i*ndim2+j] 
+              = mat[curq*ndim1*ndim2+j*ndim1+i] 
+              = iqtq[i*(i+1)/2+j];
+        }
+        else
+            std::copy(iqtq.Get(), iqtq.Get() + ndim12, mat.get() + curq*ndim12);
 
-            if(dft.IsPacked(tensorflag))
-            {
-                for(int i = 0; i < ndim1; i++)
-                for(int j = 0; j <= i; j++)
-                    mat[curq*ndim1*ndim2+i*ndim2+j] 
-                  = mat[curq*ndim1*ndim2+j*ndim1+i] 
-                  = iqtq[i*(i+1)/2+j];
-            }
-            else
-                std::copy(iqtq.Get(), iqtq.Get() + ndim12, mat.get() + curq*ndim12);
+        ++iqtq;
+    }
 
-            ++iqtq;
+    string titleq(title);
+    titleq.append(" (by Q)");
+    ret += TestMatrix(titleq, reffile,
+                      mat.get(), matsize,
+                      sum_threshold, checksum_threshold, element_threshold,
+                      verbose);
+
+
+    // Now do by ij
+    bufsize = matsize;
+    if(batchsize)
+        bufsize = naux * batchsize;
+
+    outbuf = unique_ptr<double[]>(new double[bufsize]);
+    std::fill(mat.get(), mat.get()+matsize, 0.0);
+    std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
+
+
+    // Note - The reference matrices are always stored "by q". So some
+    // index math is appropriate
+    DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
+    while(iqtij)
+    {
+        int i = iqtij.i();
+        int j = iqtij.j();
+
+        // tests are always done on unpacked matrices
+        if(dft.IsPacked(tensorflag))
+        {
+            // expand
+            for(int q = 0; q < naux; q++)
+                mat[q*ndim1*ndim2 + i * ndim2 + j]
+              = mat[q*ndim1*ndim2 + j * ndim1 + i]
+              = iqtij[q];
+        }
+        else
+        {
+            for(int q = 0; q < naux; q++)
+                mat[q*ndim1*ndim2 + i * ndim2 + j] = iqtij[q];
         }
 
-        string titleq(title);
-        titleq.append(" (by Q)");
-        ret += TestMatrix(titleq, reffile,
-                          mat.get(), matsize,
-                          sum_threshold, checksum_threshold, element_threshold,
-                          verbose);
+        ++iqtij;
+    }
 
+    string titleij(title);
+    titleij.append(" (by IJ)");
+    ret += TestMatrix(titleij, reffile,
+                      mat.get(), matsize,
+                      sum_threshold, checksum_threshold, element_threshold,
+                      verbose);
 
-        // Now do by ij
-        bufsize = matsize;
-        if(batchsize)
-            bufsize = naux * batchsize;
-
-        outbuf = unique_ptr<double[]>(new double[bufsize]);
-        std::fill(mat.get(), mat.get()+matsize, 0.0);
-        std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
-
-        DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
-        while(iqtij)
-        {
-            int i = iqtij.i();
-            int j = iqtij.j();
-
-            if(dft.IsPacked(tensorflag))
-            {
-                // expand
-                for(int q = 0; q < naux; q++)
-                    mat[q*ndim1*ndim2 + i * ndim2 + j]
-                  = mat[q*ndim1*ndim2 + j * ndim1 + i]
-                  = iqtij[q];
-            }
-            else
-            {
-                for(int q = 0; q < naux; q++)
-                    mat[q*ndim1*ndim2 + i * ndim2 + j] = iqtij[q];
-            }
-
-            ++iqtij;
-        }
-
-        string titleij(title);
-        titleij.append(" (by IJ)");
-        ret += TestMatrix(titleij, reffile,
-                          mat.get(), matsize,
-                          sum_threshold, checksum_threshold, element_threshold,
-                          verbose);
-
-        return ret;
+    return ret;
 
 }
 
+
+void GenTestMatrix(ThreeIndexTensor & dft, const string & title,
+                  int tensorflag, int batchsize,
+                  const string & reffile,
+                  bool verbose)
+{
+    using namespace std;
+
+    *out << "** Generating Matrix \"" << title << "\"" << "\n";
+
+    // starts of the same as RunTestMatrix
+    int naux, ndim1, ndim2;
+    dft.TensorDimensions(tensorflag, naux, ndim1, ndim2);
+
+    // may be packed
+    int ndim12 = dft.QBatchSize(tensorflag);
+
+    int bufsize = ndim12 * naux;
+    if(batchsize)
+        bufsize = ndim12 * batchsize;
+        
+    unique_ptr<double[]> outbuf(new double[bufsize]);
+    unique_ptr<double[]> outbuf2(new double[ndim1*ndim2]); // expanded piece
+
+
+    // only go by q
+
+    double sum = 0;
+    double checksum = 0;
+    size_t index = 0;
+
+    array<pair<size_t, double>, 50> largest, smallest;
+    for(int i = 0; i < 50; i++)
+    {
+        largest[i].second = -numeric_limits<double>::max();
+        smallest[i].second = numeric_limits<double>::max();
+    }
+
+    DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+    while(iqtq)
+    {
+        // tests are always done on unpacked matrices
+        if(dft.IsPacked(tensorflag))
+        {
+            for(int i = 0; i < ndim1; i++)
+            for(int j = 0; j <= i; j++)
+                outbuf2[i*ndim1+j] 
+              = outbuf2[j*ndim1+i] 
+              = iqtq[i*(i+1)/2+j];
+        }
+        else
+            copy(iqtq.Get(), iqtq.Get() + ndim12, outbuf2.get());
+
+        // now we have the expanded matrices. Check for the largest & smallest elements
+        // and update the checksums
+        for(int64_t i = 0; i < ndim1*ndim2; i++)
+        {
+            double val = outbuf2[i];
+            sum += val;
+            checksum += val*static_cast<double>(index+1);
+
+            if(val > largest[0].second)
+            {
+                largest[0].first = index;
+                largest[0].second = val;
+                sort(largest.begin(), largest.end(), [](pair<size_t, double> p1, pair<size_t, double> p2)
+                {
+                    return p1.second < p2.second;
+                });
+            }
+            if(val < smallest[49].second)
+            {
+                smallest[49].first = index;
+                smallest[49].second = val;
+                sort(smallest.begin(), smallest.end(), [](pair<size_t, double> p1, pair<size_t, double> p2)
+                {
+                    return p1.second < p2.second;
+                });
+            }
+
+            index++;
+        }
+
+        ++iqtq;
+    }
+
+
+    // write out the matrix
+    ofstream outfile(reffile.c_str(), ofstream::trunc);
+    outfile << naux << "\n" << ndim1*ndim2 << "\n";
+    outfile << setprecision(20);
+    outfile << sum << "\n" << checksum << "\n";
+    for(auto & it : largest)
+        outfile << it.first << " " << it.second << "\n";
+    for(auto & it : smallest)
+        outfile << it.first << " " << it.second << "\n";
+
+    // file closed automatically
+}
 
 string GetNextArg(int & i, int argc, char ** argv)
 {
@@ -642,6 +745,10 @@ int main(int argc, char ** argv)
             throw std::runtime_error("Incompatible options: cyclops and disk");
         #endif
 
+        if(generate && !docholesky)
+            throw std::runtime_error("Generate must include cholesky!");
+
+
         if(verbose)
             panache::output::SetOutput(&*out);
 
@@ -660,7 +767,10 @@ int main(int argc, char ** argv)
         getline(desc, desc_str);
 
         *out << "--------------------------------------\n";
-        *out << "Results for test: " << desc_str << "\n";
+        if(generate)
+            *out << "Generating tests for : " << desc_str << "\n";
+        else
+            *out << "Results for test: " << desc_str << "\n";
         *out << "--------------------------------------\n";
 
         auto mol = ReadMoleculeFile(dir + "geometry");
@@ -694,7 +804,8 @@ int main(int argc, char ** argv)
         dft.SetNOcc(nocc);
         cht.SetNOcc(nocc);
 
-        int qflags = (QGEN_DFQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+        int dfqflags = (QGEN_DFQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+        int chqflags = (QGEN_CHQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
 
         int qstore = 0;
         if(byq)
@@ -709,76 +820,126 @@ int main(int argc, char ** argv)
         else
             qstore |= QSTORAGE_INMEM;
 
-        dft.GenQTensors(qflags, qstore);
+        dft.GenQTensors(dfqflags, qstore);
 
         if(docholesky)
-            cht.GenQTensors(qflags, qstore);
+            cht.GenQTensors(chqflags, qstore);
 
 
-        ///////////
-        // Test Qso
-        ///////////
-        ret += RunTestMatrix(dft, "QSO",
-                             batchsize, QGEN_DFQSO,
-                             dir + "qso", 
-                             QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                             verbose);
-
-        ///////////
-        // Test Qmo
-        ///////////
-        ret += RunTestMatrix(dft, "QMO",
-                             batchsize, QGEN_QMO,
-                             dir + "qmo", 
-                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                             verbose);
-
-        ///////////
-        // Test Qoo
-        ///////////
-        ret += RunTestMatrix(dft, "QOO",
-                             batchsize, QGEN_QOO,
-                             dir + "qoo", 
-                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                             verbose);
-
-        ///////////
-        // Test Qov
-        ///////////
-        ret += RunTestMatrix(dft, "QOV",
-                             batchsize, QGEN_QOV,
-                             dir + "qov",
-                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                             verbose);
-
-        ///////////
-        // Test Qvv
-        ///////////
-        ret += RunTestMatrix(dft, "QVV",
-                             batchsize, QGEN_QVV,
-                             dir + "qvv",
-                             QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                             verbose);
-
-        ///////////////////////
-        // Test Cholesky QSO
-        ///////////////////////
-        if(docholesky)
+        if(generate)
         {
-            ret += RunTestMatrix(cht, "CHQSO",
-                                 batchsize, QGEN_CHQSO,
-                                 dir + "chqso",
+            ///////////
+            // Gen Qso
+            ///////////
+            GenTestMatrix(dft, "QSO", QGEN_DFQSO, batchsize,
+                          dir + "qso", verbose);
+    
+            ///////////
+            // Gen Qmo
+            ///////////
+            GenTestMatrix(dft, "QMO", QGEN_QMO, batchsize,
+                          dir + "qmo", verbose);
+    
+            ///////////
+            // Gen Qoo
+            ///////////
+            GenTestMatrix(dft, "QOO", QGEN_QOO, batchsize,
+                          dir + "qoo", verbose);
+    
+            ///////////
+            // Gen Qov
+            ///////////
+            GenTestMatrix(dft, "QOV", QGEN_QOV, batchsize,
+                          dir + "qov", verbose);
+    
+            ///////////
+            // Gen Qvv
+            ///////////
+            GenTestMatrix(dft, "QVV", QGEN_QVV, batchsize,
+                          dir + "qvv", verbose);
+
+            ///////////////////////
+            // Test Cholesky QSO
+            ///////////////////////
+            GenTestMatrix(cht, "CHQSO", QGEN_CHQSO, batchsize,
+                           dir + "chqso", verbose);
+        }
+        else
+        {
+            ///////////
+            // Test Qso
+            ///////////
+            ret += RunTestMatrix(dft, "QSO",
+                                 batchsize, QGEN_DFQSO,
+                                 dir + "qso", 
                                  QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                                  verbose);
+    
+            ///////////
+            // Test Qmo
+            ///////////
+            ret += RunTestMatrix(dft, "QMO",
+                                 batchsize, QGEN_QMO,
+                                 dir + "qmo", 
+                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                 verbose);
+    
+            ///////////
+            // Test Qoo
+            ///////////
+            ret += RunTestMatrix(dft, "QOO",
+                                 batchsize, QGEN_QOO,
+                                 dir + "qoo", 
+                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                 verbose);
+    
+            ///////////
+            // Test Qov
+            ///////////
+            ret += RunTestMatrix(dft, "QOV",
+                                 batchsize, QGEN_QOV,
+                                 dir + "qov",
+                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                 verbose);
+    
+            ///////////
+            // Test Qvv
+            ///////////
+            ret += RunTestMatrix(dft, "QVV",
+                                 batchsize, QGEN_QVV,
+                                 dir + "qvv",
+                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                 verbose);
+    
+            ///////////////////////
+            // Test Cholesky QSO
+            ///////////////////////
+            if(docholesky)
+            {
+                ret += RunTestMatrix(cht, "CHQSO",
+                                     batchsize, QGEN_CHQSO,
+                                     dir + "chqso",
+                                     QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
+                                     verbose);
+            }
         }
 
 
-        *out << "\n\n";
-        *out << "*************************************************\n"
+        *out << "\n\n"
              << "*************************************************\n"
-             << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
-        if(ret)
-            *out << "    ( " << ret << " failures)\n";
+             << "*************************************************\n";
+
+        if(generate)
+        {
+            *out << " REFERENCE FILES GENERATED\n";
+        }
+        else
+        {
+            *out << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
+            if(ret)
+                *out << "    ( " << ret << " failures)\n";
+        }
+
         *out << "*************************************************\n"
              << "*************************************************\n";
 
