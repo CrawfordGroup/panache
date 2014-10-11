@@ -3,6 +3,8 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
+#include <cmath>
+
 #include "panache/storedqtensor/LocalQTensor.h"
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
