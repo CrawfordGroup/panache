@@ -213,26 +213,17 @@ void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
     
     // note: We are calculating just the symmetric part
     // and then applying it to the other triangular part of the
-    // tensor as well. The for loop will calculate the size of
-    // just the part of the lower triangle that we are calculating
-    // on the process, then we double it
-    for(int i = 0; i < nprimshell; i++)
+    // tensor as well.
+    for(int i = 0, count = 1; i < nprimshell; i++)
     {
-        for(int j = 0; j <= i; j++)
+        for(int j = 0; j < primary->shell(i).nfunction(); j++, count++)
         {
-            int64_t n = primary->shell(i).nfunction()*primary->shell(j).nfunction();
-            nsymelements += n;
-            nelements += n;
-            myelements += n;
-
-            if(i != j)
-            {
-                nelements += n;
-                myelements += n;
-            }
+            nsymelements += count;
+            nelements += 2*count-1;
+            myelements += 2*count-1;
         }
 
-        if(elranges[curproc].second < nsymelements)
+        if(elranges[curproc].second <= nsymelements)
         {
             shellranges[curproc].second = i+1;
             allnelements[curproc] = myelements;
