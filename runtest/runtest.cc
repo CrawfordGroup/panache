@@ -49,6 +49,7 @@ void PrintUsage(void)
          << "-c           Use Cyclops Tensor Framework\n"
          << "-b           Get Qso/Qmo in batches\n"
          << "-t           Use transpose of C matrix\n"
+         << "-g           Generate tests from basis/molecule info\n"
          << "-C           Disable cholesky runs\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
@@ -580,6 +581,7 @@ int main(int argc, char ** argv)
 
         string dir;
 
+        // program options
         bool verbose = false;
         bool byq = false;
         bool transpose = false;
@@ -587,48 +589,57 @@ int main(int argc, char ** argv)
         bool cyclops = false;
         bool disk = false;
         bool docholesky = true;
+        bool generate = false;
 
         int i = 1;
         while(i < argc)
         {
             string starg(GetNextArg(i, argc, argv));
-            if(starg == "-h")
-            {
-                PrintUsage();
-                return 0;
-            }
-            else if(starg == "-b")
-                batchsize = GetIArg(i, argc, argv);
-            else if(starg == "-d")
-            {
-                disk = true;
-                cyclops = false;
-            }
-            else if(starg == "-v")
+            if(starg == "-v")
                 verbose = true;
             else if(starg == "-t")
                 transpose = true;
             else if(starg == "-q")
                 byq = true;
-            else if(starg == "-c")
-            {
-                disk = false;
-                cyclops = true;
-            }
+            else if(starg == "-b")
+                batchsize = GetIArg(i, argc, argv);
             else if(starg == "-C")
                 docholesky = false;
-            else
+            else if(starg == "-d")
+                disk = true;
+            else if(starg == "-c")
+                cyclops = true;
+            else if(starg == "-g")
+                generate = true;
+            else if(starg == "-h")
+            {
+                PrintUsage();
+                return 0;
+            }
+            else if(dir.length() == 0)
             {
                 // add trailing slash if needed
                 if(starg[starg.length()-1] != '/')
                     starg.append("/");
                 dir = starg;
             }
+            else
+            {
+                *out << "\n\n";
+                *out << "-----------------------------------------------\n";
+                *out << "Error: Unknown argument \"" << starg << "\"\n";
+                *out << "-----------------------------------------------\n\n";
+                return 1;
+            }
         }
 
+        // check for incompatible options
         #ifndef PANACHE_CYCLOPS
         if(cyclops)
             throw std::runtime_error("Error - Panache not compiled with cyclops!");
+        #else
+        if(cyclops && disk)
+            throw std::runtime_error("Incompatible options: cyclops and disk");
         #endif
 
         if(verbose)
@@ -772,8 +783,14 @@ int main(int argc, char ** argv)
              << "*************************************************\n";
 
 
+        // even if not verbose, print the timints
+        if(!verbose)
+            panache::output::SetOutput(&*out);
+
         dft.PrintTimings();
-        cht.PrintTimings();
+
+        if(docholesky)
+            cht.PrintTimings();
 
     }
     catch(const exception & ex)
