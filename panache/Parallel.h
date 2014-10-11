@@ -8,6 +8,7 @@
 
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 #ifdef PANACHE_CYCLOPS
 #include <ctf.hpp>
