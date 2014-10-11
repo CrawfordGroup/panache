@@ -167,6 +167,7 @@ void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
 {
+    int rank = parallel::Rank();
     int maxpershell = primary->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
@@ -193,38 +194,70 @@ void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
 
 
     const int nauxshell = auxiliary->nshell();
-
+    const int nprimshell = primary->nshell();
 
 
     // Get the begin and end shells for this rank
     // Parallelization is over primary basis
-    auto range = parallel::MyRange(primary->nshell());
+    // but ending at shell boundaries
+    std::vector<parallel::Range> elranges = parallel::AllRanges((ndim1()*(ndim1()+1))/2);
+    std::vector<parallel::Range> shellranges(parallel::Size());
+    std::vector<int64_t> allnelements(parallel::Size());
 
-    // allocate
-    size_t nelements = 0;
+    shellranges[0] = parallel::Range(0,0);
 
+    int64_t nelements = 0;
+    int64_t myelements = 0;
+    int64_t nsymelements = 0;
+    int curproc = 0;
+    
     // note: We are calculating just the symmetric part
     // and then applying it to the other triangular part of the
     // tensor as well. The for loop will calculate the size of
     // just the part of the lower triangle that we are calculating
     // on the process, then we double it
-    for(int i = range.first; i < range.second; i++)
-    for(int j = 0; j <= i; j++)
+    for(int i = 0; i < nprimshell; i++)
     {
-        if(i == j)
-            nelements += primary->shell(i).nfunction() * primary->shell(j).nfunction();
-        else
-            nelements += 2*primary->shell(i).nfunction()*primary->shell(j).nfunction();
+        for(int j = 0; j <= i; j++)
+        {
+            int64_t n = primary->shell(i).nfunction()*primary->shell(j).nfunction();
+            nsymelements += n;
+            nelements += n;
+            myelements += n;
+
+            if(i != j)
+            {
+                nelements += n;
+                myelements += n;
+            }
+        }
+
+        if(elranges[curproc].second < nsymelements)
+        {
+            shellranges[curproc].second = i+1;
+            allnelements[curproc] = myelements;
+
+            curproc++;
+            myelements = 0;
+
+            if(curproc < (parallel::Size()))
+                shellranges[curproc].first = i+1;
+        }
     }
 
+    // allocate. We can reuse the nelements variable
+    nelements = allnelements[rank];
+    parallel::Range range = shellranges[rank];
+
+    // The above calculation was only on the ij pair.
+    // Now we include naux
     nelements *= naux;
 
     std::unique_ptr<double[]> data(new double[nelements]);
     std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
 
-std::cout << parallel::Rank() << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
-std::cout << parallel::Rank() << ": NELEMENTS: " << nelements << "\n";
-std::cout << parallel::Rank() << ": NTHREADS: " << nthreads << "\n";
+    std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
+    std::cout << rank << ": NELEMENTS: " << nelements << "\n";
 
     int64_t curidx = 0;
 
@@ -304,7 +337,7 @@ std::cout << parallel::Rank() << ": NTHREADS: " << nthreads << "\n";
         }
     }
 
-std::cout << parallel::Rank() << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
+std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
 
     tensor_->write(curidx, idx.get(), data.get());
 
@@ -314,7 +347,7 @@ std::cout << parallel::Rank() << " CURIDX/NELEMENTS: " << curidx << " / " << nel
         delete [] B[i];
     }
 
-    std::cout << parallel::Rank() << " : Done\n";
+    std::cout << rank << " : Done\n";
 }
 
 

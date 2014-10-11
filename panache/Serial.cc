@@ -51,9 +51,16 @@ bool IsMaster(void)
     return true;
 }
 
-std::pair<int, int> MyRange(int totalsize)
+Range MyRange(int64_t totalsize)
 {
-    return std::pair<int, int>(0, totalsize);
+    return Range(0, totalsize);
+}
+
+std::vector<Range> AllRanges(int64_t totalsize)
+{
+    std::vector<Range> ret;
+    ret.push_back(Range(0, totalsize));
+    return ret;
 }
 
 } //close namespace panache

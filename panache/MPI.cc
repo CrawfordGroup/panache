@@ -81,7 +81,7 @@ bool IsMaster(void)
     return (rank_ == 0);
 }
 
-std::pair<int, int> MyRange(int totalsize)
+Range MyRange(int64_t totalsize)
 {
     int rank = Rank();
     int nelements = (totalsize / Size());
@@ -97,7 +97,32 @@ std::pair<int, int> MyRange(int totalsize)
     else
         start += leftover;
     
-    return std::pair<int, int>(start, start+nelements);
+    return Range(start, start+nelements);
+}
+
+std::vector<Range> AllRanges(int64_t totalsize)
+{
+    std::vector<Range> ret;
+    int rank = Rank();
+    int nelements = (totalsize / Size());
+    int leftover = (totalsize % Size());
+
+    for(int rank = 0; rank < Size(); rank++)
+    {
+        int start = nelements * rank;
+        int nel = nelements;
+        if(rank < leftover)
+        {
+            start += rank;
+            nel++;
+        }
+        else
+            start += leftover;
+
+        ret.push_back(Range(start, start+nel));
+    }
+
+    return ret;
 }
 
 #ifdef PANACHE_CYCLOPS

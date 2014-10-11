@@ -7,6 +7,7 @@
 #define PANACHE_PARALLEL_H
 
 #include <utility>
+#include <vector>
 
 #ifdef PANACHE_CYCLOPS
 #include <ctf.hpp>
@@ -32,7 +33,10 @@ int Size(void);
 int Rank(void);
 bool IsMaster(void);
 
-std::pair<int, int> MyRange(int totalsize);
+typedef std::pair<int64_t, int64_t> Range;
+
+Range MyRange(int64_t totalsize);
+std::vector<Range> AllRanges(int64_t totalsize);
 
 #ifdef PANACHE_CYCLOPS
 CTF_World & CTFWorld(void);
