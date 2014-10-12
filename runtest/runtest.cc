@@ -455,7 +455,7 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
     //std::fill(outbuf.get(), outbuf.get()+bufsize, 0.0);
 
     // First, do by q
-    DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+    ThreeIndexTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
     while(iqtq)
     {
         int curq = iqtq.q();
@@ -497,7 +497,7 @@ int RunTestMatrix(ThreeIndexTensor & dft, const string & title,
 
     // Note - The reference matrices are always stored "by q". So some
     // index math is appropriate
-    DFTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
+    ThreeIndexTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(tensorflag, outbuf.get(), bufsize);
     while(iqtij)
     {
         int i = iqtij.i();
@@ -573,7 +573,7 @@ void GenTestMatrix(ThreeIndexTensor & dft, const string & title,
         smallest[i].second = numeric_limits<double>::max();
     }
 
-    DFTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
+    ThreeIndexTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(tensorflag, outbuf.get(), bufsize);
     while(iqtq)
     {
         // tests are always done on unpacked matrices
