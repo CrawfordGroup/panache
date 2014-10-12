@@ -45,7 +45,7 @@ public:
      * FittingMetric.
      *
      * \param [in] primary The primary basis set
-     * \param [in] auxiliary The auxiliary (DF) basis set
+     * \param [in] auxpath Path to auxiliary basis set file (G98 format)
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] nthreads Max number of threads to use
      */ 
@@ -59,7 +59,7 @@ protected:
 
 private:
     int naux_;   //!< Number of auxiliary basis functions
-    SharedBasisSet auxiliary_;
+    SharedBasisSet auxiliary_;  //!< Auxiliary (density fitting) basis set
     std::shared_ptr<FittingMetric> fittingmetric_; //!< Fitting metric J
 
     /// Print the DF tensor information

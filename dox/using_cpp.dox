@@ -1,9 +1,14 @@
 /*! \page usage_cpp_sec C++ Interface
 
+\section usage_cpp_df_sec Density Fitting C++ Interface
+
 Typical include files:
 
 \code{.cpp}
-#include <panache/DFTensor.h>
+#include <panache/DFTensor.h> // density fitting
+//or
+#include <panache/CHTensor.h> // cholesky
+
 #include <panache/Molecule.h>
 #include <panache/BasisSet.h>
 #include <panache/Output.h>
@@ -34,6 +39,8 @@ mol.add_atom( x2_cord, y2_cord, z2_cord, symbol2 );
 
 
 Then, a BasisSet object for the primary and auxiliary bases
+(although see below for using a G09-formatted basis set file
+for the auxiliary basis).
 
 \code{.cpp}
 // We need a vector of vectors containing ShellInfo objects
@@ -48,61 +55,129 @@ std::vector<std::vector<ShellInfo> > primary_shellmap, aux_shellmap;
 // These should be shared basis set objects
 SharedBasisSet primary_basis(new BasisSet(mol, primary_shellmap));
 SharedBasisSet aux_basis(new BasisSet(mol, aux_shellmap));
+\endcode
 
+Now construct a DFTensor object.
 
+\code{.cpp}
+DFTensor dft(primary_basis, aux_basis, "/path/to/scratch/dir", nthreads);
+
+// or, by giving a G98-formatted basis set file
+
+DFTensor dft(primary_basis, aux_file_path, "/path/to/scratch/dir", nthreads);
+\endcode
+
+Set the MO coefficient matrix and number of occupations
+
+\code{.cpp}
+double * cmat;
+
+...
+
+dft.SetCMatrix(cmat, nmo, false);
+dft.SetNOcc(nocc, nfroz);
 \endcode
 
 
-Now construct a DFTensor object
+Generate the tensors
 
 \code{.cpp}
-DFTensor dft(primary_basis, aux_basis, "/path/to/somefile.dat");
+int dfqflags = (QGEN_DFQSO | QGEN_DFQMP); // etc
+
+dft.GenQTensors(dfqflags, QSTORAGE_DISK); // see Flags.h
 \endcode
 
 
-As with the other interfaces, create a buffer and give it to DFTensor
+Now we can get batches of the 3-index tensors either by calling GetBatch / GetQBatch, or by iterators.
+Below shows a loop over the entire 3-index tensor, however you can obtain any piece through the
+last parameter in GetBatch/GetQBatch.
+
 
 \code{.cpp}
-int naux, nso2, nso;
-dft.QsoDimensions(naux, nso2);
-nso = primary->nbf();
+bool ispacked = dft.IsPacked(QGEN_QMO);
+int nbatch = 0;
 
-size_t buffsize = 4*nso2; // or something
+///////////
+// By Q //
+///////////
+int qbatchsize = dft.QBatchSize(QGEN_QMO); // or QGEN_QOV, etc
+double * qbuf = new double[4*qbatchsize];
 
-std::unique_ptr<double[]> outbuf(new double[buffsize]);
-dft.SetOutputBuffer(outbuf.get(), buffsize);
-\endcode
-
-Now get Qso in batches
-
-\code{.cpp}
-int n = 0;
-while((n = dft.GetBatch_Qso()))
+int curq = 0;
+while((nbatch = GetQBatch(QGEN_QMO, qbuf, 4*qbatchsize, curq)))
 {
-    // do something with it
+    for(int n = 0; n < nbatch; n++)
+    {
+        // do something!
+    }
+    curq += nbatch;
 }
 
+delete [] ijbuf;
+
+///////////
+// By IJ //
+///////////
+int batchsize = dft.BatchSize(QGEN_QMO); // same, but for ij
+double * ijbuf = new double[4*batchsize];
+
+int curij = 0;
+while((nbatch = GetBatch(QGEN_QMO, ijbuf, 4*batchsize, curij)))
+{
+    for(int n = 0; n < nbatch; n++)
+    {
+        // do something!
+    }
+    curij += nbatch;
+}
 \endcode
 
-And for Qmo
+
+If you want to loop over the entire tensor, iterators may be slightly easier
 
 \code{.cpp}
-
-dft.ResetBatches(); // needed if switching between Qso and Qmo 
-
-
-double * cmat; // your MO coefficient matrix
-
-dft.SetCMatrix(cmat, nmo, false); // see documentation about last parameter
-
-int n = 0;
-while((n = dft.GetBatch_Qmo()))
+///////////
+// By Q //
+///////////
+ThreeIndexTensor::IteratedQTensorByQ iqtq = dft.IterateByQ(QGEN_QMO, qbuf, 4*qbatchsize);
+while(iqtq)
 {
-    // do something with it
+    // can get current q value
+    int curq = iqtq.q();
+
+    // do stuff
+
+    ++iqtq;
 }
 
-// no cleanup needed!
+///////////
+// By IJ //
+///////////
+ThreeIndexTensor::IteratedQTensorByIJ iqtij = dft.IterateByIJ(QGEN_QMO, buf, 4*batchsize);
+while(iqtq)
+{
+    // can get indices
+    int i = iqtij.i();
+    int j = iqtij.j();
+    int ij = iqtij.ij(); // combined index, depends on packing
 
+    // do stuff
+
+    ++iqtq;
+}
 \endcode
+
+
+\section usage_cpp_ch_sec Cholesky C++ Interface
+
+The vast majority of the interface is part of the ThreeIndexTensor class, from
+which both DFTensor and CHTensor are derived. Using Cholesky is the same as above, except
+a CHTensor object is constructed instead.
+
+
+\code{.cpp}
+CHTensor cht(primary_basis, delta, "/path/to/scratch/dir", nthreads);
+\endcode
+
 
 */
