@@ -156,7 +156,7 @@ containing CMakeLists.txt.
 
 
 
-\section cmake_sec CMake options
+\section cmake_sec PANACHE-related CMake options
 These options are typically passed to the cmake command by prefixing them with "-D". For example,
 
 \code{.sh}
