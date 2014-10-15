@@ -49,11 +49,11 @@ int dfhandle = panache_dfinit(ncenters, atoms, normalized,
 /************************************************/
 
 // panache makes copies of all this information, so it can be safely deleted
-delete [] atoms;
-delete [] primary_nshellspercenter;
-delete [] primary_shells;
-delete [] aux_nshellspercenter;
-delete [] aux_shells;
+free(atoms);
+free(primary_nshellspercenter);
+free(primary_shells);
+free(aux_nshellspercenter);
+free(aux_shells);
 \endcode
 
 If needed, we need to set the C matrix (MO coefficient matrix) to be used in calculating Qmo, etc.
@@ -72,7 +72,7 @@ panache_setcmatrix(dfhandle, cmat, nmo, 0, BSORDER_PSI4);
 panache_setnocc(dfhandle, nocc, nfroz);
 
 // PANACHE makes a copy, so it can be deleted here if needed
-delete [] cmat;
+free(cmat);
 \endcode
 
 Next is to calculate the main Qso and other tensors, storing it in memory or on disk.
