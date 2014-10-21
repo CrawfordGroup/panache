@@ -3,14 +3,50 @@
 /////////////////////////
 /*! \mainpage
 
+\section Description
+
+PANACHE is a library for generation of approximate two-electron integrals used in
+computational chemistry.
+
+The goal is to provide a simple and efficient library for approximate integrals that would free
+developers of having to implement, test, and benchmark these techniques themselves, allowing them
+to work on more important parts of their project.
+
+PANACHE is written in C++11 with additional interfaces provided for Fortran and C, and currently
+supports density fitting and cholesky decomposition.
+
+
+\todo Expand this
+This work is funded by the NSF, grant ......
+
+
+\section features_sec Main Features
+
+  - Both density-fitting and Cholesky decomposition
+
+  - C, C++, and Fortran interfaces
+
+  - Written in standard C++11, with minimal external dependencies
+
+  - Parallelized
+    - OpenMP
+    - MPI using the Cyclops Tensor Framework (https://github.com/solomonik/ctf) [work in progress]
+
+  - Multiple backends for two-electron integral calculations
+    - Libint (https://sourceforge.net/p/libint/home/)
+    - Libint2 (https://sourceforge.net/p/libint/home/)
+    - LibERD (included with PANACHE)
+
+  - 32- and 64-bit interfaces
+
 \section main_sec Contents
 
-  - \ref features_page (todo)
-  - \ref theory_page   (todo)
+  - \ref theory_page
   - \ref compiling_page
   - \ref usage_page
 
 \section license_sec License
-TODO
+
+\todo License info
 
  */

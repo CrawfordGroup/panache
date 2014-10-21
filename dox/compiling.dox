@@ -50,10 +50,14 @@ is used.
           - Intel 2015 beta (Intel 15)
           - Clang  3.4.2
 
+      - BLAS/Lapack
+
   - Recommended
       - libint integral package (version 1.X or 2.X)
             - vectorization in v2 is not supported at the moment
- 
+
+\note The BLAS/Lapack library (and libint library) should match those you are using
+      for your project. It may be possible to do otherwise, but could be very messy. 
  
 
 \section compileroverview_sec Overview
@@ -94,6 +98,12 @@ CC=icc CXX=icpc FC=ifort cmake ...
 \endcode
 
 
+\section compile_link_sec Linking to your code
+
+To link to your code, you can just link to the static library. If you are using
+external dependencies (BLAS/Lapack, libint, cyclops, etc), you must link to those
+libraries when linking your project; they are not included in the PANACHE static library
+file.
 
 
 \section compileexamples_sec Compilation Examples

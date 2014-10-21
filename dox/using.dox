@@ -7,9 +7,25 @@
 
 \section genusage_sec General Notes
 
+\subsection Tensor flags
+
+Generating and using tensors is often done using flags to select which
+tensors you want. See Flags.h for the list of flags and what they do.
+
+The flags are used in typical C fashion with the bitwise OR operation. For
+example,
+
+\code{.cpp}
+dft.GenQTensors(QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
+\endcode
+
+will generate both Qmo and Qov tensors.
+
+
+
 \subsection tendim_sec Tensor Dimensions
 
-The page uses the following definitions:
+This documentation uses the following definitions:
 
  | Term    | Description                                                             |
  |---------|-------------------------------------------------------------------------|
@@ -25,9 +41,10 @@ The page uses the following definitions:
 The total size of a 3-index "Q" tensor is the number of auxiliary indices times
 the number of combined orbital indices ("ij"). 
 
-The number of combined orbital indices depends on the type of tensor (ie mo vs. occupied-occupied, etc)
-and the packing. The following table shows the number of combined orbital indices for a given tensor
-(which can be queried by DFTensor::QBatchSize)
+The number of combined orbital indices depends on the type of tensor
+(ie mo vs. occupied-occupied, etc) and the packing. The following table
+shows the number of combined orbital indices for a given tensor (which
+can be queried by DFTensor::QBatchSize)
 
  | Tensor | Packed Size      | Unpacked Size |
  |--------|------------------|---------------|
@@ -63,60 +80,15 @@ In this case, orbital counting for Qmo, Qoo, and Qov start
 at the first non-frozen orbital.
 
 
-\section usage_sec Typical Workflow
-
-
 \section usage_interfaces Interfaces
 
-See \ref usage_c_sec
+Panache has interfaces for Fortran, C, and C++. See the following
+separate pages for more detailed information on their usage
 
-See \ref usage_fortran_sec
+   - \ref usage_c_sec
 
-See \ref usage_cpp_sec
+   - \ref usage_fortran_sec
 
+   - \ref usage_cpp_sec
 
-
-
-
-\section memory_sec Memory Considerations
-
-\todo Double check these
-
-
-
-
-\subsection dftensor_memory_Sec Storage
-
-
-\subsubsection memory_metric_sec Storage of the metric
-
-   | Size             | Use                                       |
-   |------------------|-------------------------------------------|
-   | nso * nso        | Stores metric                             |
-   | nso * nmo        | Stores C matrix                           |
-
-
-
-
-\subsubsection memory_memory_sec If using storage in memory
-
-(see DFTensor::GenQso())
-
-   | Size             | Use                                       |
-   |------------------|-------------------------------------------|
-   | naux * nsotri    | Stores entire (Q\|ab) tensor              |
-   | nq * nsotri      | Stores part of (Q\|ab) for unpacking      |
-
-  
-
-\subsubsection memory_disk_sec If using disk storage
-
-   | Size             | Use                                                |
-   |------------------|----------------------------------------------------|
-   | nq  * nsotri     | Stores part of (Q\|ab) for unpacking               |
-   | nq  * nso * nso  | Unpacked version of part of (Q\|ab)                |
-   | nq  * nmo * nso  | Holds result of matrix multiplication QC or C(T)Q  |
-
-
-
- */
+*/
