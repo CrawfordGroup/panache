@@ -6,7 +6,8 @@
 #include <map>
 #include <sstream>
 
-#include "panache/c_interface.h"
+// included from c_convert.h
+//#include "panache/c_interface.h"
 #include "panache/c_convert.h"
 #include "panache/DFTensor.h"
 #include "panache/CHTensor.h"
