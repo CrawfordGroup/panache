@@ -16,7 +16,7 @@
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
-#define CHOLESKY_DELTA 1e-5
+#define CHOLESKY_DELTA 1e-3
 
 #define QSO_ELEMENT_THRESHOLD 1e-11
 #define QSO_SUM_THRESHOLD 1e-8
