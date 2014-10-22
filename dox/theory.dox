@@ -5,7 +5,72 @@
 
 \section theory_sec Basic Theory
 
-todo
+This sections is meant to be a very brief introduction to Density Fitting and Cholesky Decomposition
+as implemented in PANACHE. It is not meant to be exhaustive in any way.
+
+Some further reading:
+
+  - Density Fitting
+    - C. David. Sherrill; <i>Density-Fitting Approximations to the Electron Repulsion Integrals</i> (http://vergil.chemistry.gatech.edu/notes/df.pdf)
+  - Cholesky
+    - todo
+
+
+\subsection theory_notation_sec Note About Notation
+
+In PANACHE, the phrase AO is reserved strictly for <i>cartesian</i> AOs, while
+"SO" may be either cartesian or spherical, depending on the basis set. 
+
+
+\subsection df_theory_sec Density Fitting
+
+The three-index DF tensor in the SO basis (termed 'Qso' in PANACHE) is
+given by 
+
+\f[
+    b_{pq}^Q = \sum_P (pq | P) J^{\frac{1}{2}}_{PQ}
+\f]
+
+with \f$P\f$ and \f$Q\f$ labeling functions of the auxiliary (fitting) basis and \f$p\f$ and \f$q\f$
+labeling the basis functions of the primary basis.
+
+where \f$J\f$ is the fitting metric, whose matrix elements are obtained from a two-center integral
+
+\f[
+    J_{\alpha\beta} = \int d {\bf r_1} \int d {\bf r_2} \chi_\alpha({\bf r}_1) \frac{1}{r_{12}} \chi_\beta({\bf r}_2)
+\f] 
+
+From there, it is relatively simple to construct needed four-center integrals from the
+three index tensors with a simple summation (or contraction) over the auxiliary basis index
+
+\f[
+    (pq|rs) = \sum_Q b^Q_{pq}b^Q_{rs} 
+\f] 
+
+In PANACHE, generation of Qso depends somewhat on the storage scheme used, but see
+panache::LocalQTensor::GenDFQso_ for an example of how this is done. The metric \f$J\f$ is generated
+in the panache::FittingMetric class.
+ 
+
+
+\subsubsection theory_basischange Change of Basis
+
+The three-index tensor \f$b\f$ above ("Qso") can be transformed into the MO basis using the MO coefficients
+
+
+\f[
+    b_{mo}^Q = C^t b^Q_{so} C
+\f] 
+
+Similar transformations can be done using just the occupied or virtual blocks of the MO coefficient
+matrix, resulting in Qoo (occupied-occupied), Qov (occupied-virtual), and Qvv (virtual-virtual).
+Four-index integrals can then be generated in the chosen basis using the contraction shown above.
+
+In PANACHE, this is done as part of the panache::ThreeIndexTensor::GenQTensors function.
+
+
+
+\subsection ch_theory_sec Cholesky Decomposition
 
 
  */
