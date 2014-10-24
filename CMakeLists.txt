@@ -44,7 +44,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 #
 # Note that paths should probably be relative to the panache/ subdirectory
 # (since that is where add_library() is
-list(APPEND PANACHE_CXX_FLAGS "--std=c++11")
+list(APPEND PANACHE_CXX_FLAGS "-std=c++11")
 list(APPEND PANACHE_CXX_FLAGS "-Wall")
 list(APPEND PANACHE_CXX_FLAGS "-DFC_SYMBOL=2")
 list(APPEND PANACHE_CXX_INCLUDES "${CMAKE_SOURCE_DIR}")
