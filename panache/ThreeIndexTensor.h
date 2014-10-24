@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "panache/Timing.h"
 #include "panache/Flags.h"

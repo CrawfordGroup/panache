@@ -21,6 +21,8 @@
  */
 
 #include <cmath>
+#include <cstdint>
+
 #include "panache/SolidHarmonic.h" // includes matrix
 #include "panache/SimpleMatrix.h"
 
