@@ -12,19 +12,20 @@ The goal is to provide a simple and efficient library for approximate integrals 
 developers of having to implement, test, and benchmark these techniques themselves, allowing them
 to work on more important parts of their project.
 
-PANACHE is written in C++11 with additional interfaces provided for Fortran and C, and currently
-supports density fitting and cholesky decomposition.
-
-
-\todo Expand this
-This work is funded by the NSF, grant ......
+PANACHE is written in standard C++11 with additional interfaces provided
+for Fortran and C, and currently supports density fitting and cholesky
+decomposition.
 
 
 \section features_sec Main Features
 
   - Both density-fitting and Cholesky decomposition
 
-  - C, C++, and Fortran interfaces
+  - Frozen orbitals supported
+
+  - Flexible storage options (disk, memory, distributed)
+
+  - C++, C, and Fortran interfaces
 
   - Written in standard C++11, with minimal external dependencies
 
@@ -39,11 +40,22 @@ This work is funded by the NSF, grant ......
 
   - 32- and 64-bit interfaces
 
+
 \section main_sec Contents
 
   - \ref theory_page
   - \ref compiling_page
+  - \ref testing_page
   - \ref usage_page
+
+
+\section Authors
+
+PANACHE is primarily developed by Dr. Benjamin Pritchard, and by the
+group of Dr. T. Daniel Crawford, at Virginia Tech.
+
+Development of PANACHE funded by the National Science Foundation (award <a href="http://www.nsf.gov/awardsearch/showAward?AWD_ID=1147794">1147794</a>)
+
 
 \section license_sec License
 

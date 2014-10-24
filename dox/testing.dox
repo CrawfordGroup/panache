@@ -1,0 +1,22 @@
+/////////////////////////
+// TESTING             //
+/////////////////////////
+/*! \page testing_page Testing 
+
+\tableofcontents
+
+\section runtest_sec Runtest
+
+PANACHE ships with a testing program to check the integrity of the generated code. This
+program is called <b>runtest</b> and is located in the runtest subdirectory of the build directory (or the
+bin directory of the install prefix).
+
+<b>runtest</b> allows for testing much of the functionality, including generation of Qso (with density fitting and cholesky), transformation of Qso to Qmo, Qoo, etc., and reading/iterating over these three-index tensors.
+Timing information can also be printed, allowing for some benchmarking.
+
+The main argument to <b>runtest</b> is a directory containing test files. These are stored in the 'testfiles' directory of the source tree. Currently, testing is carried out with dimethyloxirane with various basis sets.
+
+Other options are documented in the program's help. See 'runtest -h' for details.
+
+
+*/
