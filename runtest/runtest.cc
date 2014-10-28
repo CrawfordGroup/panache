@@ -53,6 +53,7 @@ void PrintUsage(void)
          << "-g           Generate tests from basis/molecule info\n"
          << "-C           Disable cholesky runs\n"
          << "-S           Skip testing (useful for benchmarking)\n"
+         << "-X           Skip getting batches + testing (useful for benchmarking)\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
          << "\n\n";
@@ -700,6 +701,7 @@ int main(int argc, char ** argv)
         bool docholesky = true;
         bool generate = false;
         bool skiptest = false;
+        bool skipgetbatch = false;
 
         int i = 1;
         while(i < argc)
@@ -723,6 +725,11 @@ int main(int argc, char ** argv)
                 cyclops = true;
             else if(starg == "-g")
                 generate = true;
+            else if(starg == "-X")
+            {
+                skipgetbatch = true;
+                skiptest = true;
+            }
             else if(starg == "-h")
             {
                 PrintUsage();
@@ -874,7 +881,7 @@ int main(int argc, char ** argv)
             GenTestMatrix(cht, "CHQSO", QGEN_CHQSO, batchsize,
                            dir + "chqso", verbose);
         }
-        else
+        else if(!skipgetbatch)
         {
             ///////////
             // Test Qso
