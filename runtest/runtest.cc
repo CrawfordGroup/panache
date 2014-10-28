@@ -836,136 +836,139 @@ int main(int argc, char ** argv)
             cht.GenQTensors(chqflags, qstore);
 
 
-        if(generate)
+        if(parallel::IsMaster())
         {
-            ///////////
-            // Gen Qso
-            ///////////
-            GenTestMatrix(dft, "QSO", QGEN_DFQSO, batchsize,
-                          dir + "qso", verbose);
-    
-            ///////////
-            // Gen Qmo
-            ///////////
-            GenTestMatrix(dft, "QMO", QGEN_QMO, batchsize,
-                          dir + "qmo", verbose);
-    
-            ///////////
-            // Gen Qoo
-            ///////////
-            GenTestMatrix(dft, "QOO", QGEN_QOO, batchsize,
-                          dir + "qoo", verbose);
-    
-            ///////////
-            // Gen Qov
-            ///////////
-            GenTestMatrix(dft, "QOV", QGEN_QOV, batchsize,
-                          dir + "qov", verbose);
-    
-            ///////////
-            // Gen Qvv
-            ///////////
-            GenTestMatrix(dft, "QVV", QGEN_QVV, batchsize,
-                          dir + "qvv", verbose);
-
-            ///////////////////////
-            // Test Cholesky QSO
-            ///////////////////////
-            GenTestMatrix(cht, "CHQSO", QGEN_CHQSO, batchsize,
-                           dir + "chqso", verbose);
-        }
-        else
-        {
-            ///////////
-            // Test Qso
-            ///////////
-            ret += RunTestMatrix(dft, "QSO",
-                                 batchsize, QGEN_DFQSO,
-                                 dir + "qso", 
-                                 QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                                 skiptest, verbose);
-    
-            ///////////
-            // Test Qmo
-            ///////////
-            ret += RunTestMatrix(dft, "QMO",
-                                 batchsize, QGEN_QMO,
-                                 dir + "qmo", 
-                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 skiptest, verbose);
-    
-            ///////////
-            // Test Qoo
-            ///////////
-            ret += RunTestMatrix(dft, "QOO",
-                                 batchsize, QGEN_QOO,
-                                 dir + "qoo", 
-                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 skiptest, verbose);
-    
-            ///////////
-            // Test Qov
-            ///////////
-            ret += RunTestMatrix(dft, "QOV",
-                                 batchsize, QGEN_QOV,
-                                 dir + "qov",
-                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 skiptest, verbose);
-    
-            ///////////
-            // Test Qvv
-            ///////////
-            ret += RunTestMatrix(dft, "QVV",
-                                 batchsize, QGEN_QVV,
-                                 dir + "qvv",
-                                 QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
-                                 skiptest, verbose);
-    
-            ///////////////////////
-            // Test Cholesky QSO
-            ///////////////////////
-            if(docholesky)
-            {
-                ret += RunTestMatrix(cht, "CHQSO",
-                                     batchsize, QGEN_CHQSO,
-                                     dir + "chqso",
-                                     QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
-                                     skiptest, verbose);
-            }
-        }
-
-
-        if(!skiptest)
-        {
-            *out << "\n\n"
-                 << "*************************************************\n"
-                 << "*************************************************\n";
-    
             if(generate)
             {
-                *out << " REFERENCE FILES GENERATED\n";
+                ///////////
+                // Gen Qso
+                ///////////
+                GenTestMatrix(dft, "QSO", QGEN_DFQSO, batchsize,
+                              dir + "qso", verbose);
+        
+                ///////////
+                // Gen Qmo
+                ///////////
+                GenTestMatrix(dft, "QMO", QGEN_QMO, batchsize,
+                              dir + "qmo", verbose);
+        
+                ///////////
+                // Gen Qoo
+                ///////////
+                GenTestMatrix(dft, "QOO", QGEN_QOO, batchsize,
+                              dir + "qoo", verbose);
+        
+                ///////////
+                // Gen Qov
+                ///////////
+                GenTestMatrix(dft, "QOV", QGEN_QOV, batchsize,
+                              dir + "qov", verbose);
+        
+                ///////////
+                // Gen Qvv
+                ///////////
+                GenTestMatrix(dft, "QVV", QGEN_QVV, batchsize,
+                              dir + "qvv", verbose);
+    
+                ///////////////////////
+                // Test Cholesky QSO
+                ///////////////////////
+                GenTestMatrix(cht, "CHQSO", QGEN_CHQSO, batchsize,
+                               dir + "chqso", verbose);
             }
             else
             {
-                *out << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
-                if(ret)
-                    *out << "    ( " << ret << " failures)\n";
+                ///////////
+                // Test Qso
+                ///////////
+                ret += RunTestMatrix(dft, "QSO",
+                                     batchsize, QGEN_DFQSO,
+                                     dir + "qso", 
+                                     QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
+                                     skiptest, verbose);
+        
+                ///////////
+                // Test Qmo
+                ///////////
+                ret += RunTestMatrix(dft, "QMO",
+                                     batchsize, QGEN_QMO,
+                                     dir + "qmo", 
+                                     QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                     skiptest, verbose);
+        
+                ///////////
+                // Test Qoo
+                ///////////
+                ret += RunTestMatrix(dft, "QOO",
+                                     batchsize, QGEN_QOO,
+                                     dir + "qoo", 
+                                     QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                     skiptest, verbose);
+        
+                ///////////
+                // Test Qov
+                ///////////
+                ret += RunTestMatrix(dft, "QOV",
+                                     batchsize, QGEN_QOV,
+                                     dir + "qov",
+                                     QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                     skiptest, verbose);
+        
+                ///////////
+                // Test Qvv
+                ///////////
+                ret += RunTestMatrix(dft, "QVV",
+                                     batchsize, QGEN_QVV,
+                                     dir + "qvv",
+                                     QMO_SUM_THRESHOLD, QMO_CHECKSUM_THRESHOLD, QMO_ELEMENT_THRESHOLD,
+                                     skiptest, verbose);
+        
+                ///////////////////////
+                // Test Cholesky QSO
+                ///////////////////////
+                if(docholesky)
+                {
+                    ret += RunTestMatrix(cht, "CHQSO",
+                                         batchsize, QGEN_CHQSO,
+                                         dir + "chqso",
+                                         QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
+                                         skiptest, verbose);
+                }
             }
     
-            *out << "*************************************************\n"
-                 << "*************************************************\n";
+    
+            if(!skiptest)
+            {
+                *out << "\n\n"
+                     << "*************************************************\n"
+                     << "*************************************************\n";
+        
+                if(generate)
+                {
+                    *out << " REFERENCE FILES GENERATED\n";
+                }
+                else
+                {
+                    *out << "OVERALL RESULT: " << (ret ? "FAIL" : "PASS") << "\n";
+                    if(ret)
+                        *out << "    ( " << ret << " failures)\n";
+                }
+        
+                *out << "*************************************************\n"
+                     << "*************************************************\n";
+            }
+    
+            // even if not verbose, print the timints
+            if(!verbose)
+                panache::output::SetOutput(&*out);
+    
+            dft.PrintTimings();
+    
+            if(docholesky)
+                cht.PrintTimings();
+
         }
-
-        // even if not verbose, print the timints
-        if(!verbose)
-            panache::output::SetOutput(&*out);
-
-        dft.PrintTimings();
-
-        if(docholesky)
-            cht.PrintTimings();
-
-    }
+    } // close parallel::IsMaster()
     catch(const exception & ex)
     {
         *out << "\n*****************"
