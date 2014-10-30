@@ -250,6 +250,8 @@ private:
     StoredQTensor(const StoredQTensor && rhs) = delete;
 };
 
+typedef std::unique_ptr<StoredQTensor> UniqueStoredQTensor;
+
 } // close namespace panache
 
 #endif

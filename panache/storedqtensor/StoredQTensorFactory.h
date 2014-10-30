@@ -28,7 +28,7 @@ class StoredQTensor;
  * \param [in] directory Directory for disk storage (if needed)
  * \return Pointer to a an object derived from StoredQTensor
  */
-std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndim2, int storeflags,
+UniqueStoredQTensor StoredQTensorFactory(int naux, int ndim1, int ndim2, int storeflags,
         const std::string & name, const std::string & directory);
 
 
@@ -41,7 +41,7 @@ std::unique_ptr<StoredQTensor> StoredQTensorFactory(int naux, int ndim1, int ndi
  * \param [in] storeflags How to store (disk, memory, packed, etc)
  * \return Pointer to a an object derived from StoredQTensor
  */
-std::unique_ptr<StoredQTensor> StoredQTensorFactory(int storeflags);
+UniqueStoredQTensor StoredQTensorFactory(int storeflags);
 
 } // close namespace panache
 

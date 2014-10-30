@@ -233,7 +233,7 @@ int ThreeIndexTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
 }
 
 
-std::unique_ptr<StoredQTensor> & ThreeIndexTensor::ResolveTensorFlag(int tensorflag)
+UniqueStoredQTensor & ThreeIndexTensor::ResolveTensorFlag(int tensorflag)
 {
     switch(tensorflag)
     {
@@ -456,7 +456,7 @@ void ThreeIndexTensor::SetNOcc(int nocc, int nfroz)
 }
 
 
-void ThreeIndexTensor::PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const
+void ThreeIndexTensor::PrintTimer(const char * name, const UniqueStoredQTensor & q) const
 {
     if(q)
     {

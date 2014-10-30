@@ -56,7 +56,7 @@ public:
              int nthreads);
 
 protected:
-    virtual std::unique_ptr<StoredQTensor> GenQso(int storeflags) const;
+    virtual UniqueStoredQTensor GenQso(int storeflags) const;
 
 private:
     int naux_;   //!< Number of auxiliary basis functions

@@ -23,7 +23,7 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 }
 
 
-std::unique_ptr<StoredQTensor> CHTensor::GenQso(int storeflags) const
+UniqueStoredQTensor CHTensor::GenQso(int storeflags) const
 {
     auto qso = StoredQTensorFactory(storeflags);
 

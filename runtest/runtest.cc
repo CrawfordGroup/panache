@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 #include <array>
-#include <memory>
 #include <utility>
 #include <cmath>
 #include <algorithm>
@@ -76,7 +75,7 @@ struct TestMatrixInfo
 // Note - exceptions are turned on for the ifstream object
 // so that any parsing errors just throw an exeption. Catch those,
 // and throw an exception
-shared_ptr<BasisSet> ReadBasisFile(shared_ptr<Molecule> mol, const string & filename)
+SharedBasisSet ReadBasisFile(SharedMolecule mol, const string & filename)
 {
     ifstream f(filename.c_str());
 
@@ -132,7 +131,7 @@ shared_ptr<BasisSet> ReadBasisFile(shared_ptr<Molecule> mol, const string & file
 
 
 
-shared_ptr<Molecule> ReadMoleculeFile(const string & filename)
+SharedMolecule ReadMoleculeFile(const string & filename)
 {
     ifstream f(filename.c_str());
 

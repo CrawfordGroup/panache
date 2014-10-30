@@ -22,6 +22,7 @@ class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class TwoBodyAOInt;
 class StoredQTensor;
+typedef std::unique_ptr<StoredQTensor> UniqueStoredQTensor;
 
 namespace reorder
 {
@@ -513,7 +514,7 @@ protected:
      * \brief Generate the base Qso tensor
      * \param [in] storeflags How to store (disk, memory, packed, etc)
      */
-    virtual std::unique_ptr<StoredQTensor> GenQso(int storeflags) const = 0;
+    virtual UniqueStoredQTensor GenQso(int storeflags) const = 0;
 
     ///@}
 
@@ -576,11 +577,11 @@ private:
 
 
     ///@{ \name Q Tensor Storage
-    std::unique_ptr<StoredQTensor> qso_;  //!< Qso matrix
-    std::unique_ptr<StoredQTensor> qmo_;  //!< Qmo matrix
-    std::unique_ptr<StoredQTensor> qoo_;  //!< Qoo matrix
-    std::unique_ptr<StoredQTensor> qov_;  //!< Qov matrix
-    std::unique_ptr<StoredQTensor> qvv_;  //!< Qvv matrix
+    UniqueStoredQTensor qso_;  //!< Qso matrix
+    UniqueStoredQTensor qmo_;  //!< Qmo matrix
+    UniqueStoredQTensor qoo_;  //!< Qoo matrix
+    UniqueStoredQTensor qov_;  //!< Qov matrix
+    UniqueStoredQTensor qvv_;  //!< Qvv matrix
     ///@}
 
 
@@ -593,7 +594,7 @@ private:
      * \param [in] tensorflag Flag for the tensor
      * \return Stored object for the tensor
      */
-    std::unique_ptr<StoredQTensor> & ResolveTensorFlag(int tensorflag);
+    UniqueStoredQTensor & ResolveTensorFlag(int tensorflag);
 
 
     /*!
@@ -626,7 +627,7 @@ private:
      * \param [in] q Tensor whose timings to print
      * 
      */
-    void PrintTimer(const char * name, const std::unique_ptr<StoredQTensor> & q) const;
+    void PrintTimer(const char * name, const UniqueStoredQTensor & q) const;
 
 };
 

@@ -38,7 +38,7 @@ public:
              int nthreads);
 
 protected:
-    virtual std::unique_ptr<StoredQTensor> GenQso(int storeflags) const;
+    virtual UniqueStoredQTensor GenQso(int storeflags) const;
 
 private:
     double delta_;

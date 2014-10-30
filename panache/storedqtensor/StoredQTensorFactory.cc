@@ -17,22 +17,22 @@
 namespace panache
 {
 
-std::unique_ptr<StoredQTensor> 
+UniqueStoredQTensor 
 StoredQTensorFactory(int storeflags)
 {
     if(storeflags & QSTORAGE_ONDISK)
-        return std::unique_ptr<StoredQTensor>(new DiskQTensor());
+        return UniqueStoredQTensor(new DiskQTensor());
 
     #ifdef PANACHE_CYCLOPS
     else if(storeflags & QSTORAGE_CYCLOPS)
-        return std::unique_ptr<StoredQTensor>(new CyclopsQTensor());
+        return UniqueStoredQTensor(new CyclopsQTensor());
     #endif
 
     else
-        return std::unique_ptr<StoredQTensor>(new MemoryQTensor());
+        return UniqueStoredQTensor(new MemoryQTensor());
 }
 
-std::unique_ptr<StoredQTensor> 
+UniqueStoredQTensor 
 StoredQTensorFactory(int naux, int ndim1, int ndim2,
                      int storeflags, const std::string & name,
                      const std::string & directory)

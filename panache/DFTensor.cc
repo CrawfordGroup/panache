@@ -50,7 +50,7 @@ DFTensor::DFTensor(SharedBasisSet primary,
     Init_();
 }
 
-std::unique_ptr<StoredQTensor> DFTensor::GenQso(int storeflags) const
+UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
 {
     // Always gen qso as packed and by q
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
