@@ -10,14 +10,14 @@
 #include <memory>
 #include "panache/GaussianShell.h"
 
-using std::shared_ptr;
-
 namespace panache {
 
 class Molecule;
-typedef shared_ptr<Molecule> SharedMolecule;
+typedef std::shared_ptr<Molecule> SharedMolecule;
 
 class BasisSetParser;
+typedef std::shared_ptr<BasisSetParser> SharedBasisSetParser;
+
 
 /*! 
  * \brief Basis set container class
@@ -112,7 +112,7 @@ public:
      * \param [in] mol A molecule (information about the centers for this basis set)
      * \param [in] path Full path to a file containing the basis set in a format that \p parser can read. 
      */
-    BasisSet(const std::shared_ptr<BasisSetParser> & parser,
+    BasisSet(const SharedBasisSetParser & parser,
              const SharedMolecule & mol,
              const std::string & path);
 

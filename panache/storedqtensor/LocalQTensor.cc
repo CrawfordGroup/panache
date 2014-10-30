@@ -31,7 +31,7 @@ LocalQTensor::LocalQTensor()
 
 
 
-void LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+void LocalQTensor::GenDFQso_(const SharedFittingMetric & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
@@ -44,7 +44,7 @@ void LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
     // default constructor = zero basis
     SharedBasisSet zero(new BasisSet);
 
-    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<SharedTwoBodyAOInt> eris;
     std::vector<const double *> eribuffers;
     std::vector<double *> A, B;
 
@@ -138,7 +138,7 @@ void LocalQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
 }
 
 
-void LocalQTensor::ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, 
+void LocalQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, 
                                                       double * target)
 {
     SharedBasisSet basis = eris[0]->basis();
@@ -187,7 +187,7 @@ void LocalQTensor::ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> &
 }
 
 
-void LocalQTensor::ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, 
+void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, 
                                                  int row, double* target)
 {
     SharedBasisSet basis = eris[0]->basis();
@@ -255,7 +255,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                                                int storeflags,
                                                int nthreads)
 {
-    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<SharedTwoBodyAOInt> eris;
 
     for(int i = 0; i < nthreads; i++)
         eris.push_back(GetERI(primary, primary, primary, primary));

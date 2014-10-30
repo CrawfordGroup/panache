@@ -162,7 +162,7 @@ CyclopsQTensor::FillWithMatrix_(const double * mat, int nrow, int ncol, int sym,
 }
 
 
-void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
                                        const SharedBasisSet primary,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
@@ -176,7 +176,7 @@ void CyclopsQTensor::GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
     // default constructor = zero basis
     SharedBasisSet zero(new BasisSet);
 
-    std::vector<std::shared_ptr<TwoBodyAOInt>> eris;
+    std::vector<SharedTwoBodyAOInt> eris;
     std::vector<const double *> eribuffers;
     std::vector<double *> A, B;
 

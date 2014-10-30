@@ -79,7 +79,7 @@ void FittingMetric::form_fitting_metric()
 
     // == (A|B) Block == //
     const double **Jbuffer = new const double*[nthreads_];
-    std::shared_ptr<TwoBodyAOInt> *Jint = new std::shared_ptr<TwoBodyAOInt>[nthreads_];
+    SharedTwoBodyAOInt *Jint = new SharedTwoBodyAOInt[nthreads_];
 
     for (int Q = 0; Q<nthreads_; Q++)
     {

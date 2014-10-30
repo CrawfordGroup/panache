@@ -92,7 +92,7 @@ size_t Libint2TwoElectronInt::compute_shell(int sh1, int sh2, int sh3, int sh4)
 
     int s1, s2, s3, s4;
     int am1, am2, am3, am4, temp;
-    shared_ptr<BasisSet> bs_temp;
+    SharedBasisSet bs_temp;
 
     p13p24_ = false;
     p12_ = false;

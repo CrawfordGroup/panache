@@ -15,6 +15,7 @@ class BasisSet;
 class Molecule;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 typedef std::shared_ptr<Molecule> SharedMolecule;
+typedef std::shared_ptr<FittingMetric> SharedFittingMetric;
 
 /*!
  * \brief Generating and manipulation of a density-fitted 3-index tensor
@@ -60,7 +61,7 @@ protected:
 private:
     int naux_;   //!< Number of auxiliary basis functions
     SharedBasisSet auxiliary_;  //!< Auxiliary (density fitting) basis set
-    std::shared_ptr<FittingMetric> fittingmetric_; //!< Fitting metric J
+    SharedFittingMetric fittingmetric_; //!< Fitting metric J
 
     /// Print the DF tensor information
     void PrintHeader_(void) const;

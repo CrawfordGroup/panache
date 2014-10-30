@@ -23,6 +23,7 @@
 #ifndef PANACHE_INTEGRALPARAMETERS_H
 #define PANACHE_INTEGRALPARAMETERS_H
 
+#include <memory>
 #include <vector>
 
 namespace panache {
@@ -56,6 +57,8 @@ public:
     double *exponent() const { return exponent_; }
     double *coeff() const { return coeff_; }
 };
+
+typedef std::shared_ptr<CorrelationFactor> SharedCorrelationFactor;
 
 class FittedSlaterCorrelationFactor : public CorrelationFactor
 {

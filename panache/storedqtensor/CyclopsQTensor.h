@@ -52,7 +52,7 @@ protected:
     virtual void Clear_(void);
     virtual void Init_(void);
 
-    virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+    virtual void GenDFQso_(const SharedFittingMetric & fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads);

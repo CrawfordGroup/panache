@@ -122,6 +122,11 @@ public:
 */
 };
 
+/*!
+ * \brief A shared FittingMetric object
+ */
+typedef std::shared_ptr<FittingMetric> SharedFittingMetric;
+
 }
 
 #endif //PANACHE_FITTINGMETRIC_H

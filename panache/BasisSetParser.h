@@ -112,6 +112,13 @@ public:
     virtual std::vector<ShellInfo> parse(const std::string& symbol, const std::vector<std::string>& dataset);
 };
 
+
+/*!
+ * \brief Shared pointer to a basis set parser
+ */
+typedef std::shared_ptr<BasisSetParser> SharedBasisSetParser;
+
+
 } // end namespace panache 
 
 #endif

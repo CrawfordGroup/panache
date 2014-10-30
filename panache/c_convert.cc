@@ -8,7 +8,7 @@
 namespace panache
 {
 
-std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::Molecule> molecule,
+SharedBasisSet BasisSetFromArrays(SharedMolecule molecule,
         int_t ncenters,
         int_t * nshellspercenter,
         struct C_ShellInfo * shells, bool normalized)
@@ -43,13 +43,13 @@ std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::M
 
     }
 
-    return std::shared_ptr<panache::BasisSet>(new panache::BasisSet(molecule, shellmap));
+    return SharedBasisSet(new panache::BasisSet(molecule, shellmap));
 
 }
 
-std::shared_ptr<panache::Molecule> MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms)
+SharedMolecule MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms)
 {
-    std::shared_ptr<panache::Molecule> molecule(new panache::Molecule());
+    SharedMolecule molecule(new panache::Molecule());
 
     for(auto i = 0; i < ncenters; i++)
     {

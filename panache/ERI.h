@@ -27,10 +27,10 @@
 #endif
 
 
-
-using std::shared_ptr;
-
 namespace panache {
+
+class BasisSet;
+typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
 
 /*!
@@ -45,20 +45,20 @@ namespace panache {
  * \param [in] bs4 Basis set on the fourth center
  * \return A generator of ERI
  */
-inline shared_ptr<TwoBodyAOInt> GetERI(const shared_ptr<BasisSet> & bs1, const shared_ptr<BasisSet> & bs2,
-                                       const shared_ptr<BasisSet> & bs3, const shared_ptr<BasisSet> & bs4)
+inline SharedTwoBodyAOInt GetERI(const SharedBasisSet & bs1, const SharedBasisSet & bs2,
+                                       const SharedBasisSet & bs3, const SharedBasisSet & bs4)
 {
             #ifdef PANACHE_USE_LIBINT
-              return std::shared_ptr<TwoBodyAOInt>(new LibintERI(bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new LibintERI(bs1, bs2, bs3, bs4));
             #endif
             #ifdef PANACHE_USE_LIBINT2
-              return std::shared_ptr<TwoBodyAOInt>(new Libint2ERI(bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new Libint2ERI(bs1, bs2, bs3, bs4));
             #endif
             #ifdef PANACHE_USE_SLOWERI
-              return std::shared_ptr<TwoBodyAOInt>(new SlowERI(bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new SlowERI(bs1, bs2, bs3, bs4));
             #endif
             #ifdef PANACHE_USE_LIBERD
-              return std::shared_ptr<TwoBodyAOInt>(new ERDERI(bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new ERDERI(bs1, bs2, bs3, bs4));
             #endif
 }
 
@@ -77,15 +77,15 @@ inline shared_ptr<TwoBodyAOInt> GetERI(const shared_ptr<BasisSet> & bs1, const s
  * \param [in] bs4 Basis set on the fourth center
  * \return A generator of ErfERI
  */
-inline shared_ptr<TwoBodyAOInt> GetErfERI(double omega,
-                                          shared_ptr<BasisSet> & bs1, shared_ptr<BasisSet> & bs2,
-                                          shared_ptr<BasisSet> & bs3, shared_ptr<BasisSet> & bs4)
+inline SharedTwoBodyAOInt GetErfERI(double omega,
+                                     SharedBasisSet & bs1, SharedBasisSet & bs2,
+                                     SharedBasisSet & bs3, SharedBasisSet & bs4)
 {
             #ifdef PANACHE_USE_LIBINT
-              return std::shared_ptr<TwoBodyAOInt>(new LibintErfERI(omega, bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new LibintErfERI(omega, bs1, bs2, bs3, bs4));
             #endif
             #ifdef PANACHE_USE_LIBINT2
-              return std::shared_ptr<TwoBodyAOInt>(new Libint2ErfERI(omega, bs1, bs2, bs3, bs4));
+              return SharedTwoBodyAOInt(new Libint2ErfERI(omega, bs1, bs2, bs3, bs4));
             #endif
             #ifdef PANACHE_USE_SLOWERI
               throw RuntimeError("ErfERI for SlowERI not implemented!");

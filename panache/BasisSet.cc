@@ -12,8 +12,6 @@
 #include "panache/Output.h"
 #include "panache/BasisSetParser.h"
 
-using namespace std;
-
 namespace panache
 {
 
@@ -85,7 +83,7 @@ BasisSet::BasisSet(SharedMolecule mol, const std::vector<std::vector<ShellInfo>>
 
 
 
-BasisSet::BasisSet(const std::shared_ptr<BasisSetParser>& parser,
+BasisSet::BasisSet(const SharedBasisSetParser & parser,
         const SharedMolecule& mol,
         const std::string& path) : molecule_(mol)
 {
@@ -342,7 +340,7 @@ void BasisSet::construct_(const std::vector<std::vector<ShellInfo>> & shellmap)
     max_nprimitive_ = 0;
     for (int n = 0; n < natom; ++n)
     {
-        const vector<ShellInfo>& shells = shellmap[n];
+        const std::vector<ShellInfo>& shells = shellmap[n];
         int ustart = primitive_start[n];
         int uend = primitive_end[n];
         int nshells = shells.size();

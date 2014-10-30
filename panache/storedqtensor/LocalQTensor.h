@@ -13,6 +13,7 @@ namespace panache
 {
 
 class TwoBodyAOInt;
+typedef std::shared_ptr<TwoBodyAOInt> SharedTwoBodyAOInt;
 class FittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
@@ -51,7 +52,7 @@ protected:
      */
     virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
 
-    virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+    virtual void GenDFQso_(const SharedFittingMetric & fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads);
@@ -76,7 +77,7 @@ private:
      * \param [in] eris Objects to calculate 4-center integrals
      * \param [in] target Where to put the diagonal information. Should be nso*nso sized
      */
-    void ComputeDiagonal_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, double * target);
+    void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, double * target);
 
     /*!
      * \brief Compute a row for the cholesky Qso
@@ -88,7 +89,7 @@ private:
      * \param [in] row The row to calculate
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
-    void ComputeRow_(std::vector<std::shared_ptr<TwoBodyAOInt>> & eris, int row, double* target);
+    void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
 };
 
 } // close namespace panache

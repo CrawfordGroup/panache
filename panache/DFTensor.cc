@@ -28,7 +28,7 @@ void DFTensor::PrintHeader_(void) const
 void DFTensor::Init_(void)
 {
     naux_ = auxiliary_->nbf();
-    fittingmetric_ = std::shared_ptr<FittingMetric>(new FittingMetric(auxiliary_, nthreads_));
+    fittingmetric_ = SharedFittingMetric(new FittingMetric(auxiliary_, nthreads_));
     fittingmetric_->form_eig_inverse();
 }
 
@@ -64,7 +64,7 @@ std::unique_ptr<StoredQTensor> DFTensor::GenQso(int storeflags) const
 SharedBasisSet DFTensor::CreateAuxFromFile_(const std::string & auxpath, SharedMolecule mol)
 {
     // Gaussian input file parser for the auxiliary basis
-    std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
+    SharedBasisSetParser parser(new Gaussian94BasisSetParser);
     return SharedBasisSet(new BasisSet(parser, mol, auxpath));
 }
 

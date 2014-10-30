@@ -519,7 +519,7 @@ FJT::values(int J,double wval)
 // GaussianFundamental
 ////////
 
-GaussianFundamental::GaussianFundamental(std::shared_ptr<CorrelationFactor> cf, int maxJ)
+GaussianFundamental::GaussianFundamental(SharedCorrelationFactor cf, int maxJ)
 {
     cf_ = cf;
 
@@ -545,7 +545,7 @@ void GaussianFundamental::set_rho(double rho)
 ////////
 
 ErfFundamental::ErfFundamental(double omega, int max)
-    : GaussianFundamental(std::shared_ptr<CorrelationFactor>(), max)
+    : GaussianFundamental(SharedCorrelationFactor(), max)
 {
     omega_ = omega;
     rho_ = 0;

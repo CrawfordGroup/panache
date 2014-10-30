@@ -129,7 +129,7 @@ CumulativeTime & StoredQTensor::GetBatchTimer(void)
     return getijbatch_timer_;
 }
 
-void StoredQTensor::GenDFQso(const std::shared_ptr<FittingMetric> & fit,
+void StoredQTensor::GenDFQso(const SharedFittingMetric & fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)

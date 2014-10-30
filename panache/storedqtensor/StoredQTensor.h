@@ -18,6 +18,7 @@ namespace panache
 {
 
 class FittingMetric;
+typedef std::shared_ptr<FittingMetric> SharedFittingMetric;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet;
 
@@ -102,7 +103,7 @@ public:
      * \param [in] auxiliary Auxiliary basis set
      * \param [in] nthreads Number of threads to use
      */ 
-    void GenDFQso(const std::shared_ptr<FittingMetric> & fit,
+    void GenDFQso(const SharedFittingMetric & fit,
                   const SharedBasisSet primary,
                   const SharedBasisSet auxiliary,
                   int nthreads);
@@ -209,7 +210,7 @@ protected:
 
     /// \copydoc GenDFQso()
     /// To be implemented by derived classes
-    virtual void GenDFQso_(const std::shared_ptr<FittingMetric> & fit,
+    virtual void GenDFQso_(const SharedFittingMetric & fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads) = 0;

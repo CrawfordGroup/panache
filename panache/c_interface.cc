@@ -17,6 +17,7 @@
 
 using panache::RuntimeError;
 using panache::BasisSet;
+using panache::SharedBasisSetParser;
 using panache::Gaussian94BasisSetParser;
 using panache::SharedBasisSet;
 using panache::ThreeIndexTensor;
@@ -88,7 +89,7 @@ extern "C" {
                                       primary_nshellspercenter, primary_shells, normalized);
 
         // Gaussian input file parser for the auxiliary basis
-        std::shared_ptr<Gaussian94BasisSetParser> parser(new Gaussian94BasisSetParser);
+        SharedBasisSetParser parser(new Gaussian94BasisSetParser);
         SharedBasisSet auxBasis(new BasisSet(parser, molecule, auxfilename));
 
         ThreeIndexTensor * dft = new DFTensor(primaryBasis, auxBasis, directory, nthreads);

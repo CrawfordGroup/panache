@@ -27,7 +27,7 @@ namespace panache
      * \return A BasisSet object with the given basis information.
      *
      */ 
-    std::shared_ptr<panache::BasisSet> BasisSetFromArrays(std::shared_ptr<panache::Molecule> molecule,
+    SharedBasisSet BasisSetFromArrays(SharedMolecule molecule,
             int_t ncenters,
             int_t * nshellspercenter,
             struct C_ShellInfo * shells, bool normalized);
@@ -43,7 +43,7 @@ namespace panache
      * \return A new molecule object. 
      *
      */ 
-    std::shared_ptr<panache::Molecule> MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms);
+    SharedMolecule MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms);
 
 } // close namespace panache
 

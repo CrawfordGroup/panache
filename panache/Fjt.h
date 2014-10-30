@@ -56,6 +56,7 @@
 namespace panache {
 
 class CorrelationFactor;
+typedef std::shared_ptr<CorrelationFactor> SharedCorrelationFactor;
 
 /// Evaluates the Boys function F_j(T)
 class Fjt {
@@ -123,12 +124,12 @@ public:
 
 class GaussianFundamental : public Fjt {
 protected:
-    std::shared_ptr<CorrelationFactor> cf_;
+    SharedCorrelationFactor cf_;
     double rho_;
     double* value_;
 
 public:
-    GaussianFundamental(std::shared_ptr<CorrelationFactor> cf, int max);
+    GaussianFundamental(SharedCorrelationFactor cf, int max);
     virtual ~GaussianFundamental();
 
     virtual double* values(int J, double T) = 0;
