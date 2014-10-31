@@ -431,6 +431,7 @@ CyclopsQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int
     int real_nij = std::min(this->ndim12()-ij, nij);
     int real_nkl = std::min(rhsp->ndim12()-kl, nkl);
 
+/*
     std::array<const int, 3> l_start, l_end;
     std::array<const int, 3> r_start, r_end;
 
@@ -443,6 +444,9 @@ CyclopsQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int
 
     
     return std::pair<int, int>(real_nij, real_nkl);
+*/
+
+    throw RuntimeError("NYI");
 }
 
 
