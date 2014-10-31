@@ -186,5 +186,23 @@ void StoredQTensor::Transform(const std::vector<TransformMat> & left,
     Transform_(left, right, results, nthreads);
 }
 
+int StoredQTensor::ContractSingle(StoredQTensor * rhs, int i, int j, int k, int l, double * out,
+                                  std::vector<double> & scratch)
+{
+    auto res = ContractMulti(rhs, calcindex(i, j), calcindex(k, l), 1, 1, out, scratch);
+    return res.first * res.second; // 1 or 0
+}
+
+
+std::pair<int, int>
+StoredQTensor::ContractMulti(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
+                             double * out, std::vector<double> & scratch)
+{
+    if(scratch.size() < static_cast<size_t>(((nij+nkl)*naux())))
+        throw RuntimeError("Scratch space not large enough for contraction!");
+    return ContractMulti_(rhs, ij, kl, nij, nkl, out, scratch.data());
+}
+
+
 } // close namespace panache
 

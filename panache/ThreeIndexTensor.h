@@ -295,6 +295,53 @@ public:
     int GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart);
 
 
+    /*!
+     * \brief Sets the scratch size used for contractions
+     *
+     * Size is given as the number of doubles.
+     *
+     * Also allocates the memory
+     *
+     * \note This is not used for MPI/Cyclops calculations
+     */
+    void SetScratchSize(size_t ndoubles);
+    
+
+
+    /*!
+     * \brief Contract two Q tensors for a single 4-index quantity
+     *
+     * This forms the 4-index quantity (i j | k l)
+     *
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
+     * \param [in] i Index of the 4-index tensor
+     * \param [in] j Index of the 4-index tensor
+     * \param [in] k Index of the 4-index tensor
+     * \param [in] l Index of the 4-index tensor
+     * \return The 4-index quantity calculated
+     */
+    double ContractSingle(int lhsflag, int rhsflag, int i, int j, int k, int l);
+
+
+    /*!
+     * \brief Contract two Q tensor for several 4-index quantities
+     *
+     * This forms the 4-index quantities (i j | k l), with possible packed indicies
+     *
+     * \param [in] rhs Right-hand side tensor
+     * \param [in] ij Combined index for ( i j |
+     * \param [in] kl Combined index for | k l )
+     * \param [in] nij Number of ij to calculate
+     * \param [in] nkl Number of kl to calculate
+     * \param [in] out Where to put the results
+     * \return Actual number of ij and kl quantities calculated
+     */
+    std::pair<int, int>
+    ContractMulti(int lhsflag, int rhsflag, int ij, int kl, int nij, int nkl,
+                  double * out);
+
+
 
     /*!
      * \brief A class for iterating over a three-index tensor
@@ -574,6 +621,8 @@ private:
     void ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm);
 
 
+    /// Some space for doing contractions
+    std::vector<double> contscratch_;
 
 
     ///@{ \name Q Tensor Storage
@@ -618,7 +667,8 @@ private:
      */
     int GetBatch_Base(double * outbuf, int bufsize, int ijstart, StoredQTensor * qt);
 
-    
+
+
 
     /*!
      * \brief Prints the timer information for a given StoredQTensor

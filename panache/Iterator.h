@@ -22,8 +22,6 @@ protected:
 public:
     IndexIterator(const ITTYPE & it) : data_(it) { }
 
-
-
     
     /*!
      * \brief Get the "master" index
@@ -40,6 +38,9 @@ public:
      */ 
     bool Perm(void) const { return data_.Perm(); }
 
+    /*!
+     * \brief Test if the iterator is valid or not
+     */
     bool Valid(void) const { return data_.Valid(); }
 
     /*!

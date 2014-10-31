@@ -146,6 +146,50 @@ public:
                    int nthreads);
 
 
+    /*!
+     * \brief Contract this Q tensor with another for a single 4-index quantity
+     *
+     * This forms the 4-index quantity (i j | k l)
+     *
+     * This tensor becomes the left hand side, and \p rhs the
+     * right hand side.
+     *
+     * \param [in] rhs Right-hand side tensor
+     * \param [in] i Index of the 4-index tensor
+     * \param [in] j Index of the 4-index tensor
+     * \param [in] k Index of the 4-index tensor
+     * \param [in] l Index of the 4-index tensor
+     * \param [in] out Where to put the resulting integrals
+     * \param [in] scratch Some scratch space to use. Must be 2*naux doubles big
+     * \return Number of 4-index quantities actually calculated (should be 1 or 0)
+     *
+     */
+    int ContractSingle(StoredQTensor * rhs, int i, int j, int k, int l, double * out,
+                       std::vector<double> & scratch);
+
+
+    /*!
+     * \brief Contract this Q tensor with another for several 4-index quantities
+     *
+     * This forms the 4-index quantities (i j | k l), with possible packed indicies
+     *
+     * This tensor becomes the left hand side, and \p rhs the
+     * right hand side.
+     *
+     * \param [in] rhs Right-hand side tensor
+     * \param [in] ij Combined index for ( i j |
+     * \param [in] kl Combined index for | k l )
+     * \param [in] nij Number of ij to calculate
+     * \param [in] nkl Number of kl to calculate
+     * \param [in] out Where to put the results
+     * \param [in] scratch Some scratch space. Must be nij*nkl*naux() doubles big
+     * \return Actual number of ij and kl quantities calculated
+     */
+    virtual std::pair<int,int>
+    ContractMulti(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
+                  double * out, std::vector<double> & scratch);
+
+
     /// Get the timer for generation of this tensor
     CumulativeTime & GenTimer(void);
 
@@ -229,6 +273,12 @@ protected:
                             const std::vector<TransformMat> & right,
                             std::vector<StoredQTensor *> results,
                             int nthreads) = 0;
+
+    /// \copydoc ContractMulti()
+    /// To be implemented by derived classes
+    virtual std::pair<int,int>
+    ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
+                   double * out, double * scratch) = 0;
 
     /// Get the total size of the stored tensor
     int storesize(void) const;

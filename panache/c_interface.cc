@@ -222,5 +222,27 @@ extern "C" {
         CheckHandle(df_handle, __FUNCTION__);
         return xtensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);
     }
+
+    void panache_setscratchsize(int_t df_handle, int_t ndoubles)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        xtensors_[df_handle]->SetScratchSize(ndoubles);
+    }
+
+    double panache_contractsingle(int_t df_handle, int_t lhsflag, int_t rhsflag, int_t i, int_t j, int_t k, int_t l)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return xtensors_[df_handle]->ContractSingle(lhsflag, rhsflag, i, j, k, l);
+    }
+
+    void panache_contractmulti(int_t df_handle, int_t lhsflag, int_t rhsflag, 
+                               int_t ij, int_t kl, int_t nij, int_t nkl, double * out,
+                               int_t * real_nij, int_t * real_nkl)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        auto ret = xtensors_[df_handle]->ContractMulti(lhsflag, rhsflag, ij, kl, nij, nkl, out);
+        (*real_nij) = ret.first;
+        (*real_nkl) = ret.second;
+    }
 }
 

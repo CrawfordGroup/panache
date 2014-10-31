@@ -67,6 +67,10 @@ protected:
                             std::vector<StoredQTensor *> results,
                             int nthreads);
 
+    virtual std::pair<int,int>
+    ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
+                   double * out, double * scratch);
+
 public:
     CyclopsQTensor();
 };

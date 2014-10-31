@@ -457,5 +457,24 @@ void LocalQTensor::Transform_(const std::vector<TransformMat> & left,
 }
 
 
+std::pair<int,int>
+LocalQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
+                             double * out, double * scratch)
+{
+    LocalQTensor * rhsp = dynamic_cast<LocalQTensor *>(rhs);
+    if(rhsp == nullptr)
+        throw RuntimeError("Error - Can't contract LocalQTensor with another type!");
+
+    int nq = naux();
+    int real_nij = this->Read(scratch, nij, ij);
+    int real_nkl = rhsp->Read(scratch+nij*nq, nkl, kl);
+
+    // dimensions of both slices will be n x q
+    C_DGEMM('N', 'T', real_nij, real_nkl, nq, 1.0, scratch, nq, scratch+nij*nq, nq, 0.0, out, real_nkl);
+
+    return std::pair<int, int>(real_nij, real_nkl);
+}
+
+
 } // close namespace panache
 

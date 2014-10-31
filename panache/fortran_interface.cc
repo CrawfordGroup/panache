@@ -846,5 +846,68 @@ extern "C" {
         *nbatch = panache_getbatch(*df_handle, *tensorflag, outbuf, *bufsize, *ijstart);
     }
 
+
+    /*!
+     * \brief Sets the scratch size used for contractions
+     *
+     * Size is given as the number of doubles.
+     *
+     * Also allocates the memory
+     *
+     * \note This is not used for MPI/Cyclops calculations
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] ndoubles Number of doubles to allocate
+     */
+    void panachef_setscratchsize(int_t * df_handle, int_t * ndoubles)
+    {
+        panache_setscratchsize(*df_handle, *ndoubles);
+    }
+
+
+    /*!
+     * \brief Contract two Q tensors for a single 4-index quantity
+     *
+     * This forms the 4-index quantity (i j | k l)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
+     * \param [in] i Index of the 4-index tensor
+     * \param [in] j Index of the 4-index tensor
+     * \param [in] k Index of the 4-index tensor
+     * \param [in] l Index of the 4-index tensor
+     * \param [in] out The 4-index quantity calculated
+     */
+    void panachef_contractsingle(int_t * df_handle, int_t * lhsflag, int_t * rhsflag,
+                                 int_t * i, int_t * j, int_t * k, int_t * l,
+                                 double * out)
+    {
+        *out = panache_contractsingle(*df_handle, *lhsflag, *rhsflag, *i, *j, *k, *l);
+    }
+
+    
+    /*!
+     * \brief Contract two Q tensors for several 4-index quantities
+     *
+     * This forms the 4-index quantities (i j | k l), with possible packed indicies
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
+     * \param [in] ij Combined index for ( i j |
+     * \param [in] kl Combined index for | k l )
+     * \param [in] nij Number of ij to calculate
+     * \param [in] nkl Number of kl to calculate
+     * \param [in] out Where to put the results
+     * \param [in] real_nij Actual number of ij quantities calculated
+     * \param [in] real_nkl Actual number of kl quantities calculated
+     */
+    void panachef_contractmulti(int_t * df_handle, int_t * lhsflag, int_t * rhsflag, 
+                                int_t * ij, int_t * kl, int_t * nij, int_t * nkl, double * out,
+                                int_t * real_nij, int_t * real_nkl)
+    {
+        panache_contractmulti(*df_handle, *lhsflag, *rhsflag, *ij, *kl, *nij, *nkl, out, real_nij, real_nkl);
+    }
 }
 
