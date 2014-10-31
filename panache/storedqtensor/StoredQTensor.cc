@@ -88,6 +88,12 @@ int StoredQTensor::StoreFlags(void) const
 
 int StoredQTensor::Read(double * data, int nij, int ijstart)
 {
+    // note - don't check (nij > 0)!
+    // it may occassionally be called with nij = 0
+
+    if(nij < 0)
+        throw RuntimeError("Read() passed with negative nij!");
+
     if(ijstart + nij >= ndim12())
         nij = ndim12() - ijstart;
 
@@ -97,6 +103,12 @@ int StoredQTensor::Read(double * data, int nij, int ijstart)
 
 int StoredQTensor::ReadByQ(double * data, int nq, int qstart)
 {
+    // note - don't check (nq > 0)!
+    // it may occassionally be called with nq = 0
+
+    if(nq < 0)
+        throw RuntimeError("Read() passed with negative nq!");
+
     if(qstart + nq >= naux_)
         nq = naux_-qstart;
 
