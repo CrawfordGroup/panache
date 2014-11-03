@@ -597,6 +597,20 @@ ThreeIndexTensor::ContractMulti(int lhsflag, int rhsflag, int ij, int kl, int ni
     return ret;
 }
 
+
+int ThreeIndexTensor::ContractMulti(int lhsflag, int rhsflag, int i, int j, int k, int l, 
+                                    int ni, int nj, int nk, int nl,
+                                    double * out)
+{
+    UniqueStoredQTensor & lhs = ResolveTensorFlag(lhsflag);   
+    UniqueStoredQTensor & rhs = ResolveTensorFlag(rhsflag);   
+        
+    int ret = lhs->ContractMulti(rhs.get(), i, j, k, l, ni, nj, nk, nl, out, contscratch_); 
+    if(ret == 0)
+        throw RuntimeError("Error - can't do this multi contraction");
+    return ret;
+}
+
 } // close namespace panache
 
 

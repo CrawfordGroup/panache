@@ -449,6 +449,33 @@ CyclopsQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int
     throw RuntimeError("NYI");
 }
 
+int CyclopsQTensor::ContractMulti_(StoredQTensor * rhs,
+                                   int i, int j, int k, int l, 
+                                   int ni, int nj, int nk, int nl, 
+                                   double * out, double * scratch)
+{
+    int nq = naux();
+    int nij = ni * nj;
+    int nkl = nk * nk;
+
+    int total = nij*nkl;
+    if(total == 0)
+        return 0; // or throw exception?
+
+    // read (i j | Q)  into scratch
+    LocalQTensor * rhsp = dynamic_cast<LocalQTensor *>(rhs);
+    if(rhsp == nullptr)
+        throw RuntimeError("Error - Can't contract LocalQTensor with another type!");
+
+
+
+    throw RuntimeError("NYI");
+
+
+
+    return total;
+}
+
 
 } // close namespace panache
 

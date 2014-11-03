@@ -244,5 +244,15 @@ extern "C" {
         (*real_nij) = ret.first;
         (*real_nkl) = ret.second;
     }
+
+    int panache_contractmulti2(int_t df_handle, int_t lhsflag, int_t rhsflag, 
+                               int_t i, int_t j, int_t k, int_t l,
+                               int_t ni, int_t nj, int_t nk, int_t nl,
+                               double * out)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        return xtensors_[df_handle]->ContractMulti(lhsflag, rhsflag, i, j, k, l, ni, nj, nk, nl, out);
+    }
+
 }
 

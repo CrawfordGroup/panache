@@ -467,14 +467,54 @@ LocalQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int n
 
     int nq = naux();
     int real_nij = this->Read(scratch, nij, ij);
-    int real_nkl = rhsp->Read(scratch+nij*nq, nkl, kl);
+    int real_nkl = rhsp->Read(scratch+real_nij*nq, nkl, kl);
 
     // dimensions of both slices will be n x q
-    C_DGEMM('N', 'T', real_nij, real_nkl, nq, 1.0, scratch, nq, scratch+nij*nq, nq, 0.0, out, real_nkl);
+    C_DGEMM('N', 'T', real_nij, real_nkl, nq, 1.0, scratch, nq, scratch+real_nij*nq, nq, 0.0, out, real_nkl);
 
     return std::pair<int, int>(real_nij, real_nkl);
 }
 
+
+int LocalQTensor::ContractMulti_(StoredQTensor * rhs,
+                                 int i, int j, int k, int l, 
+                                 int ni, int nj, int nk, int nl, 
+                                 double * out, double * scratch)
+{
+    int nq = naux();
+    int nij = ni * nj;
+    int nkl = nk * nk;
+
+    int total = nij*nkl;
+    if(total == 0)
+        return 0; // or throw exception?
+
+    // read (i j | Q)  into scratch
+    LocalQTensor * rhsp = dynamic_cast<LocalQTensor *>(rhs);
+    if(rhsp == nullptr)
+        throw RuntimeError("Error - Can't contract LocalQTensor with another type!");
+
+    int count = 0;
+    for(int ii = 0; ii < ni; ii++)
+    for(int jj = 0; jj < nj; jj++)
+    {
+        if(this->Read(scratch + count*nq, 1, calcindex(i+ii, j+jj)) != 1);
+            throw RuntimeError("Error - reading past end of index!");
+        count++;
+    }
+
+    for(int kk = 0; kk < nk; kk++)
+    for(int ll = 0; ll < nl; ll++)
+    {
+        if(rhsp->Read(scratch + count*nq, 1, calcindex(k+kk, l+ll)) != 1);
+            throw RuntimeError("Error - reading past end of index!");
+        count++;
+    }
+    
+    C_DGEMM('N', 'T', nij, nkl, nq, 1.0, scratch, nq, scratch+nij*nq, nq, 0.0, out, nkl);
+
+    return total;
+}
 
 } // close namespace panache
 

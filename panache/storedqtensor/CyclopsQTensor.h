@@ -71,6 +71,12 @@ protected:
     ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
                    double * out, double * scratch);
 
+    virtual int
+    ContractMulti_(StoredQTensor * rhs,
+                   int i, int j, int k, int l, 
+                   int ni, int nj, int nk, int nl, 
+                   double * out, double * scratch);
+
 public:
     CyclopsQTensor();
 };

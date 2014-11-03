@@ -249,7 +249,7 @@ public:
      * until this function returns zero.
      *
      * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] outbuf Memory location to store the batch of tensors
+     * \param [out] outbuf Memory location to store the batch of tensors
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] qstart The starting value of q
      * \return The number of batches actually stored in the buffer.
@@ -279,8 +279,8 @@ public:
      * Call this and process the batches, incrementing qstart by the return value,
      * until this function returns zero.
      *
-     * \param [in] outbuf Memory location to store the tensor
      * \param [in] tensorflag Which tensor to get (see Flags.h)
+     * \param [out] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] ijstart The starting value of the ij index
      * \return The number of batches actually stored in the buffer.
@@ -329,7 +329,8 @@ public:
      *
      * This forms the 4-index quantities (i j | k l), with possible packed indicies
      *
-     * \param [in] rhs Right-hand side tensor
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
      * \param [in] ij Combined index for ( i j |
      * \param [in] kl Combined index for | k l )
      * \param [in] nij Number of ij to calculate
@@ -341,6 +342,28 @@ public:
     ContractMulti(int lhsflag, int rhsflag, int ij, int kl, int nij, int nkl,
                   double * out);
 
+
+    /*!
+     * \brief Contract two Q tensor for several 4-index quantities
+     *
+     * This forms the 4-index quantities (i j | k l), with possible packed indicies
+     *
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
+     * \param [in] i Index i
+     * \param [in] j Index j
+     * \param [in] k Index k
+     * \param [in] l Index l
+     * \param [in] ni Number of i to calculate
+     * \param [in] nj Number of j to calculate
+     * \param [in] nk Number of k to calculate
+     * \param [in] nl Number of l to calculate
+     * \param [out] out Where to put the results
+     * \return Actual number of quantities calculated
+     */
+    int ContractMulti(int lhsflag, int rhsflag, int i, int j, int k, int l, 
+                      int ni, int nj, int nk, int nl,
+                      double * out);
 
 
     /*!

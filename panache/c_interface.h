@@ -347,7 +347,7 @@ extern "C" {
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] outbuf Memory location to store the tensor
+     * \param [out] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] qstart The starting value of q
      * \return The number of batches actually stored in the buffer.
@@ -373,7 +373,7 @@ extern "C" {
      *
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
-     * \param [in] outbuf Memory location to store the tensor
+     * \param [out] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] ijstart The starting value of q
      * \return The number of batches actually stored in the buffer.
@@ -426,13 +426,38 @@ extern "C" {
      * \param [in] kl Combined index for | k l )
      * \param [in] nij Number of ij to calculate
      * \param [in] nkl Number of kl to calculate
-     * \param [in] out Where to put the results
-     * \param [in] real_nij Actual number of ij quantities calculated
-     * \param [in] real_nkl Actual number of kl quantities calculated
+     * \param [out] out Where to put the results
+     * \param [out] real_nij Actual number of ij quantities calculated
+     * \param [out] real_nkl Actual number of kl quantities calculated
      */
     void panache_contractmulti(int_t df_handle, int_t lhsflag, int_t rhsflag, 
                                int_t ij, int_t kl, int_t nij, int_t nkl, double * out,
-                               int_t * real_nij, int_t * real_kl);
+                               int_t * real_nij, int_t * real_nkl);
+
+
+    /*!
+     * \brief Contract two Q tensors for several 4-index quantities
+     *
+     * This forms the 4-index quantiities (i j | k l), with possible packed indicies
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] lhsflag Flag for which tensor to use for ( i j |
+     * \param [in] rhsflag Flag for which tensor to use for | k l )
+     * \param [in] i Index i
+     * \param [in] j Index j
+     * \param [in] k Index k
+     * \param [in] l Index l
+     * \param [in] ni Number of i to calculate
+     * \param [in] nj Number of j to calculate
+     * \param [in] nk Number of k to calculate
+     * \param [in] nl Number of l to calculate
+     * \param [out] out Where to put the results
+     * \return Number of quantities calculated
+     */
+    int panache_contractmulti2(int_t df_handle, int_t lhsflag, int_t rhsflag, 
+                               int_t i, int_t j, int_t k, int_t l,
+                               int_t ni, int_t nj, int_t nk, int_t nl,
+                               double * out);
 
 } // end extern "C"
 

@@ -203,6 +203,16 @@ StoredQTensor::ContractMulti(StoredQTensor * rhs, int ij, int kl, int nij, int n
     return ContractMulti_(rhs, ij, kl, nij, nkl, out, scratch.data());
 }
 
+int StoredQTensor::ContractMulti(StoredQTensor * rhs,
+                                 int i, int j, int k, int l, 
+                                 int ni, int nj, int nk, int nl,
+                                 double * out, std::vector<double> & scratch)
+{
+    if(scratch.size() < static_cast<size_t>(((ni*nj)+(nk*nl))*naux()))
+        throw RuntimeError("Scratch space not large enough for contraction!");
+    return ContractMulti_(rhs, i, j, k, l, ni, nj, nk, nl, out, scratch.data());
+}
+
 
 } // close namespace panache
 
