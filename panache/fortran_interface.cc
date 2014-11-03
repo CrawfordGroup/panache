@@ -859,7 +859,7 @@ extern "C" {
      * \param [in] df_handle A handle (returned from an init function) for this DF calculation
      * \param [in] ndoubles Number of doubles to allocate
      */
-    void panachef_setscratchsize(int_t * df_handle, int_t * ndoubles)
+    void panachef_setscratchsize_(int_t * df_handle, int_t * ndoubles)
     {
         panache_setscratchsize(*df_handle, *ndoubles);
     }
@@ -879,9 +879,9 @@ extern "C" {
      * \param [in] l Index of the 4-index tensor
      * \param [out] out The 4-index quantity calculated
      */
-    void panachef_contractsingle(int_t * df_handle, int_t * lhsflag, int_t * rhsflag,
-                                 int_t * i, int_t * j, int_t * k, int_t * l,
-                                 double * out)
+    void panachef_contractsingle_(int_t * df_handle, int_t * lhsflag, int_t * rhsflag,
+                                  int_t * i, int_t * j, int_t * k, int_t * l,
+                                  double * out)
     {
         *out = panache_contractsingle(*df_handle, *lhsflag, *rhsflag, *i, *j, *k, *l);
     }
@@ -903,9 +903,9 @@ extern "C" {
      * \param [out] real_nij Actual number of ij quantities calculated
      * \param [out] real_nkl Actual number of kl quantities calculated
      */
-    void panachef_contractmulti(int_t * df_handle, int_t * lhsflag, int_t * rhsflag, 
-                                int_t * ij, int_t * kl, int_t * nij, int_t * nkl, double * out,
-                                int_t * real_nij, int_t * real_nkl)
+    void panachef_contractmulti_(int_t * df_handle, int_t * lhsflag, int_t * rhsflag, 
+                                 int_t * ij, int_t * kl, int_t * nij, int_t * nkl, double * out,
+                                 int_t * real_nij, int_t * real_nkl)
     {
         panache_contractmulti(*df_handle, *lhsflag, *rhsflag, *ij, *kl, *nij, *nkl, out, real_nij, real_nkl);
     }
@@ -930,11 +930,11 @@ extern "C" {
      * \param [out] out Where to put the results
      * \param [out] nijkl Actual number of quantities calculated
      */
-    void panachef_contractmulti2(int_t * df_handle, int_t * lhsflag, int_t * rhsflag, 
-                                 int_t * i, int_t * j, int_t * k, int_t * l, 
-                                 int_t * ni, int_t * nj, int_t * nk, int_t * nl,
-                                 double * out,
-                                 int_t * nijkl)
+    void panachef_contractmulti2_(int_t * df_handle, int_t * lhsflag, int_t * rhsflag, 
+                                  int_t * i, int_t * j, int_t * k, int_t * l, 
+                                  int_t * ni, int_t * nj, int_t * nk, int_t * nl,
+                                  double * out,
+                                  int_t * nijkl)
     {
         (*nijkl) = panache_contractmulti2(*df_handle, *lhsflag, *rhsflag, *i, *j, *k, *l,
                                           *ni, *nj, *nk, *nl, out);
