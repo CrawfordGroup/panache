@@ -498,7 +498,7 @@ int LocalQTensor::ContractMulti_(StoredQTensor * rhs,
     for(int ii = 0; ii < ni; ii++)
     for(int jj = 0; jj < nj; jj++)
     {
-        if(this->Read(scratch + count*nq, 1, calcindex(i+ii, j+jj)) != 1);
+        if(this->Read(scratch + count*nq, 1, calcindex(i+ii, j+jj)) != 1)
             throw RuntimeError("Error - reading past end of index!");
         count++;
     }
@@ -506,7 +506,7 @@ int LocalQTensor::ContractMulti_(StoredQTensor * rhs,
     for(int kk = 0; kk < nk; kk++)
     for(int ll = 0; ll < nl; ll++)
     {
-        if(rhsp->Read(scratch + count*nq, 1, calcindex(k+kk, l+ll)) != 1);
+        if(rhsp->Read(scratch + count*nq, 1, calcindex(k+kk, l+ll)) != 1)
             throw RuntimeError("Error - reading past end of index!");
         count++;
     }
