@@ -483,7 +483,7 @@ int LocalQTensor::ContractMulti_(StoredQTensor * rhs,
 {
     int nq = naux();
     int nij = ni * nj;
-    int nkl = nk * nk;
+    int nkl = nk * nl;
 
     int total = nij*nkl;
     if(total == 0)
