@@ -454,6 +454,8 @@ int CyclopsQTensor::ContractMulti_(StoredQTensor * rhs,
                                    int ni, int nj, int nk, int nl, 
                                    double * out, double * scratch)
 {
+
+/*
     int nq = naux();
     int nij = ni * nj;
     int nkl = nk * nk;
@@ -463,17 +465,15 @@ int CyclopsQTensor::ContractMulti_(StoredQTensor * rhs,
         return 0; // or throw exception?
 
     // read (i j | Q)  into scratch
-    LocalQTensor * rhsp = dynamic_cast<LocalQTensor *>(rhs);
+    CyclopsQTensor * rhsp = dynamic_cast<CyclopsQTensor *>(rhs);
     if(rhsp == nullptr)
         throw RuntimeError("Error - Can't contract LocalQTensor with another type!");
 
 
+    return total;
+*/
 
     throw RuntimeError("NYI");
-
-
-
-    return total;
 }
 
 
