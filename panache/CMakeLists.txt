@@ -26,6 +26,8 @@ add_library(panache
             tensorbackend/MemoryQTensor.cc
             tensorbackend/DiskQTensor.cc
             tensorbackend/StoredQTensorFactory.cc
+            tensorbackend/FourIndexTensor.cc
+            tensorbackend/Local4IndexTensor.cc
             ${LIBINT_FILES}
             ${PARALLEL_FILES}
             ${CYCLOPS_FILES}
