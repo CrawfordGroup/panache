@@ -1,27 +1,25 @@
 /*! \file
- * \brief Three-index tensor storage on disk (header)
+ * \brief Three-index tensor storage in memory (header)
  * \ingroup storedqgroup
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#ifndef PANACHE_DISKQTENSOR_H
-#define PANACHE_DISKQTENSOR_H
+#ifndef PANACHE_MEMORYQTENSOR_H
+#define PANACHE_MEMORYQTENSOR_H
 
-#include <fstream>
-
-#include "panache/storedqtensor/LocalQTensor.h"
+#include "panache/tensorbackend/LocalQTensor.h"
 
 namespace panache
 {
 
 /*!
- *  \brief Class for storing a 3-index tensor on disk
+ *  \brief Class for storing a 3-index tensor in memory
  *  \ingroup storedqgroup
  */
-class DiskQTensor : public LocalQTensor
+class MemoryQTensor : public LocalQTensor
 {
 public:
-    DiskQTensor();
+    MemoryQTensor();
 
 protected:
     virtual void Write_(double * data, int nij, int ijstart);
@@ -32,14 +30,11 @@ protected:
     virtual void Init_(void);
 
 private:
-    std::unique_ptr<std::fstream> file_;
+    std::unique_ptr<double[]> data_;
 
-    void OpenFile_(void);
-    void CloseFile_(void);
 };
 
 } // close namespace panache
 
 #endif
-
 

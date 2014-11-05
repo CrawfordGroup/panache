@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/tensorbackend/StoredQTensor.h"
 #include "panache/Exception.h"
 #include "panache/Flags.h"
 

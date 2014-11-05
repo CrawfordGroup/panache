@@ -7,11 +7,11 @@
 #include "panache/Exception.h"
 
 // All the different StoredQTensor types
-#include "panache/storedqtensor/MemoryQTensor.h"
-#include "panache/storedqtensor/DiskQTensor.h"
+#include "panache/tensorbackend/MemoryQTensor.h"
+#include "panache/tensorbackend/DiskQTensor.h"
 
 #ifdef PANACHE_CYCLOPS
-#include "panache/storedqtensor/CyclopsQTensor.h"
+#include "panache/tensorbackend/CyclopsQTensor.h"
 #endif
 
 namespace panache

@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/storedqtensor/CyclopsQTensor.h"
+#include "panache/tensorbackend/CyclopsQTensor.h"
 #include "panache/Parallel.h"
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"

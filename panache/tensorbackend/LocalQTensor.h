@@ -7,7 +7,7 @@
 #ifndef PANACHE_LOCALQTENSOR_H
 #define PANACHE_LOCALQTENSOR_H
 
-#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/tensorbackend/StoredQTensor.h"
 
 namespace panache
 {

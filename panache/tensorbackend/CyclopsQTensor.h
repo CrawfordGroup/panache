@@ -9,7 +9,7 @@
 
 #include <ctf.hpp>
 
-#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/tensorbackend/StoredQTensor.h"
 
 namespace panache
 {

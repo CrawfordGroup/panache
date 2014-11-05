@@ -4,7 +4,7 @@
  */
 
 #include "panache/Exception.h"
-#include "panache/storedqtensor/DiskQTensor.h"
+#include "panache/tensorbackend/DiskQTensor.h"
 
 #ifdef _OPENMP
 #include <omp.h>

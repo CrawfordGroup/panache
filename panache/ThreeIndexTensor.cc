@@ -5,8 +5,8 @@
 
 
 #include "panache/ThreeIndexTensor.h"
-#include "panache/storedqtensor/StoredQTensor.h"
-#include "panache/storedqtensor/StoredQTensorFactory.h"
+#include "panache/tensorbackend/StoredQTensor.h"
+#include "panache/tensorbackend/StoredQTensorFactory.h"
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"

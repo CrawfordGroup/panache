@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-#include "panache/storedqtensor/LocalQTensor.h"
+#include "panache/tensorbackend/LocalQTensor.h"
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
 #include "panache/Lapack.h"

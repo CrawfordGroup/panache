@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/storedqtensor/MemoryQTensor.h"
+#include "panache/tensorbackend/MemoryQTensor.h"
 
 namespace panache
 {
