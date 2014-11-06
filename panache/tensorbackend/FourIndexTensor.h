@@ -31,31 +31,21 @@ class FourIndexTensor
 public:
     typedef std::array<int, 4> IndexArray;
 
-    FourIndexTensor(int d1, int d2, int d3, int d4);
+    FourIndexTensor();
 
+    // wrappers for derived class virtual functions
+    int GetNBatches(void) const;
     int GetNLocalIntegrals(void) const;
+    bool GetNextBatch(void);
     FourIndexIntegral LocalIntegral(int index);
 
 
-
 protected:
+    virtual int GetNBatches(void) const = 0;
     virtual int GetNLocalIntegrals_(void) const = 0;
+    virtual bool GetNextBatch_(void) = 0;
     virtual FourIndexIntegral LocalIntegral_(int index) = 0;
-    virtual void Free_(void) = 0;
 
-    IndexArray GetDimensions_(void) const;
-    IndexArray DecomposeIndex_(int index, bool colmajor = false) const;
-
-
-private:
-    IndexArray dimensions_;
-
-    // used in DecomposeIndex_
-    int d123_;
-    int d23_;
-
-    int d012_;
-    int d12_;
 };
 
 }

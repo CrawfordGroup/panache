@@ -12,23 +12,73 @@ namespace panache
 {
 
 
-Local4IndexTensor::Local4IndexTensor(LocalQTensor * left, LocalQTensor * right)
-                                    : FourIndexTensor(left->ndim1(), left->ndim2(),
-                                                      right->ndim1(), right->ndim2()),
-                                      left_(left), right_(right)
+Local4IndexTensor::Local4IndexTensor(LocalQTensor * left, LocalQTensor * right, size_t nperbatch)
+                                    : left_(left), right_(right)
 {
-    contscratch_.resize(left->naux()+right->naux());
+    ldim12_ = left->ndim12();
+    rdim12_ = right->ndim12();
+    naux_ = left->naux();
+
+    if(nperbatch == 0)
+        nperbatch_ = ldim12;
+    else
+        nperbatch_ = std::min(nperbatch, ldim12); // in case nperbatch > the acutal number we have to do
+
+    nbatches_ = ldim12 / nperbatch_;
+    if(ldim12 % nperbatch_ > 0)
+        nbatches_++;  // last incomplete batch
+
+    contscratch_.resize((rdim12_ + nperbatch_)* naux
+    integrals_.resize(nperbatch_ * rdim12_);
+
+    curbatch_ = 0;
+
+    GetCurBatch_();
+}
+
+int Local4IndexTensor::GetNBatches(void) const
+{
+    return nbatches_;
 }
 
 int Local4IndexTensor::GetNLocalIntegrals_(void) const
 {
     // only unique!
-    return left_->ndim12() * right_->ndim12();
+    //return left_->ndim12() * right_->ndim12();
+}
+
+bool Local4IndexTensor::GetNextBatch(void)
+{
+    curbatch_++;
+    if(curbatch_ >= nbatches_)
+        return false;
+    GetCurBatch_();
+    return true;
 }
 
 FourIndexIntegral Local4IndexTensor::LocalIntegral_(int index)
 {
+    int internalindex = index + (curbatch_ * right_->ndim12());
+}
 
+FourIndexTensor::IndexArray Local4IndexTensor::DecomposeIndex_(int internalindex) const
+{
+    FourIndexTensor::IndexArray indices;
+
+    indices[0] = internalindex / d123_;
+    internalindex -= indices[0] * d123_;
+
+    indices[1] = internalindex / d23_;
+    internalindex -= indices[1] * d23_;
+
+    indices[2] = internalindex / dimensions_[3];
+    indices[3] = internalindex - (indices[2] * dimensions_[3]);
+
+    return indices;
+}
+
+void Local4IndexTensor::GetCurBatch_(void)
+{
     // reuse existing infrastructure
     FourIndexTensor::IndexArray ind = DecomposeIndex_(index);
 
