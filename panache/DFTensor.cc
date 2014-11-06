@@ -8,8 +8,8 @@
 #include "panache/Output.h"
 #include "panache/BasisSet.h"
 #include "panache/BasisSetParser.h"
-#include "panache/tensorbackend/StoredQTensor.h"
-#include "panache/tensorbackend/StoredQTensorFactory.h"
+#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensorFactory.h"
 
 namespace panache {
 

@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/tensorbackend/CyclopsQTensor.h"
+#include "panache/storedqtensor/CyclopsQTensor.h"
 #include "panache/Parallel.h"
 #include "panache/ERI.h"
 #include "panache/FittingMetric.h"
@@ -247,8 +247,8 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
     std::unique_ptr<double[]> data(new double[nelements]);
     std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
 
-    //std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
-    //std::cout << rank << ": NELEMENTS: " << nelements << "\n";
+    std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
+    std::cout << rank << ": NELEMENTS: " << nelements << "\n";
 
     int64_t curidx = 0;
 
@@ -328,7 +328,7 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
         }
     }
 
-    //std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
+std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
 
     tensor_->write(curidx, idx.get(), data.get());
 
@@ -418,64 +418,6 @@ void CyclopsQTensor::Transform_(const std::vector<TransformMat> & left,
         #endif
     }
 }
-
-std::pair<int,int>
-CyclopsQTensor::ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
-                               double * out, double * scratch)
-{
-    CyclopsQTensor * rhsp = dynamic_cast<CyclopsQTensor *>(rhs);
-    if(rhsp == nullptr)
-        throw RuntimeError("Error - Can't contract CyclopsQTensor with another type!");
-
-    int nq = naux();
-    int real_nij = std::min(this->ndim12()-ij, nij);
-    int real_nkl = std::min(rhsp->ndim12()-kl, nkl);
-
-/*
-    std::array<const int, 3> l_start, l_end;
-    std::array<const int, 3> r_start, r_end;
-
-    if(byq())
-    {
-        ldims = {{0,  }};
-    }
-
-    CTF_Tensor lslice = tensor_->slice(
-
-    
-    return std::pair<int, int>(real_nij, real_nkl);
-*/
-
-    throw RuntimeError("NYI");
-}
-
-int CyclopsQTensor::ContractMulti_(StoredQTensor * rhs,
-                                   int i, int j, int k, int l, 
-                                   int ni, int nj, int nk, int nl, 
-                                   double * out, double * scratch)
-{
-
-/*
-    int nq = naux();
-    int nij = ni * nj;
-    int nkl = nk * nk;
-
-    int total = nij*nkl;
-    if(total == 0)
-        return 0; // or throw exception?
-
-    // read (i j | Q)  into scratch
-    CyclopsQTensor * rhsp = dynamic_cast<CyclopsQTensor *>(rhs);
-    if(rhsp == nullptr)
-        throw RuntimeError("Error - Can't contract LocalQTensor with another type!");
-
-
-    return total;
-*/
-
-    throw RuntimeError("NYI");
-}
-
 
 } // close namespace panache
 

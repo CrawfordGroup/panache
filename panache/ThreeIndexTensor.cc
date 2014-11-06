@@ -5,8 +5,8 @@
 
 
 #include "panache/ThreeIndexTensor.h"
-#include "panache/tensorbackend/StoredQTensor.h"
-#include "panache/tensorbackend/StoredQTensorFactory.h"
+#include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensorFactory.h"
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
@@ -280,11 +280,6 @@ int ThreeIndexTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJI
         return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag).get());
     else
         return 0;
-}
-
-void ThreeIndexTensor::SetScratchSize(size_t ndoubles)
-{
-    contscratch_.resize(ndoubles);
 }
 
 
@@ -570,46 +565,6 @@ ThreeIndexTensor::IteratedQTensorByIJ ThreeIndexTensor::IterateByIJ(int tensorfl
     return iqt;
 }
 
-
-double ThreeIndexTensor::ContractSingle(int lhsflag, int rhsflag, int i, int j, int k, int l)
-{
-    double ret;
-    UniqueStoredQTensor & lhs = ResolveTensorFlag(lhsflag);   
-    UniqueStoredQTensor & rhs = ResolveTensorFlag(rhsflag);   
-        
-    int n = lhs->ContractSingle(rhs.get(), i, j, k, l, &ret, contscratch_); 
-    if(n == 0)
-        throw RuntimeError("Error - can't do this single contraction");
-    return ret;
-}
-
-
-std::pair<int, int>
-ThreeIndexTensor::ContractMulti(int lhsflag, int rhsflag, int ij, int kl, int nij, int nkl,
-                                double * out)
-{
-    UniqueStoredQTensor & lhs = ResolveTensorFlag(lhsflag);   
-    UniqueStoredQTensor & rhs = ResolveTensorFlag(rhsflag);   
-        
-    auto ret = lhs->ContractMulti(rhs.get(), ij, kl, nij, nkl, out, contscratch_); 
-    if(ret.first * ret.second == 0)
-        throw RuntimeError("Error - can't do this multi contraction");
-    return ret;
-}
-
-
-int ThreeIndexTensor::ContractMulti(int lhsflag, int rhsflag, int i, int j, int k, int l, 
-                                    int ni, int nj, int nk, int nl,
-                                    double * out)
-{
-    UniqueStoredQTensor & lhs = ResolveTensorFlag(lhsflag);   
-    UniqueStoredQTensor & rhs = ResolveTensorFlag(rhsflag);   
-        
-    int ret = lhs->ContractMulti(rhs.get(), i, j, k, l, ni, nj, nk, nl, out, contscratch_); 
-    if(ret == 0)
-        throw RuntimeError("Error - can't do this multi contraction");
-    return ret;
-}
 
 } // close namespace panache
 

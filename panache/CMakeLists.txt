@@ -21,13 +21,11 @@ add_library(panache
             fortran_interface.cc
             c_convert.cc
             Lapack.cc
-            tensorbackend/StoredQTensor.cc
-            tensorbackend/LocalQTensor.cc
-            tensorbackend/MemoryQTensor.cc
-            tensorbackend/DiskQTensor.cc
-            tensorbackend/StoredQTensorFactory.cc
-            tensorbackend/FourIndexTensor.cc
-            tensorbackend/Local4IndexTensor.cc
+            storedqtensor/StoredQTensor.cc
+            storedqtensor/LocalQTensor.cc
+            storedqtensor/MemoryQTensor.cc
+            storedqtensor/DiskQTensor.cc
+            storedqtensor/StoredQTensorFactory.cc
             ${LIBINT_FILES}
             ${PARALLEL_FILES}
             ${CYCLOPS_FILES}

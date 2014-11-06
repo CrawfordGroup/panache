@@ -3,7 +3,7 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
-#include "panache/tensorbackend/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensor.h"
 #include "panache/Exception.h"
 #include "panache/Flags.h"
 
@@ -185,34 +185,6 @@ void StoredQTensor::Transform(const std::vector<TransformMat> & left,
 {
     Transform_(left, right, results, nthreads);
 }
-
-int StoredQTensor::ContractSingle(StoredQTensor * rhs, int i, int j, int k, int l, double * out,
-                                  std::vector<double> & scratch)
-{
-    auto res = ContractMulti(rhs, calcindex(i, j), calcindex(k, l), 1, 1, out, scratch);
-    return res.first * res.second; // 1 or 0
-}
-
-
-std::pair<int, int>
-StoredQTensor::ContractMulti(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
-                             double * out, std::vector<double> & scratch)
-{
-    if(scratch.size() < static_cast<size_t>(((nij+nkl)*naux())))
-        throw RuntimeError("Scratch space not large enough for contraction!");
-    return ContractMulti_(rhs, ij, kl, nij, nkl, out, scratch.data());
-}
-
-int StoredQTensor::ContractMulti(StoredQTensor * rhs,
-                                 int i, int j, int k, int l, 
-                                 int ni, int nj, int nk, int nl,
-                                 double * out, std::vector<double> & scratch)
-{
-    if(scratch.size() < static_cast<size_t>(((ni*nj)+(nk*nl))*naux()))
-        throw RuntimeError("Scratch space not large enough for contraction!");
-    return ContractMulti_(rhs, i, j, k, l, ni, nj, nk, nl, out, scratch.data());
-}
-
 
 } // close namespace panache
 

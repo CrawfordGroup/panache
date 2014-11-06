@@ -9,7 +9,7 @@
 
 #include <ctf.hpp>
 
-#include "panache/tensorbackend/StoredQTensor.h"
+#include "panache/storedqtensor/StoredQTensor.h"
 
 namespace panache
 {
@@ -66,16 +66,6 @@ protected:
                             const std::vector<TransformMat> & right,
                             std::vector<StoredQTensor *> results,
                             int nthreads);
-
-    virtual std::pair<int,int>
-    ContractMulti_(StoredQTensor * rhs, int ij, int kl, int nij, int nkl,
-                   double * out, double * scratch);
-
-    virtual int
-    ContractMulti_(StoredQTensor * rhs,
-                   int i, int j, int k, int l, 
-                   int ni, int nj, int nk, int nl, 
-                   double * out, double * scratch);
 
 public:
     CyclopsQTensor();
