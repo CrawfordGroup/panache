@@ -77,7 +77,7 @@ private:
      * \param [in] eris Objects to calculate 4-center integrals
      * \param [in] target Where to put the diagonal information. Should be nso*nso sized
      */
-    void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, double * target);
+    static void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, double * target);
 
     /*!
      * \brief Compute a row for the cholesky Qso
@@ -89,7 +89,7 @@ private:
      * \param [in] row The row to calculate
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
-    void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
+    static void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
 };
 
 } // close namespace panache

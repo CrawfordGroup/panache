@@ -265,7 +265,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     int n2 = n*n;
 
     double * diag = new double[n2];
-    std::fill(diag, diag + n2, 0.0);
+    //std::fill(diag, diag + n2, 0.0);
 
     ComputeDiagonal_(eris, diag);
 
@@ -288,6 +288,8 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                 pivot = P;
             }
         }
+
+        //std::cout << "MAX: " << Dmax << " element " << pivot << "\n";
 
         if(Dmax < delta || Dmax < 0.0) break;
 
