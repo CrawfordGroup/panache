@@ -297,7 +297,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         double L_QQ = sqrt(Dmax);
 
         L.push_back(new double[n2]);
-        std::fill(L.back(), L.back()+n2, 0.0);
+        //std::fill(L.back(), L.back()+n2, 0.0);
 
         ComputeRow_(eris, pivot, L[nQ]);
 
