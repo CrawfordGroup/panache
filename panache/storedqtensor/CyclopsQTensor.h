@@ -10,11 +10,14 @@
 #include <ctf.hpp>
 
 #include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/Parallel.h"
 
 namespace panache
 {
 
 
+class TwoBodyAOInt;
+typedef std::shared_ptr<TwoBodyAOInt> SharedTwoBodyAOInt;
 class BasisSet;
 typedef std::shared_ptr<BasisSet> SharedBasisSet; 
 
@@ -45,6 +48,39 @@ private:
      */
     std::unique_ptr<CTF_Matrix> FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name);
 
+
+    /*!
+     * \brief Find the maximum value and index of a distributed cyclops vector
+     *
+     * I can't just do vec.reduce(CTF_OP_MAX) since I also need the index (for 
+     * Cholesky decomposition).
+     *
+     * \param [in] vec Vector to find the maximum value in
+     * \return The maximum value and corresponding index
+     */
+    static std::pair<int64_t, double> FindVecMax_(CTF_Vector & vec);
+
+
+    /*!
+     * \brief Compute the cholesky diagonal
+     *
+     * The size of the \p eris vector is taken to be the number of threads this
+     * function can use, which each thread using one TwoBodyAOInt from the vector.
+     *
+     * \param [in] eris Objects to calculate 4-center integrals
+     * \param [in] target Where to put the diagonal information. Should be nso*nso sized
+     */
+    static void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, CTF_Vector & target);
+
+    /*!
+     * \brief Calculates the range of shells to calculate for a specific
+     *        process.
+     *
+     * This function aims to calculate as even a distribution as possible
+     * for a calculation over basis function pairs with packed indices.
+     */
+    static std::pair<int64_t, parallel::Range>
+    ShellRange2_(const SharedBasisSet & basis);
 
 protected:
     virtual void Read_(double * data, int nij, int ijstart);

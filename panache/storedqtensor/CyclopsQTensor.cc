@@ -167,7 +167,7 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
 {
-    int rank = parallel::Rank();
+    //int rank = parallel::Rank();
     int maxpershell = primary->max_function_per_shell();
     int maxpershell2 = maxpershell*maxpershell;
 
@@ -194,51 +194,15 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
 
 
     const int nauxshell = auxiliary->nshell();
-    const int nprimshell = primary->nshell();
 
 
     // Get the begin and end shells for this rank
     // Parallelization is over primary basis
     // but ending at shell boundaries
-    std::vector<parallel::Range> elranges = parallel::AllRanges((ndim1()*(ndim1()+1))/2);
-    std::vector<parallel::Range> shellranges(parallel::Size());
-    std::vector<int64_t> allnelements(parallel::Size());
+    auto shellrangeinfo = ShellRange2_(primary);
 
-    shellranges[0] = parallel::Range(0,0);
-
-    int64_t nelements = 0;
-    int64_t myelements = 0;
-    int64_t nsymelements = 0;
-    int curproc = 0;
-    
-    // note: We are calculating just the symmetric part
-    // and then applying it to the other triangular part of the
-    // tensor as well.
-    for(int i = 0, count = 1; i < nprimshell; i++)
-    {
-        for(int j = 0; j < primary->shell(i).nfunction(); j++, count++)
-        {
-            nsymelements += count;
-            nelements += 2*count-1;
-            myelements += 2*count-1;
-        }
-
-        if(elranges[curproc].second <= nsymelements)
-        {
-            shellranges[curproc].second = i+1;
-            allnelements[curproc] = myelements;
-
-            curproc++;
-            myelements = 0;
-
-            if(curproc < (parallel::Size()))
-                shellranges[curproc].first = i+1;
-        }
-    }
-
-    // allocate. We can reuse the nelements variable
-    nelements = allnelements[rank];
-    parallel::Range range = shellranges[rank];
+    int64_t nelements = shellrangeinfo.first;
+    parallel::Range range = shellrangeinfo.second;
 
     // The above calculation was only on the ij pair.
     // Now we include naux
@@ -247,11 +211,15 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
     std::unique_ptr<double[]> data(new double[nelements]);
     std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
 
-    std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
-    std::cout << rank << ": NELEMENTS: " << nelements << "\n";
+    //std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
+    //std::cout << rank << ": NELEMENTS: " << nelements << "\n";
 
     int64_t curidx = 0;
 
+//! \todo Fix threading in MPI?
+//#ifdef _OPENMP
+//    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+//#endif
     for (int M = range.first; M < range.second; M++)
     {
         int threadnum = 0;
@@ -328,7 +296,7 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
         }
     }
 
-std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
+    //std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
 
     tensor_->write(curidx, idx.get(), data.get());
 
@@ -338,9 +306,138 @@ std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\
         delete [] B[i];
     }
 
-    std::cout << rank << " : Done\n";
+    //std::cout << rank << " : Done\n";
 }
 
+std::pair<int64_t, parallel::Range>
+CyclopsQTensor::ShellRange2_(const SharedBasisSet & basis)
+{
+    int nbf = basis->nbf();
+    int nbf12 = (nbf*(nbf+1))/2;
+
+    // Get the begin and end shells for this rank
+    // Parallelization is over basis
+    // but ending at shell boundaries
+    std::vector<parallel::Range> elranges = parallel::AllRanges(nbf12);
+    std::vector<parallel::Range> shellranges(parallel::Size());
+    std::vector<int64_t> allnelements(parallel::Size());
+
+    shellranges[0] = parallel::Range(0,0);
+
+    int64_t nelements = 0;
+    int64_t myelements = 0;
+    int64_t nsymelements = 0;
+    int curproc = 0;
+    
+    // note: We are calculating just the symmetric part
+    // and then applying it to the other triangular part of the
+    // tensor as well.
+    const int nshell = basis->nshell();
+    for(int i = 0, count = 1; i < nshell; i++)
+    {
+        for(int j = 0; j < basis->shell(i).nfunction(); j++, count++)
+        {
+            nsymelements += count;
+            nelements += 2*count-1;
+            myelements += 2*count-1;
+        }
+
+        if(elranges[curproc].second <= nsymelements)
+        {
+            shellranges[curproc].second = i+1;
+            allnelements[curproc] = myelements;
+
+            curproc++;
+            myelements = 0;
+
+            if(curproc < (parallel::Size()))
+                shellranges[curproc].first = i+1;
+        }
+    }
+
+    int rank = parallel::Rank();
+    return std::pair<int64_t, parallel::Range>(allnelements[rank], shellranges[rank]);
+}
+
+void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, 
+                                      CTF_Vector & target)
+{
+    SharedBasisSet basis = eris[0]->basis();
+
+    const int nbf = basis->nbf();
+
+    //size_t nthreads = eris.size();
+
+    // get my shell range
+    auto shellrangeinfo = ShellRange2_(basis);
+
+    int64_t nelements = shellrangeinfo.first;
+    parallel::Range range = shellrangeinfo.second;
+
+
+    std::unique_ptr<double[]> data(new double[nelements]);
+    std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
+
+    int64_t curidx = 0;
+
+//! \todo Fix threading in MPI?
+//#ifdef _OPENMP
+//    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+//#endif
+    for (int M = range.first; M < range.second; M++) 
+    {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+        TwoBodyAOInt * integral = eris[threadnum].get();
+        const double* buffer = integral->buffer();
+
+        int nM = basis->shell(M).nfunction();
+        int mstart = basis->shell(M).function_index();
+
+        for (int N = 0; N <= M; N++) 
+        {
+            int nint = integral->compute_shell(M,N,M,N);
+
+            if(nint)
+            {
+                int nN = basis->shell(N).nfunction();
+                int nstart = basis->shell(N).function_index();
+    
+                if (N == M)
+                {
+                  for (int om = 0; om < nM; om++)
+                  {
+                    for (int on = 0; on < nN; on++)
+                    {
+                        idx[curidx] = (om + mstart) * nbf + (on + nstart);
+                        data[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                        curidx += 1;
+                    }
+                  }
+                }
+                else
+                {    
+                  for (int om = 0; om < nM; om++)
+                  {
+                    for (int on = 0; on < nN; on++)
+                    {
+                        idx[curidx] = (om + mstart) * nbf + (on + nstart);
+                        data[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                        idx[curidx+1] = (on + nstart) * nbf + (om + mstart); 
+                        data[curidx+1] = data[curidx];
+                        curidx += 2;
+                    }
+                  }
+                }
+            }
+        }
+    }
+
+    target.write(curidx, idx.get(), data.get());
+}
 
 
 void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
@@ -348,6 +445,21 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
                                                  int storeflags,
                                                  int nthreads)
 {
+    std::vector<SharedTwoBodyAOInt> eris;
+
+    for(int i = 0; i < nthreads; i++)
+        eris.push_back(GetERI(primary, primary, primary, primary));
+
+    int nQ = 0;
+    int n = primary->nbf();
+    int n2 = n*n;
+
+
+    CTF_Vector diag(n2, parallel::CTFWorld(), "CHODIAG");
+    ComputeDiagonal_(eris, diag);
+
+    auto max = FindVecMax_(diag);
+
     throw RuntimeError("NYI");
 }
 
@@ -418,6 +530,76 @@ void CyclopsQTensor::Transform_(const std::vector<TransformMat> & left,
         #endif
     }
 }
+
+std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
+{
+  int myRank = parallel::Rank();
+  int numPes = parallel::Size();
+
+  // find maximum on this process
+  int64_t np;
+  int64_t * idx;
+  double * data;
+
+  // \todo I wish this didn't create copies...
+  // Or I could just get a list of indicies
+  vec.read_local(&np, &idx, &data);
+
+  double max = data[0];
+  int64_t index = 0;
+
+  for(int64_t i = 1; i < np; i++)
+  {
+    if(max < data[i])
+    {
+        max = data[i];
+        index = idx[i];
+    }
+  }
+
+  // all send my local max to master node
+  // also send number of elements on this node, so master knows if I actually had data or not
+  if(myRank == 0)
+  {
+    for(int i = 1; i < numPes; i++)
+    {
+        int64_t remotenp;
+        int64_t remoteindex;
+        double remotevalue;
+        MPI_Recv(&remotenp, 1, MPI_INT64_T, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        if(remotenp > 0)
+        {
+            // only do this if the remote process actually has data
+            MPI_Recv(&remoteindex, 1, MPI_INT64_T, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&remotevalue, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if(max < remotevalue)
+            {
+                // this is a new max value
+                max = remotevalue;
+                index = remoteindex;
+            }
+        }
+    }
+  }
+  else
+  {
+      MPI_Send(&np, 1, MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
+      if(np > 0)
+      {
+        MPI_Send(&index, 1, MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      }
+  }
+
+  // max and index will contain the overall max information
+  // send to all ranks
+  MPI_Bcast(&index, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&max, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  return std::pair<int64_t, double>(index, max);
+}
+
 
 } // close namespace panache
 
