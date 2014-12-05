@@ -205,7 +205,7 @@ void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
     int sstart = basis->shell(S).function_index();
 
     int oR = r - rstart;
-    int os = s - sstart;
+    int oS = s - sstart;
 
     size_t nthreads = eris.size();
 
@@ -240,7 +240,7 @@ void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
                     for (int on = 0; on < nN; on++) {
                         target[(om + mstart) * nbf + (on + nstart)] =
                         target[(on + nstart) * nbf + (om + mstart)] =
-                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
                     }
                 }
             }
