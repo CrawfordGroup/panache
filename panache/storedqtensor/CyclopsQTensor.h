@@ -32,6 +32,12 @@ private:
     /// Actual tensor data
     std::unique_ptr<CTF_Tensor> tensor_;
 
+    /// Range of (packed) shell pairs for this process
+    parallel::Range myrange_;
+
+    /// Number of individual basis function elements in that range
+    int64_t mynelements_;
+
     /*!
      * \brief Convert a locally-stored matrix into a CTF matrix
      *
@@ -67,10 +73,28 @@ private:
      * The size of the \p eris vector is taken to be the number of threads this
      * function can use, which each thread using one TwoBodyAOInt from the vector.
      *
+     * \note Not static like in LocalQTensor since we need access to range information
+     *       (mynelements_ and myrange_)
+     *
      * \param [in] eris Objects to calculate 4-center integrals
      * \param [in] target Where to put the diagonal information. Should be nso*nso sized
      */
-    static void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, CTF_Vector & target);
+    void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, CTF_Vector & target);
+
+    /*!
+     * \brief Compute a row for the cholesky Qso
+     *
+     * The size of the \p eris vector is taken to be the number of threads this
+     * function can use, which each thread using one TwoBodyAOInt from the vector.
+     *
+     * \note Not static like in LocalQTensor since we need access to range information
+     *       (mynelements_ and myrange_)
+     *
+     * \param [in] eris Objects to calculate 4-center integrals
+     * \param [in] row The row to calculate
+     * \param [in] target Where to put the row. Should be nso*nso sized
+     */
+    void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, CTF_Vector & target);
 
     /*!
      * \brief Calculates the range of shells to calculate for a specific

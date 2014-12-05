@@ -366,25 +366,17 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
 
     const int nbf = basis->nbf();
 
-    //size_t nthreads = eris.size();
-
-    // get my shell range
-    auto shellrangeinfo = ShellRange2_(basis);
-
-    int64_t nelements = shellrangeinfo.first;
-    parallel::Range range = shellrangeinfo.second;
-
-
-    std::unique_ptr<double[]> data(new double[nelements]);
-    std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
+    std::unique_ptr<double[]> data(new double[mynelements_]);
+    std::unique_ptr<int64_t[]> idx(new int64_t[mynelements_]);
 
     int64_t curidx = 0;
 
+    //size_t nthreads = eris.size();
 //! \todo Fix threading in MPI?
 //#ifdef _OPENMP
 //    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
 //#endif
-    for (int M = range.first; M < range.second; M++) 
+    for (int M = myrange_.first; M < myrange_.second; M++) 
     {
         int threadnum = 0;
 
@@ -439,12 +431,79 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
     target.write(curidx, idx.get(), data.get());
 }
 
+void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, 
+                                 int row, CTF_Vector & target)
+{
+    SharedBasisSet basis = eris[0]->basis();
+
+    const int nbf = basis->nbf();
+
+    int r = row / nbf;
+    int s = row % nbf;
+    int R = basis->function_to_shell(r);
+    int S = basis->function_to_shell(s);
+
+    int nR = basis->shell(R).nfunction();
+    int nS = basis->shell(S).nfunction();
+    int rstart = basis->shell(R).function_index();
+    int sstart = basis->shell(S).function_index();
+
+    int oR = r - rstart;
+    int os = s - sstart;
+
+/*
+    
+    //size_t nthreads = eris.size();
+//! \todo Fix threading in MPI?
+//#ifdef _OPENMP
+//    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+//#endif
+    for (int M = myrange_.first; M < myrange_.second; M++)
+    {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+
+        TwoBodyAOInt * integral = eris[threadnum].get();
+        const double* buffer = integral->buffer();
+
+        int nM = basis->shell(M).nfunction();
+        int mstart = basis->shell(M).function_index();
+
+        for (int N = 0; N <= M; N++)
+        {
+            int nint = integral->compute_shell(M,N,R,S);
+
+            if(nint)
+            {
+                int nN = basis->shell(N).nfunction();
+                int nstart = basis->shell(N).function_index();
+    
+                for (int om = 0; om < nM; om++) {
+                    for (int on = 0; on < nN; on++) {
+                        target[(om + mstart) * nbf + (on + nstart)] =
+                        target[(on + nstart) * nbf + (om + mstart)] =
+                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+                    }
+                }
+            }
+        }
+    }
+*/
+}
 
 void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
                                                  double delta,
                                                  int storeflags,
                                                  int nthreads)
 {
+    auto shellrangeinfo = ShellRange2_(primary);
+
+    mynelements_ = shellrangeinfo.first;
+    myrange_ = shellrangeinfo.second;
+
     std::vector<SharedTwoBodyAOInt> eris;
 
     for(int i = 0; i < nthreads; i++)
