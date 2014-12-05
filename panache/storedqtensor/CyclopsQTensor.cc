@@ -10,6 +10,7 @@
 #include "panache/BasisSet.h"
 #include "panache/Iterator.h"
 #include "panache/Lapack.h"
+#include "panache/Flags.h"
  
 #ifdef PANACHE_PROFILE
 #include "panache/Output.h"
@@ -195,21 +196,24 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
 
     const int nauxshell = auxiliary->nshell();
 
+    // Note - storing this info in the class members, although
+    // they are really only used in this function
+    // (just to keep it somewhat consistent with GenCHQso)
 
     // Get the begin and end shells for this rank
     // Parallelization is over primary basis
     // but ending at shell boundaries
     auto shellrangeinfo = ShellRange2_(primary);
 
-    int64_t nelements = shellrangeinfo.first;
-    parallel::Range range = shellrangeinfo.second;
+    mynelements_ = shellrangeinfo.first;
+    myrange_ = shellrangeinfo.second;
 
     // The above calculation was only on the ij pair.
     // Now we include naux
-    nelements *= naux;
+    int64_t nelements = mynelements_ * naux;
 
-    std::unique_ptr<double[]> data(new double[nelements]);
-    std::unique_ptr<int64_t[]> idx(new int64_t[nelements]);
+    mydata_ = std::unique_ptr<double[]>(new double[nelements]);
+    myidx_ = std::unique_ptr<int64_t[]>(new int64_t[nelements]);
 
     //std::cout << rank << ": MYRANGE: [" << range.first << " , " << range.second << ") NSHELL=" << primary->nshell() << "\n";
     //std::cout << rank << ": NELEMENTS: " << nelements << "\n";
@@ -220,7 +224,7 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
 //#ifdef _OPENMP
 //    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
 //#endif
-    for (int M = range.first; M < range.second; M++)
+    for (int M = myrange_.first; M < myrange_.second; M++)
     {
         int threadnum = 0;
 
@@ -276,8 +280,8 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
                 for (int n0 = 0, n = nstart; n < nend; n0++, n++)
                 for (int q = 0; q < naux; q++)
                 {
-                    idx[curidx] = n*ndim1()*naux + m*naux + q;
-                    data[curidx] = A[threadnum][m0*naux*nn + n0*naux + q];
+                    myidx_[curidx] = n*ndim1()*naux + m*naux + q;
+                    mydata_[curidx] = A[threadnum][m0*naux*nn + n0*naux + q];
                     curidx++;
                 }
             }
@@ -287,9 +291,9 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
                 for (int n0 = 0, n = nstart; n < nend; n0++, n++)
                 for (int q = 0; q < naux; q++)
                 {
-                    idx[curidx] = n*ndim1()*naux + m*naux + q;
-                    idx[curidx+1] = m*ndim1()*naux + n*naux + q;
-                    data[curidx] = data[curidx+1] = A[threadnum][m0*naux*nn + n0*naux + q];
+                    myidx_[curidx] = n*ndim1()*naux + m*naux + q;
+                    myidx_[curidx+1] = m*ndim1()*naux + n*naux + q;
+                    mydata_[curidx] = mydata_[curidx+1] = A[threadnum][m0*naux*nn + n0*naux + q];
                     curidx += 2;
                 }
             }
@@ -298,13 +302,16 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
 
     //std::cout << rank << " CURIDX/NELEMENTS: " << curidx << " / " << nelements << "\n";
 
-    tensor_->write(curidx, idx.get(), data.get());
+    tensor_->write(curidx, myidx_.get(), mydata_.get());
 
     for(int i = 0; i < nthreads; i++)
     {
         delete [] A[i];
         delete [] B[i];
     }
+
+    mydata_.reset();
+    myidx_.reset();
 
     //std::cout << rank << " : Done\n";
 }
@@ -366,8 +373,6 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
 
     const int nbf = basis->nbf();
 
-    std::unique_ptr<double[]> data(new double[mynelements_]);
-    std::unique_ptr<int64_t[]> idx(new int64_t[mynelements_]);
 
     int64_t curidx = 0;
 
@@ -404,8 +409,8 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
                   {
                     for (int on = 0; on < nN; on++)
                     {
-                        idx[curidx] = (om + mstart) * nbf + (on + nstart);
-                        data[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                        myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
+                        mydata_[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
                         curidx += 1;
                     }
                   }
@@ -416,10 +421,10 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
                   {
                     for (int on = 0; on < nN; on++)
                     {
-                        idx[curidx] = (om + mstart) * nbf + (on + nstart);
-                        data[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
-                        idx[curidx+1] = (on + nstart) * nbf + (om + mstart); 
-                        data[curidx+1] = data[curidx];
+                        myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
+                        mydata_[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
+                        myidx_[curidx+1] = (on + nstart) * nbf + (om + mstart); 
+                        mydata_[curidx+1] = mydata_[curidx];
                         curidx += 2;
                     }
                   }
@@ -428,7 +433,7 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
         }
     }
 
-    target.write(curidx, idx.get(), data.get());
+    target.write(curidx, myidx_.get(), mydata_.get());
 }
 
 void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, 
@@ -449,10 +454,10 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
     int sstart = basis->shell(S).function_index();
 
     int oR = r - rstart;
-    int os = s - sstart;
+    int oS = s - sstart;
 
-/*
-    
+    int64_t curidx = 0;
+
     //size_t nthreads = eris.size();
 //! \todo Fix threading in MPI?
 //#ifdef _OPENMP
@@ -481,17 +486,37 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
                 int nN = basis->shell(N).nfunction();
                 int nstart = basis->shell(N).function_index();
     
-                for (int om = 0; om < nM; om++) {
-                    for (int on = 0; on < nN; on++) {
-                        target[(om + mstart) * nbf + (on + nstart)] =
-                        target[(on + nstart) * nbf + (om + mstart)] =
-                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + os];
+                if (N == M)
+                {
+                  for (int om = 0; om < nM; om++)
+                  {
+                    for (int on = 0; on < nN; on++)
+                    {
+                        myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
+                        mydata_[curidx] = buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
+                        curidx += 1;
                     }
+                  }
+                }
+                else
+                {    
+                  for (int om = 0; om < nM; om++)
+                  {
+                    for (int on = 0; on < nN; on++)
+                    {
+                        myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
+                        mydata_[curidx] = buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
+                        myidx_[curidx+1] = (on + nstart) * nbf + (om + mstart); 
+                        mydata_[curidx+1] = mydata_[curidx];
+                        curidx += 2;
+                    }
+                  }
                 }
             }
         }
     }
-*/
+
+    target.write(curidx, myidx_.get(), mydata_.get());
 }
 
 void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
@@ -503,6 +528,8 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
     mynelements_ = shellrangeinfo.first;
     myrange_ = shellrangeinfo.second;
+    mydata_ = std::unique_ptr<double[]>(new double[mynelements_]);
+    myidx_ = std::unique_ptr<int64_t[]>(new int64_t[mynelements_]);
 
     std::vector<SharedTwoBodyAOInt> eris;
 
@@ -517,9 +544,112 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
     CTF_Vector diag(n2, parallel::CTFWorld(), "CHODIAG");
     ComputeDiagonal_(eris, diag);
 
-    auto max = FindVecMax_(diag);
+    // Temporary cholesky rows
+    std::vector<CTF_Vector *> L;
 
-    throw RuntimeError("NYI");
+    // List of selected pivots
+    std::vector<int> pivots;
+
+    int64_t oneidx;
+    double oneval;
+
+    std::vector<int64_t> someidx;
+    std::vector<double> someval;
+
+    while(nQ < n2)
+    {
+        auto maxel = FindVecMax_(diag);
+        int pivot = maxel.first;
+        double Dmax = maxel.second;
+
+        if(Dmax < delta || Dmax < 0.0) break;
+
+        pivots.push_back(pivot); // should be ok distributed. They all have the same index/value
+
+        double L_QQ = sqrt(Dmax);
+
+        L.push_back(new CTF_Vector(n2, parallel::CTFWorld()));
+
+        ComputeRow_(eris, pivot, *(L[nQ]));
+
+        // [(m|Q) - L_m^P L_Q^P]
+        for(int P = 0; P < nQ; P++)
+        {
+            oneidx = pivots[nQ];
+            L[P]->read(1, &oneidx, &oneval);
+            (*L[nQ])["i"] += -1.0*oneval * (*L[P])["i"];
+        }
+
+
+        // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
+        (*L[nQ]).scale(1.0 / L_QQ, "i");
+
+        // Zero the upper triangle
+        for(size_t P = 0; P < pivots.size(); P++)
+        {
+            oneidx = pivots[P];
+            oneval = 0.0;
+            L[nQ]->write(1, &oneidx, &oneval);
+        }
+
+        // Set the pivot factor
+        oneidx = pivot;
+        oneval = L_QQ;
+        L[nQ]->write(1, &oneidx, &oneval);
+
+        // Update the Schur complement diagonal
+        diag["i"] -= (*L[nQ])["i"] * (*L[nQ])["i"];
+
+        // Force truly zero elements to zero
+        someidx.resize(pivots.size());
+        someval.resize(pivots.size());
+
+        for (size_t P = 0; P < pivots.size(); P++)
+        {
+          someidx[P] = pivots[P];
+          someval[P] = 0.0;
+          diag.write(pivots.size(), someidx.data(), someval.data());
+        }
+
+        nQ++;
+    }
+
+    // done with buffers
+    mydata_.reset();
+    myidx_.reset();
+
+    // Now we know the dimensions. initialize the tensor
+    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ, "qso");
+
+    // convert vector of CTF_Vector to a proper 3-index tensor
+    double * localvals;
+    int64_t * localidx;
+    int64_t np;
+
+    for(int i = 0; i < nQ; i++)
+    {
+        // need local data
+        L[i]->read_local(&np, &localidx, &localvals);
+
+        // row in 3-index tensor corresponds to i
+        for(int64_t j = 0; j < np; j++)
+        {
+            // this is an n x n matrix actually
+            // and symmetric too, so no need to worry
+            // about column vs. row major order
+            int64_t mrow = localidx[j]/n;
+            int64_t mcol = localidx[j] - (mrow*n);
+
+            // just change the index in localidx and reuse the data array
+            localidx[j] = i + mrow * nQ + mcol * nQ * n;
+        }
+
+        tensor_->write(np, localidx, localvals);
+
+        free(localidx);
+        free(localvals);
+        delete L[i];
+    }
 }
 
 
@@ -615,6 +745,9 @@ std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
         index = idx[i];
     }
   }
+
+  free(idx);
+  free(data);
 
   // all send my local max to master node
   // also send number of elements on this node, so master knows if I actually had data or not

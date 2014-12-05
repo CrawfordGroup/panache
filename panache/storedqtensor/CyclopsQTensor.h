@@ -35,6 +35,12 @@ private:
     /// Range of (packed) shell pairs for this process
     parallel::Range myrange_;
 
+    /// Local storage buffer for values
+    std::unique_ptr<double[]> mydata_;
+
+    /// Local storage buffer for indicies
+    std::unique_ptr<int64_t[]> myidx_;
+
     /// Number of individual basis function elements in that range
     int64_t mynelements_;
 
