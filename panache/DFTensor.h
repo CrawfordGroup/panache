@@ -61,7 +61,6 @@ protected:
 private:
     int naux_;   //!< Number of auxiliary basis functions
     SharedBasisSet auxiliary_;  //!< Auxiliary (density fitting) basis set
-    SharedFittingMetric fittingmetric_; //!< Fitting metric J
 
     /// Print the DF tensor information
     void PrintHeader_(void) const;

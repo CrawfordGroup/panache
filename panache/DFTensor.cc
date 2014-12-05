@@ -28,8 +28,6 @@ void DFTensor::PrintHeader_(void) const
 void DFTensor::Init_(void)
 {
     naux_ = auxiliary_->nbf();
-    fittingmetric_ = SharedFittingMetric(new FittingMetric(auxiliary_, nthreads_));
-    fittingmetric_->form_eig_inverse();
 }
 
 DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
@@ -56,7 +54,17 @@ UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
                                     storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso", directory_);
 
-    qso->GenDFQso(fittingmetric_, primary_, auxiliary_, nthreads_);
+    // we only use the fitting metrix here. No need to keep it around for longer than
+    // is necessary
+    // Overhead for shared pointer is negligible here, but consider making it a straight
+    // pass by reference in the future
+    SharedFittingMetric fittingmetric(new FittingMetric(auxiliary_, nthreads_));
+    fittingmetric->form_eig_inverse();
+
+    qso->GenDFQso(fittingmetric, primary_, auxiliary_, nthreads_);
+
+    fittingmetric.reset(); // done with it?
+
     return qso;
 }
 
