@@ -528,6 +528,8 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
     mynelements_ = shellrangeinfo.first;
     myrange_ = shellrangeinfo.second;
+
+    // buffers are used in ComputeDiagonal_ and ComputeRow_
     mydata_ = std::unique_ptr<double[]>(new double[mynelements_]);
     myidx_ = std::unique_ptr<int64_t[]>(new int64_t[mynelements_]);
 
@@ -552,9 +554,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
     int64_t oneidx;
     double oneval;
-
-    std::vector<int64_t> someidx;
-    std::vector<double> someval;
+    bool ismaster = parallel::IsMaster();
 
     while(nQ < n2)
     {
@@ -577,39 +577,39 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
         {
             oneidx = pivots[nQ];
             L[P]->read(1, &oneidx, &oneval);
-            (*L[nQ])["i"] += -1.0*oneval * (*L[P])["i"];
+            (*L[nQ])["i"] += (-1.0*oneval) * (*L[P])["i"];
         }
-
 
         // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
         (*L[nQ]).scale(1.0 / L_QQ, "i");
 
         // Zero the upper triangle
-        for(size_t P = 0; P < pivots.size(); P++)
-        {
-            oneidx = pivots[P];
-            oneval = 0.0;
-            L[nQ]->write(1, &oneidx, &oneval);
-        }
+        std::vector<int64_t> someidx(pivots.begin(), pivots.end());
+        std::vector<double> someval(pivots.size(), 0.0);
+        if(ismaster)
+          L[nQ]->write(someidx.size(), someidx.data(), someval.data());
+        else
+
+          L[nQ]->write(0, someidx.data(), someval.data()); // dummy. only master does writes
+
 
         // Set the pivot factor
         oneidx = pivot;
         oneval = L_QQ;
-        L[nQ]->write(1, &oneidx, &oneval);
+        if(ismaster)
+            L[nQ]->write(1, &oneidx, &oneval);
+        else
+            L[nQ]->write(0, &oneidx, &oneval); // dummy. only master does writes
+                                               // if not, the value gets doubled (??????)
 
         // Update the Schur complement diagonal
         diag["i"] -= (*L[nQ])["i"] * (*L[nQ])["i"];
 
         // Force truly zero elements to zero
-        someidx.resize(pivots.size());
-        someval.resize(pivots.size());
-
-        for (size_t P = 0; P < pivots.size(); P++)
-        {
-          someidx[P] = pivots[P];
-          someval[P] = 0.0;
-          diag.write(pivots.size(), someidx.data(), someval.data());
-        }
+        if(ismaster)
+          diag.write(someidx.size(), someidx.data(), someval.data());
+        else
+          diag.write(0, someidx.data(), someval.data()); // dummy. only master does writes
 
         nQ++;
     }
@@ -637,11 +637,17 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
             // this is an n x n matrix actually
             // and symmetric too, so no need to worry
             // about column vs. row major order
-            int64_t mrow = localidx[j]/n;
-            int64_t mcol = localidx[j] - (mrow*n);
+            //int64_t mrow = localidx[j]/n;
+            //int64_t mcol = localidx[j] - (mrow*n);
 
             // just change the index in localidx and reuse the data array
-            localidx[j] = i + mrow * nQ + mcol * nQ * n;
+            //localidx[j] = i + mrow * nQ + mcol * nQ * n;
+            
+            ////////////////////////////////////////////////
+            // some simple algebra gets you here
+            // especially given the symmetry of the matrix
+            ////////////////////////////////////////////////
+            localidx[j] = i + nQ * localidx[j];
         }
 
         tensor_->write(np, localidx, localvals);
@@ -734,16 +740,21 @@ std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
   // Or I could just get a list of indicies
   vec.read_local(&np, &idx, &data);
 
-  double max = data[0];
+  double max = 0;
   int64_t index = 0;
 
-  for(int64_t i = 1; i < np; i++)
+  if(np)
   {
-    if(max < data[i])
-    {
-        max = data[i];
-        index = idx[i];
-    }
+      max = data[0];
+      index = idx[0];
+      for(int64_t i = 1; i < np; i++)
+      {
+          if(max < data[i])
+          {
+              max = data[i];
+              index = idx[i];
+          }
+      }
   }
 
   free(idx);
@@ -779,8 +790,8 @@ std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
       MPI_Send(&np, 1, MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
       if(np > 0)
       {
-        MPI_Send(&index, 1, MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
-        MPI_Send(&max, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+          MPI_Send(&index, 1, MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
+          MPI_Send(&max, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
       }
   }
 
