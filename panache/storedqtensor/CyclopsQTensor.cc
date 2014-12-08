@@ -437,7 +437,7 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
 }
 
 void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, 
-                                 int row, CTF_Vector & target)
+                                 int64_t row, CTF_Vector & target)
 {
     SharedBasisSet basis = eris[0]->basis();
 
@@ -550,7 +550,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
     std::vector<CTF_Vector *> L;
 
     // List of selected pivots
-    std::vector<int> pivots;
+    std::vector<int64_t> pivots;
 
     int64_t oneidx;
     double oneval;
@@ -559,7 +559,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
     while(nQ < n2)
     {
         auto maxel = FindVecMax_(diag);
-        int pivot = maxel.first;
+        int64_t pivot = maxel.first;
         double Dmax = maxel.second;
 
         if(Dmax < delta || Dmax < 0.0) break;
@@ -583,33 +583,35 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
         // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
         (*L[nQ]).scale(1.0 / L_QQ, "i");
 
-        // Zero the upper triangle
-        std::vector<int64_t> someidx(pivots.begin(), pivots.end());
-        std::vector<double> someval(pivots.size(), 0.0);
-        if(ismaster)
-          L[nQ]->write(someidx.size(), someidx.data(), someval.data());
-        else
-
-          L[nQ]->write(0, someidx.data(), someval.data()); // dummy. only master does writes
-
-
-        // Set the pivot factor
-        oneidx = pivot;
-        oneval = L_QQ;
-        if(ismaster)
-            L[nQ]->write(1, &oneidx, &oneval);
-        else
-            L[nQ]->write(0, &oneidx, &oneval); // dummy. only master does writes
-                                               // if not, the value gets doubled (??????)
-
         // Update the Schur complement diagonal
         diag["i"] -= (*L[nQ])["i"] * (*L[nQ])["i"];
 
-        // Force truly zero elements to zero
+        // for zeroing some elements
+        std::vector<double> zeroval(nQ+1, 0.0);
+
+        // pivot factor
+        oneidx = pivot;
+        oneval = L_QQ;
+
         if(ismaster)
-          diag.write(someidx.size(), someidx.data(), someval.data());
+        {
+            // Zero the upper triangle
+            L[nQ]->write(nQ+1, pivots.data(), zeroval.data());
+
+            // Set the pivot factor
+            L[nQ]->write(1, &oneidx, &oneval);
+
+            // Force truly zero elements to zero
+            diag.write(nQ+1, pivots.data(), zeroval.data());
+        }
         else
-          diag.write(0, someidx.data(), someval.data()); // dummy. only master does writes
+        {
+            // These are dummy writes. Only the master does writes
+            // If not, value gets doubled (????)
+            L[nQ]->write(0, pivots.data(), zeroval.data());
+            L[nQ]->write(0, &oneidx, &oneval);
+            diag.write(0, pivots.data(), zeroval.data());
+        }
 
         nQ++;
     }

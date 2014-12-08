@@ -100,7 +100,7 @@ private:
      * \param [in] row The row to calculate
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
-    void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, CTF_Vector & target);
+    void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int64_t row, CTF_Vector & target);
 
     /*!
      * \brief Calculates the range of shells to calculate for a specific
