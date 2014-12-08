@@ -265,7 +265,10 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     int n2 = n*n;
 
     double * diag = new double[n2];
-    //std::fill(diag, diag + n2, 0.0);
+
+    // actually important. LibERD interface
+    // may not fill every value
+    std::fill(diag, diag + n2, 0.0);
 
     ComputeDiagonal_(eris, diag);
 
@@ -297,7 +300,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         double L_QQ = sqrt(Dmax);
 
         L.push_back(new double[n2]);
-        //std::fill(L.back(), L.back()+n2, 0.0);
+        std::fill(L.back(), L.back()+n2, 0.0);
 
         ComputeRow_(eris, pivot, L[nQ]);
 

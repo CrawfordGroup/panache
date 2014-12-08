@@ -568,6 +568,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
         double L_QQ = sqrt(Dmax);
 
+        // no need to zero like in LocalQTensor - cyclops does it
         L.push_back(new CTF_Vector(n2, parallel::CTFWorld()));
 
         ComputeRow_(eris, pivot, *(L[nQ]));
