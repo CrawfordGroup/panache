@@ -344,6 +344,8 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     }
 
     delete [] diag;
+    pivots.clear();
+    eris.clear();
 
     // copy to memory now that we have the sizes
     StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ | QSTORAGE_PACKED, "qso");
