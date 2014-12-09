@@ -24,8 +24,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * Initializes the basis set members, and constructs the creates the
-     * FittingMetric
+     * Initializes the basis set members, etc
      *
      * \param [in] primary The primary basis set
      * \param [in] delta Maximum error in the Cholesky procedure

@@ -26,8 +26,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * Initializes the basis set members, and constructs the creates the
-     * FittingMetric
+     * Initializes the basis set members, etc
      *
      * \param [in] primary The primary basis set
      * \param [in] auxiliary The auxiliary (DF) basis set
@@ -42,8 +41,8 @@ public:
     /*!
      * \brief Constructor
      *
-     * Initializes the basis set members, and constructs the creates the
-     * FittingMetric.
+     * Initializes the basis set members, etc. Auxiliary basis set is set
+     * via the \p auxpath parameter
      *
      * \param [in] primary The primary basis set
      * \param [in] auxpath Path to auxiliary basis set file (G98 format)

@@ -25,6 +25,9 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 
 UniqueStoredQTensor CHTensor::GenQso(int storeflags) const
 {
+    // PACKED flag should have been removed by 
+    // ThreeIndexTensor::GenQTensors
+
     auto qso = StoredQTensorFactory(storeflags);
 
     // will be initialized in here
