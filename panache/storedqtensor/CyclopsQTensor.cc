@@ -253,15 +253,9 @@ void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
                 if(ncalc)
                 {
                     for (int p = pstart, index = 0; p < pend; p++)
-                    {
-                        for (int m = 0; m < nm; m++)
-                        {
-                            for (int n = 0; n < nn; n++, index++)
-                            {
-                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
-                            }
-                        }
-                    }
+                    for (int m = 0; m < nm; m++)
+                    for (int n = 0; n < nn; n++, index++)
+                        B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
                 }
             }
 
@@ -405,20 +399,17 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
     
                 if (N == M)
                 {
-                  for (int om = 0; om < nM; om++)
-                  {
+                    for (int om = 0; om < nM; om++)
                     for (int on = 0; on < nN; on++)
                     {
                         myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
                         mydata_[curidx] = buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
                         curidx += 1;
                     }
-                  }
                 }
                 else
                 {    
-                  for (int om = 0; om < nM; om++)
-                  {
+                    for (int om = 0; om < nM; om++)
                     for (int on = 0; on < nN; on++)
                     {
                         myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
@@ -427,7 +418,6 @@ void CyclopsQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
                         mydata_[curidx+1] = mydata_[curidx];
                         curidx += 2;
                     }
-                  }
                 }
             }
         }
@@ -488,20 +478,17 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
     
                 if (N == M)
                 {
-                  for (int om = 0; om < nM; om++)
-                  {
+                    for (int om = 0; om < nM; om++)
                     for (int on = 0; on < nN; on++)
                     {
                         myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
                         mydata_[curidx] = buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
                         curidx += 1;
                     }
-                  }
                 }
                 else
                 {    
-                  for (int om = 0; om < nM; om++)
-                  {
+                    for (int om = 0; om < nM; om++)
                     for (int on = 0; on < nN; on++)
                     {
                         myidx_[curidx] = (om + mstart) * nbf + (on + nstart);
@@ -510,7 +497,6 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
                         mydata_[curidx+1] = mydata_[curidx];
                         curidx += 2;
                     }
-                  }
                 }
             }
         }
