@@ -11,6 +11,7 @@
 #include "panache/Lapack.h"
 #include "panache/ERI.h"
 #include "panache/Flags.h"
+#include "panache/Iterator.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -143,8 +144,6 @@ void LocalQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
 {
     SharedBasisSet basis = eris[0]->basis();
 
-    const int nbf = basis->nbf();
-
     size_t nthreads = eris.size();
 
 
@@ -174,12 +173,19 @@ void LocalQTensor::ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris,
                 int nstart = basis->shell(N).function_index();
     
     
-                for (int om = 0; om < nM; om++) {
-                    for (int on = 0; on < nN; on++) {
-                        target[(om + mstart) * nbf + (on + nstart)] =
-                        target[(on + nstart) * nbf + (om + mstart)] =
+                if(N == M)
+                {
+                    for (int om = 0; om < nM; om++)
+                    for (int on = 0; on <= om; on++)
+                        target[((om + mstart) * (om + mstart + 1))/2 + (on + nstart)] =
                             buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
-                    }
+                }
+                else
+                {
+                    for (int om = 0; om < nM; om++)
+                    for (int on = 0; on < nN; on++)
+                        target[((om + mstart) * (om + mstart + 1))/2 + (on + nstart)] =
+                            buffer[om * nN * nM * nN + on * nM * nN + om * nN + on];
                 }
             }
         }
@@ -194,8 +200,11 @@ void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
 
     const int nbf = basis->nbf();
 
-    int r = row / nbf;
-    int s = row % nbf;
+    IJIterator ijit(nbf, nbf, true);
+    ijit += row; 
+
+    int r = ijit.i();
+    int s = ijit.j();
     int R = basis->function_to_shell(r);
     int S = basis->function_to_shell(s);
 
@@ -236,12 +245,19 @@ void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
                 int nN = basis->shell(N).nfunction();
                 int nstart = basis->shell(N).function_index();
     
-                for (int om = 0; om < nM; om++) {
-                    for (int on = 0; on < nN; on++) {
-                        target[(om + mstart) * nbf + (on + nstart)] =
-                        target[(on + nstart) * nbf + (om + mstart)] =
+                if(N == M)
+                {
+                    for (int om = 0; om < nM; om++)
+                    for (int on = 0; on <= om; on++)
+                        target[((om + mstart) * (om + mstart + 1))/2 + (on + nstart)] =
                             buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
-                    }
+                }
+                else
+                {
+                    for (int om = 0; om < nM; om++)
+                    for (int on = 0; on < nN; on++)
+                        target[((om + mstart) * (om + mstart + 1))/2 + (on + nstart)] =
+                            buffer[om * nN * nR * nS + on * nR * nS + oR * nS + oS];
                 }
             }
         }
@@ -262,16 +278,15 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
 
     int nQ = 0;
     int n = primary->nbf();
-    int n2 = n*n;
+    int n12 = (n*(n+1))/2;
 
-    double * diag = new double[n2];
+    double * diag = new double[n12];
 
     // actually important. LibERD interface
     // may not fill every value
-    std::fill(diag, diag + n2, 0.0);
+    std::fill(diag, diag + n12, 0.0);
 
     ComputeDiagonal_(eris, diag);
-
 
     // Temporary cholesky factor
     std::vector<double*> L;
@@ -279,11 +294,11 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     // List of selected pivots
     std::vector<int> pivots;
  
-    while(nQ < n2)
+    while(nQ < n12)
     {
         int pivot = 0;
         double Dmax = diag[0];
-        for(int P = 0; P < n2; P++)
+        for(int P = 0; P < n12; P++)
         {
             if(Dmax < diag[P])
             {
@@ -292,24 +307,22 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
             }
         }
 
-        //std::cout << "MAX: " << Dmax << " element " << pivot << "\n";
-
         if(Dmax < delta || Dmax < 0.0) break;
 
         pivots.push_back(pivot);
         double L_QQ = sqrt(Dmax);
 
-        L.push_back(new double[n2]);
-        std::fill(L.back(), L.back()+n2, 0.0);
+        L.push_back(new double[n12]);
+        std::fill(L.back(), L.back()+n12, 0.0);
 
         ComputeRow_(eris, pivot, L[nQ]);
 
         // [(m|Q) - L_m^P L_Q^P]
         for (int P = 0; P < nQ; P++)
-            C_DAXPY(n2,-L[P][pivots[nQ]],L[P],1,L[nQ],1);
+            C_DAXPY(n12,-L[P][pivot],L[P],1,L[nQ],1);
 
         // 1/L_QQ [(m|Q) - L_m^P L_Q^P]
-        C_DSCAL(n2, 1.0 / L_QQ, L[nQ], 1);
+        C_DSCAL(n12, 1.0 / L_QQ, L[nQ], 1);
 
         // Zero the upper triangle
         for (size_t P = 0; P < pivots.size(); P++)
@@ -319,8 +332,9 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
         L[nQ][pivot] = L_QQ;
 
         // Update the Schur complement diagonal
-        for (int P = 0; P < n2; P++)
+        for (int P = 0; P < n12; P++)
             diag[P] -= L[nQ][P] * L[nQ][P];
+
 
         // Force truly zero elements to zero
         for (size_t P = 0; P < pivots.size(); P++)
@@ -332,7 +346,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     delete [] diag;
 
     // copy to memory now that we have the sizes
-    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ, "qso");
+    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ | QSTORAGE_PACKED, "qso");
 
     for(int i = 0; i < nQ; i++)
     {
