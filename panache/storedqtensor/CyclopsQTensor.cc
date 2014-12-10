@@ -532,8 +532,8 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
     // List of selected pivots
     std::vector<int64_t> pivots;
 
-    int64_t oneidx;
-    double oneval;
+    int64_t oneidx = 0;
+    double oneval = 0;
     bool ismaster = parallel::IsMaster();
 
     while(nQ < n12)
@@ -554,7 +554,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
         ComputeRow_(eris, pivot, *(L[nQ]));
 
         // [(m|Q) - L_m^P L_Q^P]
-        oneidx = pivots[nQ];
+        oneidx = pivot;
         for(int P = 0; P < nQ; P++)
         {
             L[P]->read(1, &oneidx, &oneval);
