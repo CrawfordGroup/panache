@@ -656,6 +656,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
         free(localidx);
         free(localvals);
+        delete [] idxcopy;
         delete L[i];
     }
 }
