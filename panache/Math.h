@@ -6,14 +6,25 @@
 #ifndef PANACHE_MATH_H
 #define PANACHE_MATH_H
 
+#define FACTORIAL_TABLE_SIZE 15
+#define DBL_FACTORIAL_TABLE_SIZE 15
+#define PACKED_ROW_TABLE_SIZE 2000
+
+#include <utility>
+#include <cstdint>
 
 namespace panache {
-
 
 /*!
  * \brief Functions for some simple math
  */
 namespace math {
+
+/*!
+ * \brief Initialize some lookup tables
+ */
+void initmath(void);
+
 
 /*!
  * \brief Simple factorial
@@ -61,6 +72,16 @@ double double_factorial_nminus1(int n);
  * \return \f$ _nC_k \f$
  */
 double combinations(int n, int k);
+
+
+
+/*!
+ * \brief Decompose a packed index ij into i and j
+ *
+ * \param [in] ij The packed index
+ * \return separate i and j values
+ */
+std::pair<int64_t, int64_t> decomposeij_packed(int64_t ij); 
 
 }} // close namespace panache::Math
 
