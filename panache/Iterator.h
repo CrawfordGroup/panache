@@ -6,6 +6,8 @@
 #ifndef PANACHE_ITERATOR_H
 #define PANACHE_ITERATOR_H
 
+#include "panache/Math.h"
+
 namespace panache {
 
 template<typename ITTYPE>
@@ -193,17 +195,10 @@ struct IJIteratorType
 
         if(packed)
         {
-            while(a > 0)
-            {
-                j++;
-                if(j > i)
-                {
-                    i++;
-                    j = 0;
-                }
-                a--;
-                ij++;
-            }
+            ij += a;
+            auto ij2 = math::decomposeij_packed(ij);
+            i = ij2.first;
+            j = ij2.second;
         }
         else
         {
@@ -228,20 +223,10 @@ struct IJIteratorType
 
         if(packed)
         {
-            while(a > 0)
-            {
-                ij--;
-                j--;
-                if(j < 0)
-                {
-                    i--;
-                    j = i;
-
-                    if(i < 0)
-                        break;
-                }
-                a--;
-            }
+            ij -= a;
+            auto ij2 = math::decomposeij_packed(ij);
+            i = ij2.first;
+            j = ij2.second;
         }
         else
         {

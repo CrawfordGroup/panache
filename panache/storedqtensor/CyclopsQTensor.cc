@@ -428,13 +428,9 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
 {
     SharedBasisSet basis = eris[0]->basis();
 
-    const int nbf = basis->nbf();
-
-    IJIterator ijit(nbf, nbf, true);
-    ijit += row;
-
-    int r = ijit.i();
-    int s = ijit.j();
+    auto ij = math::decomposeij_packed(row);
+    int r = ij.first;
+    int s = ij.second;
     int R = basis->function_to_shell(r);
     int S = basis->function_to_shell(s);
 
@@ -612,8 +608,10 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
 
     // unfortunately we need a mapping of packed indices to unpacked
     // (for distributing the data at the end)
+    // (well, we don't NEED it, but should be faster than decomposing the indices all the time)
     std::vector<std::pair<int64_t, int64_t>> packmap;
     packmap.reserve(n12);
+
     IJIterator ijit(n, n, true);
     for(int i = 0; i < n12; i++)
     {
