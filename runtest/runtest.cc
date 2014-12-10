@@ -811,8 +811,8 @@ int main(int argc, char ** argv)
 
         DFTensor dft(primary, dir + "basis.aux.gbs", "/tmp/df", 0);
 
-        // *** We are only testing Qso from CHTensor              *** //
-        // *** But generating them all (to test for memory issues *** //
+        // *** We are only testing Qso from CHTensor               *** //
+        // *** But generating them all (to test for memory issues) *** //
         CHTensor cht(primary, CHOLESKY_DELTA, "/tmp/ch", 0);
 
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
