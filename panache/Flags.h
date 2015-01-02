@@ -35,6 +35,7 @@
     ///@{
     #define BSORDER_PSI4   1 //!< Order as Psi4 does
     #define BSORDER_GAMESS 2 //!< Order as GAMESS does
+    #define BSORDER_DALTON 3 //!< Order as DALTON does
     ///@}
 
 #endif

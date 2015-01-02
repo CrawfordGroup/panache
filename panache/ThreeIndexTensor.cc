@@ -87,12 +87,18 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
     if(order != BSORDER_PSI4)
     {
         reorder::Orderings * ord;
-        reorder::CNorm * cnorm;
+        reorder::CNorm * cnorm = nullptr;
 
         if (order == BSORDER_GAMESS)
         {
             ord = new reorder::GAMESS_Ordering();
             cnorm = new reorder::GAMESS_CNorm();
+        }
+        if (order == BSORDER_DALTON)
+        {
+            output::printf("DALTON ORDERING\n");
+            ord = new reorder::DALTON_Ordering();
+            cnorm = nullptr;
         }
         else
             throw RuntimeError("Unknown ordering!");
@@ -100,7 +106,7 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        ReorderCMat(*ord, *cnorm);
+        ReorderCMat(ord, cnorm);
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
@@ -365,27 +371,30 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void ThreeIndexTensor::ReorderCMat(const reorder::Orderings & order, const reorder::CNorm & cnorm)
+void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order, const reorder::CNorm * cnorm)
 {
     using namespace reorder;
     using std::placeholders::_1;
     using std::placeholders::_2;
 
     // First, renormalize
-    for(int i = 0; i < primary_->nshell(); i++)
+    if(cnorm != nullptr)
     {
-        const GaussianShell & s = primary_->shell(i);
-        if(cnorm.NeedsCNorm(s.is_pure(), s.am()))
+        for(int i = 0; i < primary_->nshell(); i++)
         {
-            auto normfac = cnorm.GetCNorm(s.is_pure(), s.am());
-            
-            // multiply rows by factors
-            for(size_t j = 0; j < normfac.size(); j++)
+            const GaussianShell & s = primary_->shell(i);
+            if(cnorm->NeedsCNorm(s.is_pure(), s.am()))
             {
-                int jstart = s.function_index();
-
-                for(int k = 0; k < nmo_; k++)
-                    Cmo_[(jstart+j)*nmo_+k] *= normfac[j];
+                auto normfac = cnorm->GetCNorm(s.is_pure(), s.am());
+                
+                // multiply rows by factors
+                for(size_t j = 0; j < normfac.size(); j++)
+                {
+                    int jstart = s.function_index();
+    
+                    for(int k = 0; k < nmo_; k++)
+                        Cmo_[(jstart+j)*nmo_+k] *= normfac[j];
+                }
             }
         }
     }
@@ -399,8 +408,8 @@ void ThreeIndexTensor::ReorderCMat(const reorder::Orderings & order, const reord
     for(int i = 0; i < primary_->nshell(); i++)
     {
         const GaussianShell & s = primary_->shell(i);
-        if(order.NeedsInvReordering(s.is_pure(), s.am()))
-            vpm.push_back(PointerMap(s.function_index(), order.GetInvOrder(s.is_pure(), s.am())));
+        if(order->NeedsInvReordering(s.is_pure(), s.am()))
+            vpm.push_back(PointerMap(s.function_index(), order->GetInvOrder(s.is_pure(), s.am())));
     }
 
 

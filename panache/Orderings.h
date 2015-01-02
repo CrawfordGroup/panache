@@ -185,6 +185,18 @@ public:
     }
 };
 
+class DALTON_Ordering : public Orderings
+{
+public:
+    DALTON_Ordering(void)
+    {
+        //! \todo Dalton cartesian ordering and more spherical ordering
+
+        //SetSphOrder(1, {3, 1, 2});
+        SetSphOrder(2, {3, 4, 2, 5, 1});
+    }
+};
+
 
 
 } } // close namespace panache::reorder
