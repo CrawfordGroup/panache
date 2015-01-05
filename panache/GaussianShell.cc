@@ -43,7 +43,7 @@ const double* GaussianShell::center() const
 
 void GaussianShell::print(void) const
 {
-    output::printf("    %c %3d 1.00\n", AMCHAR(), nprimitive());
+    output::printf("    %c %3d   %s\n", AMCHAR(), nprimitive(), is_pure() ? "sph" : "cart");
     for (int K = 0; K < nprimitive(); K++)
         output::printf("               %20.8f %20.8f\n",exp_[K], coef_[K]);
 }
