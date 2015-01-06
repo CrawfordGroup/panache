@@ -96,7 +96,7 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
         }
         else if (order == BSORDER_DALTON)
         {
-            output::printf("DALTON ORDERING\n");
+            //output::printf("DALTON ORDERING\n");
             ord = new reorder::DALTON_Ordering();
             cnorm = nullptr;
         }
