@@ -17,18 +17,18 @@ extern "C" {
     /*!
      * \brief Initializes a new density-fitting calculation
      *
-     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * Sets up the basis set information and returns a handle that
      * is used to identify this particular calculation.
      *
      * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \note Basis set coefficients should NOT be normalized
      *
      * \param [in] ncenters    The number of basis function centers
      * \param [in] xyz         Coordinates of the basis function centers. In order:
      *                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
      * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
      * \param [in] symbollen   Length of each symbol in \p symbols
-     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
-     *
      * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
      *                                       Expected to be of length ncenters.
      * \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
@@ -68,7 +68,7 @@ extern "C" {
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
      */
     void panachef_dfinit_(int_t * ncenters,
-                       double * xyz, char * symbols, int_t * symbollen, int_t * normalized, 
+                       double * xyz, char * symbols, int_t * symbollen,
                        int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
@@ -153,7 +153,7 @@ extern "C" {
         strncpy(mdir, directory, *directorylen);
         mdir[*directorylen] = '\0';
 
-        *dfhandle = panache_dfinit(*ncenters, atoms, *normalized,
+        *dfhandle = panache_dfinit(*ncenters, atoms,
                                  primary_nshellspercenter, primary_shells,
                                  aux_nshellspercenter, aux_shells, mdir, *nthreads);
 
@@ -186,17 +186,18 @@ extern "C" {
     /*!
      * \brief Initializes a new density-fitting calculation using an auxiliary basis set file
      *
-     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * Sets up the basis set information and returns a handle that
      * is used to identify this particular calculation.
      *
      * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \note Basis set coefficients should NOT be normalized
      *
      * \param [in] ncenters    The number of basis function centers
      * \param [in] xyz         Coordinates of the basis function centers. In order:
      *                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
      * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
      * \param [in] symbollen   Length of each symbol in \p symbols
-     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
      *
      * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
      *                                       Expected to be of length ncenters.
@@ -224,7 +225,7 @@ extern "C" {
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
      */
     void panachef_dfinit2_(int_t * ncenters,
-                        double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
+                        double * xyz, char * symbols, int_t * symbollen,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         const char * auxfilename, int_t * auxfilenamelen, const char * directory,
@@ -339,7 +340,7 @@ extern "C" {
         cfname[*auxfilenamelen] = '\0';
         mdir[*directorylen] = '\0';
 
-        *dfhandle = panache_dfinit2(*ncenters, atoms, *normalized,
+        *dfhandle = panache_dfinit2(*ncenters, atoms,
                                   primary_nshellspercenter, primary_shells,
                                   cfname, mdir, *nthreads);
 
@@ -368,17 +369,18 @@ extern "C" {
     /*!
      * \brief Initializes a new density-fitting calculation using an auxiliary basis set file
      *
-     * Sets up the basis set information and calculates the metric. It returns a handle that
+     * Sets up the basis set information and returns a handle that
      * is used to identify this particular calculation.
      *
      * Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+     *
+     * \note Basis set coefficients should NOT be normalized
      *
      * \param [in] ncenters    The number of basis function centers
      * \param [in] xyz         Coordinates of the basis function centers. In order:
      *                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
      * \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
      * \param [in] symbollen   Length of each symbol in \p symbols
-     * \param [in] normalized  Are these basis functions normalized or not. Nonzero = No normalization needed.
      *
      * \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
      *                                       Expected to be of length ncenters.
@@ -405,7 +407,7 @@ extern "C" {
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
      */
     void panachef_chinit_(int_t * ncenters,
-                        double * xyz, char * symbols, int_t * symbollen, int_t * normalized,
+                        double * xyz, char * symbols, int_t * symbollen,
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         double * delta, const char * directory,
@@ -517,7 +519,7 @@ extern "C" {
         strncpy(mdir, directory, *directorylen);
         mdir[*directorylen] = '\0';
 
-        *dfhandle = panache_chinit(*ncenters, atoms, *normalized,
+        *dfhandle = panache_chinit(*ncenters, atoms,
                                   primary_nshellspercenter, primary_shells,
                                   *delta, mdir, *nthreads);
 

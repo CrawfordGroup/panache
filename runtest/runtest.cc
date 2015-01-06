@@ -111,8 +111,8 @@ SharedBasisSet ReadBasisFile(SharedMolecule mol, const string & filename)
 
 
         // Create the basis set
-        // Last argument - these are not normalized
-        auto ret = BasisSetFromArrays(mol, ncenters, nshellspercenter.get(), shells.get(), false);
+        // These are not normalized
+        auto ret = BasisSetFromArrays(mol, ncenters, nshellspercenter.get(), shells.get());
 
         for(int i = 0; i < nshells; i++)
         {

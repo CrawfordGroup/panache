@@ -241,7 +241,7 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
 
                             //                                printf("Adding new shell. nprimitive = %d\n", nprimitive);
                             // We have a full shell, push it to the basis set
-                            shell_list.push_back(ShellInfo(am, contractions, exponents, gaussian_type, 0, center, ShellInfo::Unnormalized));
+                            shell_list.push_back(ShellInfo(am, contractions, exponents, gaussian_type, 0, center));
                         }
                         else if (shell_type.size() == 2)
                         {
@@ -292,8 +292,8 @@ Gaussian94BasisSetParser::parse(const std::string& symbol, const std::vector<std
                             }
 
                             //                                printf("Adding 2 new shells. nprimitive = %d\n", nprimitive);
-                            shell_list.push_back(ShellInfo(am1, contractions1, exponents, gaussian_type, 0, center, ShellInfo::Unnormalized));
-                            shell_list.push_back(ShellInfo(am2, contractions2, exponents, gaussian_type, 0, center, ShellInfo::Unnormalized));
+                            shell_list.push_back(ShellInfo(am1, contractions1, exponents, gaussian_type, 0, center));
+                            shell_list.push_back(ShellInfo(am2, contractions2, exponents, gaussian_type, 0, center));
                         }
                         else
                         {

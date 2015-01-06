@@ -51,7 +51,7 @@ extern "C" {
 
 
     int_t panache_dfinit(int_t ncenters,
-               C_AtomCenter * atoms, int_t normalized,
+               C_AtomCenter * atoms,
                int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
                const char * directory, int_t nthreads )
@@ -62,10 +62,10 @@ extern "C" {
 
         // Construct the basis set info
         auto primaryBasis = BasisSetFromArrays(molecule, ncenters,
-                            primary_nshellspercenter, primary_shells, normalized);
+                            primary_nshellspercenter, primary_shells);
 
         auto auxBasis = BasisSetFromArrays(molecule, ncenters,
-                        aux_nshellspercenter, aux_shells, normalized);
+                        aux_nshellspercenter, aux_shells);
 
         ThreeIndexTensor * dft = new DFTensor(primaryBasis, auxBasis, directory, nthreads);
         xtensors_[tensor_index_] = dft;
@@ -76,7 +76,7 @@ extern "C" {
 
 
     int_t panache_dfinit2(int_t ncenters,
-                    C_AtomCenter * atoms, int_t normalized,
+                    C_AtomCenter * atoms,
                     int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                     const char * auxfilename, const char * directory, int_t nthreads)
     {
@@ -86,7 +86,7 @@ extern "C" {
 
         // Construct the basis set info
         SharedBasisSet primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                                      primary_nshellspercenter, primary_shells, normalized);
+                                      primary_nshellspercenter, primary_shells);
 
         // Gaussian input file parser for the auxiliary basis
         SharedBasisSetParser parser(new Gaussian94BasisSetParser);
@@ -100,7 +100,7 @@ extern "C" {
 
 
     int_t panache_chinit(int_t ncenters,
-                    C_AtomCenter * atoms, int_t normalized,
+                    C_AtomCenter * atoms,
                     int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                     double delta, const char * directory, int_t nthreads)
     {
@@ -110,7 +110,7 @@ extern "C" {
 
         // Construct the basis set info
         SharedBasisSet primaryBasis = panache::BasisSetFromArrays(molecule, ncenters,
-                                      primary_nshellspercenter, primary_shells, normalized);
+                                      primary_nshellspercenter, primary_shells);
 
         ThreeIndexTensor * dft = new CHTensor(primaryBasis, delta, directory, nthreads);
         xtensors_[tensor_index_] = dft;

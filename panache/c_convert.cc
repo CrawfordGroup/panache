@@ -11,7 +11,7 @@ namespace panache
 SharedBasisSet BasisSetFromArrays(SharedMolecule molecule,
         int_t ncenters,
         int_t * nshellspercenter,
-        struct C_ShellInfo * shells, bool normalized)
+        struct C_ShellInfo * shells)
 {
     // Construct the basis set info
     std::vector<std::vector<panache::ShellInfo>> shellmap;
@@ -34,8 +34,7 @@ SharedBasisSet BasisSetFromArrays(SharedMolecule molecule,
             }
             shellvec.push_back(panache::ShellInfo(shells[counter].am, c, e,
                                                   shells[counter].ispure ? panache::ShellInfo::GaussianType::Pure : panache::ShellInfo::GaussianType::Cartesian,
-                                                  i, cen, 
-                                                  normalized ? panache::ShellInfo::PrimitiveType::Normalized : panache::ShellInfo::PrimitiveType::Unnormalized));
+                                                  i, cen)); 
             counter++;
         }
 

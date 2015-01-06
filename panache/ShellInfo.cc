@@ -16,8 +16,7 @@ namespace panache {
 
 ShellInfo::ShellInfo(int am, const std::vector<double> &c,
                              const std::vector<double> &e, GaussianType pure,
-                             int nc, const Vector3 &center,
-                             PrimitiveType pt)
+                             int nc, const Vector3 &center)
     : l_(am), puream_(pure), exp_(e), coef_(c), original_coef_(c),
       nc_(nc), center_(center)
 {
@@ -25,12 +24,7 @@ ShellInfo::ShellInfo(int am, const std::vector<double> &c,
     nfunction_  = INT_NFUNC(puream_, l_);
 
     // Compute the normalization constants
-    if (pt == Unnormalized){
-        normalize_shell();
-    }
-
-    // by default, coef_ = original_coef_ = c
-
+    normalize_shell();
 }
 
 
@@ -46,13 +40,14 @@ double ShellInfo::primitive_normalization(int p)
 
 void ShellInfo::normalize_shell()
 {
+    // by default, coef_ = original_coef_ 
     double m = (double)l_+1.5;
     double sum = 0.0;
     for(int j = 0; j < nprimitive(); j++){
         for(int k = 0; k <= j; k++){
             double a1 = exp_[j];
             double a2 = exp_[k];
-            double temp = (original_coef(j) * original_coef(k));
+            double temp = (coef_[j] * coef_[k]);
             double temp2 = (2.0 * sqrt(a1 * a2) / (a1 + a2));
             temp2 = pow(temp2, m);
             temp = temp * temp2;

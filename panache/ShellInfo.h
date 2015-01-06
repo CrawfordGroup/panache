@@ -59,15 +59,6 @@ public:
 
    
     /*!
-     * \brief Are the primitives normalized or not
-     */
-    enum PrimitiveType {
-        Normalized, //!< Is normalized
-        Unnormalized //!< Is NOT normalized
-    };
-
-    
-    /*!
      * \brief Are the primitives pure spherical or cartesian basis funtions
      */
     enum GaussianType {
@@ -85,15 +76,13 @@ public:
      *  \param pure Pure spherical harmonics, or Cartesian.
      *  \param nc The atomic center that this shell is located on. Must map back to the correct atom in the owning BasisSet molecule_. Used in integral derivatives for indexing.
      *  \param center The x, y, z position of the shell. This is passed to reduce the number of calls to the molecule.
-     *  \param pt Is the shell already normalized?
      */
     ShellInfo(int am,
                   const std::vector<double>& c,
                   const std::vector<double>& e,
                   GaussianType pure,
                   int nc,
-                  const Vector3& center,
-                  PrimitiveType pt = Normalized);
+                  const Vector3& center);
 
     /*!
      * \brief Normalizes the entire shell
