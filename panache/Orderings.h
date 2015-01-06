@@ -190,10 +190,10 @@ class DALTON_Ordering : public Orderings
 public:
     DALTON_Ordering(void)
     {
-        //! \todo Dalton cartesian ordering and more spherical ordering
-
-        //SetSphOrder(1, {3, 1, 2});
-        SetSphOrder(2, {3, 4, 2, 5, 1});
+        // Dalton cartesian ordering seems to be the same as Psi4 ordering
+        // Spherical, however, goes from -l, ..., l , where psi4 goes 0, +1, -1, ..., +l, -l
+        SetSphOrder(2, {5, 3, 1, 2, 4});
+        SetSphOrder(3, {7, 5, 3, 1, 2, 4, 6});
     }
 };
 
