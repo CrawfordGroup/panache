@@ -83,20 +83,6 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
     else
         std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get());
 
-    if(bsorder_ != BSORDER_PSI4)
-    {
-        // unique ptr to ordering
-        auto ord = reorder::GetOrdering(bsorder_);
-        auto cnorm = reorder::GetCNorm(bsorder_);
-
-        //std::cout << "BEFORE REORDERING:\n";
-        //for(int i = 0; i < nmo_*nso_; i++)
-        //    std::cout << Cmo_[i] << "\n";
-        ReorderCMat(ord.get(), cnorm.get());
-        //std::cout << "AFTER REORDERING:\n";
-        //for(int i = 0; i < nmo_*nso_; i++)
-        //    std::cout << Cmo_[i] << "\n";
-    }
 }
 
 
@@ -121,6 +107,49 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
     if(!qso_)
         qso_ = GenQso(storeflags); // calls the virtual function
+
+
+    // Renormalize CMat if necessary
+    if(bsorder_ != BSORDER_PSI4)
+    {
+        // a unique_ptr
+        auto cnorm = reorder::GetCNorm(bsorder_);
+
+        // if it actually needs renormalization
+        // unique ptr will be null if it doesn't
+        if(cnorm)
+            RenormCMat(cnorm.get());
+    }
+
+    // Decide how we want to proceed with respect to basis function ordering
+    // If reordering is necessary, and Qso is not requested, we can just reorder
+    //     the C matrix
+    // If reordering is necessary, and Qso is needed, reorder Qso itself and
+    //     don't reorder the C matrix
+    if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
+    {
+        // reorder Qso
+        auto ord = reorder::GetOrdering(bsorder_);
+
+    }
+    else if(bsorder_ != BSORDER_PSI4)
+    {
+        // reorder the Cmat
+        auto ord = reorder::GetOrdering(bsorder_);
+
+        //std::cout << "BEFORE REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
+        ReorderCMat(ord.get());
+        //std::cout << "AFTER REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
+    }
+
+    // now we can split the c matrix
+    // Whether we need the cmatrix or not has been checked above ^_^
+    if(Cmo_)
+        SplitCMat();
 
     std::vector<StoredQTensor::TransformMat> lefts;
     std::vector<StoredQTensor::TransformMat> rights;
@@ -161,7 +190,9 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
     }
 
-    // actually do the transformation (if necessary)
+
+
+
     if(lefts.size() > 0)
         qso_->Transform(lefts, rights, qouts, nthreads_);
 
@@ -228,9 +259,7 @@ UniqueStoredQTensor & ThreeIndexTensor::ResolveTensorFlag(int tensorflag)
 {
     switch(tensorflag)
     {
-        case QGEN_DFQSO:
-            return qso_;
-        case QGEN_CHQSO:  // Stored in the same place as DFQSO
+        case QGEN_QSO:
             return qso_;
         case QGEN_QMO:
             return qmo_;
@@ -356,34 +385,30 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order, const reorder::CNorm * cnorm)
+void ThreeIndexTensor::RenormCMat(const reorder::CNorm * cnorm)
 {
     using namespace reorder;
-    using std::placeholders::_1;
-    using std::placeholders::_2;
 
-    // First, renormalize
-    if(cnorm != nullptr)
+    for(int i = 0; i < primary_->nshell(); i++)
     {
-        for(int i = 0; i < primary_->nshell(); i++)
+        const GaussianShell & s = primary_->shell(i);
+        int jstart = s.function_index();
+
+        if(cnorm->NeedsCNorm(s.is_pure(), s.am()))
         {
-            const GaussianShell & s = primary_->shell(i);
-            if(cnorm->NeedsCNorm(s.is_pure(), s.am()))
-            {
-                auto normfac = cnorm->GetCNorm(s.is_pure(), s.am());
-                
-                // multiply rows by factors
-                for(size_t j = 0; j < normfac.size(); j++)
-                {
-                    int jstart = s.function_index();
-    
-                    for(int k = 0; k < nmo_; k++)
-                        Cmo_[(jstart+j)*nmo_+k] *= normfac[j];
-                }
-            }
+            auto normfac = cnorm->GetCNorm(s.is_pure(), s.am());
+            
+            // multiply rows by factors
+            for(size_t j = 0, js = jstart; j < normfac.size(); j++, js++)
+                for(int k = 0; k < nmo_; k++)
+                    Cmo_[js*nmo_+k] *= normfac[j];
         }
     }
+}
 
+void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order)
+{
+    using namespace reorder;
 
     TotalMemorySwapper sf1(nmo_);  // swaps rows
 
@@ -397,9 +422,7 @@ void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order, const reord
             vpm.push_back(PointerMap(s.function_index(), order->GetInvOrder(s.is_pure(), s.am())));
     }
 
-
     std::vector<double *> pointers(primary_->max_function_per_shell());
-
 
     // Swap rows
     for(auto & it : vpm)
@@ -446,7 +469,9 @@ void ThreeIndexTensor::SetNOcc(int nocc, int nfroz)
     nfroz_ = nfroz;
     nvir_ = nmo_ - nocc - nfroz;
 
-    SplitCMat();
+    // Delay this, since whether or not it is reordered depends
+    // on some logic in GenQTensors
+    //SplitCMat();
 }
 
 
@@ -479,12 +504,12 @@ void ThreeIndexTensor::PrintTimings(void) const
     const char * name = "??";
     switch (qtype_)
     {
-        case QGEN_DFQSO:
+        case QTYPE_DFQSO:
         {
             name = "DF";
             break;
         }
-        case QGEN_CHQSO:
+        case QTYPE_CHQSO:
         {
             name = "Cholesky";
             break;

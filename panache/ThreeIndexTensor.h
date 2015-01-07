@@ -142,6 +142,9 @@ public:
      * For the \p qflags and \p storeflags parameters, see Flags.h. For example, to calculate the
      * Qmo and Qov tensors on disk,
      *
+     * The Qso is, obviously, always calculated. But if QGEN_QSO is not specified, it will
+     * be deleted generation of the others.
+     *
      * \code{.cpp}
      * dft.GenQTensors(QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
      * \endcode
@@ -567,13 +570,20 @@ private:
 
 
     /*!
+     * \brief Renormalizes the whole C matrix for the specified software
+     * 
+     * \param [in] cnorm The Renormalization to use
+     */
+    void RenormCMat(const reorder::CNorm * cnorm);
+
+
+    /*!
      * \brief Reorders the whole C matrix into the specified ordering, including
      *        some renormalization if needed
      * 
      * \param [in] order The order to use
-     * \param [in] cnorm Normalization factors to multiply by. May be nullptr
      */
-    void ReorderCMat(const reorder::Orderings * order, const reorder::CNorm * cnorm);
+    void ReorderCMat(const reorder::Orderings * order);
 
 
 

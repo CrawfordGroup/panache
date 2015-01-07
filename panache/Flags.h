@@ -8,14 +8,19 @@
 #ifndef PANACHE_FLAGS_H
 #define PANACHE_FLAGS_H
 
+    /*! \name Flags specifing which type of approximation this is */
+    ///@{
+    #define QTYPE_DFQSO 1  //!< Select DF-based so tensor
+    #define QTYPE_CHQSO 2  //!< Select Cholesky-based so tensor
+    ///@}
+
     /*! \name Flags specifing which tensors to calculate */
     ///@{
-    #define QGEN_DFQSO 1 //!< Select DF-based so tensor
-    #define QGEN_CHQSO 2 //!< Select Cholesky-based so tensor
-    #define QGEN_QMO   4 //!< Select Qmo
-    #define QGEN_QOO   8 //!< Select Qoo
-    #define QGEN_QOV   16 //!< Select Qov
-    #define QGEN_QVV   32 //!< Select Qvv
+    #define QGEN_QSO   1  //!< Select Qso
+    #define QGEN_QMO   2  //!< Select Qmo
+    #define QGEN_QOO   4  //!< Select Qoo
+    #define QGEN_QOV   8  //!< Select Qov
+    #define QGEN_QVV   16 //!< Select Qvv
     ///@}
 
     /*! \name Flags specifing how tensors should be stored */

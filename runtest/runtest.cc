@@ -820,8 +820,8 @@ int main(int argc, char ** argv)
         dft.SetNOcc(nocc);
         cht.SetNOcc(nocc);
 
-        int dfqflags = (QGEN_DFQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
-        int chqflags = (QGEN_CHQSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+        int dfqflags = (QGEN_QSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
+        int chqflags = (QGEN_QSO | QGEN_QMO | QGEN_QOO | QGEN_QOV | QGEN_QVV);
 
         int qstore = 0;
         if(byq)
@@ -847,7 +847,7 @@ int main(int argc, char ** argv)
             ///////////
             // Gen Qso
             ///////////
-            GenTestMatrix(dft, "QSO", QGEN_DFQSO, batchsize,
+            GenTestMatrix(dft, "QSO", QGEN_QSO, batchsize,
                           dir + "qso", verbose);
     
             ///////////
@@ -877,7 +877,7 @@ int main(int argc, char ** argv)
             ///////////////////////
             // Test Cholesky QSO
             ///////////////////////
-            GenTestMatrix(cht, "CHQSO", QGEN_CHQSO, batchsize,
+            GenTestMatrix(cht, "CHQSO", QGEN_QSO, batchsize,
                            dir + "chqso", verbose);
         }
         else if(!skipgetbatch)
@@ -886,7 +886,7 @@ int main(int argc, char ** argv)
             // Test Qso
             ///////////
             ret += RunTestMatrix(dft, "QSO",
-                                 batchsize, QGEN_DFQSO,
+                                 batchsize, QGEN_QSO,
                                  dir + "qso", 
                                  QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                                  skiptest, verbose);
@@ -933,7 +933,7 @@ int main(int argc, char ** argv)
             if(docholesky)
             {
                 ret += RunTestMatrix(cht, "CHQSO",
-                                     batchsize, QGEN_CHQSO,
+                                     batchsize, QGEN_QSO,
                                      dir + "chqso",
                                      QSO_SUM_THRESHOLD, QSO_CHECKSUM_THRESHOLD, QSO_ELEMENT_THRESHOLD,
                                      skiptest, verbose);

@@ -33,7 +33,7 @@ void DFTensor::Init_(void)
 DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
                    const std::string & directory,
                    int bsorder,
-                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_DFQSO, bsorder, nthreads), auxiliary_(auxiliary)
+                   int nthreads) : ThreeIndexTensor(primary, directory, QTYPE_DFQSO, bsorder, nthreads), auxiliary_(auxiliary)
 {
     PrintHeader_();
     Init_();
@@ -43,7 +43,7 @@ DFTensor::DFTensor(SharedBasisSet primary,
                    const std::string & auxpath,
                    const std::string & directory,
                    int bsorder,
-                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_DFQSO, bsorder, nthreads),
+                   int nthreads) : ThreeIndexTensor(primary, directory, QTYPE_DFQSO, bsorder, nthreads),
                                    auxiliary_(CreateAuxFromFile_(auxpath, primary->molecule()))
 {
     PrintHeader_();
