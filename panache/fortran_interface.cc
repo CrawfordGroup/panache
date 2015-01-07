@@ -63,6 +63,7 @@ extern "C" {
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
      * \param [in] directorylen Actual length of \p filename
+     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Number of threads to use
      *
@@ -74,8 +75,8 @@ extern "C" {
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
                        int_t * aux_nprimpershell, double * aux_exp, double * aux_coef,
-                       const char * directory, int_t * directorylen, int_t * bsorder, int_t * nthreads,
-                       int_t * dfhandle)
+                       const char * directory, int_t * directorylen, int_t * bsorder, 
+                       int_t * metricflag, int_t * nthreads, int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -157,7 +158,8 @@ extern "C" {
 
         *dfhandle = panache_dfinit(*ncenters, atoms,
                                  primary_nshellspercenter, primary_shells,
-                                 aux_nshellspercenter, aux_shells, mdir, *bsorder, *nthreads);
+                                 aux_nshellspercenter, aux_shells, mdir, *metricflag,
+                                 *bsorder, *nthreads);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -222,6 +224,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      * \param [in] directorylen Actual length of \p filename
+     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Number of threads to use
      *
@@ -232,7 +235,7 @@ extern "C" {
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         const char * auxfilename, int_t * auxfilenamelen, const char * directory,
-                        int_t * directorylen, int_t * bsorder, int_t * nthreads, int_t * dfhandle)
+                        int_t * directorylen, int_t * metricflag, int_t * bsorder, int_t * nthreads, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -345,7 +348,7 @@ extern "C" {
 
         *dfhandle = panache_dfinit2(*ncenters, atoms,
                                   primary_nshellspercenter, primary_shells,
-                                  cfname, mdir, *bsorder, *nthreads);
+                                  cfname, mdir, *metricflag, *bsorder, *nthreads);
 
         // Free memory
         delete [] cfname;
@@ -370,7 +373,7 @@ extern "C" {
 
 
     /*!
-     * \brief Initializes a new density-fitting calculation using an auxiliary basis set file
+     * \brief Initializes a new cholesky calculation
      *
      * Sets up the basis set information and returns a handle that
      * is used to identify this particular calculation.

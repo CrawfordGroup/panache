@@ -62,6 +62,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
+     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
@@ -71,7 +72,7 @@ extern "C" {
                        C_AtomCenter * atoms,
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                       const char * directory, int_t bsorder, int_t nthreads);
+                       const char * directory, int_t metricflag, int_t bsorder, int_t nthreads);
 
 
 
@@ -97,6 +98,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
+     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
@@ -105,11 +107,12 @@ extern "C" {
     int_t panache_dfinit2(int_t ncenters,
                         C_AtomCenter * atoms,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename, const char * directory, int_t bsorder, int_t nthreads);
+                        const char * auxfilename, const char * directory, int_t metricflag,
+                        int_t bsorder, int_t nthreads);
 
 
     /*!
-     * \brief Initializes a new cholesky calculation using an auxiliary basis set file
+     * \brief Initializes a new cholesky calculation
      *
      * Sets up the basis set information and returns a handle that
      * is used to identify this particular calculation.
