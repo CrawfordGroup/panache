@@ -121,7 +121,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
             // if it actually needs renormalization
             // unique ptr will be null if it doesn't
             if(cnorm)
-                RenormCMat(cnorm.get());
+                RenormCMat(cnorm);
         }
 
         // Decide how we want to proceed with respect to basis function ordering
@@ -142,7 +142,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
             //std::cout << "BEFORE REORDERING:\n";
             //for(int i = 0; i < nmo_*nso_; i++)
             //    std::cout << Cmo_[i] << "\n";
-            ReorderMatRows(Cmo_.get(), ord.get(), nmo_);
+            ReorderMatRows(Cmo_, ord, nmo_);
             //std::cout << "AFTER REORDERING:\n";
             //for(int i = 0; i < nmo_*nso_; i++)
             //    std::cout << Cmo_[i] << "\n";
@@ -217,16 +217,18 @@ void ThreeIndexTensor::ReorderQso(void)
 
     // First, generate an identity matrix
     std::unique_ptr<double[]> tmat(new double[nso2]);
-    std::fill(tmat.get(), tmat.get() + nso2, 0.0);
+    double * tmatp = tmat.get();
+
+    std::fill(tmatp, tmatp + nso2, 0.0);
     for(int i = 0; i < nso2; i += (nso_+1))
         tmat[i] = 1.0;
 
     // Make into a transformation matrix
-    ReorderMatRows(tmat.get(), ord.get(), nso_);
+    ReorderMatRows(tmat, ord, nso_);
 
     // Create an empty qso object
     // Then transform qso
-    leftright.push_back(StoredQTensor::TransformMat(tmat.get(), nso_));
+    leftright.push_back(StoredQTensor::TransformMat(tmatp, nso_));
     auto newqso = StoredQTensorFactory(qso_->naux(),
                                        qso_->ndim1(),
                                        qso_->ndim2(),
@@ -242,7 +244,7 @@ void ThreeIndexTensor::ReorderQso(void)
 
 
 int ThreeIndexTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
-                             StoredQTensor * qt)
+                                    const UniqueStoredQTensor & qt)
 {
 #ifdef PANACHE_TIMING
     Timer tim;
@@ -267,7 +269,7 @@ int ThreeIndexTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
 
 
 int ThreeIndexTensor::GetBatch_Base(double * outbuf, int bufsize, int ijstart,
-                             StoredQTensor * qt)
+                                    const UniqueStoredQTensor & qt)
 {
 #ifdef PANACHE_TIMING
     Timer tim;
@@ -313,19 +315,19 @@ UniqueStoredQTensor & ThreeIndexTensor::ResolveTensorFlag(int tensorflag)
 
 int ThreeIndexTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, int qstart)
 {
-    return GetQBatch_Base(outbuf, bufsize, qstart, ResolveTensorFlag(tensorflag).get());
+    return GetQBatch_Base(outbuf, bufsize, qstart, ResolveTensorFlag(tensorflag));
 }
 
 int ThreeIndexTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, int ijstart)
 {
-    return GetBatch_Base(outbuf, bufsize, ijstart, ResolveTensorFlag(tensorflag).get());
+    return GetBatch_Base(outbuf, bufsize, ijstart, ResolveTensorFlag(tensorflag));
 }
 
 
 int ThreeIndexTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QIterator qstart)
 {
     if(qstart)
-        return GetQBatch_Base(outbuf, bufsize, qstart.Index(), ResolveTensorFlag(tensorflag).get());
+        return GetQBatch_Base(outbuf, bufsize, qstart.Index(), ResolveTensorFlag(tensorflag));
     else
         return 0;
 }
@@ -333,7 +335,7 @@ int ThreeIndexTensor::GetQBatch(int tensorflag, double * outbuf, int bufsize, QI
 int ThreeIndexTensor::GetBatch(int tensorflag, double * outbuf, int bufsize, IJIterator ijstart)
 {
     if(ijstart)
-        return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag).get());
+        return GetBatch_Base(outbuf, bufsize, ijstart.Index(), ResolveTensorFlag(tensorflag));
     else
         return 0;
 }
@@ -421,7 +423,7 @@ static void Reorder(std::vector<unsigned short> order, std::vector<double *> poi
     }
 }
 
-void ThreeIndexTensor::RenormCMat(const reorder::CNorm * cnorm)
+void ThreeIndexTensor::RenormCMat(const std::unique_ptr<reorder::CNorm> & cnorm)
 {
     using namespace reorder;
 
@@ -442,7 +444,9 @@ void ThreeIndexTensor::RenormCMat(const reorder::CNorm * cnorm)
     }
 }
 
-void ThreeIndexTensor::ReorderMatRows(double * mat, const reorder::Orderings * order, int ncol)
+void ThreeIndexTensor::ReorderMatRows(const std::unique_ptr<double[]> & mat,
+                                      const std::unique_ptr<reorder::Orderings> & order,
+                                      int ncol)
 {
     using namespace reorder;
 
@@ -472,7 +476,9 @@ void ThreeIndexTensor::ReorderMatRows(double * mat, const reorder::Orderings * o
     }
 }
 
-void ThreeIndexTensor::ReorderMatCols(double * mat, const reorder::Orderings * order, int nrow)
+void ThreeIndexTensor::ReorderMatCols(const std::unique_ptr<double[]> & mat,
+                                      const std::unique_ptr<reorder::Orderings> & order,
+                                      int nrow)
 {
     using namespace reorder;
 

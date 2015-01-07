@@ -574,7 +574,7 @@ private:
      * 
      * \param [in] cnorm The Renormalization to use
      */
-    void RenormCMat(const reorder::CNorm * cnorm);
+    void RenormCMat(const std::unique_ptr<reorder::CNorm> & cnorm);
 
 
     /*!
@@ -584,7 +584,9 @@ private:
      * \param [in] order The order to use
      * \param [in] ncol Number of columns of the matrix
      */
-    void ReorderMatRows(double * mat, const reorder::Orderings * order, int ncol);
+    void ReorderMatRows(const std::unique_ptr<double[]> & mat,
+                        const std::unique_ptr<reorder::Orderings> & order,
+                        int ncol);
 
     /*!
      * \brief Reorders the columns of a n x nso matrix into the specified ordering
@@ -593,7 +595,9 @@ private:
      * \param [in] order The order to use
      * \param [in] nrow Number of rows of the matrix
      */
-    void ReorderMatCols(double * mat, const reorder::Orderings * order, int nrow);
+    void ReorderMatCols(const std::unique_ptr<double[]> & mat,
+                        const std::unique_ptr<reorder::Orderings> & order,
+                        int nrow);
 
 
     /*!
@@ -632,7 +636,7 @@ private:
      * \param [in] qstart The starting value of q
      * \param [in] qt Pointer to the StoredQTensor to retrieve
      */
-    int GetQBatch_Base(double * outbuf, int bufsize, int qstart, StoredQTensor * qt);
+    int GetQBatch_Base(double * outbuf, int bufsize, int qstart, const UniqueStoredQTensor & qt);
 
 
     /*!
@@ -643,7 +647,7 @@ private:
      * \param [in] ijstart Starting combined orbital index
      * \param [in] qt Pointer to the StoredQTensor to retrieve
      */
-    int GetBatch_Base(double * outbuf, int bufsize, int ijstart, StoredQTensor * qt);
+    int GetBatch_Base(double * outbuf, int bufsize, int ijstart, const UniqueStoredQTensor & qt);
 
     
 
