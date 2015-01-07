@@ -47,8 +47,9 @@
     /*! \name Flags specifing density fitting metrics */
     ///@{
     #define DFMETRIC_COULOMB 1 //!< Coulomb metric
+
     #define DFMETRIC_EIGINV  2048  //!< Take the inverse sqrt of the metric
-    #define DFMETRIC_CHOLESKY 4096 //!< Cholesky decompose the metric
+    #define DFMETRIC_CHOINV  4096 //!< Cholesky inverse of the metric
     ///@}
 
 #endif

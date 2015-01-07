@@ -28,6 +28,10 @@ void DFTensor::PrintHeader_(void) const
 void DFTensor::Init_(void)
 {
     naux_ = auxiliary_->nbf();
+
+    // Defaults for fitting metric
+    if(metricflag_ == 0)
+        metricflag_ = DFMETRIC_COULOMB | DFMETRIC_EIGINV;
 }
 
 DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
@@ -57,12 +61,25 @@ UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
                                     storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso", directory_);
 
-    // we only use the fitting metrix here. No need to keep it around for longer than
+
+    // we only use the fitting metric here. No need to keep it around for longer than
     // is necessary
     // Overhead for shared pointer is negligible here, but consider making it a straight
     // pass by reference in the future
     SharedFittingMetric fittingmetric(new FittingMetric(auxiliary_, nthreads_));
-    fittingmetric->form_eig_inverse();
+
+    if(metricflag_ & DFMETRIC_COULOMB)
+        fittingmetric->form_coulomb_fitting_metric();
+    else
+        throw RuntimeError("Unknown fitting metric type!");
+     
+    if(metricflag_ & DFMETRIC_EIGINV) 
+        fittingmetric->form_eig_inverse();
+    else if(metricflag_ & DFMETRIC_CHOINV)
+        fittingmetric->form_cholesky_inverse();
+    else
+        throw RuntimeError("Unknown fitting metric decomposition!");
+
 
     qso->GenDFQso(fittingmetric, primary_, auxiliary_, nthreads_);
 

@@ -66,7 +66,7 @@ FittingMetric::~FittingMetric()
     delete [] metric_;
 }
 
-void FittingMetric::form_fitting_metric()
+void FittingMetric::form_coulomb_fitting_metric()
 {
     is_inverted_ = false;
     algorithm_ = "NONE";
@@ -144,7 +144,7 @@ void FittingMetric::form_eig_inverse(double tol)
     is_inverted_ = true;
     algorithm_ = "EIG";
 
-    form_fitting_metric();
+    //form_fitting_metric();
 
     //metric_->print();
 
@@ -191,14 +191,65 @@ void FittingMetric::form_eig_inverse(double tol)
     delete [] W;
 }
 
-/*
+
+void FittingMetric::pivot()
+{
+/*    for (int h = 0; h < metric_->nirrep(); h++)
+    {
+
+        if (metric_->colspi()[h] == 0) continue;
+
+        double** J = metric_->pointer(h);
+        int* P = pivots_->pointer(h);
+        int norbs = metric_->colspi()[h];
+        double* Temp = new double[norbs];
+
+        // Pivot
+        double max;
+        int Temp_p;
+        int pivot;
+        for (int i = 0; i<norbs-1; i++)
+        {
+            max = 0.0;
+            //Where's the pivot diagonal?
+            for (int j = i; j<norbs; j++)
+                if (max <= fabs(J[j][j]))
+                {
+                    max = fabs(J[j][j]);
+                    pivot = j;
+                }
+
+            //Rows
+            C_DCOPY(norbs,&J[pivot][0],1,Temp,1);
+            C_DCOPY(norbs,&J[i][0],1,&J[pivot][0],1);
+            C_DCOPY(norbs,Temp,1,&J[i][0],1);
+
+            //Columns
+            C_DCOPY(norbs,&J[0][pivot],norbs,Temp,1);
+            C_DCOPY(norbs,&J[0][i],norbs,&J[0][pivot],norbs);
+            C_DCOPY(norbs,Temp,1,&J[0][i],norbs);
+
+            Temp_p = P[i];
+            P[i] = P[pivot];
+            P[pivot] = Temp_p;
+        }
+        delete[] Temp;
+
+        int* R = rev_pivots_->pointer(h);
+        for (int i = 0; i < norbs; i++)
+            R[P[i]] = i;
+    }
+*/
+}
+
+
 void FittingMetric::form_cholesky_inverse()
 {
     is_inverted_ = true;
     algorithm_ = "CHOLESKY";
 
-    form_fitting_metric();
-
+    throw RuntimeError("form_cholesky_inverse() not implemented yet!");
+/*
     pivot();
     for (int h = 0; h < metric_->nirrep(); h++)
     {
@@ -213,8 +264,11 @@ void FittingMetric::form_cholesky_inverse()
                 J[A][B] = 0.0;
     }
     metric_->set_name("SO Basis Fitting Inverse (Cholesky)");
+*/
 }
-void FittingMetric::form_QR_inverse(double tol)
+
+
+/*void FittingMetric::form_QR_inverse(double tol)
 {
     is_inverted_ = true;
     algorithm_ = "QR";
@@ -410,54 +464,6 @@ void FittingMetric::form_cholesky_factor()
     metric_->set_name("SO Basis Cholesky Factor (Full)");
 }
 
-void FittingMetric::pivot()
-{
-    for (int h = 0; h < metric_->nirrep(); h++)
-    {
-
-        if (metric_->colspi()[h] == 0) continue;
-
-        double** J = metric_->pointer(h);
-        int* P = pivots_->pointer(h);
-        int norbs = metric_->colspi()[h];
-        double* Temp = new double[norbs];
-
-        // Pivot
-        double max;
-        int Temp_p;
-        int pivot;
-        for (int i = 0; i<norbs-1; i++)
-        {
-            max = 0.0;
-            //Where's the pivot diagonal?
-            for (int j = i; j<norbs; j++)
-                if (max <= fabs(J[j][j]))
-                {
-                    max = fabs(J[j][j]);
-                    pivot = j;
-                }
-
-            //Rows
-            C_DCOPY(norbs,&J[pivot][0],1,Temp,1);
-            C_DCOPY(norbs,&J[i][0],1,&J[pivot][0],1);
-            C_DCOPY(norbs,Temp,1,&J[i][0],1);
-
-            //Columns
-            C_DCOPY(norbs,&J[0][pivot],norbs,Temp,1);
-            C_DCOPY(norbs,&J[0][i],norbs,&J[0][pivot],norbs);
-            C_DCOPY(norbs,Temp,1,&J[0][i],norbs);
-
-            Temp_p = P[i];
-            P[i] = P[pivot];
-            P[pivot] = Temp_p;
-        }
-        delete[] Temp;
-
-        int* R = rev_pivots_->pointer(h);
-        for (int i = 0; i < norbs; i++)
-            R[P[i]] = i;
-    }
-}
 */
 
 } // close namespace panache

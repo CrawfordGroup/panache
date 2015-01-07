@@ -104,13 +104,15 @@ public:
     SharedBasisSet get_poisson_basis() const {return pois_; }
 
     /// Build the raw fitting metric (sets up indices to canonical)
-    void form_fitting_metric();
+    void form_coulomb_fitting_metric();
+
     /// Build the eigendecomposed half inverse metric (calls form_fitting_metric)
     void form_eig_inverse(double tol = 1.0E-10);
 
-/*
     /// Build the Cholesky half inverse metric (calls form_fitting_metric)
     void form_cholesky_inverse();
+
+/*
     /// Build the QR half inverse metric (calls form_fitting_metric)
     void form_QR_inverse(double tol = 1.0E-10);
     /// Build the full inverse metric. NOT RECOMMENDED: Numerical stability (calls form_fitting_metric)
