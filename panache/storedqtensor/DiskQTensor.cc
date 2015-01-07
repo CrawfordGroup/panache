@@ -18,14 +18,14 @@ void DiskQTensor::OpenFile_(void)
     if(file_ && file_->is_open())
         return;
 
-    if(name().length() == 0)
+    if(filename_.length() == 0 || name().length() == 0)
         throw RuntimeError("Error - no file specified!");
 
-    file_ = std::unique_ptr<std::fstream>(new std::fstream(name().c_str(),
+    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
                                           std::fstream::in | std::fstream::out |
                                           std::fstream::binary | std::fstream::trunc ));
     if(!file_->is_open())
-        throw RuntimeError(name());
+        throw RuntimeError(std::string("Unable to open file ") + filename_);
 
     file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
 }
@@ -160,11 +160,14 @@ void DiskQTensor::Clear_(void)
 
 void DiskQTensor::Init_(void)
 {
+    filename_ = directory_;
+    filename_.append("/");
+    filename_.append(name());
     OpenFile_();
 }
 
 
-DiskQTensor::DiskQTensor()
+DiskQTensor::DiskQTensor(const std::string & directory) : directory_(directory)
 {
 }
 

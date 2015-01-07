@@ -271,6 +271,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                                                int storeflags,
                                                int nthreads)
 {
+    // number of threads is passed around implicitly as the size of eris
     std::vector<SharedTwoBodyAOInt> eris;
 
     for(int i = 0; i < nthreads; i++)

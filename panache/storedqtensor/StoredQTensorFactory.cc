@@ -18,10 +18,10 @@ namespace panache
 {
 
 UniqueStoredQTensor 
-StoredQTensorFactory(int storeflags)
+StoredQTensorFactory(int storeflags, const std::string & directory)
 {
     if(storeflags & QSTORAGE_ONDISK)
-        return UniqueStoredQTensor(new DiskQTensor());
+        return UniqueStoredQTensor(new DiskQTensor(directory));
 
     #ifdef PANACHE_CYCLOPS
     else if(storeflags & QSTORAGE_CYCLOPS)
@@ -40,18 +40,10 @@ StoredQTensorFactory(int naux, int ndim1, int ndim2,
     if(name == "")
         throw RuntimeError("NO NAME SPECIFIED");
 
-    auto ptr = StoredQTensorFactory(storeflags);
+    auto ptr = StoredQTensorFactory(storeflags, directory);
 
     // convert name to filename if on disk
-    if(storeflags & QSTORAGE_ONDISK)
-    {
-        std::string filename(directory);
-        filename.append("/");
-        filename.append(name);
-        ptr->Init(naux, ndim1, ndim2, storeflags, filename);
-    }
-    else
-        ptr->Init(naux, ndim1, ndim2, storeflags, name);
+    ptr->Init(naux, ndim1, ndim2, storeflags, name);
 
     return ptr;
 }

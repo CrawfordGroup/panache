@@ -29,7 +29,7 @@ UniqueStoredQTensor CHTensor::GenQso(int storeflags) const
 {
     // PACKED storage, etc, not handled in factory.
     // Will be passed in through qso->GenCHQso 
-    auto qso = StoredQTensorFactory(storeflags);
+    auto qso = StoredQTensorFactory(storeflags, directory_);
 
     // will be initialized in here
     qso->GenCHQso(primary_, delta_, storeflags, nthreads_);
