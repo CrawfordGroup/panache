@@ -11,7 +11,6 @@
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
 #include "panache/Output.h"
-#include <iostream>
 
 // for reordering
 #include "panache/MemorySwapper.h"
@@ -69,6 +68,9 @@ ThreeIndexTensor::~ThreeIndexTensor()
 
 void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 {
+    if(Cmo_)
+        throw RuntimeError("Error - C matrix already set!");
+
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
 
@@ -88,19 +90,10 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
 void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 {
-
 #ifdef PANACHE_TIMING
     Timer tim;
     tim.Start();
 #endif
-
-    // reset all the stuff
-    qso_.reset();
-    qmo_.reset();
-    qoo_.reset();
-    qov_.reset();
-    qvv_.reset();
-
 
     // remove packed setting
     storeflags &= ~QSTORAGE_PACKED;
@@ -113,50 +106,54 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
          (qflags & QGEN_QVV)) )
         throw RuntimeError("Set the c-matrix first!");
 
+
+    // only do this stuff the first time!
     if(!qso_)
+    {
         qso_ = GenQso(storeflags); // calls the virtual function
 
+        // Renormalize CMat if necessary
+        if(bsorder_ != BSORDER_PSI4)
+        {
+            // a unique_ptr
+            auto cnorm = reorder::GetCNorm(bsorder_);
 
-    // Renormalize CMat if necessary
-    if(bsorder_ != BSORDER_PSI4)
-    {
-        // a unique_ptr
-        auto cnorm = reorder::GetCNorm(bsorder_);
+            // if it actually needs renormalization
+            // unique ptr will be null if it doesn't
+            if(cnorm)
+                RenormCMat(cnorm.get());
+        }
 
-        // if it actually needs renormalization
-        // unique ptr will be null if it doesn't
-        if(cnorm)
-            RenormCMat(cnorm.get());
+        // Decide how we want to proceed with respect to basis function ordering
+        // If reordering is necessary, and Qso is not requested, we can just reorder
+        //     the C matrix
+        // If reordering is necessary, and Qso is needed, reorder Qso itself and
+        //     don't reorder the C matrix
+        if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
+        {
+            ReorderQso();
+        }
+        else if(bsorder_ != BSORDER_PSI4)
+        {
+            // reorder the Cmat
+            auto ord = reorder::GetOrdering(bsorder_);
+    
+            // only need to reorder the rows
+            //std::cout << "BEFORE REORDERING:\n";
+            //for(int i = 0; i < nmo_*nso_; i++)
+            //    std::cout << Cmo_[i] << "\n";
+            ReorderMatRows(Cmo_.get(), ord.get(), nmo_);
+            //std::cout << "AFTER REORDERING:\n";
+            //for(int i = 0; i < nmo_*nso_; i++)
+            //    std::cout << Cmo_[i] << "\n";
+        }
+
+        // now we can split the c matrix
+        // Whether we need the cmatrix or not has been checked above ^_^
+        if(Cmo_)
+            SplitCMat();
     }
 
-    // Decide how we want to proceed with respect to basis function ordering
-    // If reordering is necessary, and Qso is not requested, we can just reorder
-    //     the C matrix
-    // If reordering is necessary, and Qso is needed, reorder Qso itself and
-    //     don't reorder the C matrix
-    if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
-    {
-        ReorderQso();
-    }
-    else if(bsorder_ != BSORDER_PSI4)
-    {
-        // reorder the Cmat
-        auto ord = reorder::GetOrdering(bsorder_);
-
-        // only need to reorder the rows
-        //std::cout << "BEFORE REORDERING:\n";
-        //for(int i = 0; i < nmo_*nso_; i++)
-        //    std::cout << Cmo_[i] << "\n";
-        ReorderMatRows(Cmo_.get(), ord.get(), nmo_);
-        //std::cout << "AFTER REORDERING:\n";
-        //for(int i = 0; i < nmo_*nso_; i++)
-        //    std::cout << Cmo_[i] << "\n";
-    }
-
-    // now we can split the c matrix
-    // Whether we need the cmatrix or not has been checked above ^_^
-    if(Cmo_)
-        SplitCMat();
 
     std::vector<StoredQTensor::TransformMat> lefts;
     std::vector<StoredQTensor::TransformMat> rights;
@@ -211,8 +208,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
 void ThreeIndexTensor::ReorderQso(void)
 {
-    std::cout << "REORDERING QSO\n";
-
     std::vector<StoredQTensor::TransformMat> leftright;
     std::vector<StoredQTensor *> qouts;
 
