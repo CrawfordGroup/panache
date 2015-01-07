@@ -809,11 +809,11 @@ int main(int argc, char ** argv)
         int nocc = ReadNocc(dir + "nocc");
         int nmo = nso;
 
-        DFTensor dft(primary, dir + "basis.aux.gbs", "/tmp/df", 0);
+        DFTensor dft(primary, dir + "basis.aux.gbs", "/tmp/df", BSORDER_PSI4, 0);
 
         // *** We are only testing Qso from CHTensor               *** //
         // *** But generating them all (to test for memory issues) *** //
-        CHTensor cht(primary, CHOLESKY_DELTA, "/tmp/ch", 0);
+        CHTensor cht(primary, CHOLESKY_DELTA, "/tmp/ch", BSORDER_PSI4, 0);
 
         dft.SetCMatrix(cmat->pointer(), nmo, transpose);
         cht.SetCMatrix(cmat->pointer(), nmo, transpose);

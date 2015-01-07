@@ -15,8 +15,7 @@
 
 // for reordering
 #include "panache/MemorySwapper.h"
-#include "panache/CNorm.h"
-#include "panache/Orderings.h"
+#include "panache/Reorder.h"
 
 
 #ifdef _OPENMP
@@ -29,8 +28,9 @@ namespace panache
 ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
                      const std::string & directory,
                      int qtype,
+                     int bsorder,
                      int nthreads)
-    : primary_(primary), directory_(directory), qtype_(qtype)
+    : primary_(primary), directory_(directory), qtype_(qtype), bsorder_(bsorder)
 {
     //remove trailing slashes
     while(directory_.size() > 1 && directory_.back() == '/')
@@ -67,8 +67,7 @@ ThreeIndexTensor::~ThreeIndexTensor()
 {
 }
 
-void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
-                           int order)
+void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 {
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
@@ -84,33 +83,19 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans,
     else
         std::copy(cmo, cmo+(nmo_*nso_), Cmo_.get());
 
-    if(order != BSORDER_PSI4)
+    if(bsorder_ != BSORDER_PSI4)
     {
-        reorder::Orderings * ord;
-        reorder::CNorm * cnorm = nullptr;
-
-        if (order == BSORDER_GAMESS)
-        {
-            ord = new reorder::GAMESS_Ordering();
-            cnorm = new reorder::GAMESS_CNorm();
-        }
-        else if (order == BSORDER_DALTON)
-        {
-            //output::printf("DALTON ORDERING\n");
-            ord = new reorder::DALTON_Ordering();
-            cnorm = nullptr;
-        }
-        else
-            throw RuntimeError("Unknown ordering!");
+        // unique ptr to ordering
+        auto ord = reorder::GetOrdering(bsorder_);
+        auto cnorm = reorder::GetCNorm(bsorder_);
 
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        ReorderCMat(ord, cnorm);
+        ReorderCMat(ord.get(), cnorm.get());
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        delete ord;
     }
 }
 

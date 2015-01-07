@@ -13,7 +13,9 @@ namespace panache {
 
 CHTensor::CHTensor(SharedBasisSet primary, double delta,
                    const std::string & directory,
-                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_CHQSO, nthreads), delta_(delta)
+                   int bsorder,
+                   int nthreads) : ThreeIndexTensor(primary, directory, QGEN_CHQSO, bsorder, nthreads),
+                                   delta_(delta)
 {
     output::printf("  ==> LibPANACHE CH Tensor <==\n\n");
     output::printf("  delta: %f", delta_);

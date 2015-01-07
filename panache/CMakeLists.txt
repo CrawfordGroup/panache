@@ -21,6 +21,7 @@ add_library(panache
             fortran_interface.cc
             c_convert.cc
             Lapack.cc
+            Reorder.cc
             storedqtensor/StoredQTensor.cc
             storedqtensor/LocalQTensor.cc
             storedqtensor/MemoryQTensor.cc

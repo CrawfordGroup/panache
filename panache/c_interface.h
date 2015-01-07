@@ -62,6 +62,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
      * \return A handle representing this particular density-fitting calculation.
@@ -70,7 +71,7 @@ extern "C" {
                        C_AtomCenter * atoms,
                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                       const char * directory, int_t nthreads);
+                       const char * directory, int_t bsorder, int_t nthreads);
 
 
 
@@ -96,6 +97,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
      * \return A handle representing this particular density-fitting calculation.
@@ -103,7 +105,7 @@ extern "C" {
     int_t panache_dfinit2(int_t ncenters,
                         C_AtomCenter * atoms,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename, const char * directory, int_t nthreads);
+                        const char * auxfilename, const char * directory, int_t bsorder, int_t nthreads);
 
 
     /*!
@@ -127,6 +129,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
      * \return A handle representing this particular density-fitting calculation.
@@ -134,7 +137,7 @@ extern "C" {
     int_t panache_chinit(int_t ncenters,
                         C_AtomCenter * atoms,
                         int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        double delta, const char * directory, int_t nthreads);
+                        double delta, const char * directory, int_t bsorder, int_t nthreads);
 
 
 
@@ -185,10 +188,8 @@ extern "C" {
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in column-major order.
-     * \param [in] bsorder Ordering of the basis function in the c-matrix. See Flags.h
      */
-    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans,
-                            int_t bsorder = BSORDER_PSI4);
+    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans);
 
 
     /*!

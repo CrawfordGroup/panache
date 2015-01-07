@@ -1,12 +1,13 @@
-#ifndef PANACHE_REORDER_H
-#define PANACHE_REORDER_H
+#ifndef PANACHE_ORDERINGS_H
+#define PANACHE_ORDERINGS_H
 
 #include <vector>
 #include <array>
-#include <functional>
 #include <sstream>
+#include <memory>
 
-#include "BasisFunctionMacros.h"
+#include "panache/BasisFunctionMacros.h"
+#include "panache/Exception.h"
 
 #ifndef MAX_REORDER_AM
 #define MAX_REORDER_AM 10
@@ -14,7 +15,6 @@
 
 using std::vector;
 using std::array;
-using std::function;
 
 
 namespace panache {
@@ -149,54 +149,6 @@ public:
     }
 
 };
-
-
-
-class GAMESS_Ordering : public Orderings
-{
-public:
-    GAMESS_Ordering(void)
-    {
-        // don't ask
-        SetCartOrder(2, {1, 4, 6, 2, 3, 5} );
-        SetCartOrder(3, {1, 7, 10, 2, 3, 4, 8, 6, 9, 5} );
-        SetCartOrder(4, {1, 11, 15, 2, 3, 7, 12, 10, 14, 4, 6, 13, 5, 8, 9} );
-        SetCartOrder(5, {1, 16, 21, 2, 3, 11, 17, 15, 20, 4, 6, 7, 18, 10, 19, 8, 9, 13, 9, 13, 9} );
-        SetCartOrder(6, {1, 22, 28, 2, 3, 16, 23, 21, 27, 4, 6, 11, 24, 15, 26, 7, 10, 25, 8, 9, 12, 18, 14, 19, 13, 13, 13, 13} );
-        SetCartOrder(7, {1, 29, 36, 2, 3, 22, 30, 28, 35, 4, 6, 16, 31, 21, 34, 7, 10, 11, 32, 15, 33, 12, 14, 25, 13, 18, 19, 18, 19, 18, 19, 18, 19, 18, 19, 18} );
-        SetCartOrder(8, {1, 37, 45, 2, 3, 29, 38, 36, 44, 4, 6, 22, 39, 28, 43, 7, 10, 16, 40, 21, 42, 11, 15, 41, 12, 14, 17, 32, 20, 33, 18, 19, 25, 19, 25, 19, 25, 19, 25, 19, 25, 19, 25, 19, 25} );
-/*
-        for(int am = 1; am <= MAX_REORDER_AM; am++)
-        {
-            int nfunc = INT_NPURE(am);
-            vector<unsigned short> re(nfunc);
-
-            re[0] = am+1;
-            int j = 0;
-            for(int i = 1; i <= (nfunc-1)/2; i++)
-            {
-                re[++j] = re[0] + i;
-                re[++j] = re[0] - i;
-            }
-
-            SetSphOrder(am, re);
-        }
-*/
-    }
-};
-
-class DALTON_Ordering : public Orderings
-{
-public:
-    DALTON_Ordering(void)
-    {
-        // Dalton cartesian ordering seems to be the same as Psi4 ordering
-        // Spherical, however, goes from -l, ..., l , where psi4 goes 0, +1, -1, ..., +l, -l
-        SetSphOrder(2, {5, 3, 1, 2, 4});
-        SetSphOrder(3, {7, 5, 3, 1, 2, 4, 6});
-    }
-};
-
 
 
 } } // close namespace panache::reorder

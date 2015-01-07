@@ -31,11 +31,13 @@ public:
      * \param [in] primary The primary basis set
      * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] directory Full path to a directory to put scratch files
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor(SharedBasisSet primary,
              SharedBasisSet auxiliary,
              const std::string & directory,
+             int bsorder,
              int nthreads);
 
     /*!
@@ -47,11 +49,13 @@ public:
      * \param [in] primary The primary basis set
      * \param [in] auxpath Path to auxiliary basis set file (G98 format)
      * \param [in] directory Full path to a directory to put scratch files
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor(SharedBasisSet primary,
              const std::string & auxpath,
              const std::string & directory,
+             int bsorder,
              int nthreads);
 
 protected:

@@ -29,11 +29,13 @@ public:
      * \param [in] primary The primary basis set
      * \param [in] delta Maximum error in the Cholesky procedure
      * \param [in] directory Full path to a directory to put scratch files
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      */ 
     CHTensor(SharedBasisSet primary,
              double delta,
              const std::string & directory,
+             int bsorder,
              int nthreads);
 
 protected:

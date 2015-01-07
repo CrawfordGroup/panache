@@ -50,12 +50,14 @@ public:
      *
      * \param [in] primary The primary basis set
      * \param [in] directory Full path to a directory to put scratch files
-     * \param [in] qtype The type of tensor stored (Cholesky, DF)
+     * \param [in] qtype The type of tensor stored (Cholesky, DF, may include various options)
+     * \param [in] bsorder The ordering of basis functions (PSI4, GAMESS, etc)
      * \param [in] nthreads Max number of threads to use
      */ 
     ThreeIndexTensor(SharedBasisSet primary,
              const std::string & directory,
              int qtype,
+             int bsorder,
              int nthreads);
 
 
@@ -88,9 +90,8 @@ public:
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in column-major order.
-     * \param [in] order Ordering of the basis functions
      */
-    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans, int order = BSORDER_PSI4);
+    void SetCMatrix(double * cmo, int nmo, bool cmo_is_trans);
 
 
 
@@ -552,6 +553,7 @@ protected:
 
 private:
     int qtype_;  //!< Type of tensor (DF, CH, etc. See Flags.h)
+    int bsorder_; //!< Ordering of basis functions (See Flags.h)
 
 
     /*!

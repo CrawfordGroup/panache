@@ -63,6 +63,7 @@ extern "C" {
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
      * \param [in] directorylen Actual length of \p filename
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
@@ -73,7 +74,8 @@ extern "C" {
                        int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                        int_t * aux_nshellspercenter, int_t * aux_am, int_t * aux_is_pure,
                        int_t * aux_nprimpershell, double * aux_exp, double * aux_coef,
-                       const char * directory, int_t * directorylen, int_t * nthreads, int_t * dfhandle)
+                       const char * directory, int_t * directorylen, int_t * bsorder, int_t * nthreads,
+                       int_t * dfhandle)
     {
         // Make molecule struct
         C_AtomCenter * atoms = new C_AtomCenter[*ncenters];
@@ -155,7 +157,7 @@ extern "C" {
 
         *dfhandle = panache_dfinit(*ncenters, atoms,
                                  primary_nshellspercenter, primary_shells,
-                                 aux_nshellspercenter, aux_shells, mdir, *nthreads);
+                                 aux_nshellspercenter, aux_shells, mdir, *bsorder, *nthreads);
 
         // Free memory
         for(int_t i = 0; i < p_nshell; i++)
@@ -220,6 +222,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      * \param [in] directorylen Actual length of \p filename
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
@@ -229,7 +232,7 @@ extern "C" {
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         const char * auxfilename, int_t * auxfilenamelen, const char * directory,
-                        int_t * directorylen, int_t * nthreads, int_t * dfhandle)
+                        int_t * directorylen, int_t * bsorder, int_t * nthreads, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -342,7 +345,7 @@ extern "C" {
 
         *dfhandle = panache_dfinit2(*ncenters, atoms,
                                   primary_nshellspercenter, primary_shells,
-                                  cfname, mdir, *nthreads);
+                                  cfname, mdir, *bsorder, *nthreads);
 
         // Free memory
         delete [] cfname;
@@ -402,6 +405,7 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      * \param [in] directorylen Actual length of \p filename
+     * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Number of threads to use
      *
      * \param [out] dfhandle A handle representing this particular density-fitting calculation.
@@ -411,7 +415,7 @@ extern "C" {
                         int_t * primary_nshellspercenter, int_t * primary_am, int_t * primary_is_pure,
                         int_t * primary_nprimpershell, double * primary_exp, double * primary_coef,
                         double * delta, const char * directory,
-                        int_t * directorylen, int_t * nthreads, int_t * dfhandle)
+                        int_t * directorylen, int_t * bsorder, int_t * nthreads, int_t * dfhandle)
     {
         // DUMP
         /*
@@ -521,7 +525,7 @@ extern "C" {
 
         *dfhandle = panache_chinit(*ncenters, atoms,
                                   primary_nshellspercenter, primary_shells,
-                                  *delta, mdir, *nthreads);
+                                  *delta, mdir, *bsorder, *nthreads);
 
         // Free memory
         delete [] mdir;
@@ -601,15 +605,13 @@ extern "C" {
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in row-major order.
-     * \param [in] bsorder Ordering of the C matrix passed in (see BSORDER_* in Flags.h)
      */
-    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans,
-                              int_t * bsorder)
+    void panachef_setcmatrix_(int_t * df_handle, double * cmo, int_t * nmo, int_t * cmo_is_trans)
     {
         if(*cmo_is_trans)
-          panache_setcmatrix(*df_handle, cmo, *nmo, 0, *bsorder);
+          panache_setcmatrix(*df_handle, cmo, *nmo, 0);
         else
-          panache_setcmatrix(*df_handle, cmo, *nmo, 1, *bsorder);
+          panache_setcmatrix(*df_handle, cmo, *nmo, 1);
     }
 
 
