@@ -667,6 +667,20 @@ extern "C" {
     }
 
 
+
+    /*!
+     * \brief Delete a tensor (from memory, disk, etc)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] qflags A combination of flags specifying which tensors to delete
+     */
+    void panachef_delete_(int_t * df_handle, int_t * qflags)
+    {
+        panache_delete(*df_handle, *qflags);
+    }
+
+
+
     /*!
      * \brief Generates various 3-index tensors
      *

@@ -183,7 +183,13 @@ extern "C" {
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storeflags)
     {
         CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->GenQTensors(qflags, storeflags); 
+        xtensors_[df_handle]->GenQTensors(qflags, storeflags); 
+    }
+
+    void panache_delete(int_t df_handle, int_t qflags)
+    {
+        CheckHandle(df_handle, __FUNCTION__);
+        xtensors_[df_handle]->Delete(qflags); 
     }
 
     void panache_output(FILE * out)

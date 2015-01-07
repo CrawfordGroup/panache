@@ -259,6 +259,19 @@ extern "C" {
      */
     void panache_genqtensors(int_t df_handle, int_t qflags, int_t storeflags);
 
+
+
+
+    /*!
+     * \brief Delete a tensor (from memory, disk, etc)
+     *
+     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] qflags A combination of flags specifying which tensors to delete
+     */
+    void panache_delete(int_t df_handle, int_t qflags);
+
+
+
     /*!
      * \brief Obtain the batch size for panache_getqbatch()
      *
