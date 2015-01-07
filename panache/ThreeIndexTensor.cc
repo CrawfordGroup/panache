@@ -12,7 +12,6 @@
 #include "panache/Exception.h"
 #include "panache/Output.h"
 
-
 // for reordering
 #include "panache/MemorySwapper.h"
 #include "panache/Reorder.h"
@@ -137,10 +136,11 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         // reorder the Cmat
         auto ord = reorder::GetOrdering(bsorder_);
 
+        // only need to reorder the rows
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        ReorderCMat(ord.get());
+        ReorderMatRows(ord.get(), nmo_);
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
@@ -406,11 +406,11 @@ void ThreeIndexTensor::RenormCMat(const reorder::CNorm * cnorm)
     }
 }
 
-void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order)
+void ThreeIndexTensor::ReorderMatRows(const reorder::Orderings * order, int ncol)
 {
     using namespace reorder;
 
-    TotalMemorySwapper sf1(nmo_);  // swaps rows
+    TotalMemorySwapper sf1(ncol);  // swaps rows
 
     std::vector<PointerMap> vpm;
 
@@ -430,9 +430,44 @@ void ThreeIndexTensor::ReorderCMat(const reorder::Orderings * order)
         size_t ntoswap = it.order.size();
 
         for(size_t n = 0; n < ntoswap; n++)
-            pointers[n] = &(Cmo_[(it.start+n)*nmo_]);
+            pointers[n] = &(Cmo_[(it.start+n)*ncol]);
 
         Reorder(it.order, pointers, sf1);
+    }
+}
+
+void ThreeIndexTensor::ReorderMatCols(const reorder::Orderings * order, int nrow)
+{
+    using namespace reorder;
+
+    TotalMemorySwapper sf1(1);  // swaps elements
+
+    std::vector<PointerMap> vpm;
+
+    //go through what would need to be changed in the primary basis
+    for(int i = 0; i < primary_->nshell(); i++)
+    {
+        const GaussianShell & s = primary_->shell(i);
+        if(order->NeedsInvReordering(s.is_pure(), s.am()))
+            vpm.push_back(PointerMap(s.function_index(), order->GetInvOrder(s.is_pure(), s.am())));
+    }
+
+    std::vector<double *> pointers(primary_->max_function_per_shell());
+
+    // Swap columns
+    for(int i = 0; i < nrow; i++)
+    {
+        int irow = i * nrow;
+
+        for(auto & it : vpm)
+        {
+            size_t ntoswap = it.order.size();
+
+            for(size_t n = 0; n < ntoswap; n++)
+               pointers[n] = &(Cmo_[irow + (it.start+n)]);
+
+            Reorder(it.order, pointers, sf1);
+        }
     }
 }
 
