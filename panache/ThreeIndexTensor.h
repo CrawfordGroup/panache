@@ -165,6 +165,16 @@ public:
 
 
     /*!
+     * \brief Delete the given tensor
+     *
+     * May delete the memory, file on disk, etc.
+     *
+     * \param [in] qflags A combination of flags specifying which tensors to erase/delete
+     */
+    void Delete(int qflags);
+
+
+    /*!
      * \brief Obtain the dimensions of a tensor
      *
      * The 3-index tensor is accessed in row-major order

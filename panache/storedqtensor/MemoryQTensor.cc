@@ -87,11 +87,6 @@ void MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void MemoryQTensor::Clear_(void)
-{
-    data_.reset();
-}
-
 void MemoryQTensor::Init_(void)
 {
     if(!data_)

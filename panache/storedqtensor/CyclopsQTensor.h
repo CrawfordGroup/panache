@@ -115,7 +115,6 @@ private:
 protected:
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
-    virtual void Clear_(void);
     virtual void Init_(void);
 
     virtual void GenDFQso_(const SharedFittingMetric & fit,

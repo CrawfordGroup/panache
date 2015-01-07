@@ -3,6 +3,8 @@
  * \author Benjamin Pritchard (ben@bennyp.org)
  */
 
+#include <cstdio> // for remove()
+
 #include "panache/Exception.h"
 #include "panache/storedqtensor/DiskQTensor.h"
 
@@ -12,33 +14,6 @@
 
 namespace panache
 {
-
-void DiskQTensor::OpenFile_(void)
-{
-    if(file_ && file_->is_open())
-        return;
-
-    if(filename_.length() == 0 || name().length() == 0)
-        throw RuntimeError("Error - no file specified!");
-
-    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
-                                          std::fstream::in | std::fstream::out |
-                                          std::fstream::binary | std::fstream::trunc ));
-    if(!file_->is_open())
-        throw RuntimeError(std::string("Unable to open file ") + filename_);
-
-    file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
-}
-
-void DiskQTensor::CloseFile_(void)
-{
-    if(file_ && file_->is_open())
-    {
-        file_->close();
-        file_.reset();
-    }
-}
-
 
 void DiskQTensor::Write_(double * data, int nij, int ijstart)
 {
@@ -152,24 +127,45 @@ void DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DiskQTensor::Clear_(void)
-{
-    //! \todo Erase file
-    CloseFile_();
-}
-
 void DiskQTensor::Init_(void)
 {
     filename_ = directory_;
     filename_.append("/");
     filename_.append(name());
-    OpenFile_();
+
+    if(file_ && file_->is_open())
+        return;
+
+    if(filename_.length() == 0 || name().length() == 0)
+        throw RuntimeError("Error - no file specified!");
+
+    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
+                                          std::fstream::in | std::fstream::out |
+                                          std::fstream::binary | std::fstream::trunc ));
+    if(!file_->is_open())
+        throw RuntimeError(std::string("Unable to open file ") + filename_);
+
+    file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
 }
 
 
 DiskQTensor::DiskQTensor(const std::string & directory) : directory_(directory)
 {
 }
+
+
+DiskQTensor::~DiskQTensor()
+{
+    if(file_ && file_->is_open())
+    {
+        file_->close();
+        file_.reset();
+    }
+
+    // erase the file
+    std::remove(filename_.c_str());
+}
+
 
 
 } // close namespace panache

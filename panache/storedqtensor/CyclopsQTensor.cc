@@ -95,11 +95,6 @@ void CyclopsQTensor::ReadByQ_(double * data, int nq, int qstart)
     tensor_->read(nelements, indices.data(), data);
 }
 
-void CyclopsQTensor::Clear_(void)
-{
-    tensor_.release();
-}
-
 void CyclopsQTensor::Init_(void)
 {
     //! \todo Symmetry not implemented

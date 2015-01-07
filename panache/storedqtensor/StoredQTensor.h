@@ -78,12 +78,6 @@ public:
 
 
     /*!
-     * \brief Clear/delete any associated data
-     */
-    void Clear(void);
-
-
-    /*!
      * \brief Initialize storage for a given size
      *
      * \param [in] naux Size along the auxiliary index
@@ -198,10 +192,6 @@ protected:
      * been filled in
      */
     virtual void Init_(void) = 0;
-
-    /// \copydoc Clear()
-    /// To be implemented by derived classes
-    virtual void Clear_() = 0;
 
     /// \copydoc Read()
     /// To be implemented by derived classes

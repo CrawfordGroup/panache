@@ -22,22 +22,19 @@ class DiskQTensor : public LocalQTensor
 {
 public:
     DiskQTensor(const std::string & directory);
+    virtual ~DiskQTensor();
 
 protected:
     virtual void Write_(double * data, int nij, int ijstart);
     virtual void WriteByQ_(double * data, int nij, int ijstart);
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
-    virtual void Clear_(void);
     virtual void Init_(void);
 
 private:
     std::unique_ptr<std::fstream> file_;
     std::string directory_;
     std::string filename_;
-
-    void OpenFile_(void);
-    void CloseFile_(void);
 };
 
 } // close namespace panache

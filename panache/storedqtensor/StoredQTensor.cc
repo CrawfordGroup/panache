@@ -121,11 +121,6 @@ int StoredQTensor::ReadByQ(double * data, int nq, int qstart)
     return nq;
 }
 
-void StoredQTensor::Clear(void)
-{
-    Clear_();
-}
-
 StoredQTensor::StoredQTensor(void)
 {
 }

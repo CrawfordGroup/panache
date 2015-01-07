@@ -88,6 +88,25 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 }
 
 
+void ThreeIndexTensor::Delete(int qflags)
+{
+    if(qflags & QGEN_QSO)
+        qso_.reset();
+
+    if(qflags & QGEN_QMO)
+        qmo_.reset();
+
+    if(qflags & QGEN_QOO)
+        qoo_.reset();
+
+    if(qflags & QGEN_QOV)
+        qov_.reset();
+
+    if(qflags & QGEN_QVV)
+        qvv_.reset();
+}
+
+
 void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 {
 #ifdef PANACHE_TIMING
