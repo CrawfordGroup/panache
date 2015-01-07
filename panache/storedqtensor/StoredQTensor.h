@@ -168,6 +168,9 @@ public:
     /// Get the size with respect to combined orbital indices. Depends on packing.
     int ndim12(void) const;
 
+    /// Get all storage flags
+    int storeflags(void) const;
+
     /// Get whether or not this tensor is stored packed
     int packed(void) const;
 

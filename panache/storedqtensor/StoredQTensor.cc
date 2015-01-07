@@ -36,6 +36,11 @@ int StoredQTensor::storesize(void) const
     return ndim12_*naux_;
 }
 
+int StoredQTensor::storeflags(void) const
+{
+    return storeflags_;
+}
+
 int StoredQTensor::packed(void) const
 {
     return (storeflags_ & QSTORAGE_PACKED);

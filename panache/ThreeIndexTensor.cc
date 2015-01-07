@@ -11,6 +11,7 @@
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
 #include "panache/Output.h"
+#include <iostream>
 
 // for reordering
 #include "panache/MemorySwapper.h"
@@ -93,6 +94,14 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     tim.Start();
 #endif
 
+    // reset all the stuff
+    qso_.reset();
+    qmo_.reset();
+    qoo_.reset();
+    qov_.reset();
+    qvv_.reset();
+
+
     // remove packed setting
     storeflags &= ~QSTORAGE_PACKED;
 
@@ -127,9 +136,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     //     don't reorder the C matrix
     if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
     {
-        // reorder Qso
-        auto ord = reorder::GetOrdering(bsorder_);
-
+        ReorderQso();
     }
     else if(bsorder_ != BSORDER_PSI4)
     {
@@ -140,7 +147,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         //std::cout << "BEFORE REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
-        ReorderMatRows(ord.get(), nmo_);
+        ReorderMatRows(Cmo_.get(), ord.get(), nmo_);
         //std::cout << "AFTER REORDERING:\n";
         //for(int i = 0; i < nmo_*nso_; i++)
         //    std::cout << Cmo_[i] << "\n";
@@ -191,8 +198,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     }
 
 
-
-
     if(lefts.size() > 0)
         qso_->Transform(lefts, rights, qouts, nthreads_);
 
@@ -203,6 +208,42 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
 }
 
+
+void ThreeIndexTensor::ReorderQso(void)
+{
+    std::cout << "REORDERING QSO\n";
+
+    std::vector<StoredQTensor::TransformMat> leftright;
+    std::vector<StoredQTensor *> qouts;
+
+    auto ord = reorder::GetOrdering(bsorder_);
+
+    int nso2 = nso_*nso_;
+
+    // First, generate an identity matrix
+    std::unique_ptr<double[]> tmat(new double[nso2]);
+    std::fill(tmat.get(), tmat.get() + nso2, 0.0);
+    for(int i = 0; i < nso2; i += (nso_+1))
+        tmat[i] = 1.0;
+
+    // Make into a transformation matrix
+    ReorderMatRows(tmat.get(), ord.get(), nso_);
+
+    // Create an empty qso object
+    // Then transform qso
+    leftright.push_back(StoredQTensor::TransformMat(tmat.get(), nso_));
+    auto newqso = StoredQTensorFactory(qso_->naux(),
+                                       qso_->ndim1(),
+                                       qso_->ndim2(),
+                                       qso_->storeflags(), "qso2", directory_); 
+    qouts.push_back(newqso.get());
+    qso_->Transform(leftright, leftright, qouts, nthreads_);
+
+    // overwrite the old qso_
+    std::swap(qso_, newqso);
+
+    // newqso (formerly qso_) will be deleted in its destructor 
+}
 
 
 int ThreeIndexTensor::GetQBatch_Base(double * outbuf, int bufsize, int qstart,
@@ -406,7 +447,7 @@ void ThreeIndexTensor::RenormCMat(const reorder::CNorm * cnorm)
     }
 }
 
-void ThreeIndexTensor::ReorderMatRows(const reorder::Orderings * order, int ncol)
+void ThreeIndexTensor::ReorderMatRows(double * mat, const reorder::Orderings * order, int ncol)
 {
     using namespace reorder;
 
@@ -430,13 +471,13 @@ void ThreeIndexTensor::ReorderMatRows(const reorder::Orderings * order, int ncol
         size_t ntoswap = it.order.size();
 
         for(size_t n = 0; n < ntoswap; n++)
-            pointers[n] = &(Cmo_[(it.start+n)*ncol]);
+            pointers[n] = &(mat[(it.start+n)*ncol]);
 
         Reorder(it.order, pointers, sf1);
     }
 }
 
-void ThreeIndexTensor::ReorderMatCols(const reorder::Orderings * order, int nrow)
+void ThreeIndexTensor::ReorderMatCols(double * mat, const reorder::Orderings * order, int nrow)
 {
     using namespace reorder;
 
@@ -464,7 +505,7 @@ void ThreeIndexTensor::ReorderMatCols(const reorder::Orderings * order, int nrow
             size_t ntoswap = it.order.size();
 
             for(size_t n = 0; n < ntoswap; n++)
-               pointers[n] = &(Cmo_[irow + (it.start+n)]);
+               pointers[n] = &(mat[irow + (it.start+n)]);
 
             Reorder(it.order, pointers, sf1);
         }

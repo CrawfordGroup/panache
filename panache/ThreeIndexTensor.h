@@ -580,19 +580,26 @@ private:
     /*!
      * \brief Reorders rows of a nso x n matrix (ie, the C matrix) into the specified ordering
      * 
+     * \param [in] mat The matrix to reorder
      * \param [in] order The order to use
      * \param [in] ncol Number of columns of the matrix
      */
-    void ReorderMatRows(const reorder::Orderings * order, int ncol);
+    void ReorderMatRows(double * mat, const reorder::Orderings * order, int ncol);
 
     /*!
      * \brief Reorders the columns of a n x nso matrix into the specified ordering
      * 
+     * \param [in] mat The matrix to reorder
      * \param [in] order The order to use
      * \param [in] nrow Number of rows of the matrix
      */
-    void ReorderMatCols(const reorder::Orderings * order, int nrow);
+    void ReorderMatCols(double * mat, const reorder::Orderings * order, int nrow);
 
+
+    /*!
+     * \brief Reorders the Qso tensor
+     */
+    void ReorderQso(void);
 
 
 
