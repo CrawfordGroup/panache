@@ -347,7 +347,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     pivots.clear();
     eris.clear();
 
-    // copy to memory now that we have the sizes
+    // copy to memory/disk now that we have the sizes
     StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ | QSTORAGE_PACKED, "qso");
 
     for(int i = 0; i < nQ; i++)
