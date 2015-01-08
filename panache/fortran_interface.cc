@@ -103,7 +103,8 @@ extern "C" {
                     csymbols[i][j] = c;
             }
 
-            atoms[i].symbol = csymbols[i]; 
+            strncpy(atoms[i].symbol, csymbols[i], 4); 
+            atoms[i].symbol[4] = '\0';
 
             atoms[i].center[0] = xyz[3*i];
             atoms[i].center[1] = xyz[3*i+1];
@@ -287,7 +288,8 @@ extern "C" {
                     csymbols[i][j] = c;
             }
 
-            atoms[i].symbol = csymbols[i]; 
+            strncpy(atoms[i].symbol, csymbols[i], 4); 
+            atoms[i].symbol[4] = '\0';
 
             atoms[i].center[0] = xyz[3*i];
             atoms[i].center[1] = xyz[3*i+1];
@@ -470,7 +472,8 @@ extern "C" {
                     csymbols[i][j] = c;
             }
 
-            atoms[i].symbol = csymbols[i]; 
+            strncpy(atoms[i].symbol, csymbols[i], 4); 
+            atoms[i].symbol[4] = '\0';
 
             atoms[i].center[0] = xyz[3*i];
             atoms[i].center[1] = xyz[3*i+1];

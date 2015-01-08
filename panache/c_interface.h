@@ -31,7 +31,7 @@ extern "C" {
      */
     struct C_AtomCenter
     {
-        const char * symbol;   //!< Atomic symbol (used in printing, debugging, and if the auxiliary basis set is from a file)
+        char symbol[5];   //!< Atomic symbol (used in printing, debugging, and if the auxiliary basis set is from a file)
         double center[3];      //!< x, y, and z Coordinates (in atomic units)
     };
 

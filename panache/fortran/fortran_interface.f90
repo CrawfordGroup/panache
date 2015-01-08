@@ -1,5 +1,5 @@
 module FToPanache
-  use iso_c_binding, only: C_INT, C_DOUBLE, C_PTR
+  use iso_c_binding, only: C_INT, C_DOUBLE, C_PTR, C_CHAR
   implicit none
 
   type, bind(C) :: C_ShellInfo
@@ -11,12 +11,44 @@ module FToPanache
   end type C_ShellInfo 
 
   type, bind(C) :: C_AtomCenter
-    type(C_PTR) :: symbol
+    character(C_CHAR) :: symbol(5)
     real(C_DOUBLE) :: center(3)
   end type C_AtomCenter
 
 
   interface
+    subroutine panache_dfinit(ncenters, atoms , &
+                              primary_nshellspercenter, primary_shells, &
+                              aux_nshellspercenter, aux_shells, &
+                              directory, metricflag, bsorder, nthreads) bind(C, name="panache_dfinit")
+      use iso_c_binding
+      import C_ShellInfo
+      import C_AtomCenter
+      implicit none
+      integer(C_INT), intent(in), value :: ncenters, metricflag, bsorder, nthreads
+      integer(C_INT), intent(in) :: primary_nshellspercenter(ncenters), &
+                                    aux_nshellspercenter(ncenters)
+      type(C_AtomCenter), intent(in) :: atoms(ncenters)
+      type(C_ShellInfo), intent(in) :: primary_shells(*), aux_shells(*)
+      character(kind=C_CHAR), intent(in) :: directory(*)
+    end subroutine
+
+
+    subroutine panache_dfinit2(ncenters, atoms , &
+                               primary_nshellspercenter, primary_shells, &
+                               auxfilename, directory, metricflag, bsorder, nthreads) bind(C, name="panache_dfinit2")
+      use iso_c_binding
+      import C_ShellInfo
+      import C_AtomCenter
+      implicit none
+      integer(C_INT), intent(in), value :: ncenters, metricflag, bsorder, nthreads
+      integer(C_INT), intent(in) :: primary_nshellspercenter(ncenters)
+      type(C_AtomCenter), intent(in) :: atoms(ncenters)
+      type(C_ShellInfo), intent(in) :: primary_shells(*)
+      character(kind=C_CHAR), intent(in) :: auxfilename(*), directory(*)
+    end subroutine
+                           
+
     function panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart) result(res) bind(C, name="panache_getqbatch")
       use iso_c_binding
       implicit none
@@ -122,49 +154,16 @@ module FToPanache
       implicit none
     end subroutine
 
-!    subroutine X(handle) bind(C, name="X")
-!      use iso_c_binding
-!      implicit none
-!      integer(C_INT), intent(in), value :: handle
-!    end subroutine
+    subroutine tmp_print_atoms(at) bind(C, name="tmp_print_atoms")
+      use iso_c_binding
+      import C_AtomCenter
+      implicit none
 
+      type(C_AtomCenter), intent(in) :: at
+    end subroutine
   end interface
 
-     
   contains
-
-  subroutine GetPtr(scalar_len, scalar, ptr)
-    use iso_c_binding
-    implicit none
-  
-    integer, intent(in) :: scalar_len
-    character(kind=C_CHAR,len=scalar_len), intent(in), target :: scalar(1)
-    character(:,kind=C_CHAR), intent(out), pointer :: ptr
-    ptr => scalar(1)
-  end subroutine GetPtr
-
-  ! For converting a C null-terminated string to a fortran pointer to string
-  subroutine CStringToFPtr(cstr, fstr)
-    use iso_c_binding, only : C_PTR, C_CHAR, C_INT, C_F_POINTER
-    implicit none
-
-    type(C_PTR), intent(in), value :: cstr
-    character(:,kind=C_CHAR), pointer, intent(out) :: fstr
-    character(kind=C_CHAR), pointer :: arr(:)
-
-    interface
-      function strlen(s) BIND(C, name='strlen')
-        use iso_c_binding, only: C_PTR, C_SIZE_T
-        implicit none
-
-        type(C_PTR), intent(in), value :: s
-        integer(C_SIZE_T) :: strlen
-      end function strlen
-    end interface
-
-    call c_f_pointer(cstr, arr, [strlen(cstr)])
-    call GetPtr(size(arr), arr, fstr)
-  end subroutine CStringToFPtr
 
 end module FToPanache
 
@@ -511,3 +510,80 @@ subroutine panachef_getbatch(handle, tensorflag, outbuf, bufsize, ijstart, nbatc
 
   nbatch = panache_getbatch(handle, tensorflag, outbuf, bufsize, ijstart)
 end subroutine
+
+
+
+
+!> 
+!! \brief Initializes a new density-fitting calculation using an auxiliary basis set file
+!!
+!! Sets up the basis set information and returns a handle that
+!! is used to identify this particular calculation.
+!!
+!! Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+!!
+!! \note Basis set coefficients should NOT be normalized
+!!
+!! \param [in] ncenters    The number of basis function centers
+!! \param [in] xyz         Coordinates of the basis function centers. In order:
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+!! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+!!                                       Expected to be of length ncenters.
+!! \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
+!!                         Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_is_pure  Whether each shell is pure/spherical or not (primary basis).
+!!                              Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_nprimpershell  Number of primitives in each shell of the primary basis. 
+!!                                    Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_exp  All exponents for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!! \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!! \param [in] auxfilename A full path to a file containing the auxiliary basis set (in Gaussian94 format)
+!!
+!! \param [in] directory A full path to a file to be used if storing matrices to disk.
+!!                       Not referenced if the disk is not used. Should not be set to "NULL", but
+!!                       may be set to an empty string if disk is not to be used.
+!! \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+!! \param [in] bsorder Basis function ordering flag
+!! \param [in] nthreads Number of threads to use
+!!
+!! \param [out] dfhandle A handle representing this particular density-fitting calculation.
+!!
+subroutine panachef_dfinit22(ncenters, xyz, symbols, &
+                            primary_nshellspercenter, primary_am, primary_is_pure, &
+                            primary_nprimpershell, primary_exp, primary_coef, &
+                            auxfilename, directory, metricflag, bsorder, nthreads, handle) 
+  use FToPanache
+  use iso_c_binding
+
+  implicit none
+  integer, intent(in) :: ncenters, metricflag, bsorder, nthreads, &
+                         primary_nshellspercenter(ncenters), &
+                         primary_am(*), primary_is_pure(*), primary_nprimpershell(*)
+  double precision, intent(in) :: xyz(3,ncenters), primary_exp(*), primary_coef(*)
+  character(len=*) :: symbols(ncenters), auxfilename, directory
+  integer, intent(out) :: handle
+
+  type(C_AtomCenter) :: atoms(ncenters)
+  integer :: i, j, length
+
+  do i = 1, ncenters
+    atoms(i)%center = xyz(:,i)
+
+    length = min(4, len(symbols(i)))
+
+    do j = 1, length
+      atoms(i)%symbol(j) = symbols(i)(j:j)
+    end do
+    atoms(i)%symbol(length+1) = C_NULL_CHAR
+
+    call tmp_print_atoms(atoms(i))
+  end do
+end subroutine
+
+
+
