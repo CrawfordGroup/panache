@@ -177,6 +177,12 @@ extern "C" {
 
 
     /*!
+     * \brief Sets the text output of PANACHE to stdout
+     */
+    void panache_stdout(void);
+
+
+    /*!
      * \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, Qov, Qoo, and Qvv
      *
      * The matrix is expected be nso x nmo (MOs in the columns) in row-major order.

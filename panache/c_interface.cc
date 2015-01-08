@@ -5,6 +5,7 @@
 
 #include <map>
 #include <sstream>
+#include <iostream> // for std::cout
 
 // included from c_convert.h
 //#include "panache/c_interface.h"
@@ -195,6 +196,11 @@ extern "C" {
     void panache_output(FILE * out)
     {
        panache::output::SetOutput(out); 
+    }
+
+    void panache_stdout(void)
+    {
+       panache::output::SetOutput(&std::cout); 
     }
 
     int_t panache_setnthread(int_t df_handle, int_t nthread)
