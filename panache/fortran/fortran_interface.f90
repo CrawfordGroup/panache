@@ -17,6 +17,28 @@ module FToPanache
 
 
   interface
+    function panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart) result(res) bind(C, name="panache_getqbatch")
+      use iso_c_binding
+      implicit none
+      integer(C_INT), intent(in), value :: handle, tensorflag, bufsize, qstart
+      real(C_DOUBLE), intent(out) :: outbuf(bufsize)
+      integer(C_INT) :: res
+    end function
+
+    function panache_getbatch(handle, tensorflag, outbuf, bufsize, ijstart) result(res) bind(C, name="panache_getbatch")
+      use iso_c_binding
+      implicit none
+      integer(C_INT), intent(in), value :: handle, tensorflag, bufsize, ijstart
+      real(C_DOUBLE), intent(out) :: outbuf(bufsize)
+      integer(C_INT) :: res
+    end function
+
+    subroutine panache_setcmatrix(handle, cmat, nmo, istrans) bind(C, name="panache_setcmatrix")
+      use iso_c_binding
+      implicit none
+      integer(C_INT), intent(in), value :: handle, nmo, istrans
+      real(C_DOUBLE), intent(in) :: cmat(*)
+    end subroutine
 
     function panache_tensordimensions(handle, tensorflag, naux, ndim1, ndim2) result(res) bind(C, name="panache_tensordimensions")
       use iso_c_binding
@@ -386,4 +408,106 @@ subroutine panachef_tensordimensions(handle, tensorflag, naux, ndim1, ndim2, tot
   integer, intent(in) :: handle, tensorflag
   integer, intent(out) :: naux, ndim1, ndim2, total
   total = panache_tensordimensions(handle, tensorflag, naux, ndim1, ndim2)
+end subroutine
+
+
+!>
+!! \brief Sets the C matrix (so-ao matrix) for use in generating Qmo, etc
+!!
+!! The matrix is expected be nso x nmo (MOs in the columns) in column-major order.
+!! If it is nmo x nso, or the matrix is in row major order, set \p cmo_is_trans.
+!!
+!! \note This is different from panache_setcmatrix(), as fortran column-major order
+!! matrices are handled automatically.
+!!
+!! The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
+!! changed after calling this function.
+!!
+!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] cmat Pointer to a nso x nmo matrix representing the MO coefficients
+!! \param [in] nmo Number of MOs in this C matrix
+!! \param [in] istrans Set to non-zero if the matrix is the transpose (nmo x nso) or
+!!                          is in row-major order.
+!!
+subroutine panachef_setcmatrix(handle, cmat, nmo, istrans)
+  use FToPanache
+  implicit none
+  integer, intent(in) :: handle, nmo, istrans
+  double precision, intent(in) :: cmat(*)
+
+  if(istrans > 0) then
+    call panache_setcmatrix(handle, cmat, nmo, 0)
+  else
+    call panache_setcmatrix(handle, cmat, nmo, 1)
+  end if
+end subroutine
+
+
+!>
+!! \brief Retrieves a batch of a 3-index tensor 
+!!
+!! See \ref theory_page for what these tensors actually are, and memory_sec for more information
+!! about memory.
+!!
+!! This function returns the number of batches it has stored in the buffer. The buffer
+!! will contain (number of batches)*naux elements with the combined orbital index
+!! as the slowest index.
+!!
+!! The batchsize can be obtained using BatchSize()
+!!
+!! Call this and process the batches, incrementing qstart by the return value,
+!! until this function returns zero.
+!!
+!! \note Tensors are always in row-major order!
+!!
+!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] tensorflag Which tensor to get (see Flags.h)
+!! \param [in] outbuf Memory location to store the tensor
+!! \param [in] bufsize The size of \p outbuf (in number of doubles)
+!! \param [in] ijstart The starting value of q
+!! \param [out] nbatch The number of batches actually stored in the buffer.
+!!
+subroutine panachef_getqbatch(handle, tensorflag, outbuf, bufsize, qstart, nbatch)
+  use FToPanache
+  implicit none
+  integer, intent(in) :: handle, tensorflag, bufsize, qstart
+  integer, intent(out) :: nbatch
+  double precision, intent(out) :: outbuf(bufsize)
+
+  nbatch = panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart)
+end subroutine
+    
+
+!>
+!! \brief Retrieves a batch of a 3-index tensor 
+!!
+!! See \ref theory_page for what these tensors actually are, and memory_sec for more information
+!! about memory.
+!!
+!! This function returns the number of batches it has stored in the buffer. The buffer
+!! will contain (number of batches)*naux elements with the combined orbital index
+!! as the slowest index.
+!!
+!! The batchsize can be obtained using BatchSize()
+!!
+!! Call this and process the batches, incrementing qstart by the return value,
+!! until this function returns zero.
+!!
+!! \note Tensors are always in row-major order!
+!!
+!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] tensorflag Which tensor to get (see Flags.h)
+!! \param [in] outbuf Memory location to store the tensor
+!! \param [in] bufsize The size of \p outbuf (in number of doubles)
+!! \param [in] ijstart The starting value of q
+!! \param [out] nbatch The number of batches actually stored in the buffer.
+!!
+subroutine panachef_getbatch(handle, tensorflag, outbuf, bufsize, ijstart, nbatch)
+  use FToPanache
+  implicit none
+  integer, intent(in) :: handle, tensorflag, bufsize, ijstart
+  integer, intent(out) :: nbatch
+  double precision, intent(out) :: outbuf(bufsize)
+
+  nbatch = panache_getbatch(handle, tensorflag, outbuf, bufsize, ijstart)
 end subroutine
