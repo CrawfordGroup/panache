@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(panache CXX)
 enable_language(C) # Required for find_package(lapack)
-enable_language(Fortran) # Test program
+enable_language(Fortran) # Fortran interface
 
 
 ###################################################

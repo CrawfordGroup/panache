@@ -19,6 +19,7 @@ add_library(panache
             TwoBodyAOInt.cc
             c_interface.cc
             fortran_interface.cc
+            fortran/fortran_interface.f90
             c_convert.cc
             Lapack.cc
             Reorder.cc

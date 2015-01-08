@@ -766,6 +766,7 @@ WARN_LOGFILE           =
 
 INPUT                  = panache/ \
                          panache/storedqtensor/ \
+                         panache/fortran/ \
                          dox/
 
 # This tag can be used to specify the character encoding of the source files
