@@ -58,7 +58,7 @@ private:
      *
      * \param [in] name Some descriptive name
      */
-    std::unique_ptr<CTF_Matrix> FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name);
+    static std::unique_ptr<CTF_Matrix> FillWithMatrix_(const double * mat, int nrow, int ncol, int sym, const char * name);
 
 
     /*!
