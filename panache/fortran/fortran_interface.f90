@@ -210,8 +210,10 @@ module FToPanache
         end do
     
         ! tricky
-        shells(i)%exp  = C_LOC(expptr(i)%ptr)
-        shells(i)%coef = C_LOC(coefptr(i)%ptr)
+        ! Using the address of the first element gets around
+        ! some gfortran 4.8 bugs
+        shells(i)%exp  = C_LOC(expptr(i)%ptr(1))
+        shells(i)%coef = C_LOC(coefptr(i)%ptr(1))
       end do
     end subroutine
 
