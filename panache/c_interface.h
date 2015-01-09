@@ -7,7 +7,6 @@
 #ifndef PANACHE_C_INTERFACE_H
 #define PANACHE_C_INTERFACE_H
 
-#include "panache/int_t.h"
 #include "panache/Flags.h"
 
 extern "C" {
@@ -17,9 +16,9 @@ extern "C" {
      */
     struct C_ShellInfo
     {
-        int_t nprim;    //!< Number of primitives in this shell
-        int_t am;       //!< Angular momentum of the shell
-        int_t ispure;   //!< Non-zero if this shell is a pure (spherical) shell
+        int nprim;    //!< Number of primitives in this shell
+        int am;       //!< Angular momentum of the shell
+        int ispure;   //!< Non-zero if this shell is a pure (spherical) shell
         double * exp;   //!< Exponents of the primitives of this shell (expected to be of length nprim)
         double * coef;  //!< Coefficients of the primitives of this shell (expected to be of length nprim)
     };
@@ -68,11 +67,11 @@ extern "C" {
      *
      * \return A handle representing this particular density-fitting calculation.
      */
-    int_t panache_dfinit(int_t ncenters,
+    int panache_dfinit(int ncenters,
                        C_AtomCenter * atoms,
-                       int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                       int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                       const char * directory, int_t metricflag, int_t bsorder, int_t nthreads);
+                       int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                       int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+                       const char * directory, int metricflag, int bsorder, int nthreads);
 
 
 
@@ -104,11 +103,11 @@ extern "C" {
      *
      * \return A handle representing this particular density-fitting calculation.
      */
-    int_t panache_dfinit2(int_t ncenters,
+    int panache_dfinit2(int ncenters,
                         C_AtomCenter * atoms,
-                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename, const char * directory, int_t metricflag,
-                        int_t bsorder, int_t nthreads);
+                        int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                        const char * auxfilename, const char * directory, int metricflag,
+                        int bsorder, int nthreads);
 
 
     /*!
@@ -137,10 +136,10 @@ extern "C" {
      *
      * \return A handle representing this particular density-fitting calculation.
      */
-    int_t panache_chinit(int_t ncenters,
+    int panache_chinit(int ncenters,
                         C_AtomCenter * atoms,
-                        int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        double delta, const char * directory, int_t bsorder, int_t nthreads);
+                        int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                        double delta, const char * directory, int bsorder, int nthreads);
 
 
 
@@ -149,10 +148,10 @@ extern "C" {
      *
      * You should not attempt to use the handle afterwards
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF
+     * \param [in] handle A handle (returned from an init function) for the DF
      *                       calculation to be cleaned up
      */
-    void panache_cleanup(int_t df_handle);
+    void panache_cleanup(int handle);
 
 
 
@@ -192,13 +191,13 @@ extern "C" {
      * The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
      * changed after calling this function.
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] cmo Pointer to a nso x nmo matrix representing the MO coefficients
      * \param [in] nmo Number of MOs in this C matrix
      * \param [in] cmo_is_trans Set to non-zero if the matrix is the transpose (nmo x nso) or
      *                          is in column-major order.
      */
-    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans);
+    void panache_setcmatrix(int handle, double * cmo, int nmo, int cmo_is_trans);
 
 
     /*!
@@ -211,11 +210,11 @@ extern "C" {
      *
      * \note You must set the C Matrix first before calling (see panache_setcmatrix())
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] nocc Number of (non-frozen) occupied orbitals
      * \param [in] nfroz Number of frozen occupied orbitals
      */
-     void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz = 0);
+     void panache_setnocc(int handle, int nocc, int nfroz = 0);
 
 
     /*!
@@ -224,11 +223,11 @@ extern "C" {
      * Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
      * set by omp_num_threads, or the default for this machine).
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] nthread Max number of threads to use
      * \return The max number of threads that will actually be used (ie if \p nthread is zero).
      */ 
-    int_t panache_setnthread(int_t df_handle, int_t nthread);
+    int panache_setnthread(int handle, int nthread);
 
 
 
@@ -238,9 +237,9 @@ extern "C" {
      * All times are cumulative for all operations. The output must be set
      *  first (See Output.h)
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      */
-    void panache_printtimings(int_t df_handle);
+    void panache_printtimings(int handle);
 
 
 
@@ -251,7 +250,7 @@ extern "C" {
      * Qmo and Qov tensors on disk,
      *
      * \code{.c}
-     * panache_genqtensors(df_handle, QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
+     * panache_genqtensors(handle, QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
      * \endcode
      *
      * Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
@@ -262,11 +261,11 @@ extern "C" {
      * \warning Be sure to set the C-Matrix first and number of occupied orbitals first
      *          if qflags contains more than QGEN_QSO
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] qflags A combination of flags specifying which tensors to generate
      * \param [in] storeflags How to store the matrix
      */
-    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storeflags);
+    void panache_genqtensors(int handle, int qflags, int storeflags);
 
 
 
@@ -274,10 +273,10 @@ extern "C" {
     /*!
      * \brief Delete a tensor (from memory, disk, etc)
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] qflags A combination of flags specifying which tensors to delete
      */
-    void panache_delete(int_t df_handle, int_t qflags);
+    void panache_delete(int handle, int qflags);
 
 
 
@@ -294,11 +293,11 @@ extern "C" {
      * | Qov    |                  | nocc*nvir     |
      * | Qvv    | nvir*(nvir+1)/2  | nvir*nvir     |
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \return Size of batches returned by panache_getqbatch
      */
-    int_t panache_qbatchsize(int_t df_handle, int_t tensorflag);
+    int panache_qbatchsize(int handle, int tensorflag);
 
 
     /*!
@@ -306,50 +305,50 @@ extern "C" {
      *
      * The size will always be naux (number of auxiliary basis functions)
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \return Size of batches returned by panache_getbatch()
      */
-    int_t panache_batchsize(int_t df_handle, int_t tensorflag);
+    int panache_batchsize(int handle, int tensorflag);
 
 
 
     /*!
      * \brief See if a particular tensor is stored packed
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \return Nonzero if the tensor is in packed storage
      */
-    int_t panache_ispacked(int_t df_handle, int_t tensorflag);
+    int panache_ispacked(int handle, int tensorflag);
 
     /*!
      * \brief Calculate a combined orbital index
      *
      * Depends on packing
      * 
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \param [in] i First orbital index
      * \param [in] j Second orbital index
      * \return ij, depending on packing
      */
-    int_t panache_calcindex(int_t df_handle, int_t tensorflag, int_t i, int_t j);
+    int panache_calcindex(int handle, int tensorflag, int i, int j);
     
 
 
     /*!
      * \brief Obtain the dimensions of a tensor
      *
-     * \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+     * \param [in] handle A handle (returned from an init function) for the DF calculation 
      * \param [in] tensorflag Which tensor to query (see Flags.h)
      * \param [out] naux Number of auxiliary basis functions
      * \param [out] ndim1 First dimension for a particular q
      * \param [out] ndim2 Second dimension for a particular q
      * \return Total tensor size (depends on packing)
      */
-    int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
-                                   int_t * naux, int_t * ndim1, int_t * ndim2);
+    int panache_tensordimensions(int handle, int tensorflag,
+                                   int * naux, int * ndim1, int * ndim2);
 
 
 
@@ -371,14 +370,14 @@ extern "C" {
      * Call this and process the batches, incrementing qstart by the return value,
      * until this function returns zero.
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
      * \param [in] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] qstart The starting value of q
      * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getqbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t qstart);
+    int panache_getqbatch(int handle, int tensorflag, double * outbuf, int bufsize, int qstart);
 
 
 
@@ -397,14 +396,14 @@ extern "C" {
      * Call this and process the batches, incrementing qstart by the return value,
      * until this function returns zero.
      *
-     * \param [in] df_handle A handle (returned from an init function) for this DF calculation
+     * \param [in] handle A handle (returned from an init function) for this DF calculation
      * \param [in] tensorflag Which tensor to get (see Flags.h)
      * \param [in] outbuf Memory location to store the tensor
      * \param [in] bufsize The size of \p outbuf (in number of doubles)
      * \param [in] ijstart The starting value of q
      * \return The number of batches actually stored in the buffer.
      */
-    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart);
+    int panache_getbatch(int handle, int tensorflag, double * outbuf, int bufsize, int ijstart);
 
 
 } // end extern "C"

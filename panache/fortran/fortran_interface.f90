@@ -55,6 +55,22 @@ module FToPanache
       character(kind=C_CHAR), intent(in) :: auxfilename(*), directory(*)
       integer(C_INT) :: res
     end function
+
+    function panache_chinit(ncenters, atoms , &
+                            primary_nshellspercenter, primary_shells, &
+                            delta, directory, bsorder, nthreads) result(res) bind(C, name="panache_chinit")
+      use iso_c_binding
+      import C_ShellInfo
+      import C_AtomCenter
+      implicit none
+      integer(C_INT), intent(in), value :: ncenters, bsorder, nthreads
+      integer(C_INT), intent(in) :: primary_nshellspercenter(ncenters)
+      type(C_AtomCenter), intent(in) :: atoms(ncenters)
+      type(C_ShellInfo), intent(in) :: primary_shells(*)
+      character(kind=C_CHAR), intent(in) :: directory(*)
+      real(C_DOUBLE), intent(in), value :: delta
+      integer(C_INT) :: res
+    end function
                            
 
     function panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart) result(res) bind(C, name="panache_getqbatch")
@@ -277,7 +293,7 @@ end subroutine
 !!
 !! \note You must set the C Matrix first before calling (see panache_setcmatrix())
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] nocc Number of (non-frozen) occupied orbitals.
 !! \param [in] nfroz Number of frozen occupied orbitals.
 !!
@@ -295,7 +311,7 @@ end subroutine
 !! Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
 !! set by omp_num_threads, or the default for this machine).
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !! \param [in] nthread Max number of threads to use
 !! \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
 !! 
@@ -313,7 +329,7 @@ end subroutine
 !! All times are cumulative for all operations. The output must be set
 !!  first (See Output.h)
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !!
 subroutine panachef_printtimings(handle)
   use FToPanache
@@ -326,7 +342,7 @@ end subroutine
 !>
 !! \brief Delete a tensor (from memory, disk, etc)
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !! \param [in] qflags A combination of flags specifying which tensors to delete
 !!
 subroutine panachef_delete(handle, qflags)
@@ -344,7 +360,7 @@ end subroutine
 !! Qmo and Qov tensors on disk,
 !!
 !! \code{.f90}
-!! call panachef_genqtensors(df_handle, 10, 4)
+!! call panachef_genqtensors(handle, 10, 4)
 !! \endcode
 !!
 !! Default is QSTORAGE_INMEM and not to store with QSTORAGE_BYQ
@@ -358,7 +374,7 @@ end subroutine
 !! \note The Qso matrix is always stored with QSTORAGE_BYQ
 !! \note Be sure to set the C-Matrix first!
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] qflags A combination of flags specifying which tensors to generate
 !! \param [in] storeflags How to store the matrix
 !!
@@ -383,7 +399,7 @@ end subroutine
 !! | Qov    |                  | nocc*nvir     |
 !! | Qvv    | nvir*(nvir+1)/2  |               |
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] batchsize of batches returned by panachef_getqbatch
 !!
@@ -401,7 +417,7 @@ end subroutine
 !!
 !! The size will always be naux (number of auxiliary basis functions)
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] batchsize Size of batches returned by panache_getbatch()
 !!
@@ -417,7 +433,7 @@ end subroutine
 !>
 !! \brief See if a particular tensor is stored packed
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] ispacked Nonzero if the tensor is in packed storage
 !!
@@ -437,7 +453,7 @@ end subroutine
 !! 
 !! \note This function takes into account 1-based indexing from fortran, so you don't
 !!       have to (ie this function subtracts 1 from *i and *j)
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [in] i First orbital index
 !! \param [in] j Second orbital index
@@ -455,7 +471,7 @@ end subroutine
 !>
 !! \brief Obtain the dimensions of a tensor
 !!
-!! \param [in] df_handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the DF calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] naux Number of auxiliary basis functions
 !! \param [out] ndim1 First dimension for a particular q
@@ -483,7 +499,7 @@ end subroutine
 !! The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
 !! changed after calling this function.
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !! \param [in] cmat Pointer to a nso x nmo matrix representing the MO coefficients
 !! \param [in] nmo Number of MOs in this C matrix
 !! \param [in] istrans Set to non-zero if the matrix is the transpose (nmo x nso) or
@@ -520,7 +536,7 @@ end subroutine
 !!
 !! \note Tensors are always in row-major order!
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !! \param [in] tensorflag Which tensor to get (see Flags.h)
 !! \param [in] outbuf Memory location to store the tensor
 !! \param [in] bufsize The size of \p outbuf (in number of doubles)
@@ -555,7 +571,7 @@ end subroutine
 !!
 !! \note Tensors are always in row-major order!
 !!
-!! \param [in] df_handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for this DF calculation
 !! \param [in] tensorflag Which tensor to get (see Flags.h)
 !! \param [in] outbuf Memory location to store the tensor
 !! \param [in] bufsize The size of \p outbuf (in number of doubles)
@@ -587,7 +603,7 @@ end subroutine
 !! \param [in] ncenters    The number of basis function centers
 !! \param [in] xyz         Coordinates of the basis function centers. In order:
 !!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
-!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
 !! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
 !!                                       Expected to be of length ncenters.
 !! \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
@@ -625,7 +641,7 @@ end subroutine
 !! \param [in] bsorder Basis function ordering flag
 !! \param [in] nthreads Number of threads to use
 !!
-!! \param [out] dfhandle A handle representing this particular density-fitting calculation.
+!! \param [out] handle A handle representing this particular density-fitting calculation.
 !!
 subroutine panachef_dfinit(ncenters, xyz, symbols, &
                            primary_nshellspercenter, primary_am, primary_is_pure, &
@@ -730,7 +746,7 @@ end subroutine
 !! \param [in] ncenters    The number of basis function centers
 !! \param [in] xyz         Coordinates of the basis function centers. In order:
 !!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
-!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
 !! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
 !!                                       Expected to be of length ncenters.
 !! \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
@@ -754,7 +770,7 @@ end subroutine
 !! \param [in] bsorder Basis function ordering flag
 !! \param [in] nthreads Number of threads to use
 !!
-!! \param [out] dfhandle A handle representing this particular density-fitting calculation.
+!! \param [out] handle A handle representing this particular density-fitting calculation.
 !!
 subroutine panachef_dfinit2(ncenters, xyz, symbols, &
                             primary_nshellspercenter, primary_am, primary_is_pure, &
@@ -830,4 +846,107 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
 end subroutine
 
 
+!> 
+!! \brief Initializes a new cholesky calculation
+!!
+!! Sets up the basis set information and returns a handle that
+!! is used to identify this particular calculation.
+!!
+!! Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+!!
+!! \note Basis set coefficients should NOT be normalized
+!!
+!! \param [in] ncenters    The number of basis function centers
+!! \param [in] xyz         Coordinates of the basis function centers. In order:
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
+!! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+!!                                       Expected to be of length ncenters.
+!! \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
+!!                         Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_is_pure  Whether each shell is pure/spherical or not (primary basis).
+!!                              Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_nprimpershell  Number of primitives in each shell of the primary basis. 
+!!                                    Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_exp  All exponents for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!! \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!!
+!! \param [in] delta     Maximum error in the Cholesky procedure
+!! \param [in] directory A full path to a file to be used if storing matrices to disk.
+!!                       Not referenced if the disk is not used. Should not be set to "NULL", but
+!!                       may be set to an empty string if disk is not to be used.
+!! \param [in] bsorder Basis function ordering flag
+!! \param [in] nthreads Number of threads to use
+!!
+!! \param [out] handle A handle representing this particular density-fitting calculation.
+!!
+subroutine panachef_chinit(ncenters, xyz, symbols, &
+                           primary_nshellspercenter, primary_am, primary_is_pure, &
+                           primary_nprimpershell, primary_exp, primary_coef, &
+                           delta, directory, bsorder, nthreads, handle) 
+  use FToPanache
+  use iso_c_binding
 
+  implicit none
+
+
+  integer, intent(in) :: ncenters, bsorder, nthreads, &
+                         primary_nshellspercenter(ncenters), &
+                         primary_am(*), primary_is_pure(*), primary_nprimpershell(*)
+
+  double precision, intent(in) :: xyz(3,ncenters), primary_exp(*), primary_coef(*), delta
+  character(len=*), intent(in) :: symbols(ncenters), directory
+  integer, intent(out) :: handle
+
+  type(C_AtomCenter) :: atoms(ncenters)
+  type(C_ShellInfo), allocatable :: pshells(:)
+  type(dptr), allocatable :: pexpptr(:), pcoefptr(:)
+
+  character(C_CHAR), allocatable :: directoryarr(:)
+  integer :: i, pnshells
+
+  call ArraysToAtoms(ncenters, symbols, xyz, atoms)
+
+  ! Count the number of shells
+  ! pnshells = primary # of shells
+  pnshells = 0
+  do i = 1, ncenters
+    pnshells = pnshells + primary_nshellspercenter(i)
+  end do
+
+  allocate(pshells(pnshells))
+  allocate(pexpptr(pnshells))
+  allocate(pcoefptr(pnshells))
+
+
+  call ArraysToShellInfo(pnshells, primary_nprimpershell, primary_am, primary_is_pure, &
+                         primary_exp, primary_coef, pshells, pexpptr, pcoefptr)
+
+  ! handle the filenames & paths
+  allocate(directoryarr(len_trim(directory)+1))
+  directoryarr(len_trim(directory)+1) = C_NULL_CHAR
+
+  do i = 1, len_trim(directory)
+    directoryarr(i) = directory(i:i)
+  end do
+
+
+  ! do stuff
+  handle = panache_chinit(ncenters, atoms, primary_nshellspercenter, &
+                          pshells, delta, directoryarr, &
+                          bsorder, nthreads) 
+   
+  do i = 1, pnshells
+    deallocate(pexpptr(i)%ptr)
+    deallocate(pcoefptr(i)%ptr)
+  end do
+  deallocate(pshells)
+
+  deallocate(directoryarr) 
+
+  
+end subroutine

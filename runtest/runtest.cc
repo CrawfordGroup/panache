@@ -11,7 +11,7 @@
 #include "panache/CHTensor.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
-#include "panache/c_convert.h" // int_t comes in through here
+#include "panache/c_convert.h" // int comes in through here
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
@@ -88,10 +88,10 @@ SharedBasisSet ReadBasisFile(SharedMolecule mol, const string & filename)
 
     try
     {
-        int_t ncenters, nshells, nbf, nao, nprim;
+        int ncenters, nshells, nbf, nao, nprim;
         f >> nshells >> nbf >> nao >> nprim >> ncenters;
 
-        unique_ptr<int_t[]> nshellspercenter(new int_t[ncenters]);
+        unique_ptr<int[]> nshellspercenter(new int[ncenters]);
         unique_ptr<C_ShellInfo[]> shells(new C_ShellInfo[nshells]);
 
         for(int i = 0; i < ncenters; i++)
@@ -143,7 +143,7 @@ SharedMolecule ReadMoleculeFile(const string & filename)
                  std::ifstream::eofbit);
     try
     {
-        int_t natoms, nallatoms;
+        int natoms, nallatoms;
         std::string schoen, fullpg; // fullpg is no longer used
 
         f >> natoms >> nallatoms;

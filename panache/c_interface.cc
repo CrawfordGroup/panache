@@ -34,9 +34,9 @@ int tensor_index_ = 0;
 std::map<int, ThreeIndexTensor *> xtensors_;
 
 
-void CheckHandle(int_t df_handle, const char * func)
+void CheckHandle(int handle, const char * func)
 {
-    if(xtensors_.count(df_handle) == 0)
+    if(xtensors_.count(handle) == 0)
     {
         std::stringstream ss;
         ss << "Function: " << func << ": Error - cannot find ThreeIndexTensor object with that handle!";
@@ -51,11 +51,11 @@ void CheckHandle(int_t df_handle, const char * func)
 extern "C" {
 
 
-    int_t panache_dfinit(int_t ncenters,
+    int panache_dfinit(int ncenters,
                C_AtomCenter * atoms,
-               int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-               int_t * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-               const char * directory, int_t metricflag, int_t bsorder, int_t nthreads )
+               int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+               int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
+               const char * directory, int metricflag, int bsorder, int nthreads )
     {
         // Molecule
         SharedMolecule molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -76,10 +76,10 @@ extern "C" {
 
 
 
-    int_t panache_dfinit2(int_t ncenters,
+    int panache_dfinit2(int ncenters,
                     C_AtomCenter * atoms,
-                    int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                    const char * auxfilename, const char * directory, int_t metricflag, int_t bsorder, int_t nthreads)
+                    int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                    const char * auxfilename, const char * directory, int metricflag, int bsorder, int nthreads)
     {
         // Molecule
         SharedMolecule molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -100,10 +100,10 @@ extern "C" {
     }
 
 
-    int_t panache_chinit(int_t ncenters,
+    int panache_chinit(int ncenters,
                     C_AtomCenter * atoms,
-                    int_t * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                    double delta, const char * directory, int_t bsorder, int_t nthreads)
+                    int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
+                    double delta, const char * directory, int bsorder, int nthreads)
     {
         // Molecule
         SharedMolecule molecule = panache::MoleculeFromArrays(ncenters, atoms);
@@ -120,48 +120,48 @@ extern "C" {
     }
 
 
-    int_t panache_qbatchsize(int_t df_handle, int_t tensorflag)
+    int panache_qbatchsize(int handle, int tensorflag)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->QBatchSize(tensorflag); 
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->QBatchSize(tensorflag); 
     }
 
-    int_t panache_batchsize(int_t df_handle, int_t tensorflag)
+    int panache_batchsize(int handle, int tensorflag)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->BatchSize(tensorflag); 
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->BatchSize(tensorflag); 
     }
 
-    int_t panache_ispacked(int_t df_handle, int_t tensorflag)
+    int panache_ispacked(int handle, int tensorflag)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->IsPacked(tensorflag); 
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->IsPacked(tensorflag); 
     }
 
-    int_t panache_calcindex(int_t df_handle, int_t tensorflag, int_t i, int_t j)
+    int panache_calcindex(int handle, int tensorflag, int i, int j)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->CalcIndex(tensorflag, i, j); 
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->CalcIndex(tensorflag, i, j); 
     }
 
-    int_t panache_tensordimensions(int_t df_handle, int_t tensorflag,
-                                   int_t * naux, int_t * ndim1, int_t * ndim2)
+    int panache_tensordimensions(int handle, int tensorflag,
+                                   int * naux, int * ndim1, int * ndim2)
     {
-        CheckHandle(df_handle, __FUNCTION__);
+        CheckHandle(handle, __FUNCTION__);
         int nauxtmp, ndim1tmp, ndim2tmp;
-        int ret = xtensors_[df_handle]->TensorDimensions(tensorflag, nauxtmp, ndim1tmp, ndim2tmp);
+        int ret = xtensors_[handle]->TensorDimensions(tensorflag, nauxtmp, ndim1tmp, ndim2tmp);
         *naux = nauxtmp;
         *ndim1 = ndim1tmp;
         *ndim2 = ndim2tmp;
         return ret;
     }
 
-    void panache_cleanup(int_t df_handle)
+    void panache_cleanup(int handle)
     {
-        if(xtensors_.count(df_handle) > 0)
+        if(xtensors_.count(handle) > 0)
         {
-            delete xtensors_[df_handle];
-            xtensors_.erase(df_handle);
+            delete xtensors_[handle];
+            xtensors_.erase(handle);
         }
     }
 
@@ -175,22 +175,22 @@ extern "C" {
         xtensors_.clear();
     }
 
-    void panache_setcmatrix(int_t df_handle, double * cmo, int_t nmo, int_t cmo_is_trans)
+    void panache_setcmatrix(int handle, double * cmo, int nmo, int cmo_is_trans)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        xtensors_[df_handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
+        CheckHandle(handle, __FUNCTION__);
+        xtensors_[handle]->SetCMatrix(cmo, nmo, cmo_is_trans);
     }
 
-    void panache_genqtensors(int_t df_handle, int_t qflags, int_t storeflags)
+    void panache_genqtensors(int handle, int qflags, int storeflags)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        xtensors_[df_handle]->GenQTensors(qflags, storeflags); 
+        CheckHandle(handle, __FUNCTION__);
+        xtensors_[handle]->GenQTensors(qflags, storeflags); 
     }
 
-    void panache_delete(int_t df_handle, int_t qflags)
+    void panache_delete(int handle, int qflags)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        xtensors_[df_handle]->Delete(qflags); 
+        CheckHandle(handle, __FUNCTION__);
+        xtensors_[handle]->Delete(qflags); 
     }
 
     void panache_output(FILE * out)
@@ -203,36 +203,36 @@ extern "C" {
        panache::output::SetOutput(&std::cout); 
     }
 
-    int_t panache_setnthread(int_t df_handle, int_t nthread)
+    int panache_setnthread(int handle, int nthread)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->SetNThread(nthread); 
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->SetNThread(nthread); 
     }
 
 
-    void panache_setnocc(int_t df_handle, int_t nocc, int_t nfroz)
+    void panache_setnocc(int handle, int nocc, int nfroz)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        xtensors_[df_handle]->SetNOcc(nocc, nfroz); 
+        CheckHandle(handle, __FUNCTION__);
+        xtensors_[handle]->SetNOcc(nocc, nfroz); 
     }
 
-    void panache_printtimings(int_t df_handle)
+    void panache_printtimings(int handle)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        xtensors_[df_handle]->PrintTimings(); 
+        CheckHandle(handle, __FUNCTION__);
+        xtensors_[handle]->PrintTimings(); 
     }
 
-    int_t panache_getqbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t qstart)
+    int panache_getqbatch(int handle, int tensorflag, double * outbuf, int bufsize, int qstart)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->GetQBatch(tensorflag, outbuf, bufsize, qstart);
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->GetQBatch(tensorflag, outbuf, bufsize, qstart);
     }
 
 
-    int_t panache_getbatch(int_t df_handle, int_t tensorflag, double * outbuf, int_t bufsize, int_t ijstart)
+    int panache_getbatch(int handle, int tensorflag, double * outbuf, int bufsize, int ijstart)
     {
-        CheckHandle(df_handle, __FUNCTION__);
-        return xtensors_[df_handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);
+        CheckHandle(handle, __FUNCTION__);
+        return xtensors_[handle]->GetBatch(tensorflag, outbuf, bufsize, ijstart);
     }
 }
 

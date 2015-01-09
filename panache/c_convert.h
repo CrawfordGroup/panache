@@ -29,8 +29,8 @@ namespace panache
      *
      */ 
     SharedBasisSet BasisSetFromArrays(SharedMolecule molecule,
-            int_t ncenters,
-            int_t * nshellspercenter,
+            int ncenters,
+            int * nshellspercenter,
             struct C_ShellInfo * shells);
 
 
@@ -44,7 +44,7 @@ namespace panache
      * \return A new molecule object. 
      *
      */ 
-    SharedMolecule MoleculeFromArrays(int_t ncenters, C_AtomCenter * atoms);
+    SharedMolecule MoleculeFromArrays(int ncenters, C_AtomCenter * atoms);
 
 } // close namespace panache
 
