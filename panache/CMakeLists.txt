@@ -80,6 +80,7 @@ set_source_files_properties(${PANACHE_CXX_FILES} PROPERTIES COMPILE_FLAGS "${PAN
 # all we can do. set_source_files_properties doesn't work with INCLUDE_DIRECTORIES
 set_target_properties(panache PROPERTIES INCLUDE_DIRECTORIES "${PANACHE_CXX_INCLUDES}")
 if(PANACHE_F03_INTERFACE)
+  string(REPLACE ";" " " PANACHE_F03_INTERFACE_FLAGS "${PANACHE_F03_INTERFACE_FLAGS}")
   set_source_files_properties(${PANACHE_F03_INTERFACE_FILES} PROPERTIES COMPILE_FLAGS ${PANACHE_F03_INTERFACE_FLAGS})
 endif()
 

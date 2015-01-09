@@ -33,6 +33,10 @@ set(PANACHE_PROFILE FALSE CACHE BOOL "Enable some profiling code")
 set(PANACHE_LAPACK64 FALSE CACHE BOOL "Use the 64-bit interface to Lapack/BLAS. Must be set if you link to 64-bit lapack/BLAS/MKL, etc")
 set(PANACHE_INTERFACE64 FALSE CACHE BOOL "Build 64-bit C/Fortran interface")
 
+set(PANACHE_CXX_FLAGS "" CACHE STRING "C++ compiler flags")
+set(PANACHE_F03_INTERFACE_FLAGS "" CACHE STRING "Fortran 2003 interface compiler flags")
+set(LIBERD_F90_FLAGS "" CACHE STRING "Fortran 90 compiler flags for libERD")
+set(RUNTEST_CXX_FLAGS "" CACHE STRING "C++ compiler flags for runtest program")
 
 
 ################################################################
@@ -129,10 +133,9 @@ list(APPEND RUNTEST_CXX_FLAGS "--std=c++11 -Wall")
 list(APPEND RUNTEST_CXX_INCLUDES "${CMAKE_SOURCE_DIR}")
 
 # Todo - other compiler types?
-message(STATUS "PANACHE FORT: ${PANACHE_FORTRAN}")
 if(PANACHE_FORTRAN)
   if("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
-    list(APPEND PANACHE_F03_INTERFACE_FLAGS "-Wall")
+    list(APPEND PANACHE_F03_INTERFACE_FLAGS "-Wall -std=f2003")
     list(APPEND LIBERD_F90_FLAGS "-Wall")
   elseif("${CMAKE_Fortran_COMPILER_ID}" MATCHES "Intel")
     list(APPEND PANACHE_F03_INTERFACE_FLAGS "-warn all")
@@ -177,7 +180,7 @@ if(PANACHE_CYCLOPS)
     list(APPEND RUNTEST_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
     #list(APPEND LIBERD_F90_FLAGS "${MPI_CXX_FLAGS}")
     #list(APPEND PANACHE_F03_INTERFACE_FLAGS "${MPI_CXX_FLAGS}")
-    list(APPEND RUNTEST_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
+    list(APPEND RUNTEST_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
     list(APPEND RUNTEST_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
     list(APPEND RUNTEST_LINK_LIBRARIES "${CYCLOPS_PATH}/lib/libctf.a")
   else()
