@@ -158,9 +158,8 @@ SharedMolecule ReadMoleculeFile(const string & filename)
 
         for(int i = 0; i < nallatoms; i++)
         {
-            char * s = new char[8];
-            f.get(s, 4, ' ');
-            atoms[i].symbol = s;
+            f.get(atoms[i].symbol, 4, ' ');
+            atoms[i].symbol[4] = '\0';
 
             f >> dummy  // Z is not used
               >> atoms[i].center[0]
@@ -172,9 +171,6 @@ SharedMolecule ReadMoleculeFile(const string & filename)
         }
 
         auto ret = MoleculeFromArrays(nallatoms, atoms.get());
-
-        for(int i = 0; i < nallatoms; i++)
-            delete [] atoms[i].symbol;
 
         return ret;
     }

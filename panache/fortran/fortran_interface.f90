@@ -15,12 +15,18 @@ module FToPanache
     real(C_DOUBLE) :: center(3)
   end type C_AtomCenter
 
+  ! For an array of pointer to double precision
+  ! see http://stackoverflow.com/questions/8900336/arrays-of-pointers
+  type dptr
+    double precision, pointer :: ptr(:)
+  end type dptr
+
 
   interface
-    subroutine panache_dfinit(ncenters, atoms , &
+    function panache_dfinit(ncenters, atoms , &
                               primary_nshellspercenter, primary_shells, &
                               aux_nshellspercenter, aux_shells, &
-                              directory, metricflag, bsorder, nthreads) bind(C, name="panache_dfinit")
+                              directory, metricflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit")
       use iso_c_binding
       import C_ShellInfo
       import C_AtomCenter
@@ -31,12 +37,13 @@ module FToPanache
       type(C_AtomCenter), intent(in) :: atoms(ncenters)
       type(C_ShellInfo), intent(in) :: primary_shells(*), aux_shells(*)
       character(kind=C_CHAR), intent(in) :: directory(*)
-    end subroutine
+      integer(C_INT) :: res
+    end function
 
 
-    subroutine panache_dfinit2(ncenters, atoms , &
-                               primary_nshellspercenter, primary_shells, &
-                               auxfilename, directory, metricflag, bsorder, nthreads) bind(C, name="panache_dfinit2")
+    function panache_dfinit2(ncenters, atoms , &
+                             primary_nshellspercenter, primary_shells, &
+                             auxfilename, directory, metricflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit2")
       use iso_c_binding
       import C_ShellInfo
       import C_AtomCenter
@@ -46,7 +53,8 @@ module FToPanache
       type(C_AtomCenter), intent(in) :: atoms(ncenters)
       type(C_ShellInfo), intent(in) :: primary_shells(*)
       character(kind=C_CHAR), intent(in) :: auxfilename(*), directory(*)
-    end subroutine
+      integer(C_INT) :: res
+    end function
                            
 
     function panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart) result(res) bind(C, name="panache_getqbatch")
@@ -154,16 +162,69 @@ module FToPanache
       implicit none
     end subroutine
 
-    subroutine tmp_print_atoms(at) bind(C, name="tmp_print_atoms")
-      use iso_c_binding
-      import C_AtomCenter
-      implicit none
-
-      type(C_AtomCenter), intent(in) :: at
-    end subroutine
   end interface
 
   contains
+    subroutine ArraysToShellInfo(nshell, nprimpershell, am, ispure, exp, coef, shells, expptr, coefptr)
+      use iso_c_binding
+      implicit none
+
+      integer, intent(in) :: nshell, nprimpershell(nshell), am(nshell), ispure(nshell)
+      double precision, intent(in) :: exp(*), coef(*)
+      type(C_ShellInfo), intent(inout) :: shells(:)
+      type(dptr), intent(inout) :: expptr(:), coefptr(:)
+      
+      integer :: i, j, primcount, nprim
+
+      !primcount = counts through the primitive array
+      primcount = 1
+      do i = 1, nshell
+        nprim = nprimpershell(i)
+        shells(i)%nprim     = nprim
+        shells(i)%am        = am(i)
+        shells(i)%ispure    = ispure(i)
+    
+        allocate(expptr(i)%ptr(nprim))
+        allocate(coefptr(i)%ptr(nprim))
+    
+        do j = 1, nprim
+          expptr(i)%ptr(j) = exp(primcount)
+          coefptr(i)%ptr(j) = coef(primcount)
+          primcount = primcount + 1
+        end do
+    
+        ! tricky
+        shells(i)%exp  = C_LOC(expptr(i)%ptr)
+        shells(i)%coef = C_LOC(coefptr(i)%ptr)
+      end do
+    end subroutine
+
+    subroutine ArraysToAtoms(ncenters, symbols, xyz, atoms)
+      use iso_c_binding
+      implicit none
+
+      integer, intent(in) :: ncenters
+      double precision, intent(in) :: xyz(3,ncenters)
+      character(len=*), intent(in) :: symbols(ncenters)
+      type(C_AtomCenter), intent(inout) :: atoms(ncenters)
+
+      integer :: i, j, length
+
+      do i = 1, ncenters
+        atoms(i)%center = xyz(:,i)
+    
+        length = min(4, len_trim(symbols(i)))
+    
+        do j = 1, length
+          atoms(i)%symbol(j) = symbols(i)(j:j)
+        end do
+    
+        ! safe, since symbol has a size of 5 and length
+        ! is at most 4
+        atoms(i)%symbol(length+1) = C_NULL_CHAR
+      end do
+
+    end subroutine
 
 end module FToPanache
 
@@ -513,6 +574,148 @@ end subroutine
 
 
 
+!>
+!! \brief Initializes a new density-fitting calculation
+!!
+!! Sets up the basis set information and returns a handle that
+!! is used to identify this particular calculation.
+!!
+!! Information passed in is copied, so any dynamic arrays, etc, can be safely deleted afterwards
+!!
+!! \note Basis set coefficients should NOT be normalized
+!!
+!! \param [in] ncenters    The number of basis function centers
+!! \param [in] xyz         Coordinates of the basis function centers. In order:
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings of length \p symbollen
+!! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
+!!                                       Expected to be of length ncenters.
+!! \param [in] primary_am  Angular momentum of each shell (s = 0, p = 1, etc) in the primary basis. 
+!!                         Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_is_pure  Whether each shell is pure/spherical or not (primary basis).
+!!                              Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_nprimpershell  Number of primitives in each shell of the primary basis. 
+!!                                    Length should be the sum of primary_nshellspercenter.
+!! \param [in] primary_exp  All exponents for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!! \param [in] primary_coef All basis function coefficients for all shells of the primary basis. 
+!!                          Length should be the sum of primary_nprimpershell, with grouping
+!!                          by shell.
+!!
+!! \param [in] aux_nshellspercenter  Number of shells on each center for the auxiliary basis.
+!!                                   Expected to be of length ncenters.
+!! \param [in] aux_am  Angular momentum of each shell (s = 0, p = 1, etc) in the auxiliary basis. 
+!!                     Length should be the sum of aux_nshellspercenter.
+!! \param [in] aux_is_pure  Whether each shell is pure/spherical or not (auxiliary basis).
+!!                          Length should be the sum of aux_nshellspercenter.
+!! \param [in] aux_nprimpershell  Number of primitives in each shell of the auxiliary basis. 
+!!                                Length should be the sum of aux_nshellspercenter.
+!! \param [in] aux_exp  All exponents for all shells of the auxiliary basis. 
+!!                      Length should be the sum of aux_nprimpershell, with grouping
+!!                      by shell.
+!! \param [in] aux_coef All basis function coefficients for all shells of the auxiliary basis. 
+!!                      Length should be the sum of aux_nprimpershell, with grouping
+!!                      by shell.
+!! \param [in] directory A full path to a file to be used if storing matrices to disk.
+!!                       Not referenced if the disk is not used. Should not be set to "NULL", but
+!!                       may be set to an empty string if disk is not to be used.
+!!                       If used, any existing files will be overwritten.
+!! \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+!! \param [in] bsorder Basis function ordering flag
+!! \param [in] nthreads Number of threads to use
+!!
+!! \param [out] dfhandle A handle representing this particular density-fitting calculation.
+!!
+subroutine panachef_dfinit(ncenters, xyz, symbols, &
+                           primary_nshellspercenter, primary_am, primary_is_pure, &
+                           primary_nprimpershell, primary_exp, primary_coef, &
+                           aux_nshellspercenter, aux_am, aux_is_pure, &
+                           aux_nprimpershell, aux_exp, aux_coef, &
+                           directory, metricflag, bsorder, nthreads, handle) 
+  use FToPanache
+  use iso_c_binding
+
+  implicit none
+
+
+  integer, intent(in) :: ncenters, metricflag, bsorder, nthreads, &
+                         primary_nshellspercenter(ncenters), &
+                         primary_am(*), primary_is_pure(*), primary_nprimpershell(*), &
+                         aux_nshellspercenter(ncenters), &
+                         aux_am(*), aux_is_pure(*), aux_nprimpershell(*)
+  double precision, intent(in) :: xyz(3,ncenters), &
+                                  primary_exp(*), primary_coef(*), &
+                                  aux_exp(*), aux_coef(*)
+  character(len=*), intent(in) :: symbols(ncenters), directory
+  integer, intent(out) :: handle
+
+  type(C_AtomCenter) :: atoms(ncenters)
+  type(C_ShellInfo), allocatable :: pshells(:), ashells(:)
+  type(dptr), allocatable :: pexpptr(:), pcoefptr(:), aexpptr(:), acoefptr(:)
+
+  character(C_CHAR), allocatable :: directoryarr(:)
+  integer :: i, pnshells, anshells
+
+  call ArraysToAtoms(ncenters, symbols, xyz, atoms)
+
+  ! Count the number of shells
+  ! pnshells = primary # of shells
+  pnshells = 0
+  anshells = 0
+  do i = 1, ncenters
+    pnshells = pnshells + primary_nshellspercenter(i)
+    anshells = anshells + aux_nshellspercenter(i)
+  end do
+
+  allocate(pshells(pnshells))
+  allocate(pexpptr(pnshells))
+  allocate(pcoefptr(pnshells))
+  allocate(ashells(pnshells))
+  allocate(aexpptr(pnshells))
+  allocate(acoefptr(pnshells))
+
+
+  call ArraysToShellInfo(pnshells, primary_nprimpershell, primary_am, primary_is_pure, &
+                         primary_exp, primary_coef, pshells, pexpptr, pcoefptr)
+  call ArraysToShellInfo(anshells, aux_nprimpershell, aux_am, aux_is_pure, &
+                         aux_exp, aux_coef, ashells, aexpptr, acoefptr)
+
+  ! handle the filenames & paths
+  allocate(directoryarr(len_trim(directory)+1))
+  directoryarr(len_trim(directory)+1) = C_NULL_CHAR
+
+  do i = 1, len_trim(directory)
+    directoryarr(i) = directory(i:i)
+  end do
+
+
+  ! do stuff
+  handle = panache_dfinit(ncenters, atoms, primary_nshellspercenter, &
+                           pshells, aux_nshellspercenter, ashells, &
+                           directoryarr, metricflag, bsorder, nthreads) 
+
+  do i = 1, pnshells
+    deallocate(pexpptr(i)%ptr)
+    deallocate(pcoefptr(i)%ptr)
+  end do
+  deallocate(pshells)
+
+  do i = 1, anshells
+    deallocate(aexpptr(i)%ptr)
+    deallocate(acoefptr(i)%ptr)
+  end do
+  deallocate(pshells)
+
+  deallocate(directoryarr) 
+
+  
+end subroutine
+
+
+
+
+
 
 !> 
 !! \brief Initializes a new density-fitting calculation using an auxiliary basis set file
@@ -553,7 +756,7 @@ end subroutine
 !!
 !! \param [out] dfhandle A handle representing this particular density-fitting calculation.
 !!
-subroutine panachef_dfinit22(ncenters, xyz, symbols, &
+subroutine panachef_dfinit2(ncenters, xyz, symbols, &
                             primary_nshellspercenter, primary_am, primary_is_pure, &
                             primary_nprimpershell, primary_exp, primary_coef, &
                             auxfilename, directory, metricflag, bsorder, nthreads, handle) 
@@ -561,28 +764,69 @@ subroutine panachef_dfinit22(ncenters, xyz, symbols, &
   use iso_c_binding
 
   implicit none
+
+
   integer, intent(in) :: ncenters, metricflag, bsorder, nthreads, &
                          primary_nshellspercenter(ncenters), &
                          primary_am(*), primary_is_pure(*), primary_nprimpershell(*)
   double precision, intent(in) :: xyz(3,ncenters), primary_exp(*), primary_coef(*)
-  character(len=*) :: symbols(ncenters), auxfilename, directory
+  character(len=*), intent(in) :: symbols(ncenters), auxfilename, directory
   integer, intent(out) :: handle
 
   type(C_AtomCenter) :: atoms(ncenters)
-  integer :: i, j, length
+  type(C_ShellInfo), allocatable :: pshells(:)
+  type(dptr), allocatable :: pexpptr(:), pcoefptr(:)
 
+  character(C_CHAR), allocatable :: auxfilearr(:), directoryarr(:)
+  integer :: i, pnshells
+
+  call ArraysToAtoms(ncenters, symbols, xyz, atoms)
+
+  ! Count the number of shells
+  ! pnshells = primary # of shells
+  pnshells = 0
   do i = 1, ncenters
-    atoms(i)%center = xyz(:,i)
-
-    length = min(4, len(symbols(i)))
-
-    do j = 1, length
-      atoms(i)%symbol(j) = symbols(i)(j:j)
-    end do
-    atoms(i)%symbol(length+1) = C_NULL_CHAR
-
-    call tmp_print_atoms(atoms(i))
+    pnshells = pnshells + primary_nshellspercenter(i)
   end do
+
+  allocate(pshells(pnshells))
+  allocate(pexpptr(pnshells))
+  allocate(pcoefptr(pnshells))
+
+
+  call ArraysToShellInfo(pnshells, primary_nprimpershell, primary_am, primary_is_pure, &
+                         primary_exp, primary_coef, pshells, pexpptr, pcoefptr)
+
+  ! handle the filenames & paths
+  allocate(auxfilearr(len_trim(auxfilename)+1))
+  allocate(directoryarr(len_trim(directory)+1))
+  auxfilearr(len_trim(auxfilename)+1) = C_NULL_CHAR
+  directoryarr(len_trim(directory)+1) = C_NULL_CHAR
+
+  do i = 1, len_trim(auxfilename)
+    auxfilearr(i) = auxfilename(i:i)
+  end do
+  do i = 1, len_trim(directory)
+    directoryarr(i) = directory(i:i)
+  end do
+
+
+  ! do stuff
+  handle = panache_dfinit2(ncenters, atoms, primary_nshellspercenter, &
+                           pshells, auxfilearr, directoryarr, metricflag, &
+                           bsorder, nthreads) 
+   
+
+  do i = 1, pnshells
+    deallocate(pexpptr(i)%ptr)
+    deallocate(pcoefptr(i)%ptr)
+  end do
+  deallocate(pshells)
+
+  deallocate(auxfilearr) 
+  deallocate(directoryarr) 
+
+  
 end subroutine
 
 
