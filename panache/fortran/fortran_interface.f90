@@ -1,5 +1,5 @@
 module FToPanache
-  use iso_c_binding, only: C_INT, C_DOUBLE, C_PTR, C_CHAR
+  use iso_c_binding
   implicit none
 
   type, bind(C) :: C_ShellInfo
@@ -153,7 +153,8 @@ module FToPanache
     subroutine panache_setnthread(handle, nthread, actual) bind(C, name="panache_setnthread")
       use iso_c_binding
       implicit none
-      integer(C_INT), intent(in), value :: handle, nthread, actual
+      integer(C_INT), intent(in), value :: handle, nthread
+      integer(C_INT), intent(out) :: actual
     end subroutine
 
     subroutine panache_setnocc(handle, nocc, nvir) bind(C, name="panache_setnocc")
@@ -182,7 +183,6 @@ module FToPanache
 
   contains
     subroutine ArraysToShellInfo(nshell, nprimpershell, am, ispure, exp, coef, shells, expptr, coefptr)
-      use iso_c_binding
       implicit none
 
       integer, intent(in) :: nshell, nprimpershell(nshell), am(nshell), ispure(nshell)
@@ -196,9 +196,9 @@ module FToPanache
       primcount = 1
       do i = 1, nshell
         nprim = nprimpershell(i)
-        shells(i)%nprim     = nprim
-        shells(i)%am        = am(i)
-        shells(i)%ispure    = ispure(i)
+        shells(i)%nprim     = INT(nprim, C_INT)
+        shells(i)%am        = INT(am(i), C_INT)
+        shells(i)%ispure    = INT(ispure(i), C_INT)
     
         allocate(expptr(i)%ptr(nprim))
         allocate(coefptr(i)%ptr(nprim))
@@ -218,7 +218,6 @@ module FToPanache
     end subroutine
 
     subroutine ArraysToAtoms(ncenters, symbols, xyz, atoms)
-      use iso_c_binding
       implicit none
 
       integer, intent(in) :: ncenters
@@ -259,7 +258,7 @@ subroutine panachef_cleanup(handle)
   use FToPanache
   implicit none
   integer, intent(in) :: handle
-  call panache_cleanup(handle)
+  call panache_cleanup(INT(handle,C_INT))
 end subroutine
 
 
@@ -303,7 +302,9 @@ subroutine panachef_setnocc(handle, nocc, nfroz)
   use FToPanache
   implicit none
   integer, intent(in) :: handle, nocc, nfroz
-  call panache_setnocc(handle, nocc, nfroz)
+  call panache_setnocc(INT(handle, C_INT), &
+                       INT(nocc, C_INT),   &
+                       INT(nfroz, C_INT))
 end subroutine
 
 
@@ -320,8 +321,14 @@ end subroutine
 subroutine panachef_setnthread(handle, nthread, actual)
   use FToPanache
   implicit none
-  integer, intent(in) :: handle, nthread, actual
-  call panache_setnthread(handle, nthread, actual)
+  integer, intent(in) :: handle, nthread
+  integer, intent(out) :: actual
+  integer(C_INT) :: c_actual
+  
+  call panache_setnthread(INT(handle, C_INT),  &
+                          INT(nthread, C_INT), &
+                          c_actual)
+  actual = INT(c_actual)
 end subroutine
 
 
@@ -337,7 +344,7 @@ subroutine panachef_printtimings(handle)
   use FToPanache
   implicit none
   integer, intent(in) :: handle
-  call panache_printtimings(handle)
+  call panache_printtimings(INT(handle, C_INT))
 end subroutine
 
 
@@ -351,7 +358,7 @@ subroutine panachef_delete(handle, qflags)
   use FToPanache
   implicit none
   integer, intent(in) :: handle, qflags
-  call panache_delete(handle, qflags)
+  call panache_delete(INT(handle, C_INT), INT(qflags, C_INT))
 end subroutine
 
 
@@ -384,7 +391,9 @@ subroutine panachef_genqtensors(handle, qflags, storeflags)
   use FToPanache
   implicit none
   integer, intent(in) :: handle, qflags, storeflags
-  call panache_genqtensors(handle, qflags, storeflags)
+  call panache_genqtensors(INT(handle, C_INT), &
+                           INT(qflags, C_INT), &
+                           INT(storeflags, C_INT))
 end subroutine
 
 
@@ -410,7 +419,7 @@ subroutine panachef_qbatchsize(handle, tensorflag, batchsize)
   implicit none
   integer, intent(in) :: handle, tensorflag
   integer, intent(out) :: batchsize
-  batchsize = panache_qbatchsize(handle, tensorflag)
+  batchsize = panache_qbatchsize(INT(handle, C_INT), INT(tensorflag, C_INT))
 end subroutine
 
 
@@ -428,7 +437,11 @@ subroutine panachef_batchsize(handle, tensorflag, batchsize)
   implicit none
   integer, intent(in) :: handle, tensorflag
   integer, intent(out) :: batchsize
-  batchsize = panache_batchsize(handle, tensorflag)
+  integer(C_INT) :: c_batchsize
+ 
+  c_batchsize = panache_batchsize(INT(handle, C_INT), INT(tensorflag, C_INT))
+  batchsize = INT(c_batchsize)
+
 end subroutine
 
 
@@ -444,7 +457,11 @@ subroutine panachef_ispacked(handle, tensorflag, ispacked)
   implicit none
   integer, intent(in) :: handle, tensorflag
   integer, intent(out) :: ispacked
-  ispacked = panache_ispacked(handle, tensorflag)
+  integer(C_INT) :: c_ispacked
+
+  c_ispacked = panache_ispacked(INT(handle, C_INT), INT(tensorflag, C_INT))
+  ispacked = INT(c_ispacked)
+
 end subroutine
 
 
@@ -466,7 +483,11 @@ subroutine panachef_calcindex(handle, tensorflag, i, j, ij)
   implicit none
   integer, intent(in) :: handle, tensorflag, i, j
   integer, intent(out) :: ij
-  ij = panache_calcindex(handle, tensorflag, i-1, j-1)
+  integer(C_INT) :: c_ij
+
+  c_ij = panache_calcindex(INT(handle, C_INT), INT(tensorflag, C_INT), &
+                           INT(i-1, C_INT), INT(j-1, C_INT))
+  ij = INT(c_ij)
 end subroutine
 
 
@@ -485,7 +506,15 @@ subroutine panachef_tensordimensions(handle, tensorflag, naux, ndim1, ndim2, tot
   implicit none
   integer, intent(in) :: handle, tensorflag
   integer, intent(out) :: naux, ndim1, ndim2, total
-  total = panache_tensordimensions(handle, tensorflag, naux, ndim1, ndim2)
+  integer(C_INT) :: c_naux, c_ndim1, c_ndim2, c_total
+
+  c_total = panache_tensordimensions(INT(handle, C_INT), INT(tensorflag, C_INT), &
+                                     c_naux, c_ndim1, c_ndim2)
+  naux = INT(c_naux)
+  ndim1 = INT(c_ndim1)
+  ndim2 = INT(c_ndim2)
+  total = INT(c_total)
+
 end subroutine
 
 
@@ -514,9 +543,9 @@ subroutine panachef_setcmatrix(handle, cmat, nmo, istrans)
   double precision, intent(in) :: cmat(*)
 
   if(istrans > 0) then
-    call panache_setcmatrix(handle, cmat, nmo, 0)
+    call panache_setcmatrix(INT(handle, C_INT), cmat, INT(nmo, C_INT), INT(0, C_INT))
   else
-    call panache_setcmatrix(handle, cmat, nmo, 1)
+    call panache_setcmatrix(INT(handle, C_INT), cmat, INT(nmo, C_INT), INT(1, C_INT))
   end if
 end subroutine
 
@@ -551,8 +580,12 @@ subroutine panachef_getqbatch(handle, tensorflag, outbuf, bufsize, qstart, nbatc
   integer, intent(in) :: handle, tensorflag, bufsize, qstart
   integer, intent(out) :: nbatch
   double precision, intent(out) :: outbuf(bufsize)
+  integer(C_INT) :: c_nbatch
 
-  nbatch = panache_getqbatch(handle, tensorflag, outbuf, bufsize, qstart)
+  c_nbatch = panache_getqbatch(INT(handle, C_INT), INT(tensorflag, C_INT), &
+                               outbuf, INT(bufsize, C_INT), INT(qstart, C_INT))
+
+  nbatch = INT(c_nbatch)
 end subroutine
     
 
@@ -586,8 +619,12 @@ subroutine panachef_getbatch(handle, tensorflag, outbuf, bufsize, ijstart, nbatc
   integer, intent(in) :: handle, tensorflag, bufsize, ijstart
   integer, intent(out) :: nbatch
   double precision, intent(out) :: outbuf(bufsize)
+  integer(C_INT) :: c_nbatch
 
-  nbatch = panache_getbatch(handle, tensorflag, outbuf, bufsize, ijstart)
+  c_nbatch = panache_getbatch(INT(handle, C_INT), INT(tensorflag, C_INT), &
+                              outbuf, INT(bufsize, C_INT), INT(ijstart, C_INT))
+
+  nbatch = INT(c_nbatch)
 end subroutine
 
 
@@ -652,7 +689,6 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
                            aux_nprimpershell, aux_exp, aux_coef, &
                            directory, metricflag, bsorder, nthreads, handle) 
   use FToPanache
-  use iso_c_binding
 
   implicit none
 
@@ -662,10 +698,12 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
                          primary_am(*), primary_is_pure(*), primary_nprimpershell(*), &
                          aux_nshellspercenter(ncenters), &
                          aux_am(*), aux_is_pure(*), aux_nprimpershell(*)
+
   double precision, intent(in) :: xyz(3,ncenters), &
                                   primary_exp(*), primary_coef(*), &
                                   aux_exp(*), aux_coef(*)
   character(len=*), intent(in) :: symbols(ncenters), directory
+
   integer, intent(out) :: handle
 
   type(C_AtomCenter) :: atoms(ncenters)
@@ -673,18 +711,29 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
   type(dptr), allocatable :: pexpptr(:), pcoefptr(:), aexpptr(:), acoefptr(:)
 
   character(C_CHAR), allocatable :: directoryarr(:)
+
+  ! for some conversion
+  integer(C_INT) :: c_primary_nshellspercenter(ncenters), c_aux_nshellspercenter(ncenters)
+
   integer :: i, pnshells, anshells
 
   call ArraysToAtoms(ncenters, symbols, xyz, atoms)
 
   ! Count the number of shells
-  ! pnshells = primary # of shells
+  ! pnshells = # of primary shells
+  ! anshells = # of aux shells
   pnshells = 0
   anshells = 0
   do i = 1, ncenters
     pnshells = pnshells + primary_nshellspercenter(i)
     anshells = anshells + aux_nshellspercenter(i)
+
+    ! convert integer types
+    c_primary_nshellspercenter(i) = INT(primary_nshellspercenter(i), C_INT)
+    c_aux_nshellspercenter(i) = INT(aux_nshellspercenter(i), C_INT)
   end do
+
+  
 
   allocate(pshells(pnshells))
   allocate(pexpptr(pnshells))
@@ -709,9 +758,10 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
 
 
   ! do stuff
-  handle = panache_dfinit(ncenters, atoms, primary_nshellspercenter, &
-                           pshells, aux_nshellspercenter, ashells, &
-                           directoryarr, metricflag, bsorder, nthreads) 
+  handle = panache_dfinit(INT(ncenters, C_INT), atoms, c_primary_nshellspercenter, &
+                          pshells, c_aux_nshellspercenter, ashells, &
+                          directoryarr, INT(metricflag, C_INT), &
+                          INT(bsorder, C_INT), INT(nthreads, C_INT)) 
 
   do i = 1, pnshells
     deallocate(pexpptr(i)%ptr)
@@ -779,7 +829,6 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
                             primary_nprimpershell, primary_exp, primary_coef, &
                             auxfilename, directory, metricflag, bsorder, nthreads, handle) 
   use FToPanache
-  use iso_c_binding
 
   implicit none
 
@@ -796,6 +845,10 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
   type(dptr), allocatable :: pexpptr(:), pcoefptr(:)
 
   character(C_CHAR), allocatable :: auxfilearr(:), directoryarr(:)
+
+  ! for some conversion
+  integer(C_INT) :: c_primary_nshellspercenter(ncenters)
+
   integer :: i, pnshells
 
   call ArraysToAtoms(ncenters, symbols, xyz, atoms)
@@ -805,6 +858,9 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
   pnshells = 0
   do i = 1, ncenters
     pnshells = pnshells + primary_nshellspercenter(i)
+
+    ! convert integer types
+    c_primary_nshellspercenter(i) = INT(primary_nshellspercenter(i), C_INT)
   end do
 
   allocate(pshells(pnshells))
@@ -830,9 +886,9 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
 
 
   ! do stuff
-  handle = panache_dfinit2(ncenters, atoms, primary_nshellspercenter, &
-                           pshells, auxfilearr, directoryarr, metricflag, &
-                           bsorder, nthreads) 
+  handle = panache_dfinit2(INT(ncenters, C_INT), atoms, c_primary_nshellspercenter, &
+                           pshells, auxfilearr, directoryarr, INT(metricflag, C_INT), &
+                           INT(bsorder, C_INT), INT(nthreads, C_INT)) 
    
 
   do i = 1, pnshells
@@ -891,7 +947,6 @@ subroutine panachef_chinit(ncenters, xyz, symbols, &
                            primary_nprimpershell, primary_exp, primary_coef, &
                            delta, directory, bsorder, nthreads, handle) 
   use FToPanache
-  use iso_c_binding
 
   implicit none
 
@@ -909,6 +964,10 @@ subroutine panachef_chinit(ncenters, xyz, symbols, &
   type(dptr), allocatable :: pexpptr(:), pcoefptr(:)
 
   character(C_CHAR), allocatable :: directoryarr(:)
+
+  ! for some conversion
+  integer(C_INT) :: c_primary_nshellspercenter(ncenters)
+
   integer :: i, pnshells
 
   call ArraysToAtoms(ncenters, symbols, xyz, atoms)
@@ -918,6 +977,9 @@ subroutine panachef_chinit(ncenters, xyz, symbols, &
   pnshells = 0
   do i = 1, ncenters
     pnshells = pnshells + primary_nshellspercenter(i)
+
+    ! convert integer types
+    c_primary_nshellspercenter(i) = INT(primary_nshellspercenter(i), C_INT)
   end do
 
   allocate(pshells(pnshells))
@@ -938,9 +1000,9 @@ subroutine panachef_chinit(ncenters, xyz, symbols, &
 
 
   ! do stuff
-  handle = panache_chinit(ncenters, atoms, primary_nshellspercenter, &
+  handle = panache_chinit(INT(ncenters, C_INT), atoms, c_primary_nshellspercenter, &
                           pshells, delta, directoryarr, &
-                          bsorder, nthreads) 
+                          INT(bsorder, C_INT), INT(nthreads, C_INT)) 
    
   do i = 1, pnshells
     deallocate(pexpptr(i)%ptr)
