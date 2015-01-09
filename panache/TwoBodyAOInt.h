@@ -35,9 +35,6 @@ protected:
     const SharedBasisSet original_bs3_;  //!< Original basis set on center 3 (before any reordering)
     const SharedBasisSet original_bs4_;  //!< Original basis set on center 4 (before any reordering)
 
-    std::array<int, 4> curshells;  //!< Current shells contained in the buffer (used in compute_basisfunction)
-    size_t curnint;                //!< Current number of integrals in the buffer (used in compute_basisfunction)
-    
     double *target_;            //!< Buffer to hold the final integrals.
     int curr_buff_size_;        //!< Number of integrals in the current buffer
     double *tformbuf_;          //!< Buffer to hold the transformation intermediates.
@@ -46,8 +43,6 @@ protected:
     int natom_;                 //!< Number of atoms.
     bool force_cartesian_;      //!< Whether to force integrals to be generated in the Cartesian (AO) basis;
     unsigned char buffer_offsets_[4];  //!< The order of the derivative integral buffers, after permuting shells
-
-    unsigned long bmiss_;       //!< Number of 'misses' in compute_basisfunction
 
 
     /*!
@@ -293,22 +288,6 @@ public:
      */
     void pure_transform(int sh1, int sh2, int sh3, int sh4, int nchunk);
 
-
-
-
-    /*!
-     * \brief Compute the integrals between 4 (contracted) basis functions 
-     *
-     * \param [in] bf1 First basis function
-     * \param [in] bf2 Second basis function
-     * \param [in] bf3 Third basis function
-     * \param [in] bf4 Fourth basis function
-     * \return The integral ( bf1 bf2 | bf3 bf4 )
-     */
-    virtual double compute_basisfunction(int bf1, int bf2, int bf3, int bf4);
-
-
-    unsigned long BMiss(void) const;
 };
 
 

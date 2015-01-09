@@ -34,9 +34,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 # Compiler flags
 #####################################
 # PANACHE_CXX_FLAGS - flags for main library
+# PANACHE_F90_FLAGS - flags for F2003 interface
 # LIBERD_F90_FLAGS - flags for libERD
 # RUNTEST_CXX_FLAGS - flags for the C++ test program
-# FRUNTEST_F90_FLAGS - flags for the Fortran90 test program
 
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
@@ -56,16 +56,15 @@ list(APPEND RUNTEST_CXX_INCLUDES "${CMAKE_SOURCE_DIR}")
 
 # Todo - other compiler types?
 if(CMAKE_COMPILER_IS_GNUG77)
-  list(APPEND FRUNTEST_F90_FLAGS "-Wall")
+  list(APPEND PANACHE_F90_FLAGS "-Wall")
   list(APPEND LIBERD_F90_FLAGS "-Wall")
 else(CMAKE_COMPILER_IS_GNUG77)
-  list(APPEND FRUNTEST_F90_FLAGS "-warn all")
+  list(APPEND PANACHE_F90_FLAGS "-warn all")
   list(APPEND LIBERD_F90_FLAGS "-warn all")
 endif(CMAKE_COMPILER_IS_GNUG77)
 
 # Standard link libraries
 list(APPEND RUNTEST_LINK_LIBRARIES "stdc++" "m")
-list(APPEND FRUNTEST_LINK_LIBRARIES "stdc++" "m")
 
 
 #####################################
@@ -86,7 +85,6 @@ if(PANACHE_CYCLOPS)
     list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_MPI")
     list(APPEND RUNTEST_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
     list(APPEND RUNTEST_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
-    #list(APPEND FRUNTEST_F90_FLAGS "${MPI_CXX_FLAGS}") 
     #list(APPEND LIBERD_F90_FLAGS "${MPI_CXX_FLAGS}")
     list(APPEND RUNTEST_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
     list(APPEND RUNTEST_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
@@ -120,7 +118,6 @@ if(PANACHE_OPENMP)
     list(APPEND RUNTEST_CXX_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
 
     # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
-    list(APPEND FRUNTEST_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
     list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else(OPENMP_FOUND)
     message(WARNING "OpenMP was not found! Disabling...")
@@ -179,18 +176,6 @@ if(PANACHE_LAPACK64)
 else(PANACHE_LAPACK64)
   message(STATUS "Using 32-bit lapack interface")
 endif(PANACHE_LAPACK64)
-
-
-
-#####################################
-# Prefetching from disk
-#####################################
-set(PANACHE_DISKPREFETCH FALSE CACHE BOOL "Prefetch next batch from disk in separate thread")
-
-if(PANACHE_DISKPREFETCH)
-  list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_DISKPREFETCH")
-  message(WARNING "Enabling disk prefetching. THIS IS EXPERIMENTAL AND MAY REQUIRE A VERY NEW COMPILER")
-endif(PANACHE_DISKPREFETCH)
 
 
 
@@ -296,7 +281,6 @@ if(PANACHE_USE_LIBERD)
   set(LIBINT_FILES ERDTwoElectronInt.cc ERDERI.cc)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBERD")
   list(APPEND RUNTEST_LINK_LIBRARIES panache_erd)
-  list(APPEND FRUNTEST_LINK_LIBRARIES panache_erd)
 endif(PANACHE_USE_LIBERD)
 
 
