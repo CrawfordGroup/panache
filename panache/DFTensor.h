@@ -32,13 +32,14 @@ public:
      * \param [in] auxiliary The auxiliary (DF) basis set
      * \param [in] directory Full path to a directory to put scratch files
      * \param [in] bsorder Basis function ordering flag
-     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+     * \param [in] optflag Flag controlling the type of metric to use
+     *             and other options. Set to zero for default (coulomb/eiginv)
      * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor(SharedBasisSet primary,
              SharedBasisSet auxiliary,
              const std::string & directory,
-             int metricflag,
+             int optflag,
              int bsorder,
              int nthreads);
 
@@ -51,14 +52,15 @@ public:
      * \param [in] primary The primary basis set
      * \param [in] auxpath Path to auxiliary basis set file (G98 format)
      * \param [in] directory Full path to a directory to put scratch files
-     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+     * \param [in] optflag Flag controlling the type of metric to use
+     *                     and other options. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      */ 
     DFTensor(SharedBasisSet primary,
              const std::string & auxpath,
              const std::string & directory,
-             int metricflag,
+             int optflag,
              int bsorder,
              int nthreads);
 
@@ -69,7 +71,7 @@ private:
     int naux_;   //!< Number of auxiliary basis functions
     SharedBasisSet auxiliary_;  //!< Auxiliary (density fitting) basis set
 
-    int metricflag_; //!< Flags controlling the type of metric
+    int optflag_; //!< Flags controlling the type of metric and other options
 
     /// Print the DF tensor information
     void PrintHeader_(void) const;

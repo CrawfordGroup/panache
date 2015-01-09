@@ -806,7 +806,7 @@ int main(int argc, char ** argv)
         int nmo = nso;
 
         DFTensor dft(primary, dir + "basis.aux.gbs", "/tmp/df",
-                     DFMETRIC_COULOMB | DFMETRIC_EIGINV,
+                     DFOPT_COULOMB | DFOPT_EIGINV,
                      BSORDER_PSI4, 0);
 
         // *** We are only testing Qso from CHTensor               *** //

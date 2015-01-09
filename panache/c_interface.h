@@ -61,7 +61,8 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
-     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+     * \param [in] optflag Flag controlling the type of metric to use
+     *                     and other options. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
@@ -71,7 +72,7 @@ extern "C" {
                        C_AtomCenter * atoms,
                        int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
                        int * aux_nshellspercenter, struct C_ShellInfo * aux_shells,
-                       const char * directory, int metricflag, int bsorder, int nthreads);
+                       const char * directory, int optflag, int bsorder, int nthreads);
 
 
 
@@ -97,7 +98,8 @@ extern "C" {
      *                       Not referenced if the disk is not used. Should not be set to "NULL", but
      *                       may be set to an empty string if disk is not to be used.
      *                       If used, any existing files will be overwritten.
-     * \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+     * \param [in] optflag Flag controlling the type of metric to use
+     *                     and other options. Set to zero for default (coulomb/eiginv)
      * \param [in] bsorder Basis function ordering flag
      * \param [in] nthreads Max number of threads to use
      *
@@ -106,7 +108,7 @@ extern "C" {
     int panache_dfinit2(int ncenters,
                         C_AtomCenter * atoms,
                         int * primary_nshellspercenter, struct C_ShellInfo * primary_shells,
-                        const char * auxfilename, const char * directory, int metricflag,
+                        const char * auxfilename, const char * directory, int optflag,
                         int bsorder, int nthreads);
 
 

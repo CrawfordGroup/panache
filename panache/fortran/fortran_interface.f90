@@ -26,12 +26,12 @@ module FToPanache
     function panache_dfinit(ncenters, atoms , &
                               primary_nshellspercenter, primary_shells, &
                               aux_nshellspercenter, aux_shells, &
-                              directory, metricflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit")
+                              directory, optflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit")
       use iso_c_binding
       import C_ShellInfo
       import C_AtomCenter
       implicit none
-      integer(C_INT), intent(in), value :: ncenters, metricflag, bsorder, nthreads
+      integer(C_INT), intent(in), value :: ncenters, optflag, bsorder, nthreads
       integer(C_INT), intent(in) :: primary_nshellspercenter(ncenters), &
                                     aux_nshellspercenter(ncenters)
       type(C_AtomCenter), intent(in) :: atoms(ncenters)
@@ -43,12 +43,12 @@ module FToPanache
 
     function panache_dfinit2(ncenters, atoms , &
                              primary_nshellspercenter, primary_shells, &
-                             auxfilename, directory, metricflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit2")
+                             auxfilename, directory, optflag, bsorder, nthreads) result(res) bind(C, name="panache_dfinit2")
       use iso_c_binding
       import C_ShellInfo
       import C_AtomCenter
       implicit none
-      integer(C_INT), intent(in), value :: ncenters, metricflag, bsorder, nthreads
+      integer(C_INT), intent(in), value :: ncenters, optflag, bsorder, nthreads
       integer(C_INT), intent(in) :: primary_nshellspercenter(ncenters)
       type(C_AtomCenter), intent(in) :: atoms(ncenters)
       type(C_ShellInfo), intent(in) :: primary_shells(*)
@@ -676,7 +676,8 @@ end subroutine
 !!                       Not referenced if the disk is not used. Should not be set to "NULL", but
 !!                       may be set to an empty string if disk is not to be used.
 !!                       If used, any existing files will be overwritten.
-!! \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+!! \param [in] optflag Flag controlling the type of metric to use
+!!                     and other options. Set to zero for default (coulomb/eiginv)
 !! \param [in] bsorder Basis function ordering flag
 !! \param [in] nthreads Number of threads to use
 !!
@@ -687,13 +688,13 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
                            primary_nprimpershell, primary_exp, primary_coef, &
                            aux_nshellspercenter, aux_am, aux_is_pure, &
                            aux_nprimpershell, aux_exp, aux_coef, &
-                           directory, metricflag, bsorder, nthreads, handle) 
+                           directory, optflag, bsorder, nthreads, handle) 
   use FToPanache
 
   implicit none
 
 
-  integer, intent(in) :: ncenters, metricflag, bsorder, nthreads, &
+  integer, intent(in) :: ncenters, optflag, bsorder, nthreads, &
                          primary_nshellspercenter(ncenters), &
                          primary_am(*), primary_is_pure(*), primary_nprimpershell(*), &
                          aux_nshellspercenter(ncenters), &
@@ -760,7 +761,7 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
   ! do stuff
   handle = panache_dfinit(INT(ncenters, C_INT), atoms, c_primary_nshellspercenter, &
                           pshells, c_aux_nshellspercenter, ashells, &
-                          directoryarr, INT(metricflag, C_INT), &
+                          directoryarr, INT(optflag, C_INT), &
                           INT(bsorder, C_INT), INT(nthreads, C_INT)) 
 
   do i = 1, pnshells
@@ -818,7 +819,8 @@ end subroutine
 !! \param [in] directory A full path to a file to be used if storing matrices to disk.
 !!                       Not referenced if the disk is not used. Should not be set to "NULL", but
 !!                       may be set to an empty string if disk is not to be used.
-!! \param [in] metricflag Flag controlling the type of metric to use. Set to zero for default (coulomb/eiginv)
+!! \param [in] optflag Flag controlling the type of metric to use
+!!                     and other options. Set to zero for default (coulomb/eiginv)
 !! \param [in] bsorder Basis function ordering flag
 !! \param [in] nthreads Number of threads to use
 !!
@@ -827,13 +829,13 @@ end subroutine
 subroutine panachef_dfinit2(ncenters, xyz, symbols, &
                             primary_nshellspercenter, primary_am, primary_is_pure, &
                             primary_nprimpershell, primary_exp, primary_coef, &
-                            auxfilename, directory, metricflag, bsorder, nthreads, handle) 
+                            auxfilename, directory, optflag, bsorder, nthreads, handle) 
   use FToPanache
 
   implicit none
 
 
-  integer, intent(in) :: ncenters, metricflag, bsorder, nthreads, &
+  integer, intent(in) :: ncenters, optflag, bsorder, nthreads, &
                          primary_nshellspercenter(ncenters), &
                          primary_am(*), primary_is_pure(*), primary_nprimpershell(*)
   double precision, intent(in) :: xyz(3,ncenters), primary_exp(*), primary_coef(*)
@@ -887,7 +889,7 @@ subroutine panachef_dfinit2(ncenters, xyz, symbols, &
 
   ! do stuff
   handle = panache_dfinit2(INT(ncenters, C_INT), atoms, c_primary_nshellspercenter, &
-                           pshells, auxfilearr, directoryarr, INT(metricflag, C_INT), &
+                           pshells, auxfilearr, directoryarr, INT(optflag, C_INT), &
                            INT(bsorder, C_INT), INT(nthreads, C_INT)) 
    
 

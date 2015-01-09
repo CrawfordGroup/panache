@@ -30,15 +30,15 @@ void DFTensor::Init_(void)
     naux_ = auxiliary_->nbf();
 
     // Defaults for fitting metric
-    if(metricflag_ == 0)
-        metricflag_ = DFMETRIC_COULOMB | DFMETRIC_EIGINV;
+    if(optflag_ == 0)
+        optflag_ = DFOPT_COULOMB | DFOPT_EIGINV;
 }
 
 DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
                    const std::string & directory,
-                   int metricflag, int bsorder, int nthreads) 
+                   int optflag, int bsorder, int nthreads) 
            : ThreeIndexTensor(primary, directory, QTYPE_DFQSO, bsorder, nthreads),
-             auxiliary_(auxiliary), metricflag_(metricflag)
+             auxiliary_(auxiliary), optflag_(optflag)
 {
     PrintHeader_();
     Init_();
@@ -47,9 +47,9 @@ DFTensor::DFTensor(SharedBasisSet primary, SharedBasisSet auxiliary,
 DFTensor::DFTensor(SharedBasisSet primary,
                    const std::string & auxpath,
                    const std::string & directory,
-                   int metricflag, int bsorder, int nthreads) 
+                   int optflag, int bsorder, int nthreads) 
            : ThreeIndexTensor(primary, directory, QTYPE_DFQSO, bsorder, nthreads),
-             auxiliary_(CreateAuxFromFile_(auxpath, primary->molecule())), metricflag_(metricflag)
+             auxiliary_(CreateAuxFromFile_(auxpath, primary->molecule())), optflag_(optflag)
 {
     PrintHeader_();
     Init_();
@@ -68,14 +68,14 @@ UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
     // pass by reference in the future
     SharedFittingMetric fittingmetric(new FittingMetric(auxiliary_, nthreads_));
 
-    if(metricflag_ & DFMETRIC_COULOMB)
+    if(optflag_ & DFOPT_COULOMB)
         fittingmetric->form_coulomb_fitting_metric();
     else
         throw RuntimeError("Unknown fitting metric type!");
      
-    if(metricflag_ & DFMETRIC_EIGINV) 
+    if(optflag_ & DFOPT_EIGINV) 
         fittingmetric->form_eig_inverse();
-    else if(metricflag_ & DFMETRIC_CHOINV)
+    else if(optflag_ & DFOPT_CHOINV)
         fittingmetric->form_cholesky_inverse();
     else
         throw RuntimeError("Unknown fitting metric decomposition!");
