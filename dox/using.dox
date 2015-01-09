@@ -75,7 +75,7 @@ DFTensor::GetQBatch() or panache_getqbatch() corresponds to a row for the
 \subsection frozen Frozen orbitals
 
 PANACHE supports frozen occupied orbitals. These are set with 
-panache::ThreeIndexTensor::SetNOcc(), panache_setnocc(), or \link panachef_setnocc_() panachef_setnocc()\endlink.
+panache::ThreeIndexTensor::SetNOcc(), panache_setnocc(), or \link panachef_setnocc() panachef_setnocc()\endlink.
 In this case, orbital counting for Qmo, Qoo, and Qov start
 at the first non-frozen orbital.
 

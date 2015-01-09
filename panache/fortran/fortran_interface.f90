@@ -571,7 +571,7 @@ end subroutine
 !! \param [in] tensorflag Which tensor to get (see Flags.h)
 !! \param [in] outbuf Memory location to store the tensor
 !! \param [in] bufsize The size of \p outbuf (in number of doubles)
-!! \param [in] ijstart The starting value of q
+!! \param [in] qstart The starting value of q
 !! \param [out] nbatch The number of batches actually stored in the buffer.
 !!
 subroutine panachef_getqbatch(handle, tensorflag, outbuf, bufsize, qstart, nbatch)
