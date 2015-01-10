@@ -127,7 +127,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
 
     // only do this stuff the first time!
-    if(!qso_)
+    if(!qso_ || !qso_->filled())
     {
         qso_ = GenQso(storeflags); // calls the virtual function
 
@@ -180,37 +180,50 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
     int naux = qso_->naux();
 
+    // The checks for filled are because they may exist on disk, etc
     if(qflags & QGEN_QMO)
     {
         // generate Qmo
         qmo_ = StoredQTensorFactory(naux, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo", directory_);
-        qouts.push_back(qmo_.get());
-        lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
-        rights.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
+        if(!qmo_->filled())
+        {
+            qouts.push_back(qmo_.get());
+            lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
+            rights.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
+        }
     }
     if(qflags & QGEN_QOO)
     {
         // generate Qoo
         qoo_ = StoredQTensorFactory(naux, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo", directory_);
-        qouts.push_back(qoo_.get());
-        lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
-        rights.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+        if(!qoo_->filled())
+        {
+            qouts.push_back(qoo_.get());
+            lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+            rights.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+        }
     }
     if(qflags & QGEN_QOV)
     {
         // generate Qov
         qov_ = StoredQTensorFactory(naux, nocc_, nvir_, storeflags, "qov", directory_);
-        qouts.push_back(qov_.get());
-        lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
-        rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+        if(!qov_->filled())
+        {
+            qouts.push_back(qov_.get());
+            lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
+            rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+        }
     }
     if(qflags & QGEN_QVV)
     {
         // generate Qvv
         qvv_ = StoredQTensorFactory(naux, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv", directory_);
-        qouts.push_back(qvv_.get());
-        lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
-        rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+        if(!qvv_->filled())
+        {
+            qouts.push_back(qvv_.get());
+            lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+            rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
+        }
     }
 
 

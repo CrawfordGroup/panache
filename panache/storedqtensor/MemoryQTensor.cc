@@ -4,6 +4,8 @@
  */
 
 #include "panache/storedqtensor/MemoryQTensor.h"
+#include "panache/storedqtensor/DiskQTensor.h"
+
 
 namespace panache
 {
@@ -93,8 +95,20 @@ void MemoryQTensor::Init_(void)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-MemoryQTensor::MemoryQTensor()
+MemoryQTensor::MemoryQTensor(int storeflags, const std::string & name) : LocalQTensor(storeflags, name)
 {
+}
+
+MemoryQTensor::MemoryQTensor(DiskQTensor * diskqt) : MemoryQTensor(diskqt->storeflags(), diskqt->name())
+{
+    // from StoredQTensor base class
+    // (calls MemoryQTensor::Init_)
+    Init(*diskqt);
+
+    if(byq())
+      diskqt->ReadByQ(data_.get(), naux(), 0);
+    else
+      diskqt->Read(data_.get(), ndim12(), 0);
 }
 
 

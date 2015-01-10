@@ -57,9 +57,17 @@ DFTensor::DFTensor(SharedBasisSet primary,
 
 UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
 {
+    // Since main options can only be set in the constructor, there is no danger
+    // of changing options after construction. Therefore, calculations must
+    // be equivalent, except for storage options
+
     // Always gen qso as packed and by q
     auto qso = StoredQTensorFactory(naux_, nso_, nso_, 
                                     storeflags | QSTORAGE_PACKED | QSTORAGE_BYQ, "qso", directory_);
+
+    // already existed
+    if(qso->filled())
+        return qso;
 
 
     // we only use the fitting metric here. No need to keep it around for longer than

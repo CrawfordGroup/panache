@@ -25,12 +25,9 @@ namespace panache
 // LocalQTensor
 //////////////////////////////
 
-
-LocalQTensor::LocalQTensor()
+LocalQTensor::LocalQTensor(int storeflags, const std::string & name) : StoredQTensor(storeflags, name)
 {
 }
-
-
 
 void LocalQTensor::GenDFQso_(const SharedFittingMetric & fit,
                                      const SharedBasisSet primary,
@@ -268,7 +265,6 @@ void LocalQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
 
 void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
                                                double delta,
-                                               int storeflags,
                                                int nthreads)
 {
     // number of threads is passed around implicitly as the size of eris
@@ -349,7 +345,7 @@ void LocalQTensor::GenCHQso_(const SharedBasisSet primary,
     eris.clear();
 
     // copy to memory/disk now that we have the sizes
-    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ | QSTORAGE_PACKED, "qso");
+    StoredQTensor::Init(nQ, n, n);
 
     for(int i = 0; i < nQ; i++)
     {

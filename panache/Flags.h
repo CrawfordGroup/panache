@@ -25,11 +25,13 @@
 
     /*! \name Flags specifing how tensors should be stored */
     ///@{
-    #define QSTORAGE_PACKED  1  //!< Internal use only
-    #define QSTORAGE_ONFLY   2  //!< Generate on-the-fly (not yet implemented)
-    #define QSTORAGE_BYQ     4 //!< Store with Q as the first (slowest) index
-    #define QSTORAGE_INMEM   8  //!< Store in memory (core)
-    #define QSTORAGE_ONDISK  16  //!< Store on disk
+    #define QSTORAGE_PACKED  1     //!< Internal use only
+    #define QSTORAGE_ONFLY   2     //!< Generate on-the-fly (not yet implemented)
+    #define QSTORAGE_BYQ     4     //!< Store with Q as the first (slowest) index
+    #define QSTORAGE_INMEM   8     //!< Store in memory (core)
+    #define QSTORAGE_ONDISK  16    //!< Store on disk
+    #define QSTORAGE_KEEPDISK  32  //!< Don't erase the file on disk when done. If QSTORAGE_INMEM, writes to disk when done.
+    #define QSTORAGE_READDISK  64  //!< Read the file previously saved with QSTORAGE_KEEPDISK
 
     #ifdef PANACHE_CYCLOPS
     #define QSTORAGE_CYCLOPS 32  //!< Use Cyclops library

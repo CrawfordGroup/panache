@@ -10,6 +10,11 @@
 namespace panache
 {
 
+StoredQTensor::StoredQTensor(int storeflags, const std::string & name)
+               : name_(name), storeflags_(storeflags)
+{
+    filled_ = false;
+}
 
 int StoredQTensor::naux(void) const
 {
@@ -51,6 +56,16 @@ int StoredQTensor::byq(void) const
     return (storeflags_ & QSTORAGE_BYQ);
 }
 
+bool StoredQTensor::filled(void) const
+{
+    return filled_;
+}
+
+void StoredQTensor::markfilled(void)
+{
+    filled_ = true;
+}
+
 const std::string & StoredQTensor::name(void) const
 {
     return name_;
@@ -66,21 +81,26 @@ int StoredQTensor::calcindex(int i, int j) const
         return ((j*(j+1))>>1) + i;
 }
 
-void StoredQTensor::Init(int naux, int ndim1, int ndim2, int storeflags, const std::string & name)
+void StoredQTensor::Init(int naux, int ndim1, int ndim2)
 {
     naux_ = naux;
     ndim1_ = ndim1;
     ndim2_ = ndim2;
-    storeflags_ = storeflags;
 
     if(packed() && ndim1 != ndim2)
         throw RuntimeError("non square packed matrices?");
 
     ndim12_ = (packed() ? (ndim1_ * (ndim2_+1))/2 : ndim1_*ndim2_);
-    name_ = name;
 
     Init_();
 }
+
+
+void StoredQTensor::Init(const StoredQTensor & rhs)
+{
+    Init(rhs.naux_, rhs.ndim1_, rhs.ndim2_);
+}
+
 
 StoredQTensor::~StoredQTensor()
 {
@@ -121,10 +141,6 @@ int StoredQTensor::ReadByQ(double * data, int nq, int qstart)
     return nq;
 }
 
-StoredQTensor::StoredQTensor(void)
-{
-}
-
 
 CumulativeTime & StoredQTensor::GenTimer(void)
 {
@@ -152,6 +168,7 @@ void StoredQTensor::GenDFQso(const SharedFittingMetric & fit,
 #endif
 
     GenDFQso_(fit, primary, auxiliary, nthreads);
+    filled_ = true;
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -161,7 +178,6 @@ void StoredQTensor::GenDFQso(const SharedFittingMetric & fit,
 
 void StoredQTensor::GenCHQso(const SharedBasisSet primary,
                                      double delta,
-                                     int storeflags,
                                      int nthreads)
 {
 #ifdef PANACHE_TIMING
@@ -169,7 +185,8 @@ void StoredQTensor::GenCHQso(const SharedBasisSet primary,
     tim.Start();
 #endif
 
-    GenCHQso_(primary, delta, storeflags, nthreads);
+    GenCHQso_(primary, delta, nthreads);
+    filled_ = true;
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -184,6 +201,8 @@ void StoredQTensor::Transform(const std::vector<TransformMat> & left,
                                         int nthreads)
 {
     Transform_(left, right, results, nthreads);
+    for(auto it : results)
+        it->filled_ = true;
 }
 
 } // close namespace panache

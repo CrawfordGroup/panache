@@ -4,9 +4,12 @@
  */
 
 #include <cstdio> // for remove()
+#include <sstream>
 
 #include "panache/Exception.h"
+#include "panache/Flags.h"
 #include "panache/storedqtensor/DiskQTensor.h"
+#include "panache/storedqtensor/MemoryQTensor.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -127,21 +130,13 @@ void DiskQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
-void DiskQTensor::Init_(void)
+
+void DiskQTensor::OpenForReadWrite_(void)
 {
-    filename_ = directory_;
-    filename_.append("/");
-    filename_.append(name());
-
-    if(file_ && file_->is_open())
-        return;
-
-    if(filename_.length() == 0 || name().length() == 0)
-        throw RuntimeError("Error - no file specified!");
-
     file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
-                                          std::fstream::in | std::fstream::out |
-                                          std::fstream::binary | std::fstream::trunc ));
+                                          std::fstream::out | std::fstream::in |
+                                          std::fstream::trunc | std::fstream::binary));
+
     if(!file_->is_open())
         throw RuntimeError(std::string("Unable to open file ") + filename_);
 
@@ -149,8 +144,149 @@ void DiskQTensor::Init_(void)
 }
 
 
-DiskQTensor::DiskQTensor(const std::string & directory) : directory_(directory)
+bool DiskQTensor::OpenForRead_(bool required)
 {
+    file_ = std::unique_ptr<std::fstream>(new std::fstream(filename_.c_str(),
+                                          std::fstream::in | std::fstream::binary));
+
+    if(!file_->is_open())
+    {
+        if(required)
+            throw RuntimeError(std::string("Unable to open file ") + filename_);
+        else
+        {
+            file_.reset();
+            return false;
+        }
+    }
+
+    file_->exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+    return true;
+}
+
+
+void DiskQTensor::Init_(void)
+{
+    WriteDimFile_();
+    // Nothing else to really do here. Reserve a big file?
+}
+
+
+DiskQTensor::DiskQTensor(int storeflags, const std::string & name, const std::string & directory) 
+             : LocalQTensor(storeflags, name), directory_(directory)
+{
+    filename_ = directory_;
+    filename_.append("/");
+    filename_.append(name);
+    dimfilename_ = filename_;
+    dimfilename_.append(".dim");
+
+    existed_ = false;
+
+    if(file_ && file_->is_open())
+        return;
+
+    if(filename_.length() == 0 || name.length() == 0)
+        throw RuntimeError("Error - no file specified!");
+
+
+    if(storeflags & QSTORAGE_READDISK)
+    {
+        existed_ = OpenForRead_(false);  // false = not required
+
+        if(existed_)
+        {
+            ReadDimFile_();
+            markfilled();
+        }
+    }
+
+    if(!(storeflags & QSTORAGE_READDISK) || !existed_)
+        OpenForReadWrite_();
+}
+
+
+void DiskQTensor::ReadDimFile_(void)
+{
+    std::ifstream dim(dimfilename_.c_str());
+
+    if(!dim.is_open())
+        throw RuntimeError(std::string("Unable to open file ") + dimfilename_);
+
+    dim.exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+
+    dim >> f_naux_ >> f_ndim1_ >> f_ndim2_ >> f_ndim12_ >> f_packed_ >> f_byq_;
+
+    std::stringstream ss;
+ 
+    // careful. byq() and ibyq are both ints and would represent QSTORAGE_BYQ, etc, not just a simple bool
+    if(f_byq_ != byq())
+    {
+        ss << "Tensor " << name() << " does not match orientation from file " << dimfilename_
+           << " Here: " << byq() << " disk: " << f_byq_ << "\n";
+        throw RuntimeError(ss.str());
+    }
+
+    // same here
+    if(f_packed_ != packed())
+    {
+        ss << "Tensor " << name() << " does not match packed-ness from file " << dimfilename_
+           << " Here: " << packed() << " disk: " << f_packed_ << "\n";
+        throw RuntimeError(ss.str());
+    }
+
+    Init(f_naux_, f_ndim1_, f_ndim2_);
+}
+
+void DiskQTensor::WriteDimFile_(void)
+{
+    std::ofstream dim(dimfilename_.c_str(), std::ofstream::trunc);
+
+    if(!dim.is_open())
+        throw RuntimeError(std::string("Unable to open file ") + dimfilename_);
+
+    dim.exceptions(std::fstream::failbit | std::fstream::badbit | std::fstream::eofbit);
+
+    // careful. byq() and packed() are both ints and would represent QSTORAGE_BYQ, etc, not just a simple bool
+    dim << naux() << " " << ndim1() << " " << ndim2() << " "
+        << ndim12() << " " << packed() << " "
+        << byq() << " END";  //Sorry, the "END" is a cheap hack so that ReadDimFile_ doesn't
+                             // throw with EOF
+}
+
+
+DiskQTensor::DiskQTensor(MemoryQTensor * memqt, const std::string & directory) 
+                 : DiskQTensor(memqt->storeflags(), memqt->name(), directory)
+{
+    // from StoredQTensor base class
+    Init(*memqt);
+
+    int inaux = naux();
+    int indim12 = ndim12();
+
+    // do in blocks
+    if(byq())
+    {
+        std::unique_ptr<double[]> buf(new double[inaux]);
+        double * bufptr = buf.get();
+  
+        for(int i = 0; i < indim12; i++)
+        {
+            memqt->ReadByQ(bufptr, 1, i);
+            WriteByQ_(bufptr, 1, i);
+        }
+    }
+    else
+    {
+        std::unique_ptr<double[]> buf(new double[indim12]);
+        double * bufptr = buf.get();
+
+        for(int i = 0; i < inaux; i++)
+        {
+            memqt->Read(bufptr, 1, i);
+            Write_(bufptr, 1, i);
+        }
+    }
 }
 
 
@@ -162,8 +298,12 @@ DiskQTensor::~DiskQTensor()
         file_.reset();
     }
 
-    // erase the file
-    std::remove(filename_.c_str());
+    // Erase the file
+    if(!(storeflags() & QSTORAGE_KEEPDISK))
+    {
+        std::remove(filename_.c_str());
+        std::remove(dimfilename_.c_str());
+    }
 }
 
 

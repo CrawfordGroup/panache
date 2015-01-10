@@ -12,6 +12,8 @@
 namespace panache
 {
 
+class DiskQTensor;
+
 /*!
  *  \brief Class for storing a 3-index tensor in memory
  *  \ingroup storedqgroup
@@ -19,7 +21,18 @@ namespace panache
 class MemoryQTensor : public LocalQTensor
 {
 public:
-    MemoryQTensor();
+    /*
+     * \brief Construct with some basic information
+     *
+     * \param [in] storeflags How the tensor should be stored (packed, etc)
+     * \param [in] name Some descriptive name
+     */
+    MemoryQTensor(int storeflags, const std::string & name);
+
+    /*!
+     * \brief Reads a tensor from disk completely into memory
+     */
+    MemoryQTensor(DiskQTensor * diskqt);  
 
 protected:
     virtual void Write_(double * data, int nij, int ijstart);

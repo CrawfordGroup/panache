@@ -46,6 +46,7 @@ void PrintUsage(void)
          << "Options:\n"
          << "-v           Verbose printing\n"
          << "-d           Write Q tensors to disk (rather than in core)\n"
+         << "-k           Keep Q tensors on disk when done (if -d is given)\n"
          << "-c           Use Cyclops Tensor Framework\n"
          << "-b           Get Qso/Qmo in batches\n"
          << "-t           Use transpose of C matrix\n"
@@ -697,6 +698,8 @@ int main(int argc, char ** argv)
         bool generate = false;
         bool skiptest = false;
         bool skipgetbatch = false;
+        bool keepdisk = false;
+        bool readdisk = false;
 
         int i = 1;
         while(i < argc)
@@ -716,6 +719,10 @@ int main(int argc, char ** argv)
                 skiptest = true;
             else if(starg == "-d")
                 disk = true;
+            else if(starg == "-k")
+                keepdisk = true;
+            else if(starg == "-r")
+                readdisk = true;
             else if(starg == "-c")
                 cyclops = true;
             else if(starg == "-g")
@@ -826,7 +833,14 @@ int main(int argc, char ** argv)
             qstore |= QSTORAGE_BYQ;
 
         if(disk)
+        {
             qstore |= QSTORAGE_ONDISK;
+
+            if(keepdisk)
+                qstore |= QSTORAGE_KEEPDISK;
+            if(readdisk)
+                qstore |= QSTORAGE_READDISK;
+        }
         #ifdef PANACHE_CYCLOPS
         else if(cyclops)
             qstore |= QSTORAGE_CYCLOPS;

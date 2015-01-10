@@ -27,12 +27,19 @@ CHTensor::CHTensor(SharedBasisSet primary, double delta,
 
 UniqueStoredQTensor CHTensor::GenQso(int storeflags) const
 {
-    // PACKED storage, etc, not handled in factory.
-    // Will be passed in through qso->GenCHQso 
-    auto qso = StoredQTensorFactory(storeflags, directory_);
+    // Since main options can only be set in the constructor, there is no danger
+    // of changing options after construction. Therefore, calculations must
+    // be equivalent, except for storage options
+
+    // Can't do full initialization yet. Will be done in GenCHQso (virtual function)
+    auto qso = StoredQTensorFactory(storeflags | QSTORAGE_BYQ | QSTORAGE_PACKED, "qso", directory_);
+
+    // already existed
+    if(qso->filled())
+        return qso;
 
     // will be initialized in here
-    qso->GenCHQso(primary_, delta_, storeflags, nthreads_);
+    qso->GenCHQso(primary_, delta_, nthreads_);
     return qso;
 }
 

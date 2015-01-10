@@ -30,13 +30,14 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class StoredQTensor
 {
 public:
-    /*!
-     * \brief Default constructor
-     *
-     * You must call Init() at some point!
-     */ 
-    StoredQTensor();
 
+    /*
+     * \brief Construct with some basic information
+     *
+     * \param [in] storeflags How the tensor should be stored (packed, etc)
+     * \param [in] name Some descriptive name
+     */
+    StoredQTensor(int storeflags, const std::string & name);
 
     virtual ~StoredQTensor();
 
@@ -83,11 +84,15 @@ public:
      * \param [in] naux Size along the auxiliary index
      * \param [in] ndim1 Size along the first dimension
      * \param [in] ndim2 Size along the second dimension
-     * \param [in] storeflags How the tensor should be stored (packed, etc)
-     * \param [in] name Some descriptive name
      */
-    void Init(int naux, int ndim1, int ndim2, int storeflags, const std::string & name);
+    void Init(int naux, int ndim1, int ndim2);
 
+
+    /*!
+     * \brief Initialize storage given the sizes of another StoredQTensor
+     */
+    void Init(const StoredQTensor & rhs);
+  
 
     /*!
      * \brief Generate density-fitted Qso tensor
@@ -107,12 +112,10 @@ public:
      *
      * \param [in] primary Primary basis set
      * \param [in] delta Maximum error in the cholesky procedure
-     * \param [in] storeflags How Qso should be stored
      * \param [in] nthreads Number of threads to use
      */ 
     void GenCHQso(const SharedBasisSet primary,
                   double delta,
-                  int storeflags,
                   int nthreads);
 
     /*!
@@ -171,6 +174,9 @@ public:
     /// Get whether or not this tensor is stored by q
     int byq(void) const;
 
+    /// Get whether or not this tensor is filled in
+    bool filled(void) const;
+
     /*!
      *  \brief Calculate the combined orbital index given a pair of orbitals.
      *
@@ -212,7 +218,6 @@ protected:
     /// To be implemented by derived classes
     virtual void GenCHQso_(const SharedBasisSet primary,
                            double delta,
-                           int storeflags,
                            int nthreads) = 0;
 
 
@@ -226,13 +231,19 @@ protected:
     /// Get the total size of the stored tensor
     int storesize(void) const;
 
+    /// Mark this tensor object as filled in
+    void markfilled(void);
+
 private:
+    std::string name_;
+
     int naux_;   //!< Number of auxiliary functions
     int ndim1_;  //!< Length of index 1
     int ndim2_;  //!< Length of index 2
     int ndim12_; //!< Combined size of index 1 and 2 (depends on packing)
     int storeflags_; //!< How is this tensor stored
-    std::string name_;
+    bool filled_;    //!< Tensor has been filled in
+
     CumulativeTime gen_timer_; //!< Timer for the generation of this tensor
     CumulativeTime getijbatch_timer_; //!< Timer for getting batch by orbital index
     CumulativeTime getqbatch_timer_; //!< Timer for getting batch by q index

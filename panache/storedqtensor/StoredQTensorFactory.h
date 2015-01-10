@@ -39,10 +39,11 @@ UniqueStoredQTensor StoredQTensorFactory(int naux, int ndim1, int ndim2, int sto
  *  This does not initialize the object since it isn't passed the sizes.
  *
  * \param [in] storeflags How to store (disk, memory, packed, etc)
+ * \param [in] name Name of the tensor
  * \param [in] directory Directory for disk storage (if needed)
  * \return Pointer to a an object derived from StoredQTensor
  */
-UniqueStoredQTensor StoredQTensorFactory(int storeflags, const std::string & directory);
+UniqueStoredQTensor StoredQTensorFactory(int storeflags, const std::string & name, const std::string & directory);
 
 } // close namespace panache
 

@@ -123,7 +123,7 @@ void CyclopsQTensor::Init_(void)
 }
 
 
-CyclopsQTensor::CyclopsQTensor()
+CyclopsQTensor::CyclopsQTensor(int storeflags, const std::string & name) : StoredQTensor(storeflags, name)
 {
 
 }
@@ -496,7 +496,6 @@ void CyclopsQTensor::ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris,
 
 void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
                                                  double delta,
-                                                 int storeflags,
                                                  int nthreads)
 {
     auto shellrangeinfo = ShellRange2_(primary);
@@ -599,7 +598,7 @@ void CyclopsQTensor::GenCHQso_(const SharedBasisSet primary,
     pivots.clear();
 
     // Now we know the dimensions. initialize the tensor
-    StoredQTensor::Init(nQ, n, n, storeflags | QSTORAGE_BYQ, "qso");
+    StoredQTensor::Init(nQ, n, n);
 
     // unfortunately we need a mapping of packed indices to unpacked
     // (for distributing the data at the end)

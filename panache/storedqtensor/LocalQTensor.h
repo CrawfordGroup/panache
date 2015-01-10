@@ -29,7 +29,13 @@ typedef std::shared_ptr<BasisSet> SharedBasisSet;
 class LocalQTensor : public StoredQTensor
 {
 public:
-    LocalQTensor();
+    /*
+     * \brief Construct with some basic information
+     *
+     * \param [in] storeflags How the tensor should be stored (packed, etc)
+     * \param [in] name Some descriptive name
+     */
+    LocalQTensor(int storeflags, const std::string & name);
 
 protected:
 
@@ -59,7 +65,6 @@ protected:
 
     virtual void GenCHQso_(const SharedBasisSet primary,
                            double delta,
-                           int storeflags,
                            int nthreads);
 
     virtual void Transform_(const std::vector<TransformMat> & left,
