@@ -29,7 +29,7 @@ StoredQTensorFactory(int storeflags, const std::string & name, const std::string
     #endif
 
     else
-        return UniqueStoredQTensor(new MemoryQTensor(storeflags, name));
+        return UniqueStoredQTensor(new MemoryQTensor(storeflags, name, directory));
 }
 
 UniqueStoredQTensor 

@@ -173,16 +173,8 @@ void DiskQTensor::Init_(void)
 
 
 DiskQTensor::DiskQTensor(int storeflags, const std::string & name, const std::string & directory) 
-             : LocalQTensor(storeflags, name), directory_(directory)
+             : LocalQTensor(storeflags, name, directory)
 {
-    filename_ = directory_;
-    filename_.append("/");
-    filename_.append(name);
-    dimfilename_ = filename_;
-    dimfilename_.append(".dim");
-
-    existed_ = false;
-
     if(file_ && file_->is_open())
         return;
 
@@ -190,15 +182,11 @@ DiskQTensor::DiskQTensor(int storeflags, const std::string & name, const std::st
         throw RuntimeError("Error - no file specified!");
 
 
-    if(storeflags & QSTORAGE_READDISK)
+    if(existed_ && (storeflags & QSTORAGE_READDISK))
     {
-        existed_ = OpenForRead_(false);  // false = not required
-
-        if(existed_)
-        {
-            ReadDimFile_();
-            markfilled();
-        }
+        OpenForRead_(true);  // false = not required
+        ReadDimFile_();
+        markfilled();
     }
 
     if(!(storeflags & QSTORAGE_READDISK) || !existed_)
@@ -255,41 +243,6 @@ void DiskQTensor::WriteDimFile_(void)
 }
 
 
-DiskQTensor::DiskQTensor(MemoryQTensor * memqt, const std::string & directory) 
-                 : DiskQTensor(memqt->storeflags(), memqt->name(), directory)
-{
-    // from StoredQTensor base class
-    Init(*memqt);
-
-    int inaux = naux();
-    int indim12 = ndim12();
-
-    // do in blocks
-    if(byq())
-    {
-        std::unique_ptr<double[]> buf(new double[inaux]);
-        double * bufptr = buf.get();
-  
-        for(int i = 0; i < indim12; i++)
-        {
-            memqt->ReadByQ(bufptr, 1, i);
-            WriteByQ_(bufptr, 1, i);
-        }
-    }
-    else
-    {
-        std::unique_ptr<double[]> buf(new double[indim12]);
-        double * bufptr = buf.get();
-
-        for(int i = 0; i < inaux; i++)
-        {
-            memqt->Read(bufptr, 1, i);
-            Write_(bufptr, 1, i);
-        }
-    }
-}
-
-
 DiskQTensor::~DiskQTensor()
 {
     if(file_ && file_->is_open())
@@ -305,6 +258,44 @@ DiskQTensor::~DiskQTensor()
         std::remove(dimfilename_.c_str());
     }
 }
+
+
+DiskQTensor::DiskQTensor(MemoryQTensor * memqt) 
+                 : DiskQTensor(memqt->storeflags(), memqt->name(), memqt->directory())
+{
+    // initialize sizes
+    // from StoredQTensor base class
+    Init(*memqt);
+
+    int inaux = naux();
+    int indim12 = ndim12();
+
+    // do in blocks
+    if(byq())
+    {
+        std::unique_ptr<double[]> buf(new double[indim12]);
+        double * bufptr = buf.get();
+  
+        for(int i = 0; i < inaux; i++)
+        {
+            memqt->ReadByQ(bufptr, 1, i);
+            WriteByQ_(bufptr, 1, i);
+        }
+    }
+    else
+    {
+        std::unique_ptr<double[]> buf(new double[inaux]);
+        double * bufptr = buf.get();
+
+        for(int i = 0; i < indim12; i++)
+        {
+            memqt->Read(bufptr, 1, i);
+            Write_(bufptr, 1, i);
+        }
+    }
+}
+
+
 
 
 

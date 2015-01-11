@@ -32,7 +32,8 @@ public:
      */
     DiskQTensor(int storeflags, const std::string & name, const std::string & directory);
 
-    DiskQTensor(MemoryQTensor * memqt, const std::string & directory);
+    DiskQTensor(MemoryQTensor * memqt);
+
 
     virtual ~DiskQTensor();
 
@@ -45,10 +46,6 @@ protected:
 
 private:
     std::unique_ptr<std::fstream> file_;
-    std::string directory_;
-    std::string filename_;
-    std::string dimfilename_;
-    bool existed_;
 
     int f_naux_; //!< naux on the dim file
     int f_ndim1_; //!< ndim1 on the dim file

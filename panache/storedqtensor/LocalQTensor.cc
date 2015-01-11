@@ -4,6 +4,7 @@
  */
 
 #include <cmath>
+#include <fstream>
 
 #include "panache/storedqtensor/LocalQTensor.h"
 #include "panache/BasisSet.h"
@@ -25,9 +26,32 @@ namespace panache
 // LocalQTensor
 //////////////////////////////
 
-LocalQTensor::LocalQTensor(int storeflags, const std::string & name) : StoredQTensor(storeflags, name)
+LocalQTensor::LocalQTensor(int storeflags, const std::string & name, const std::string & directory) 
+              : StoredQTensor(storeflags, name), directory_(directory)
 {
+    filename_ = directory_;
+    filename_.append("/");
+    filename_.append(name);
+    dimfilename_ = filename_;
+    dimfilename_.append(".dim");
+
+    existed_ = FileExists();
 }
+
+
+const std::string & LocalQTensor::filename(void) const { return filename_; }
+
+const std::string & LocalQTensor::directory(void) const { return directory_; }
+
+const std::string & LocalQTensor::dimfilename(void) const { return dimfilename_; }
+
+bool LocalQTensor::FileExists(void) const
+{
+    std::ifstream ifs(filename_.c_str());
+    std::ifstream ifsd(dimfilename_.c_str());
+    return (ifs.is_open() && ifsd.is_open());
+}
+
 
 void LocalQTensor::GenDFQso_(const SharedFittingMetric & fit,
                                      const SharedBasisSet primary,

@@ -5,8 +5,9 @@
 
 #include "panache/storedqtensor/MemoryQTensor.h"
 #include "panache/storedqtensor/DiskQTensor.h"
-
-
+#include "panache/Flags.h"
+#include "panache/Exception.h"
+#include <iostream>
 namespace panache
 {
 
@@ -89,28 +90,51 @@ void MemoryQTensor::ReadByQ_(double * data, int nq, int qstart)
     }
 }
 
+
 void MemoryQTensor::Init_(void)
 {
     if(!data_)
         data_ = std::unique_ptr<double []>(new double[storesize()]);
 }
 
-MemoryQTensor::MemoryQTensor(int storeflags, const std::string & name) : LocalQTensor(storeflags, name)
+
+MemoryQTensor::MemoryQTensor(int storeflags, const std::string & name, const std::string & directory) 
+    : LocalQTensor(storeflags, name, directory)
 {
+    // does the file exist?
+    // (set by LocalQTensor constructor)
+    if(existed_ && (storeflags & QSTORAGE_READDISK))
+    {
+        // note - don't do diskqt(this) since this isn't completely constructed yet!
+        DiskQTensor diskqt(storeflags, name, directory);
+
+        if(!diskqt.filled())
+            throw RuntimeError("Can't read from disk, but file exists?");
+
+        // Init sizes, etc, 
+        // from StoredQTensor base class
+        // (calls MemoryQTensor::Init_)
+        Init(diskqt);
+
+        if(byq())
+          diskqt.ReadByQ(data_.get(), naux(), 0);
+        else
+          diskqt.Read(data_.get(), ndim12(), 0);
+
+        markfilled();
+
+        // may delete file, based on store flags
+    }
 }
 
-MemoryQTensor::MemoryQTensor(DiskQTensor * diskqt) : MemoryQTensor(diskqt->storeflags(), diskqt->name())
+MemoryQTensor::~MemoryQTensor()
 {
-    // from StoredQTensor base class
-    // (calls MemoryQTensor::Init_)
-    Init(*diskqt);
-
-    if(byq())
-      diskqt->ReadByQ(data_.get(), naux(), 0);
-    else
-      diskqt->Read(data_.get(), ndim12(), 0);
+    if(!existed_ && (storeflags() & QSTORAGE_KEEPDISK))
+    {
+        // file doesn't exist, but is wanted
+        DiskQTensor diskqt(this);  // should do everything in there
+    }
 }
-
 
 } // close namespace panache
 

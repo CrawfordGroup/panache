@@ -26,13 +26,11 @@ public:
      *
      * \param [in] storeflags How the tensor should be stored (packed, etc)
      * \param [in] name Some descriptive name
+     * \param [in] directory Directory where to store the files (if needed)
      */
-    MemoryQTensor(int storeflags, const std::string & name);
+    MemoryQTensor(int storeflags, const std::string & name, const std::string & directory);
 
-    /*!
-     * \brief Reads a tensor from disk completely into memory
-     */
-    MemoryQTensor(DiskQTensor * diskqt);  
+    ~MemoryQTensor();
 
 protected:
     virtual void Write_(double * data, int nij, int ijstart);

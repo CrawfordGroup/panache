@@ -34,8 +34,19 @@ public:
      *
      * \param [in] storeflags How the tensor should be stored (packed, etc)
      * \param [in] name Some descriptive name
+     * \param [in] directory Directory where to store files if necessary
      */
-    LocalQTensor(int storeflags, const std::string & name);
+    LocalQTensor(int storeflags, const std::string & name, const std::string & directory);
+
+    /// Get the directory where this tensor may be stored
+    const std::string & directory(void) const;
+
+    /// Get the filename for this tensor
+    const std::string & filename(void) const;
+
+    /// Get the .dim filename for this tensor
+    const std::string & dimfilename(void) const;
+
 
 protected:
 
@@ -72,6 +83,11 @@ protected:
                             std::vector<StoredQTensor *> results,
                             int nthreads);
 
+    std::string directory_; //!< Directory where to store files if necessary
+    std::string filename_;
+    std::string dimfilename_;
+    bool existed_;
+
 private:
     /*!
      * \brief Compute the cholesky diagonal
@@ -95,6 +111,12 @@ private:
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
     static void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
+
+    /*!
+     *  \brief Tests to see if the files corresponding to this tensor exists
+     */ 
+    bool FileExists(void) const;
+
 };
 
 } // close namespace panache
