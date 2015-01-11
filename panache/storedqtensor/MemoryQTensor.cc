@@ -106,6 +106,8 @@ MemoryQTensor::MemoryQTensor(int storeflags, const std::string & name, const std
     if(existed_ && (storeflags & QSTORAGE_READDISK))
     {
         // note - don't do diskqt(this) since this isn't completely constructed yet!
+        // note2 - it's ok if the INMEM vs. DISK flags are incorrect in diskqt. They
+        // aren't saved to the .dim file or matter much after construction
         DiskQTensor diskqt(storeflags, name, directory);
 
         if(!diskqt.filled())
@@ -133,6 +135,8 @@ MemoryQTensor::~MemoryQTensor()
     {
         // file doesn't exist, but is wanted
         DiskQTensor diskqt(this);  // should do everything in there
+        // note - it's ok if the INMEM vs. DISK flags are incorrect in diskqt. They
+        // aren't saved to the .dim file
     }
 }
 
