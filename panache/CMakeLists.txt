@@ -1,7 +1,7 @@
 ##############################################
 # Add files
 ##############################################
-list(APPEND PANACHE_CXX_FILES
+set(PANACHE_CXX_FILES
             AOIntegralsIterator.cc
             AOShellCombinationsIterator.cc
             BasisSet.cc
