@@ -11,7 +11,7 @@
 #include "panache/CHTensor.h"
 #include "panache/SimpleMatrix.h"
 #include "panache/Output.h"
-#include "panache/c_convert.h" // int comes in through here
+#include "panache/c_convert.h"
 #include "panache/Flags.h"
 #include "panache/Iterator.h"
 
@@ -48,7 +48,7 @@ void PrintUsage(void)
          << "-d           Write Q tensors to disk (rather than in core)\n"
          << "-k           Keep Q tensors on disk when done\n"
          << "-c           Use Cyclops Tensor Framework\n"
-         << "-b           Get Qso/Qmo in batches\n"
+         << "-b           Number of batches to get at a time (default = all)\n"
          << "-t           Use transpose of C matrix\n"
          << "-g           Generate tests from basis/molecule info\n"
          << "-C           Disable cholesky runs\n"

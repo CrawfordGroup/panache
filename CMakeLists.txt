@@ -340,4 +340,5 @@ if(PANACHE_USE_LIBERD)
 endif()
 
 add_subdirectory(runtest)
+add_subdirectory(examples)
 
