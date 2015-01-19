@@ -129,7 +129,16 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     // only do this stuff the first time!
     if(!qso_ || !qso_->filled())
     {
-        qso_ = GenQso(storeflags); // calls the virtual function
+        // remove keep flag if Qso is not wanted
+        // this is so it isn't stored with the wrong ordering,
+        // etc
+
+        int qsoflags = storeflags;
+
+        if(!(storeflags & QGEN_QSO))
+          qsoflags &= QSTORAGE_KEEPDISK;
+
+        qso_ = GenQso(qsoflags); // calls the virtual function
 
         // Renormalize CMat if necessary
         if(bsorder_ != BSORDER_PSI4)
