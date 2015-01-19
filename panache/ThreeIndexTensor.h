@@ -674,5 +674,5 @@ private:
 
 } // close namespace panache
 
-#endif //PANACHE_DFTENSOR_H
+#endif //PANACHE_THREEINDEXTENSOR_H
 

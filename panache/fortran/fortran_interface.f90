@@ -247,11 +247,11 @@ end module FToPanache
 
 
 !>
-!! \brief Clean up a particular density-fitting calculation and free memory
+!! \brief Clean up a particular calculation and free memory
 !!
 !! You should not attempt to use the handle afterwards
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF
+!! \param [in] handle A handle (returned from an init function) for the
 !!                    calculation to be cleaned up
 !!
 subroutine panachef_cleanup(handle)
@@ -263,7 +263,7 @@ end subroutine
 
 
 !>
-!! \brief Cleans up all density fitting calculations
+!! \brief Cleans up all calculations
 !!
 !! All handles are invalid after this point
 !!
@@ -294,7 +294,7 @@ end subroutine
 !!
 !! \note You must set the C Matrix first before calling (see panache_setcmatrix())
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] nocc Number of (non-frozen) occupied orbitals.
 !! \param [in] nfroz Number of frozen occupied orbitals.
 !!
@@ -314,7 +314,7 @@ end subroutine
 !! Set to zero to use the value of the environment variable OMP_NUM_THREAD (or
 !! set by omp_num_threads, or the default for this machine).
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !! \param [in] nthread Max number of threads to use
 !! \param [out] actual The max number of threads that will actually be used (ie if \p nthread is zero).
 !! 
@@ -338,7 +338,7 @@ end subroutine
 !! All times are cumulative for all operations. The output must be set
 !!  first (See Output.h)
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !!
 subroutine panachef_printtimings(handle)
   use FToPanache
@@ -351,7 +351,7 @@ end subroutine
 !>
 !! \brief Delete a tensor (from memory, disk, etc)
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !! \param [in] qflags A combination of flags specifying which tensors to delete
 !!
 subroutine panachef_delete(handle, qflags)
@@ -383,7 +383,7 @@ end subroutine
 !! \note The Qso matrix is always stored with QSTORAGE_BYQ
 !! \note Be sure to set the C-Matrix first!
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] qflags A combination of flags specifying which tensors to generate
 !! \param [in] storeflags How to store the matrix
 !!
@@ -410,7 +410,7 @@ end subroutine
 !! | Qov    |                  | nocc*nvir     |
 !! | Qvv    | nvir*(nvir+1)/2  |               |
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] batchsize of batches returned by panachef_getqbatch
 !!
@@ -428,7 +428,7 @@ end subroutine
 !!
 !! The size will always be naux (number of auxiliary basis functions)
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] batchsize Size of batches returned by panache_getbatch()
 !!
@@ -448,7 +448,7 @@ end subroutine
 !>
 !! \brief See if a particular tensor is stored packed
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] ispacked Nonzero if the tensor is in packed storage
 !!
@@ -472,7 +472,7 @@ end subroutine
 !! 
 !! \note This function takes into account 1-based indexing from fortran, so you don't
 !!       have to (ie this function subtracts 1 from *i and *j)
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [in] i First orbital index
 !! \param [in] j Second orbital index
@@ -494,7 +494,7 @@ end subroutine
 !>
 !! \brief Obtain the dimensions of a tensor
 !!
-!! \param [in] handle A handle (returned from an init function) for the DF calculation 
+!! \param [in] handle A handle (returned from an init function) for the calculation 
 !! \param [in] tensorflag Which tensor to query (see Flags.h)
 !! \param [out] naux Number of auxiliary basis functions
 !! \param [out] ndim1 First dimension for a particular q
@@ -530,7 +530,7 @@ end subroutine
 !! The matrix is copied by the PANACHE code, so it can be safely deleted or otherwise
 !! changed after calling this function.
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !! \param [in] cmat Pointer to a nso x nmo matrix representing the MO coefficients
 !! \param [in] nmo Number of MOs in this C matrix
 !! \param [in] istrans Set to non-zero if the matrix is the transpose (nmo x nso) or
@@ -567,7 +567,7 @@ end subroutine
 !!
 !! \note Tensors are always in row-major order!
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !! \param [in] tensorflag Which tensor to get (see Flags.h)
 !! \param [in] outbuf Memory location to store the tensor
 !! \param [in] bufsize The size of \p outbuf (in number of doubles)
@@ -606,7 +606,7 @@ end subroutine
 !!
 !! \note Tensors are always in row-major order!
 !!
-!! \param [in] handle A handle (returned from an init function) for this DF calculation
+!! \param [in] handle A handle (returned from an init function) for the calculation
 !! \param [in] tensorflag Which tensor to get (see Flags.h)
 !! \param [in] outbuf Memory location to store the tensor
 !! \param [in] bufsize The size of \p outbuf (in number of doubles)
