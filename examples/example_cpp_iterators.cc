@@ -208,24 +208,35 @@ int main(int argc, char ** argv)
         double e2s = 0;
         double e2t = 0;
 
-        for(int i = 0; i < nocc; i++)
-        for(int a = 0; a < nvir; a++)
-        {
-            int ia = ten->CalcIndex(QGEN_QOV, i, a);
-            ten->GetBatch(QGEN_QOV, buf_iap, naux, ia);
 
-            for(int j = 0; j < nocc; j++)
-            for(int b = 0; b < nvir; b++)
+        // Sorry, things are a little confusing here
+        // Iterators use i & j as generic indices, with i being
+        // the first index and j being the second. So for the "ia" part of the
+        // mp2 expression
+        //
+        //    iterator      common notation
+        //    ---------     ---------------
+        //    it_ia.i()   = i
+        //    it_ia.j()   = a
+        //
+        //    it_jb.i()   = j
+        //    it_jb.j()   = b
+        //
+        // Unfortunately, there aren't really enough letters in the alphabet to
+        // find a nice way of doing that.
+        //
+        ThreeIndexTensor::IteratedQTensorByIJ it_ia = ten->IterateByIJ(QGEN_QOV, buf_iap, naux);
+
+        while(it_ia)
+        {
+            ThreeIndexTensor::IteratedQTensorByIJ it_jb = ten->IterateByIJ(QGEN_QOV, buf_jbp, naux);
+            while(it_jb) 
             {
-                int jb = ten->CalcIndex(QGEN_QOV, j, b);
-                ten->GetBatch(QGEN_QOV, buf_jbp, naux, jb);
-    
-                int ib = ten->CalcIndex(QGEN_QOV, i, b);
-                int ja = ten->CalcIndex(QGEN_QOV, j, a);
-    
+                int ib = ten->CalcIndex(QGEN_QOV, it_ia.i(), it_jb.j());
+                int ja = ten->CalcIndex(QGEN_QOV, it_jb.i(), it_ia.j());
                 ten->GetBatch(QGEN_QOV, buf_ibp, naux, ib);
                 ten->GetBatch(QGEN_QOV, buf_jap, naux, ja);
-    
+
                 double iajb = 0;
                 double ibja = 0;
     
@@ -238,10 +249,16 @@ int main(int argc, char ** argv)
                 
                 // remember that a,b goes from [0,nvir) so we have to 
                 // factor in the occupied orbitals for orben
-                double denom = orben[i]+orben[j]-orben[nocc+a]-orben[nocc+b]; 
+                double denom = orben[it_ia.i()]+orben[it_jb.i()]-orben[nocc+it_ia.j()]-orben[nocc+it_jb.j()]; 
                 e2s += (iajb*iajb)/denom;
                 e2t += (iajb*(iajb-ibja))/denom;
+
+                // don't forget this!
+                ++it_jb;
             }
+
+            // don't forget this!
+            ++it_ia;
         }
        
 
