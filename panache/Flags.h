@@ -34,7 +34,7 @@
     #define QSTORAGE_READDISK  64  //!< Read the file previously saved with QSTORAGE_KEEPDISK
 
     #ifdef PANACHE_CYCLOPS
-    #define QSTORAGE_CYCLOPS 32  //!< Use Cyclops library
+    #define QSTORAGE_CYCLOPS 2048  //!< Use Cyclops library
     #endif
     ///@}
 
