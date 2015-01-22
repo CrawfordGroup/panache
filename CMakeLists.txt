@@ -113,7 +113,8 @@ endif()
 # PANACHE_CXX_FLAGS - flags for main library
 # PANACHE_F03_INTERFACE_FLAGS - flags for F2003 interface
 # LIBERD_F90_FLAGS - flags for libERD
-# RUNTEST_CXX_FLAGS - flags for the C++ test program
+# RUNTEST_CXX_FLAGS - flags for the C++ test program and examples
+# FRUNTEST_F90_FLAGS - flags for the fortran example
 
 # PANACHE requires a few C++11 features, namely
 #         std::shared_ptr and a few instances of 'auto'
@@ -137,19 +138,23 @@ if(PANACHE_FORTRAN)
   if("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
     list(APPEND PANACHE_F03_INTERFACE_FLAGS "-Wall -std=f2003")
     list(APPEND LIBERD_F90_FLAGS "-Wall")
+    list(APPEND FRUNTEST_F90_FLAGS "-Wall")
   elseif("${CMAKE_Fortran_COMPILER_ID}" MATCHES "Intel")
     list(APPEND PANACHE_F03_INTERFACE_FLAGS "-warn all")
     list(APPEND LIBERD_F90_FLAGS "-warn all")
+    list(APPEND FRUNTEST_F90_FLAGS "-warn all")
   else()
     message(WARNING "Unknown Fortran compiler ID: ${CMAKE_Fortran_COMPILER_ID}")
     list(APPEND PANACHE_F03_INTERFACE_FLAGS "-Wall")
     list(APPEND LIBERD_F90_FLAGS "-Wall")
+    list(APPEND FRUNTEST_F90_FLAGS "-Wall")
   endif()
 endif()
 
 
 # Standard link libraries
 list(APPEND RUNTEST_LINK_LIBRARIES "stdc++" "m")
+list(APPEND FRUNTEST_LINK_LIBRARIES "stdc++" "m")
 
 
 #####################################
@@ -170,19 +175,16 @@ if(PANACHE_CYCLOPS)
   find_package(MPI)
   if(MPI_CXX_FOUND)
     message(STATUS "Found MPI. Remember to link to MPI libraries when building your final project")
-    list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_CYCLOPS")
-    list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_MPI")
-    list(APPEND PANACHE_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
+    list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_CYCLOPS;-DPANACHE_MPI;${MPI_CXX_COMPILE_FLAGS}")
     list(APPEND PANACHE_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
-    list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_CYCLOPS")
-    list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_MPI")
-    list(APPEND RUNTEST_CXX_FLAGS "${MPI_CXX_COMPILE_FLAGS}") 
+
+    list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_CYCLOPS;-DPANACHE_MPI;${MPI_CXX_COMPILE_FLAGS}")
     list(APPEND RUNTEST_CXX_INCLUDES "${CYCLOPS_PATH}/include") 
-    #list(APPEND LIBERD_F90_FLAGS "${MPI_CXX_FLAGS}")
-    #list(APPEND PANACHE_F03_INTERFACE_FLAGS "${MPI_CXX_FLAGS}")
     list(APPEND RUNTEST_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
-    list(APPEND RUNTEST_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
-    list(APPEND RUNTEST_LINK_LIBRARIES "${CYCLOPS_PATH}/lib/libctf.a")
+    list(APPEND RUNTEST_LINK_LIBRARIES "${MPI_CXX_LIBRARIES};${CYCLOPS_PATH}/lib/libctf.a")
+
+    list(APPEND FRUNTEST_F90_FLAGS "-DPANACHE_CYCLOPS;-DPANACHE_MPI;${MPI_CXX_COMPILE_FLAGS}")
+    list(APPEND FRUNTEST_LINK_LIBRARIES "${MPI_CXX_LIBRARIES};${CYCLOPS_PATH}/lib/libctf.a")
   else()
     message(FATAL_ERROR "MPI was not found! This is required for Cyclops")
   endif()
@@ -207,6 +209,7 @@ if(PANACHE_OPENMP)
     list(APPEND RUNTEST_CXX_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
 
     # BUG - cmake doesn't support Fortran in FindOpenMP, so this is a big assumption
+    list(APPEND FRUNTEST_F90_LINK_FLAGS "${OpenMP_CXX_FLAGS}") 
     list(APPEND LIBERD_F90_FLAGS "${OpenMP_CXX_FLAGS}") 
   else()
     message(WARNING "OpenMP was not found! Disabling...")
@@ -237,6 +240,7 @@ if(NOT LAPACK_FOUND)
 else()
   message(STATUS "LAPACK Libraries: ${LAPACK_LIBRARIES}")
   list(APPEND RUNTEST_LINK_LIBRARIES ${LAPACK_LIBRARIES})
+  list(APPEND FRUNTEST_LINK_LIBRARIES ${LAPACK_LIBRARIES})
 endif()
 
 
@@ -248,6 +252,7 @@ endif()
 if(PANACHE_LAPACK64)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_LAPACK64")
   list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_LAPACK64") 
+  list(APPEND FRUNTEST_F90_FLAGS "-DPANACHE_LAPACK64") 
   message(STATUS "Using 64-bit lapack interface")
 else()
   message(STATUS "Using 32-bit lapack interface")
@@ -261,6 +266,7 @@ endif()
 if(PANACHE_INTERFACE64)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_INTERFACE64")
   list(APPEND RUNTEST_CXX_FLAGS "-DPANACHE_INTERFACE64")
+  list(APPEND FRUNTEST_F90_FLAGS "-DPANACHE_INTERFACE64")
   message(STATUS "Building 64-bit C/Fortran interface")
 else()
   message(STATUS "Building 32-bit C/Fortran interface")
@@ -298,6 +304,7 @@ if(PANACHE_USE_LIBINT)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT")
   list(APPEND PANACHE_CXX_INCLUDES "${LIBINT_INCLUDEDIR}")
   list(APPEND RUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
+  list(APPEND FRUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
 endif()
 
 
@@ -313,6 +320,7 @@ if(PANACHE_USE_LIBINT2)
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBINT2")
   list(APPEND PANACHE_CXX_INCLUDES "${LIBINT_INCLUDEDIR}")
   list(APPEND RUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
+  list(APPEND FRUNTEST_LINK_LIBRARIES ${LIBINT_LIBRARY})
 endif()
 
 
@@ -320,6 +328,7 @@ if(PANACHE_USE_LIBERD)
   message(STATUS "Using internal LibERD")
   list(APPEND PANACHE_CXX_FLAGS "-DPANACHE_USE_LIBERD")
   list(APPEND RUNTEST_LINK_LIBRARIES panache_erd)
+  list(APPEND FRUNTEST_LINK_LIBRARIES panache_erd)
 endif()
 
 
