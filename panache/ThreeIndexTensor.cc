@@ -118,12 +118,12 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     storeflags &= ~QSTORAGE_PACKED;
 
 
-    if( !Cmo_ && 
+    if( (!Cmo_ || nocc_ == 0) && 
         ((qflags & QGEN_QMO) || 
          (qflags & QGEN_QOO) || 
          (qflags & QGEN_QOV) || 
          (qflags & QGEN_QVV)) )
-        throw RuntimeError("Set the c-matrix first!");
+        throw RuntimeError("Set the c-matrix and occupations first!");
 
 
     // only do this stuff the first time!
