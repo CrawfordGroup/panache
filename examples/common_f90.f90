@@ -22,13 +22,13 @@ open(unit=11, file=fullpath, status='old',iostat=s)
 read(11, *) ncenter,ncenterdum,symdumm,symdumm
 
 
-allocate(xyz(1:ncenter,1:3), stat=s)
+allocate(xyz(1:3, 1:ncenter), stat=s)
 allocate(symbols(1:ncenter), stat=s)
 allocate(Z(1:ncenter), stat=s)
 allocate(masses(1:ncenter), stat=s)
 
 do i = 1,ncenter
-    read(11, *) symbols(i), Z(i), xyz(i,1:3),masses(i)
+    read(11, *) symbols(i), Z(i), xyz(1:3,i),masses(i)
 end do
 
 close(unit=11)
@@ -152,6 +152,8 @@ do i=1,ncenter
   end do
   write(6,*)
 end do
+write(6,*)
+write(6,*)
 end subroutine PrintBasis
 
 
