@@ -148,11 +148,7 @@ extern "C" {
                                    int * naux, int * ndim1, int * ndim2)
     {
         CheckHandle(handle, __FUNCTION__);
-        int nauxtmp, ndim1tmp, ndim2tmp;
-        int ret = xtensors_[handle]->TensorDimensions(tensorflag, nauxtmp, ndim1tmp, ndim2tmp);
-        *naux = nauxtmp;
-        *ndim1 = ndim1tmp;
-        *ndim2 = ndim2tmp;
+        int ret = xtensors_[handle]->TensorDimensions(tensorflag, *naux, *ndim1, *ndim2);
         return ret;
     }
 

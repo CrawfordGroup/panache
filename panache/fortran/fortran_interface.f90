@@ -157,10 +157,10 @@ module FToPanache
       integer(C_INT), intent(out) :: actual
     end subroutine
 
-    subroutine panache_setnocc(handle, nocc, nvir) bind(C, name="panache_setnocc")
+    subroutine panache_setnocc(handle, nocc, nfroz) bind(C, name="panache_setnocc")
       use iso_c_binding
       implicit none
-      integer(C_INT), intent(in), value :: handle, nocc, nvir
+      integer(C_INT), intent(in), value :: handle, nocc, nfroz
     end subroutine
 
     subroutine panache_stdout() bind(C, name="panache_stdout")
@@ -739,9 +739,10 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
   allocate(pshells(pnshells))
   allocate(pexpptr(pnshells))
   allocate(pcoefptr(pnshells))
-  allocate(ashells(pnshells))
-  allocate(aexpptr(pnshells))
-  allocate(acoefptr(pnshells))
+
+  allocate(ashells(anshells))
+  allocate(aexpptr(anshells))
+  allocate(acoefptr(anshells))
 
 
   call ArraysToShellInfo(pnshells, primary_nprimpershell, primary_am, primary_is_pure, &
@@ -774,7 +775,7 @@ subroutine panachef_dfinit(ncenters, xyz, symbols, &
     deallocate(aexpptr(i)%ptr)
     deallocate(acoefptr(i)%ptr)
   end do
-  deallocate(pshells)
+  deallocate(ashells)
 
   deallocate(directoryarr) 
 
