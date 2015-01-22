@@ -641,7 +641,7 @@ end subroutine
 !!
 !! \param [in] ncenters    The number of basis function centers
 !! \param [in] xyz         Coordinates of the basis function centers. In order:
-!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN) (ie xyz(1:3, 1:ncenter))
 !! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
 !! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
 !!                                       Expected to be of length ncenters.
@@ -799,7 +799,7 @@ end subroutine
 !!
 !! \param [in] ncenters    The number of basis function centers
 !! \param [in] xyz         Coordinates of the basis function centers. In order:
-!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN) (ie xyz(1:3, 1:ncenter))
 !! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
 !! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
 !!                                       Expected to be of length ncenters.
@@ -919,7 +919,7 @@ end subroutine
 !!
 !! \param [in] ncenters    The number of basis function centers
 !! \param [in] xyz         Coordinates of the basis function centers. In order:
-!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN)
+!!                         (x1, y1, z1, x2, y2, z2, ..., xN, yN, zN) (ie xyz(1:3, 1:ncenter))
 !! \param [in] symbols     Atomic symbols for each center, as a set of \p ncenters strings
 !! \param [in] primary_nshellspercenter  Number of shells on each center for the primary basis.
 !!                                       Expected to be of length ncenters.
