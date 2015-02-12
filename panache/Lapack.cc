@@ -1,5 +1,5 @@
 #include <stdexcept> // for std::invalid_argument
-#include "panache/Lapack.h" // for definition of int_t
+#include "panache/Lapack.h" // for definition of lapack_int_t
 
 #if FC_SYMBOL==1
 #define F_DCOPY  dcopy
@@ -81,24 +81,24 @@ extern "C"
 {
 
 // Blas
-extern void F_DCOPY(int_t *length, double *x, int_t *inc_x,  double *y, int_t *inc_y);
-extern void F_DAXPY(int_t *length, double *a, double *x, int_t *inc_x,  double *y, int_t *inc_y);
-extern double F_DDOT(int_t *n, double *x, int_t *inc_x, double *y, int_t *inc_y);
-extern void F_DSCAL(int_t *n, double *alpha, double *vec, int_t *inc);
-extern void F_DSWAP(int_t *length, double *x, int_t *inc_x, double *y, int_t *inc_y);
+extern void F_DCOPY(lapack_int_t *length, double *x, lapack_int_t *inc_x,  double *y, lapack_int_t *inc_y);
+extern void F_DAXPY(lapack_int_t *length, double *a, double *x, lapack_int_t *inc_x,  double *y, lapack_int_t *inc_y);
+extern double F_DDOT(lapack_int_t *n, double *x, lapack_int_t *inc_x, double *y, lapack_int_t *inc_y);
+extern void F_DSCAL(lapack_int_t *n, double *alpha, double *vec, lapack_int_t *inc);
+extern void F_DSWAP(lapack_int_t *length, double *x, lapack_int_t *inc_x, double *y, lapack_int_t *inc_y);
 
 // Blas 2/3
-extern void F_DGEMM(char*, char*, int_t*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*, double*, double*, int_t*);
-extern void F_DTRSM(char*, char*, char*, char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*);
-extern void F_DSYMM(char*, char*, int_t*, int_t*, double*, double*, int_t*, double*, int_t*, double*, double*, int_t*);
+extern void F_DGEMM(char*, char*, lapack_int_t*, lapack_int_t*, lapack_int_t*, double*, double*, lapack_int_t*, double*, lapack_int_t*, double*, double*, lapack_int_t*);
+extern void F_DTRSM(char*, char*, char*, char*, lapack_int_t*, lapack_int_t*, double*, double*, lapack_int_t*, double*, lapack_int_t*);
+extern void F_DSYMM(char*, char*, lapack_int_t*, lapack_int_t*, double*, double*, lapack_int_t*, double*, lapack_int_t*, double*, double*, lapack_int_t*);
 
 
 // Lapack
-extern int_t F_DGEQRF(int_t*, int_t*, double*, int_t*, double*, double*, int_t*,  int_t*);
-extern int_t F_DORGQR(int_t*, int_t*, int_t*, double*, int_t*, double*, double*, int_t*,  int_t*);
-extern int_t F_DPOTRF(char*, int_t*, double*, int_t*,  int_t*);
-extern int_t F_DPOTRI(char*, int_t*, double*, int_t*,  int_t*);
-extern int_t F_DSYEV(char*, char*, int_t*, double*, int_t*, double*, double*, int_t*,  int_t*);
+extern lapack_int_t F_DGEQRF(lapack_int_t*, lapack_int_t*, double*, lapack_int_t*, double*, double*, lapack_int_t*,  lapack_int_t*);
+extern lapack_int_t F_DORGQR(lapack_int_t*, lapack_int_t*, lapack_int_t*, double*, lapack_int_t*, double*, double*, lapack_int_t*,  lapack_int_t*);
+extern lapack_int_t F_DPOTRF(char*, lapack_int_t*, double*, lapack_int_t*,  lapack_int_t*);
+extern lapack_int_t F_DPOTRI(char*, lapack_int_t*, double*, lapack_int_t*,  lapack_int_t*);
+extern lapack_int_t F_DSYEV(char*, char*, lapack_int_t*, double*, lapack_int_t*, double*, double*, lapack_int_t*,  lapack_int_t*);
 } // end extern "C"
 
 
@@ -106,19 +106,19 @@ extern int_t F_DSYEV(char*, char*, int_t*, double*, int_t*, double*, double*, in
 namespace panache {
 
 // BLAS
-void C_DCOPY(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
+void C_DCOPY(lapack_int_t length, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y)
 {
         ::F_DCOPY(&length, x, &inc_x, y, &inc_y);
 }
 
 
-void C_DAXPY(int_t length, double a, double *x, int_t inc_x, double *y, int_t inc_y)
+void C_DAXPY(lapack_int_t length, double a, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y)
 {
         ::F_DAXPY(&length, &a, x, &inc_x, y, &inc_y);
 }
 
 
-double C_DDOT(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
+double C_DDOT(lapack_int_t length, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y)
 {
     if(length == 0) return 0.0;
 
@@ -126,12 +126,12 @@ double C_DDOT(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
 }
 
 
-void C_DSCAL(int_t length, double alpha, double *vec, int_t inc)
+void C_DSCAL(lapack_int_t length, double alpha, double *vec, lapack_int_t inc)
 {
         ::F_DSCAL(&length, &alpha, vec, &inc);
 }
 
-void C_DSWAP(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
+void C_DSWAP(lapack_int_t length, double *x, lapack_int_t inc_x, double *y, lapack_int_t inc_y)
 {
         ::F_DSWAP(&length, x, &inc_x, y, &inc_y);
 }
@@ -141,10 +141,10 @@ void C_DSWAP(int_t length, double *x, int_t inc_x, double *y, int_t inc_y)
 
 
 // BLAS 2&3
-void C_DGEMM(char transa, char transb, int_t m, int_t n, int_t k, 
-             double alpha, double* a, int_t lda,
-             double* b, int_t ldb, 
-             double beta, double* c, int_t ldc)
+void C_DGEMM(char transa, char transb, lapack_int_t m, lapack_int_t n, lapack_int_t k, 
+             double alpha, double* a, lapack_int_t lda,
+             double* b, lapack_int_t ldb, 
+             double beta, double* c, lapack_int_t ldc)
 {
     if(m == 0 || n == 0 || k == 0) return;
     ::F_DGEMM(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc);
@@ -153,7 +153,7 @@ void C_DGEMM(char transa, char transb, int_t m, int_t n, int_t k,
 
 
 void C_DTRSM(char side, char uplo, char transa, char diag,
-             int_t m, int_t n, double alpha, double* a, int_t lda, double* b, int_t ldb)
+             lapack_int_t m, lapack_int_t n, double alpha, double* a, lapack_int_t lda, double* b, lapack_int_t ldb)
 {
     if(m == 0 || n == 0) return;
     if (uplo == 'U' || uplo == 'u') uplo = 'L';
@@ -166,7 +166,7 @@ void C_DTRSM(char side, char uplo, char transa, char diag,
 }
 
 
-void C_DSYMM(char side, char uplo, int_t m, int_t n, double alpha, double* a, int_t lda, double* b, int_t ldb, double beta, double* c, int_t ldc)
+void C_DSYMM(char side, char uplo, lapack_int_t m, lapack_int_t n, double alpha, double* a, lapack_int_t lda, double* b, lapack_int_t ldb, double beta, double* c, lapack_int_t ldc)
 {
     if(m == 0 || n == 0) return;
     if (uplo == 'U' || uplo == 'u') uplo = 'L';
@@ -180,38 +180,38 @@ void C_DSYMM(char side, char uplo, int_t m, int_t n, double alpha, double* a, in
 
 
 // Lapack
-int_t C_DGEQRF(int_t m, int_t n, double* a, int_t lda, double* tau, double* work, int_t lwork)
+lapack_int_t C_DGEQRF(lapack_int_t m, lapack_int_t n, double* a, lapack_int_t lda, double* tau, double* work, lapack_int_t lwork)
 {
-    int_t info;
+    lapack_int_t info;
     ::F_DGEQRF(&m, &n, a, &lda, tau, work, &lwork, &info);
     return info;
 }
 
 
-int_t C_DORGQR(int_t m, int_t n, int_t k, double* a, int_t lda, double* tau, double* work, int_t lwork)
+lapack_int_t C_DORGQR(lapack_int_t m, lapack_int_t n, lapack_int_t k, double* a, lapack_int_t lda, double* tau, double* work, lapack_int_t lwork)
 {
-    int_t info;
+    lapack_int_t info;
     ::F_DORGQR(&m, &n, &k, a, &lda, tau, work, &lwork, &info);
     return info;
 }
 
-int_t C_DPOTRF(char uplo, int_t n, double* a, int_t lda)
+lapack_int_t C_DPOTRF(char uplo, lapack_int_t n, double* a, lapack_int_t lda)
 {
-    int_t info;
+    lapack_int_t info;
     ::F_DPOTRF(&uplo, &n, a, &lda, &info);
     return info;
 }
 
-int_t C_DPOTRI(char uplo, int_t n, double* a, int_t lda)
+lapack_int_t C_DPOTRI(char uplo, lapack_int_t n, double* a, lapack_int_t lda)
 {
-    int_t info;
+    lapack_int_t info;
     ::F_DPOTRI(&uplo, &n, a, &lda, &info);
     return info;
 }
 
-int_t C_DSYEV(char jobz, char uplo, int_t n, double* a, int_t lda, double* w, double* work, int_t lwork)
+lapack_int_t C_DSYEV(char jobz, char uplo, lapack_int_t n, double* a, lapack_int_t lda, double* w, double* work, lapack_int_t lwork)
 {
-    int_t info;
+    lapack_int_t info;
     ::F_DSYEV(&jobz, &uplo, &n, a, &lda, w, work, &lwork, &info);
     return info;
 }
