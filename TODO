@@ -30,7 +30,7 @@ Enhancements/Optimizations
     Write tensor again
 
 
-- Calling GetBatch/GetQBatch from within a loop requires resolving the
+- Calling GetBatch/GetQBatch/CalcIndex from within a loop requires resolving the
   tensorflag, followed by a vtable lookup to dereference the StoredQTensor object.
   Both of these are probably unwanted when called from within nested loops.
 
@@ -41,3 +41,5 @@ Enhancements/Optimizations
 - SharedPtr objects in some cases can be removed, although the increase in efficiency is probably
   minimal. One place would be the TwoBodyAOInt class, which should assume that the
   BasisSet objects will exist for the lifetime of the TwoBodyAOInt object.
+
+- Implement output to a file option (mostly for C/Fortran interfaces)
