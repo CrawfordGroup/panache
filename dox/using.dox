@@ -91,5 +91,6 @@ is mostly reading basis sets, etc, and would likely not be used in another proje
 
    - \ref usage_fortran_sec
    - \ref usage_cpp_sec
+   - \ref usage_cpp_it_sec
 
 */

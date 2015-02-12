@@ -9,7 +9,8 @@ run, give it a directory under testfiles.
 
 \note This program is meant to give a general outline of the usage of the library. It is
       not meant to be very optimized (for example, using DDOT or DGEMM rather than manually
-      looping over the auxiliary index).
+      looping over the auxiliary index). In addition, you should probably calculate the indices
+      yourself rather than call CalcIndex, as that may be expensive inside of a loop.
 
 \include example_cpp_iterators.cc
 
