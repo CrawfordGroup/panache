@@ -54,6 +54,7 @@ void PrintUsage(void)
          << "-C           Disable cholesky runs\n"
          << "-S           Skip testing (useful for benchmarking)\n"
          << "-X           Skip getting batches + testing (useful for benchmarking)\n"
+         << "-r           Read tensor from disk\n"
          << "-h           Print help (you're looking at it\n"
          << "<dir>        Directory holding the test information\n"
          << "\n\n";
