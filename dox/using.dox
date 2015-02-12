@@ -7,7 +7,7 @@
 
 \section genusage_sec General Notes
 
-\subsection Tensor flags
+\subsection tflags_Sec Tensor flags
 
 Generating and using tensors is often done using flags to select which
 tensors you want. See Flags.h for the list of flags and what they do.
@@ -19,7 +19,8 @@ example,
 dft.GenQTensors(QGEN_QMO | QGEN_QOV, QSTORAGE_ONDISK);
 \endcode
 
-will generate both Qmo and Qov tensors.
+will generate both Qmo and Qov tensors. To use with Fortran, you
+will have to look up the values in Flags.h and sum the numbers yourself.
 
 
 
@@ -75,20 +76,20 @@ DFTensor::GetQBatch() or panache_getqbatch() corresponds to a row for the
 \subsection frozen Frozen orbitals
 
 PANACHE supports frozen occupied orbitals. These are set with 
-panache::ThreeIndexTensor::SetNOcc(), panache_setnocc(), or \link panachef_setnocc() panachef_setnocc()\endlink.
+panache::ThreeIndexTensor::SetNOcc(), panache_setnocc(), or panachef_setnocc().
 In this case, orbital counting for Qmo, Qoo, and Qov start
 at the first non-frozen orbital.
 
 
-\section usage_interfaces Interfaces
+\section usage_interfaces Examples
 
-Panache has interfaces for Fortran, C, and C++. See the following
-separate pages for more detailed information on their usage
+Panache has interfaces for Fortran, C, and C++. See the examples
+for details on their usage.
 
-   - \ref usage_c_sec
+The examples subdirectory contains files for some "common" functions and subroutines. This
+is mostly reading basis sets, etc, and would likely not be used in another project.
 
    - \ref usage_fortran_sec
-
    - \ref usage_cpp_sec
 
 */

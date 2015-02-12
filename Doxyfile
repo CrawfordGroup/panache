@@ -767,6 +767,7 @@ WARN_LOGFILE           =
 INPUT                  = panache/ \
                          panache/storedqtensor/ \
                          panache/fortran/ \
+                         examples/ \
                          dox/
 
 # This tag can be used to specify the character encoding of the source files
@@ -853,7 +854,6 @@ EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_PATTERNS       = */.git/* \
                          */build/* \
-                         */examples/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the

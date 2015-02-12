@@ -7,13 +7,16 @@
 
 \section general_compiling_sec General Considerations
 
-\subsection compiling_f64bit_sec 64-bit vs 32-bit Fortran Interface 
+\subsection compiling_fortran Compiling the Interface
 
-By default, the Fortran interface is compiled using 32-bit integers. If
-you are compiling with "-i8" or are otherwise using 64-bit integers,
-you should enable the \ref PANACHE_INTERFACE64_sec option. You will likely have
-to enable \ref PANACHE_LAPACK64_sec option (see below) Using the C interface
-with the wrong bit-ness may result in compiler warning, but may be safe.
+If it is being used, the Fortran interface should be compiled with in a similar fashion
+to how you are compiling your Fortran code. In particular, pay attention to the
+size of integers.
+
+The Fortran interface is written in Fortran 2003 and handles conversion from
+32-bit and 64-bit to the corresponding C integers automatically. However, the
+Fortran side of the interface must still match that of your own code.
+
 
 
 \subsection compiling_lapack64 64-bit BLAS/Lapack
@@ -26,17 +29,16 @@ suffix), you must enable the \ref PANACHE_LAPACK64_sec option.
 \subsection compiling_backend_sec Integral Backends
 
 The default backend for calculating the two- and three-center integrals
-is an internal function. Although this function doesn't require any external
-libraries, it is likely far too slow for any production purposes.
-Therefore, a backend should be selected by giving the appropriate path
-to either the \ref LIBINT_PATH_sec or the \ref LIBINT2_PATH_sec cmake options.
+is the internal libERD library.  However, libint can be selected
+by giving the appropriate path to either the \ref LIBINT_PATH_sec or
+the \ref LIBINT2_PATH_sec cmake options.
 
 As an alternative, libERD can also be used by specifying
 PANACHE_USE_LIBERD. This code is also internal, but is much
 faster than the default. It requires a Fortran compiler.
 
-Only one integral backend can be specified. If none is specified, SlowERI
-is used.
+Only one integral backend can be specified. If none is specified,
+libERD is used.
 
 
 \section requirements_sec Requirements
@@ -55,10 +57,13 @@ is used.
   - Recommended
       - libint integral package (version 1.X or 2.X)
             - vectorization in v2 is not supported at the moment
+            - must be compiled with contracted integral support
+      - Fortran compiler (if using Fortran interface or libERD)
+            - Support for Fortran 2003 if using Fortran interface
 
 \note The BLAS/Lapack library (and libint library) should match those you are using
-      for your project. It may be possible to do otherwise, but could be very messy. 
- 
+      for your project. It may be possible to do otherwise, but could be very messy.
+
 
 \section compileroverview_sec Overview
 
@@ -144,11 +149,13 @@ containing CMakeLists.txt.
     make install
     \endcode
 
- - Same as previously, but using libint2. See \ref LIBINT2_PATH_sec.
+ - Same as previously, but using libint2 and enabling the Fortran interface.
+   See \ref LIBINT2_PATH_sec.
     \code{.sh}
     CC=icc CXX=icpc FC=ifort \
     cmake -DCMAKE_INSTALL_PREFIX=/my/install/path \
           -DLIBINT2_PATH:FILEPATH=/some/directory/libint2 \
+          -DPANACHE_F03_INTERFACE:Bool=On \
           -DBLA_VENDOR:STRING=Intel10_64lp \
           -DPANACHE_TIMING:Bool=On ../
     make install
@@ -182,7 +189,7 @@ Additional flags to pass to the C++ compiler
 \subsection CMAKE_C_FLAGS_sec CMAKE_C_FLAGS
 Additional flags to pass to the C compiler
 
-\note Not really used - there is no C code!
+\note Not really used - there isn't really any C code!
 
 \subsection CMAKE_Fortran_FLAGS_sec CMAKE_Fortran_FLAGS
 Additional flags to pass to the Fortran compiler
@@ -222,7 +229,7 @@ Path to top level of libint (version 1). The directory structure should be:
 
 
 \subsection PANACHE_USE_LIBERD_sec         PANACHE_USE_LIBERD
-Use internal libERD
+Use internal libERD for integrals (default)
 
 
 \subsection BLA_VENDOR_sec BLA_VENDOR
@@ -262,8 +269,9 @@ Enable timing of some functions. Timings will be printed to the
 usual output (see Output.h)
 
 
-\subsection PANACHE_INTERFACE64_sec        PANACHE_INTERFACE64
-Use 64-bit C/Fortran interfaces to libpanache. May be required if
-compiling the Fortran code with 64-bit integers.
+
+\subsection PANACHE_F03_INTERFACE_sec PANACHE_F03_INTERFACE
+Enable the use of the Fortran interface. Your code does not necessarily have
+to be in Fortran 2003, but the interface was written in Fortran 2003.
 
 */

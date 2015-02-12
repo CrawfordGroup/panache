@@ -1,8 +1,8 @@
-/*! \page usage_cpp_sec C++ Interface
+/*! \page usage_cpp_it_sec C++ Interface (with iterators)
 
-\section usage_cpp_df_sec Density Fitting C++ Interface
+\section usage_cpp_it_df_sec Density Fitting C++ Interface
 
-The following is the code of the file examples/example_cpp.cc.
+The following is the code of the file examples/example_cpp_iterators.cc.
 
 This example calculates the MP2 correlation energy for a test molecule. To
 run, give it a directory under testfiles.
@@ -11,6 +11,6 @@ run, give it a directory under testfiles.
       not meant to be very optimized (for example, using DDOT or DGEMM rather than manually
       looping over the auxiliary index).
 
-\include example_cpp.cc
+\include example_cpp_iterators.cc
 
 */
