@@ -28,3 +28,16 @@ Enhancements/Optimizations
     Read tensor
     Contract with J
     Write tensor again
+
+
+- Calling GetBatch/GetQBatch from within a loop requires resolving the
+  tensorflag, followed by a vtable lookup to dereference the StoredQTensor object.
+  Both of these are probably unwanted when called from within nested loops.
+
+  One possible solution, at least for C++, is to provide a function that returns
+  a pointer to the GetBatch/GetQBatch function from that specific class. This avoids
+  at least the resolution of the tensorflag, and maybe also the vtable lookup (?)
+
+- SharedPtr objects in some cases can be removed, although the increase in efficiency is probably
+  minimal. One place would be the TwoBodyAOInt class, which should assume that the
+  BasisSet objects will exist for the lifetime of the TwoBodyAOInt object.
