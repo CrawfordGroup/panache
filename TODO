@@ -1,0 +1,30 @@
+---------------
+Bugs
+---------------
+None known
+
+
+
+---------------------------
+Enhancements/Optimizations
+---------------------------
+- In density fitting, the transformation with C matrices
+  can be done before the contraction with the metric. In doing
+  so, the contraction with the metric is much faster, in particular
+  with the OO and OV blocks.
+
+  This, however, comes at the expense of disk IO when storing to disk.
+  There would be a great speedup in memory, however, particuarly for OO blocks.
+
+  This will require the GenDFQso functions to be replaced, more or less, and to
+  take a vector of C matrices like the transformation function does.
+
+  Outline:
+    Loop over q
+      Generate all ij for a particular shell index q
+      Transform with necessary C matrices
+      Write (to mem/disk)
+
+    Read tensor
+    Contract with J
+    Write tensor again
