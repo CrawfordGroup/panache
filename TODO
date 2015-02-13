@@ -43,3 +43,4 @@ Enhancements/Optimizations
   BasisSet objects will exist for the lifetime of the TwoBodyAOInt object.
 
 - Implement output to a file option (mostly for C/Fortran interfaces)
+  (pass in file path, and just open file in append mode)

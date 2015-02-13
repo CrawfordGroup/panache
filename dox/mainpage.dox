@@ -24,6 +24,7 @@ decomposition.
   - Frozen orbitals supported
 
   - Flexible storage options (disk, memory, distributed)
+    - Can keep disk files after process ends for later use
 
   - C++, C, and Fortran interfaces
 
@@ -38,8 +39,6 @@ decomposition.
     - Libint2 (https://sourceforge.net/p/libint/home/)
     - LibERD (included with PANACHE)
 
-  - 32- and 64-bit interfaces
-
 
 \section main_sec Contents
 
@@ -52,7 +51,7 @@ decomposition.
 \section Authors
 
 PANACHE is primarily developed by Dr. Benjamin Pritchard, and by the
-group of Dr. T. Daniel Crawford, at Virginia Tech.
+groups of Dr. T. Daniel Crawford at Virginia Tech and David Sherrial at Georgia Tech.
 
 Development of PANACHE funded by the National Science Foundation (award <a href="http://www.nsf.gov/awardsearch/showAward?AWD_ID=1147794">1147794</a>)
 
