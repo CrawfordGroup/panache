@@ -1,7 +1,18 @@
 #ifndef PANACHE_LAPACK_H
 #define PANACHE_LAPACK_H
 
-#include "panache/int_t.h"
+#include <cstdint>
+
+/*! \def lapack_int_t
+ *
+ *  \brief Is set to either int64_t or int32_t, depending on the PANACHE_USE_64LAPACK option.
+ *         See \ref compiling_lapack64
+ */
+#ifdef PANACHE_LAPACK64
+  #define lapack_int_t int64_t
+#else
+  #define lapack_int_t int32_t
+#endif
 
 
 namespace panache {
