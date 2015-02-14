@@ -29,6 +29,14 @@ Enhancements/Optimizations
     Contract with J
     Write tensor again
 
+  ** One possible way to do it - Derive from MemoryQTensor, and 
+     make GenDFQTensor a dummy function. Then, actually generate and
+     transform in one shot in the Transform_() function. This would also
+     need a new flag.
+
+     Problem: FittingMetric may not exist then. Then again, it's a shared_ptr
+              right now...
+
 
 - Calling GetBatch/GetQBatch/CalcIndex from within a loop requires resolving the
   tensorflag, followed by a vtable lookup to dereference the StoredQTensor object.
