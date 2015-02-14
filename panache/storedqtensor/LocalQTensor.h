@@ -83,6 +83,10 @@ protected:
                             std::vector<StoredQTensor *> results,
                             int nthreads);
 
+    // pass through to derived classes
+    virtual void Finalize_(void) = 0;
+    virtual void NoFinalize_(void) = 0;
+
     std::string directory_; //!< Directory where to store files if necessary
     std::string filename_;
     std::string dimfilename_;

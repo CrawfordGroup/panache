@@ -142,6 +142,24 @@ public:
                    std::vector<StoredQTensor *> results,
                    int nthreads);
 
+    /*!
+     * \brief Perform any final tranformations, etc, on the tensor
+     *
+     * Mostly used to apply the metric to density fitting 3-index tensors
+     *
+     * \warning This is either applied to Qso before transformation, or to each
+     * transformed tensor. Therefore, whatever is done in Finalize_()
+     * MUST be distributive to those tensors.
+     */ 
+    void Finalize(void);
+
+    /*!
+     * \brief Called when this tensor is not going to be finalized
+     *
+     * Can free up some memory, etc
+     */
+    void NoFinalize(void);
+
 
     /// Get the timer for generation of this tensor
     CumulativeTime & GenTimer(void);
@@ -227,6 +245,10 @@ protected:
                             const std::vector<TransformMat> & right,
                             std::vector<StoredQTensor *> results,
                             int nthreads) = 0;
+
+    /// \copydoc Finalize()
+    /// To be implemented by derived classes
+    virtual void Finalize_(void) = 0;
 
     /// Get the total size of the stored tensor
     int storesize(void) const;

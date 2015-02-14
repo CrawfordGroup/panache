@@ -140,5 +140,13 @@ MemoryQTensor::~MemoryQTensor()
     }
 }
 
+void MemoryQTensor::Finalize_(void)
+{
+}
+
+void MemoryQTensor::NoFinalize_(void)
+{
+}
+
 } // close namespace panache
 

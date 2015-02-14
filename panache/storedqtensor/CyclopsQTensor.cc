@@ -800,6 +800,13 @@ std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
   return std::pair<int64_t, double>(index, max);
 }
 
+void CyclopsQTensor::Finalize_(void)
+{
+}
+
+void CyclopsQTensor::NoFinalize_(void)
+{
+}
 
 } // close namespace panache
 

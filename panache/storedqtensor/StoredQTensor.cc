@@ -205,5 +205,17 @@ void StoredQTensor::Transform(const std::vector<TransformMat> & left,
         it->filled_ = true;
 }
 
+void StoredQTensor::Finalize(void)
+{
+    // call derived class function
+    Finalize_();
+}
+
+void StoredQTensor::NoFinalize(void)
+{
+    // call derived class function
+    Finalize_();
+}
+
 } // close namespace panache
 

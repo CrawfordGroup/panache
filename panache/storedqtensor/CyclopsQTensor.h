@@ -131,6 +131,9 @@ protected:
                             std::vector<StoredQTensor *> results,
                             int nthreads);
 
+    virtual void Finalize_(void);
+    virtual void NoFinalize_(void);
+
 public:
     /*
      * \brief Construct with some basic information

@@ -296,6 +296,13 @@ DiskQTensor::DiskQTensor(MemoryQTensor * memqt)
 }
 
 
+void DiskQTensor::Finalize_(void)
+{
+}
+
+void DiskQTensor::NoFinalize_(void)
+{
+}
 
 
 

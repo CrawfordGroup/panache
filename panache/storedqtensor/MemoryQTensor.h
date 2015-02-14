@@ -38,6 +38,8 @@ protected:
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
     virtual void Init_(void);
+    virtual void Finalize_(void);
+    virtual void NoFinalize_(void);
 
 private:
     std::unique_ptr<double[]> data_;
