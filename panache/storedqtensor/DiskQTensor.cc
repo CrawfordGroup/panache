@@ -246,7 +246,7 @@ void DiskQTensor::WriteDimFile_(void)
                              // throw with EOF
 }
 
-void DiskQTensor::GenDFQso_(const SharedFittingMetric & fit,
+void DiskQTensor::GenDFQso_(const SharedFittingMetric fit,
                             const SharedBasisSet primary,
                             const SharedBasisSet auxiliary,
                             int nthreads)
@@ -406,12 +406,10 @@ DiskQTensor::DiskQTensor(MemoryQTensor * memqt)
 }
 
 
-void DiskQTensor::Finalize_(void)
+void DiskQTensor::Finalize_(int nthreads)
 {
-}
-
-void DiskQTensor::NoFinalize_(void)
-{
+    // Nothing to do?
+    fittingmetric_.reset();
 }
 
 

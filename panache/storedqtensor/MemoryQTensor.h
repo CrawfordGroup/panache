@@ -38,10 +38,12 @@ protected:
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
     virtual void Init_(void);
-    virtual void Finalize_(void);
-    virtual void NoFinalize_(void);
+    virtual void Finalize_(int nthreads);
 
-    virtual void GenDFQso_(const SharedFittingMetric & fit,
+    // Now in LocalQTensor class
+    //virtual void NoFinalize_(void);
+
+    virtual void GenDFQso_(const SharedFittingMetric fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads);

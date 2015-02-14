@@ -117,7 +117,7 @@ protected:
     virtual void ReadByQ_(double * data, int nq, int qstart);
     virtual void Init_(void);
 
-    virtual void GenDFQso_(const SharedFittingMetric & fit,
+    virtual void GenDFQso_(const SharedFittingMetric fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads);
@@ -131,7 +131,7 @@ protected:
                             std::vector<StoredQTensor *> results,
                             int nthreads);
 
-    virtual void Finalize_(void);
+    virtual void Finalize_(int nthreads);
     virtual void NoFinalize_(void);
 
 public:

@@ -126,6 +126,10 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         throw RuntimeError("Set the c-matrix and occupations first!");
 
 
+    // is qso finalized
+    bool qsofinal = false;
+
+
     // only do this stuff the first time!
     if(!qso_ || !qso_->filled())
     {
@@ -158,7 +162,10 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         // 
         // If not, only finalize the transformed tensors
         if(qflags & QGEN_QSO)
-            qso_->Finalize();
+        {
+            qso_->Finalize(nthreads_);
+            qsofinal = true;
+        }
 
 
         // Decide how we want to proceed with respect to basis function ordering
@@ -190,7 +197,11 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         if(Cmo_)
             SplitCMat();
     }
-
+    else
+    {
+        // qso already existed and therefore must have been finalized
+        qsofinal = true;
+    }
 
     std::vector<StoredQTensor::TransformMat> lefts;
     std::vector<StoredQTensor::TransformMat> rights;
@@ -249,16 +260,17 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         qso_->Transform(lefts, rights, qouts, nthreads_);
 
     // Erase Qso if not requested
-    // Finalize the transformed matrices only if Qso isn't wanted
-    // If it is wanted, Qso has been finalized and therefore the other
-    // tensors don't need to be
     if(!(qflags & QGEN_QSO))
     {
         qso_->NoFinalize();
         qso_.reset();
+    }
 
+    // Finalize the transformed matrices if needed
+    if(!qsofinal)
+    {
         for(auto & it : qouts)
-            it->Finalize();
+            it->Finalize(nthreads_);
     }
     else
     {

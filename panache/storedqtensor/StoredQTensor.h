@@ -102,7 +102,7 @@ public:
      * \param [in] auxiliary Auxiliary basis set
      * \param [in] nthreads Number of threads to use
      */ 
-    void GenDFQso(const SharedFittingMetric & fit,
+    void GenDFQso(const SharedFittingMetric fit,
                   const SharedBasisSet primary,
                   const SharedBasisSet auxiliary,
                   int nthreads);
@@ -151,7 +151,7 @@ public:
      * transformed tensor. Therefore, whatever is done in Finalize_()
      * MUST be distributive to those tensors.
      */ 
-    void Finalize(void);
+    void Finalize(int nthreads);
 
     /*!
      * \brief Called when this tensor is not going to be finalized
@@ -227,7 +227,7 @@ protected:
 
     /// \copydoc GenDFQso()
     /// To be implemented by derived classes
-    virtual void GenDFQso_(const SharedFittingMetric & fit,
+    virtual void GenDFQso_(const SharedFittingMetric fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads) = 0;
@@ -248,7 +248,11 @@ protected:
 
     /// \copydoc Finalize()
     /// To be implemented by derived classes
-    virtual void Finalize_(void) = 0;
+    virtual void Finalize_(int nthreads) = 0;
+
+    /// \copydoc NoFinalize()
+    /// To be implemented by derived classes
+    virtual void NoFinalize_(void) = 0;
 
     /// Get the total size of the stored tensor
     int storesize(void) const;

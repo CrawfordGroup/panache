@@ -159,7 +159,7 @@ CyclopsQTensor::FillWithMatrix_(const double * mat, int nrow, int ncol, int sym,
 }
 
 
-void CyclopsQTensor::GenDFQso_(const SharedFittingMetric & fit,
+void CyclopsQTensor::GenDFQso_(const SharedFittingMetric fit,
                                        const SharedBasisSet primary,
                                        const SharedBasisSet auxiliary,
                                        int nthreads)
@@ -800,7 +800,7 @@ std::pair<int64_t, double> CyclopsQTensor::FindVecMax_(CTF_Vector & vec)
   return std::pair<int64_t, double>(index, max);
 }
 
-void CyclopsQTensor::Finalize_(void)
+void CyclopsQTensor::Finalize_(int nthreads)
 {
 }
 

@@ -74,6 +74,8 @@ UniqueStoredQTensor DFTensor::GenQso(int storeflags) const
     // is necessary
     // Overhead for shared pointer is negligible here, but consider making it a straight
     // pass by reference in the future
+    // NOTE: Keeping it a shared pointer since it may be held by some StoredQTensor
+    // derived classes and applied after MO transformation
     SharedFittingMetric fittingmetric(new FittingMetric(auxiliary_, nthreads_));
 
     if(optflag_ & DFOPT_COULOMB)

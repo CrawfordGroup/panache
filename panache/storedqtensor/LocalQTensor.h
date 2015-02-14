@@ -71,7 +71,7 @@ protected:
     virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
 
     // Implemented in MemoryQTensor and DiskQTensor
-    virtual void GenDFQso_(const SharedFittingMetric & fit,
+    virtual void GenDFQso_(const SharedFittingMetric fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
                            int nthreads) = 0;
@@ -86,8 +86,8 @@ protected:
                             int nthreads);
 
     // pass through to derived classes
-    virtual void Finalize_(void) = 0;
-    virtual void NoFinalize_(void) = 0;
+    virtual void Finalize_(int nthreads) = 0;
+    virtual void NoFinalize_(void);
 
     std::string directory_; //!< Directory where to store files if necessary
     std::string filename_;

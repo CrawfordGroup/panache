@@ -157,7 +157,7 @@ CumulativeTime & StoredQTensor::GetBatchTimer(void)
     return getijbatch_timer_;
 }
 
-void StoredQTensor::GenDFQso(const SharedFittingMetric & fit,
+void StoredQTensor::GenDFQso(const SharedFittingMetric fit,
                                      const SharedBasisSet primary,
                                      const SharedBasisSet auxiliary,
                                      int nthreads)
@@ -205,16 +205,27 @@ void StoredQTensor::Transform(const std::vector<TransformMat> & left,
         it->filled_ = true;
 }
 
-void StoredQTensor::Finalize(void)
+void StoredQTensor::Finalize(int nthreads)
 {
+// Finalizing is part of generation
+#ifdef PANACHE_TIMING
+    Timer tim;
+    tim.Start();
+#endif
+
     // call derived class function
-    Finalize_();
+    Finalize_(nthreads);
+
+#ifdef PANACHE_TIMING
+    tim.Stop();
+    GenTimer().AddTime(tim);
+#endif
 }
 
 void StoredQTensor::NoFinalize(void)
 {
     // call derived class function
-    Finalize_();
+    NoFinalize_();
 }
 
 } // close namespace panache

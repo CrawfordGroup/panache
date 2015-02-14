@@ -149,33 +149,26 @@ MemoryQTensor::~MemoryQTensor()
     }
 }
 
-void MemoryQTensor::GenDFQso_(const SharedFittingMetric & fit,
+void MemoryQTensor::GenDFQso_(const SharedFittingMetric fit,
                               const SharedBasisSet primary,
                               const SharedBasisSet auxiliary,
                               int nthreads)
 {
-    int maxpershell = primary->max_function_per_shell();
-    int maxpershell2 = maxpershell*maxpershell;
-
-    double * J = fit->get_metric();
+    // Store the fitting metric for later use
+    fittingmetric_ = fit;
+    
+    int nd12 = ndim12();
 
     // default constructor = zero basis
     SharedBasisSet zero(new BasisSet);
 
     std::vector<SharedTwoBodyAOInt> eris;
     std::vector<const double *> eribuffers;
-    std::vector<double *> A, B;
-
-    int naux = StoredQTensor::naux();
 
     for(int i = 0; i < nthreads; i++)
     {
         eris.push_back(GetERI(auxiliary, zero, primary, primary));
         eribuffers.push_back(eris.back()->buffer());
-
-        // temporary buffers
-        A.push_back(new double[naux*maxpershell2]);
-        B.push_back(new double[naux*maxpershell2]);
     }
 
 
@@ -185,82 +178,106 @@ void MemoryQTensor::GenDFQso_(const SharedFittingMetric & fit,
 #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
 #endif
-    for (int M = 0; M < nprimshell; M++)
+    for (int P = 0; P < nauxshell; P++)
     {
         int threadnum = 0;
-
 #ifdef _OPENMP
         threadnum = omp_get_thread_num();
 #endif
+        int np = auxiliary->shell(P).nfunction();
+        int pstart = auxiliary->shell(P).function_index();
+        int pend = pstart + np;
 
-        int nm = primary->shell(M).nfunction();
-        int mstart = primary->shell(M).function_index();
-        int mend = mstart + nm;
-
-        for (int N = 0; N <= M; N++)
+        for (int M = 0; M < nprimshell; M++)
         {
-            int nn = primary->shell(N).nfunction();
-            int nstart = primary->shell(N).function_index();
-            //int nend = nstart + nn;
 
-            for (int P = 0; P < nauxshell; P++)
+
+            int nm = primary->shell(M).nfunction();
+            int mstart = primary->shell(M).function_index();
+            int mend = mstart + nm;
+
+            for (int N = 0; N <= M; N++)
             {
-                int np = auxiliary->shell(P).nfunction();
-                int pstart = auxiliary->shell(P).function_index();
-                int pend = pstart + np;
+                int nn = primary->shell(N).nfunction();
+                int nstart = primary->shell(N).function_index();
+                //int nend = nstart + nn;
 
                 int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
 
+                // keep in mind that we are storing this packed
                 if(ncalc)
                 {
-                    for (int p = pstart, index = 0; p < pend; p++)
+                    if(N == M)
                     {
-                        for (int m = 0; m < nm; m++)
+                        for (int p = pstart, p0 = 0; p < pend; p++, p0++)
                         {
-                            for (int n = 0; n < nn; n++, index++)
-                            {
-                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
-                            }
+                            int pp = p*nd12;
+                            int pp0 = p0*nm*nn;
+                        
+                            // index math is tricky
+                            // m0+1 is the number of elements to store, and would increase by
+                            // one as we move down the triangular part
+                            // Remember, this is only for if N==M
+                            for (int m = mstart, m0 = 0; m < mend; m++, m0++)
+                                std::copy(&(eribuffers[threadnum][pp0 + m0*nn]), 
+                                          &(eribuffers[threadnum][pp0 + m0*nn + m0+1]), 
+                                          &(data_[pp + calcindex(m, nstart)]));
+                        }
+                    }
+                    else
+                    {
+                        for (int p = pstart, p0 = 0; p < pend; p++, p0++)
+                        {
+                            int pp = p*nd12;
+                            int pp0 = p0*nm*nn;
+                        
+                            for (int m = mstart, m0 = 0; m < mend; m++, m0++)
+                                std::copy(&(eribuffers[threadnum][pp0 + m0*nn]), 
+                                          &(eribuffers[threadnum][pp0 + m0*nn + nn]),
+                                          &(data_[pp + calcindex(m, nstart)]));
                         }
                     }
                 }
             }
-
-            // we now have a set of columns of B, although "condensed"
-            // we can do a DGEMM with J
-            // Access to J are only reads, so that is safe in parallel
-            C_DGEMM('T','T',nm*nn, naux, naux, 1.0, B[threadnum], nm*nn, J, naux, 0.0,
-                    A[threadnum], naux);
-
-
-            // write to disk or store in memory
-            if(N == M)
-            {
-                int iwrite = 1;
-                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                    Write_(A[threadnum] + (m0*nm)*naux, iwrite++, calcindex(m, mstart));
-            }
-            else
-            {
-                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                    Write_(A[threadnum] + (m0*nn)*naux, nn, calcindex(m, nstart));
-            }
         }
     }
 
-    for(int i = 0; i < nthreads; i++)
+    // MULTIPLICATION BY METRIC HAS BEEN MOVED TO FINALIZE
+}
+
+void MemoryQTensor::Finalize_(int nthreads)
+{
+    using std::swap;
+
+    // done with fitting metric
+    //std::cout << "Calling memoryqtensor finalize for " << name() << "\n";
+    if(!fittingmetric_)
+        return;
+
+    double * J = fittingmetric_->get_metric();
+
+    std::unique_ptr<double[]> newdata(new double[storesize()]);
+   
+    if(byq()) 
     {
-        delete [] A[i];
-        delete [] B[i];
+        C_DGEMM('N', 'N', naux(), ndim12(), naux(),
+                     1.0, J, naux(),
+                     data_.get(), ndim12(), 
+                     0.0, newdata.get(), ndim12());
     }
-}
+    else
+    {
+        C_DGEMM('N', 'T', ndim12(), naux(), naux(),
+                     1.0, data_.get(), naux(), 
+                     J, naux(),
+                     0.0, newdata.get(), naux());
+    }
 
-void MemoryQTensor::Finalize_(void)
-{
-}
+    swap(data_, newdata);   
 
-void MemoryQTensor::NoFinalize_(void)
-{
+    fittingmetric_.reset();
+
+    // newdata will be deleted here
 }
 
 } // close namespace panache
