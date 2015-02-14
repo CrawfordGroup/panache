@@ -168,7 +168,7 @@ int main(int argc, char ** argv)
         ten->SetCMatrix(cmat->pointer(), nmo, false);
         ten->SetNOcc(nocc);
 
-        int qflags = (QGEN_QSO | QGEN_QOV);
+        int qflags = QGEN_QOV;
 
         int qstore = 0;
 
