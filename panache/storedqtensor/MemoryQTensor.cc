@@ -11,7 +11,6 @@
 #include "panache/Exception.h"
 #include "panache/BasisSet.h"
 #include "panache/FittingMetric.h"
-#include <iostream>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -154,7 +153,21 @@ void MemoryQTensor::GenDFQso_(const SharedFittingMetric fit,
                               const SharedBasisSet auxiliary,
                               int nthreads)
 {
+    if(storeflags() & QSTORAGE_FASTDF)
+        MemoryQTensor::GenDFQso_Fast_(fit, primary, auxiliary, nthreads);
+    else
+        MemoryQTensor::GenDFQso_Slow_(fit, primary, auxiliary, nthreads);
+}
+
+
+void MemoryQTensor::GenDFQso_Fast_(const SharedFittingMetric fit,
+                                   const SharedBasisSet primary,
+                                   const SharedBasisSet auxiliary,
+                                   int nthreads)
+{
+    //std::cout << "FAST DFQSO GENERATION\n";
     // Store the fitting metric for later use
+    // Storing the metric signals that Finalize_ should apply it
     fittingmetric_ = fit;
     
     int nd12 = ndim12();
@@ -245,13 +258,125 @@ void MemoryQTensor::GenDFQso_(const SharedFittingMetric fit,
     // MULTIPLICATION BY METRIC HAS BEEN MOVED TO FINALIZE
 }
 
+
+void MemoryQTensor::GenDFQso_Slow_(const SharedFittingMetric fit,
+                                   const SharedBasisSet primary,
+                                   const SharedBasisSet auxiliary,
+                                   int nthreads)
+{
+    //std::cout << "SLOW DFQSO GENERATION\n";
+    // don't store the fitting metric!
+    // Storing the metric signals that Finalize_ should apply it
+
+
+    int maxpershell = primary->max_function_per_shell();
+    int maxpershell2 = maxpershell*maxpershell;
+
+    double * J = fit->get_metric();
+
+    // default constructor = zero basis
+    SharedBasisSet zero(new BasisSet);
+
+    std::vector<SharedTwoBodyAOInt> eris;
+    std::vector<const double *> eribuffers;
+    std::vector<double *> A, B;
+
+    int naux = StoredQTensor::naux();
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        eris.push_back(GetERI(auxiliary, zero, primary, primary));
+        eribuffers.push_back(eris.back()->buffer());
+
+        // temporary buffers
+        A.push_back(new double[naux*maxpershell2]);
+        B.push_back(new double[naux*maxpershell2]);
+    }
+
+
+    const int nprimshell = primary->nshell();
+    const int nauxshell = auxiliary->nshell();
+
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+#endif
+    for (int M = 0; M < nprimshell; M++)
+    {
+        int threadnum = 0;
+
+#ifdef _OPENMP
+        threadnum = omp_get_thread_num();
+#endif
+
+        int nm = primary->shell(M).nfunction();
+        int mstart = primary->shell(M).function_index();
+        int mend = mstart + nm;
+
+        for (int N = 0; N <= M; N++)
+        {
+            int nn = primary->shell(N).nfunction();
+            int nstart = primary->shell(N).function_index();
+            //int nend = nstart + nn;
+
+            for (int P = 0; P < nauxshell; P++)
+            {
+                int np = auxiliary->shell(P).nfunction();
+                int pstart = auxiliary->shell(P).function_index();
+                int pend = pstart + np;
+
+                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
+
+                if(ncalc)
+                {
+                    for (int p = pstart, index = 0; p < pend; p++)
+                    {
+                        for (int m = 0; m < nm; m++)
+                        {
+                            for (int n = 0; n < nn; n++, index++)
+                            {
+                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // we now have a set of columns of B, although "condensed"
+            // we can do a DGEMM with J
+            // Access to J are only reads, so that is safe in parallel
+            C_DGEMM('T','T',nm*nn, naux, naux, 1.0, B[threadnum], nm*nn, J, naux, 0.0,
+                    A[threadnum], naux);
+
+
+            // write to disk or store in memory
+            if(N == M)
+            {
+                int iwrite = 1;
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                    Write_(A[threadnum] + (m0*nm)*naux, iwrite++, calcindex(m, mstart));
+            }
+            else
+            {
+                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
+                    Write_(A[threadnum] + (m0*nn)*naux, nn, calcindex(m, nstart));
+            }
+        }
+    }
+
+    for(int i = 0; i < nthreads; i++)
+    {
+        delete [] A[i];
+        delete [] B[i];
+    }
+}
+
 void MemoryQTensor::Finalize_(int nthreads)
 {
     using std::swap;
 
     // done with fitting metric
     //std::cout << "Calling memoryqtensor finalize for " << name() << "\n";
-    if(!fittingmetric_)
+    if(!fittingmetric_) // maybe this wasn't fast df
         return;
 
     double * J = fittingmetric_->get_metric();

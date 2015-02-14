@@ -51,6 +51,16 @@ protected:
 private:
     std::unique_ptr<double[]> data_;
 
+    virtual void GenDFQso_Slow_(const SharedFittingMetric fit,
+                                const SharedBasisSet primary,
+                                const SharedBasisSet auxiliary,
+                                int nthreads);
+
+    // Postpone metric contraction
+    virtual void GenDFQso_Fast_(const SharedFittingMetric fit,
+                                const SharedBasisSet primary,
+                                const SharedBasisSet auxiliary,
+                                int nthreads);
 };
 
 } // close namespace panache

@@ -32,6 +32,7 @@
     #define QSTORAGE_ONDISK  16    //!< Store on disk
     #define QSTORAGE_KEEPDISK  32  //!< Don't erase the file on disk when done. If QSTORAGE_INMEM, writes to disk when done.
     #define QSTORAGE_READDISK  64  //!< Read the file previously saved with QSTORAGE_KEEPDISK
+    #define QSTORAGE_FASTDF    128 //!< Postpone metric multiplication until after MO transformation
 
     #ifdef PANACHE_CYCLOPS
     #define QSTORAGE_CYCLOPS 2048  //!< Use Cyclops library

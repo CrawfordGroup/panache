@@ -133,14 +133,17 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     // only do this stuff the first time!
     if(!qso_ || !qso_->filled())
     {
+        int qsoflags = storeflags;
+
         // remove keep flag if Qso is not wanted
         // this is so it isn't stored with the wrong ordering,
         // etc
+        if(!(qflags & QGEN_QSO))
+          qsoflags &= ~QSTORAGE_KEEPDISK;
 
-        int qsoflags = storeflags;
-
-        if(!(storeflags & QGEN_QSO))
-          qsoflags &= QSTORAGE_KEEPDISK;
+        // Turn on fastdf under some circumstances
+        if(!(qflags & QGEN_QSO) && !(qflags & QGEN_QMO))
+          qsoflags |= QSTORAGE_FASTDF;
 
         qso_ = GenQso(qsoflags); // calls the virtual function
 
@@ -263,7 +266,7 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     if(!(qflags & QGEN_QSO))
     {
         qso_->NoFinalize();
-        qso_.reset();
+        //qso_.reset();
     }
 
     // Finalize the transformed matrices if needed
