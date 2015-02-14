@@ -69,10 +69,11 @@ protected:
      */
     virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
 
+    // Implemented in MemoryQTensor and DiskQTensor
     virtual void GenDFQso_(const SharedFittingMetric & fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
-                           int nthreads);
+                           int nthreads) = 0;
 
     virtual void GenCHQso_(const SharedBasisSet primary,
                            double delta,

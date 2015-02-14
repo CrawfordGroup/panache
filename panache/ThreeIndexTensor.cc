@@ -152,6 +152,15 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
                 RenormCMat(cnorm);
         }
 
+        // Decide how we want to proceed with respect to finalization (ie applying J, etc)
+        //
+        // If we want Qso, then apply it to Qso and not the transformed tensors
+        // 
+        // If not, only finalize the transformed tensors
+        if(qflags & QGEN_QSO)
+            qso_->Finalize();
+
+
         // Decide how we want to proceed with respect to basis function ordering
         // If reordering is necessary, and Qso is not requested, we can just reorder
         //     the C matrix
@@ -238,6 +247,24 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
     if(lefts.size() > 0)
         qso_->Transform(lefts, rights, qouts, nthreads_);
+
+    // Erase Qso if not requested
+    // Finalize the transformed matrices only if Qso isn't wanted
+    // If it is wanted, Qso has been finalized and therefore the other
+    // tensors don't need to be
+    if(!(qflags & QGEN_QSO))
+    {
+        qso_->NoFinalize();
+        qso_.reset();
+
+        for(auto & it : qouts)
+            it->Finalize();
+    }
+    else
+    {
+        for(auto & it : qouts)
+            it->NoFinalize();
+    }
 
 #ifdef PANACHE_TIMING
     tim.Stop();

@@ -41,6 +41,11 @@ protected:
     virtual void Finalize_(void);
     virtual void NoFinalize_(void);
 
+    virtual void GenDFQso_(const SharedFittingMetric & fit,
+                           const SharedBasisSet primary,
+                           const SharedBasisSet auxiliary,
+                           int nthreads);
+
 private:
     std::unique_ptr<double[]> data_;
 
