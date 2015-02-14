@@ -8,6 +8,7 @@
 #define PANACHE_LOCALQTENSOR_H
 
 #include "panache/storedqtensor/StoredQTensor.h"
+#include "panache/FittingMetric.h"
 
 namespace panache
 {
@@ -92,6 +93,10 @@ protected:
     std::string filename_;
     std::string dimfilename_;
     bool existed_;
+
+    // Fitting metric for DF calculations
+    // held for application after MO transformation
+    SharedFittingMetric fittingmetric_;
 
 private:
     /*!

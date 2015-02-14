@@ -305,6 +305,23 @@ void LocalQTensor::Transform_(const std::vector<TransformMat> & left,
         qp = new double[ndim12*nthreads];         // packed q
 
 
+    std::vector<LocalQTensor *> localresults;
+
+    for(size_t i = 0; i < left.size(); i++)
+    {
+        LocalQTensor * qout = dynamic_cast<LocalQTensor *>(results[i]);
+        if(qout == nullptr)
+            throw RuntimeError("Cannot transform LocalQTensor into another type!");
+
+        // Store the fitting metric
+        // (this is still ok if it is a CH calculation, or if
+        // the fitting metric isn't there)
+        qout->fittingmetric_ = fittingmetric_;
+
+        localresults.push_back(qout);
+    }
+
+
     #ifdef _OPENMP
         #pragma omp parallel for num_threads(nthreads)
     #endif
@@ -319,6 +336,8 @@ void LocalQTensor::Transform_(const std::vector<TransformMat> & left,
         for(size_t i = 0; i < left.size(); i++)
         {
 
+            LocalQTensor * qout = localresults[i];
+
             #ifdef PANACHE_TIMING
                 Timer tim;
                 tim.Start();
@@ -329,9 +348,6 @@ void LocalQTensor::Transform_(const std::vector<TransformMat> & left,
             double * lptr = left[i].first;
             double * rptr = right[i].first;
 
-            LocalQTensor * qout = dynamic_cast<LocalQTensor *>(results[i]);
-            if(qout == nullptr)
-                throw RuntimeError("Cannot transform LocalQTensor into another type!");
 
             double * myqe = qe + threadnum*ndim1*ndim2;
             double * myqc = qc + threadnum*maxl*ndim2;
@@ -390,6 +406,11 @@ void LocalQTensor::Transform_(const std::vector<TransformMat> & left,
         delete [] qp;
 }
 
+void LocalQTensor::NoFinalize_(void)
+{
+    // release my pointer to the fitting metric
+    fittingmetric_.reset();
+}
 
 } // close namespace panache
 
