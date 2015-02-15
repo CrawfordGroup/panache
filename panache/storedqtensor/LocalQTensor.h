@@ -51,52 +51,14 @@ public:
 
 protected:
 
-    /*!
-     * \brief Write data with the orbital index as the slowest index
-     *
-     * \param [in] data Pointer to memory location to put the data
-     * \param [in] nij Number of orbital indices to write
-     * \param [in] ijstart Starting combined orbital index
-     */
-    virtual void Write_(double * data, int nij, int ijstart) = 0;
-
-
-    /*!
-     * \brief Write data with the auxiliary index as the slowest index
-     *
-     * \param [in] data Pointer to memory location to put the data
-     * \param [in] nq Number of auxiliary indices to write
-     * \param [in] qstart Starting auxiliary index
-     */
-    virtual void WriteByQ_(double * data, int nq, int qstart) = 0;
-
-    // Implemented in MemoryQTensor and DiskQTensor
-    virtual void GenDFQso_(const SharedFittingMetric fit,
-                           const SharedBasisSet primary,
-                           const SharedBasisSet auxiliary,
-                           int nthreads) = 0;
-
-    virtual void GenCHQso_(const SharedBasisSet primary,
-                           double delta,
-                           int nthreads);
-
-    virtual void Transform_(const std::vector<TransformMat> & left,
-                            const std::vector<TransformMat> & right,
-                            std::vector<StoredQTensor *> results,
-                            int nthreads);
-
-    // pass through to derived classes
-    virtual void Finalize_(int nthreads) = 0;
-    virtual void NoFinalize_(void);
+    void Transform_(int nleft, double * left,
+                    int nright, double * right,
+                    int nthreads);
 
     std::string directory_; //!< Directory where to store files if necessary
     std::string filename_;
     std::string dimfilename_;
     bool existed_;
-
-    // Fitting metric for DF calculations
-    // held for application after MO transformation
-    SharedFittingMetric fittingmetric_;
 
 private:
     /*!
@@ -108,7 +70,7 @@ private:
      * \param [in] eris Objects to calculate 4-center integrals
      * \param [in] target Where to put the diagonal information. Should be nso*nso sized
      */
-    static void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, double * target);
+    //static void ComputeDiagonal_(std::vector<SharedTwoBodyAOInt> & eris, double * target);
 
     /*!
      * \brief Compute a row for the cholesky Qso
@@ -120,7 +82,7 @@ private:
      * \param [in] row The row to calculate
      * \param [in] target Where to put the row. Should be nso*nso sized
      */
-    static void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
+    //static void ComputeRow_(std::vector<SharedTwoBodyAOInt> & eris, int row, double* target);
 
     /*!
      *  \brief Tests to see if the files corresponding to this tensor exists

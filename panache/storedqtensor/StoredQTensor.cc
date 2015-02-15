@@ -142,6 +142,37 @@ int StoredQTensor::ReadByQ(double * data, int nq, int qstart)
 }
 
 
+int StoredQTensor::Write(double * data, int nij, int ijstart)
+{
+    // note - don't check (nij > 0)!
+    // it may occassionally be called with nij = 0
+
+    if(nij < 0)
+        throw RuntimeError("Write() passed with negative nij!");
+
+    if(ijstart + nij >= ndim12())
+        throw RuntimeError("Write() will attempt to write past end!");
+
+    Write_(data, nij, ijstart);
+    return nij;
+}
+
+int StoredQTensor::WriteByQ(double * data, int nq, int qstart, bool ijpacked)
+{
+    // note - don't check (nq > 0)!
+    // it may occassionally be called with nq = 0
+
+    if(nq < 0)
+        throw RuntimeError("WriteByQ() passed with negative nq!");
+
+    if(qstart + nq >= naux_)
+        throw RuntimeError("WriteByQ() will attempt to write past end!");
+
+    WriteByQ_(data, nq, qstart, ijpacked);
+    return nq;
+}
+
+
 CumulativeTime & StoredQTensor::GenTimer(void)
 {
     return gen_timer_;
@@ -157,75 +188,11 @@ CumulativeTime & StoredQTensor::GetBatchTimer(void)
     return getijbatch_timer_;
 }
 
-void StoredQTensor::GenDFQso(const SharedFittingMetric fit,
-                                     const SharedBasisSet primary,
-                                     const SharedBasisSet auxiliary,
-                                     int nthreads)
+void StoredQTensor::Transform(int nleft, double * left,
+                              int nright, double * right,
+                              int nthreads)
 {
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-
-    GenDFQso_(fit, primary, auxiliary, nthreads);
-    filled_ = true;
-
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    GenTimer().AddTime(tim);
-#endif
-}
-
-void StoredQTensor::GenCHQso(const SharedBasisSet primary,
-                                     double delta,
-                                     int nthreads)
-{
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-
-    GenCHQso_(primary, delta, nthreads);
-    filled_ = true;
-
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    GenTimer().AddTime(tim);
-#endif
-}
-
-
-void StoredQTensor::Transform(const std::vector<TransformMat> & left,
-                                        const std::vector<TransformMat> & right,
-                                        std::vector<StoredQTensor *> results,
-                                        int nthreads)
-{
-    Transform_(left, right, results, nthreads);
-    for(auto it : results)
-        it->filled_ = true;
-}
-
-void StoredQTensor::Finalize(int nthreads)
-{
-// Finalizing is part of generation
-#ifdef PANACHE_TIMING
-    Timer tim;
-    tim.Start();
-#endif
-
-    // call derived class function
-    Finalize_(nthreads);
-
-#ifdef PANACHE_TIMING
-    tim.Stop();
-    GenTimer().AddTime(tim);
-#endif
-}
-
-void StoredQTensor::NoFinalize(void)
-{
-    // call derived class function
-    NoFinalize_();
+    Transform_(nleft, left, nright, right, nthreads);
 }
 
 } // close namespace panache

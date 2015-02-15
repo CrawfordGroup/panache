@@ -120,10 +120,16 @@ protected:
     virtual void GenDFQso_(const SharedFittingMetric fit,
                            const SharedBasisSet primary,
                            const SharedBasisSet auxiliary,
+                           const std::vector<TransformMat> & left,
+                           const std::vector<TransformMat> & right,
+                           std::vector<StoredQTensor *> results,
                            int nthreads);
 
     virtual void GenCHQso_(const SharedBasisSet primary,
                            double delta,
+                           const std::vector<TransformMat> & left,
+                           const std::vector<TransformMat> & right,
+                           std::vector<StoredQTensor *> results,
                            int nthreads);
 
     virtual void Transform_(const std::vector<TransformMat> & left,

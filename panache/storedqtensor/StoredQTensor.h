@@ -77,6 +77,25 @@ public:
      */
     int ReadByQ(double * data, int nq, int qstart);
 
+    /*!
+     * \brief Write data with the orbital index as the slowest index
+     *
+     * \param [in] data Pointer to memory location to put the data
+     * \param [in] nij Number of orbital indices to write
+     * \param [in] ijstart Starting combined orbital index
+     */
+    int Write(double * data, int nij, int ijstart);
+
+
+    /*!
+     * \brief Write data with the auxiliary index as the slowest index
+     *
+     * \param [in] data Pointer to memory location to put the data
+     * \param [in] nq Number of auxiliary indices to write
+     * \param [in] qstart Starting auxiliary index
+     */
+    int WriteByQ(double * data, int nq, int qstart, bool ijpacked);
+
 
     /*!
      * \brief Initialize storage for a given size
@@ -92,74 +111,13 @@ public:
      * \brief Initialize storage given the sizes of another StoredQTensor
      */
     void Init(const StoredQTensor & rhs);
+
+
+    /*!
+     * \brief Transform this three-index tensor with the given left/right matrices)
+     */
+    void Transform(int nleft, double * left, int nright, double * right, int nthreads);
   
-
-    /*!
-     * \brief Generate density-fitted Qso tensor
-     *
-     * \param [in] fit Pre-calculated fitting metric
-     * \param [in] primary Primary basis set
-     * \param [in] auxiliary Auxiliary basis set
-     * \param [in] nthreads Number of threads to use
-     */ 
-    void GenDFQso(const SharedFittingMetric fit,
-                  const SharedBasisSet primary,
-                  const SharedBasisSet auxiliary,
-                  int nthreads);
-
-    /*!
-     * \brief Generate cholesky-based Qso tensor
-     *
-     * \param [in] primary Primary basis set
-     * \param [in] delta Maximum error in the cholesky procedure
-     * \param [in] nthreads Number of threads to use
-     */ 
-    void GenCHQso(const SharedBasisSet primary,
-                  double delta,
-                  int nthreads);
-
-    /*!
-     * \brief A matrix used to transform Qso.
-     *
-     * The first member is a pointer to the matrix, and the
-     * second member is the size along the second dimension.
-     * That is, the matrix is expected to be nso x TransformMat.second.
-     */
-    typedef std::pair<double *, int> TransformMat;
-
-
-    /*!
-     *  \brief Transform this tensor
-     *
-     *  This function carries out multiple transformations. First,
-     *  it reads by q, and then for each TransformMat in \p left and \p right,
-     *  stores it in the StoredQTensor object in \p results.
-     *
-     *  The objects in the \p results vector must be created and initialized already.
-     */
-    void Transform(const std::vector<TransformMat> & left,
-                   const std::vector<TransformMat> & right,
-                   std::vector<StoredQTensor *> results,
-                   int nthreads);
-
-    /*!
-     * \brief Perform any final tranformations, etc, on the tensor
-     *
-     * Mostly used to apply the metric to density fitting 3-index tensors
-     *
-     * \warning This is either applied to Qso before transformation, or to each
-     * transformed tensor. Therefore, whatever is done in Finalize_()
-     * MUST be distributive to those tensors.
-     */ 
-    void Finalize(int nthreads);
-
-    /*!
-     * \brief Called when this tensor is not going to be finalized
-     *
-     * Can free up some memory, etc
-     */
-    void NoFinalize(void);
-
 
     /// Get the timer for generation of this tensor
     CumulativeTime & GenTimer(void);
@@ -225,34 +183,17 @@ protected:
     /// To be implemented by derived classes
     virtual void ReadByQ_(double * data, int nq, int qstart) = 0;
 
-    /// \copydoc GenDFQso()
+    /// \copydoc Write()
     /// To be implemented by derived classes
-    virtual void GenDFQso_(const SharedFittingMetric fit,
-                           const SharedBasisSet primary,
-                           const SharedBasisSet auxiliary,
-                           int nthreads) = 0;
+    virtual void Write_(double * data, int nij, int ijstart) = 0;
 
-    /// \copydoc GenCHQso()
+    /// \copydoc WriteByQ()
     /// To be implemented by derived classes
-    virtual void GenCHQso_(const SharedBasisSet primary,
-                           double delta,
-                           int nthreads) = 0;
-
+    virtual void WriteByQ_(double * data, int nq, int qstart, bool ijpacked) = 0;
 
     /// \copydoc Transform()
     /// To be implemented by derived classes
-    virtual void Transform_(const std::vector<TransformMat> & left,
-                            const std::vector<TransformMat> & right,
-                            std::vector<StoredQTensor *> results,
-                            int nthreads) = 0;
-
-    /// \copydoc Finalize()
-    /// To be implemented by derived classes
-    virtual void Finalize_(int nthreads) = 0;
-
-    /// \copydoc NoFinalize()
-    /// To be implemented by derived classes
-    virtual void NoFinalize_(void) = 0;
+    virtual void Transform_(int nleft, double * left, int nright, double * right, int nthreads) = 0;
 
     /// Get the total size of the stored tensor
     int storesize(void) const;

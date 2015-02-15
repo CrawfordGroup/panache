@@ -65,7 +65,7 @@ public:
              int nthreads);
 
 protected:
-    virtual UniqueStoredQTensor GenQso(int storeflags) const;
+    virtual void GenQTensors_(int qflags, int storeflags) const;
 
 private:
     int naux_;   //!< Number of auxiliary basis functions

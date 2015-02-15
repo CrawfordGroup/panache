@@ -129,6 +129,11 @@ public:
  */
 typedef std::shared_ptr<FittingMetric> SharedFittingMetric;
 
+/*!
+ * \brief A unique pointer to a FittingMetric object
+ */
+typedef std::unique_ptr<FittingMetric> UniqueFittingMetric;
+
 }
 
 #endif //PANACHE_FITTINGMETRIC_H

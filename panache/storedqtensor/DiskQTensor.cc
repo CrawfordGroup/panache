@@ -50,33 +50,38 @@ void DiskQTensor::Write_(double * data, int nij, int ijstart)
     }
 }
 
-void DiskQTensor::WriteByQ_(double * data, int nq, int qstart)
+void DiskQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
 {
     #ifdef _OPENMP
     #pragma omp critical
     #endif
     {
-        int indim12 = ndim12();
-
-        if(byq())
+        if(ijpacked == packed())
         {
-            file_->seekp(sizeof(double)*(qstart*indim12), std::ios_base::beg);
-            file_->write(reinterpret_cast<const char *>(data), nq*indim12*sizeof(double));
-        }
-        else
-        {
-            int inaux = naux();
+            int indim12 = ndim12();
 
-            for(int q = 0, qoff = 0; q < nq; q++, qoff += indim12)
+            if(byq())
             {
-                for(int ij = 0, ijoff = 0; ij < indim12; ij++, ijoff += inaux)
+                file_->seekp(sizeof(double)*(qstart*indim12), std::ios_base::beg);
+                file_->write(reinterpret_cast<const char *>(data), nq*indim12*sizeof(double));
+            }
+            else
+            {
+                int inaux = naux();
+    
+                for(int q = 0, qoff = 0; q < nq; q++, qoff += indim12)
                 {
-                    file_->seekp(sizeof(double)*(ijoff+qstart+q), std::ios_base::beg);
-                    file_->write(reinterpret_cast<const char *>(data+qoff+ij), sizeof(double));
+                    for(int ij = 0, ijoff = 0; ij < indim12; ij++, ijoff += inaux)
+                    {
+                        file_->seekp(sizeof(double)*(ijoff+qstart+q), std::ios_base::beg);
+                        file_->write(reinterpret_cast<const char *>(data+qoff+ij), sizeof(double));
+                    }
                 }
             }
         }
-    }
+        else
+            throw RuntimeError("Disk NYI");
+    } // close critical sec
 }
 
 void DiskQTensor::Read_(double * data, int nij, int ijstart)
@@ -246,112 +251,6 @@ void DiskQTensor::WriteDimFile_(void)
                              // throw with EOF
 }
 
-void DiskQTensor::GenDFQso_(const SharedFittingMetric fit,
-                            const SharedBasisSet primary,
-                            const SharedBasisSet auxiliary,
-                            int nthreads)
-{
-    int maxpershell = primary->max_function_per_shell();
-    int maxpershell2 = maxpershell*maxpershell;
-
-    double * J = fit->get_metric();
-
-    // default constructor = zero basis
-    SharedBasisSet zero(new BasisSet);
-
-    std::vector<SharedTwoBodyAOInt> eris;
-    std::vector<const double *> eribuffers;
-    std::vector<double *> A, B;
-
-    int naux = StoredQTensor::naux();
-
-    for(int i = 0; i < nthreads; i++)
-    {
-        eris.push_back(GetERI(auxiliary, zero, primary, primary));
-        eribuffers.push_back(eris.back()->buffer());
-
-        // temporary buffers
-        A.push_back(new double[naux*maxpershell2]);
-        B.push_back(new double[naux*maxpershell2]);
-    }
-
-
-    const int nprimshell = primary->nshell();
-    const int nauxshell = auxiliary->nshell();
-
-#ifdef _OPENMP
-    #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-#endif
-    for (int M = 0; M < nprimshell; M++)
-    {
-        int threadnum = 0;
-
-#ifdef _OPENMP
-        threadnum = omp_get_thread_num();
-#endif
-
-        int nm = primary->shell(M).nfunction();
-        int mstart = primary->shell(M).function_index();
-        int mend = mstart + nm;
-
-        for (int N = 0; N <= M; N++)
-        {
-            int nn = primary->shell(N).nfunction();
-            int nstart = primary->shell(N).function_index();
-            //int nend = nstart + nn;
-
-            for (int P = 0; P < nauxshell; P++)
-            {
-                int np = auxiliary->shell(P).nfunction();
-                int pstart = auxiliary->shell(P).function_index();
-                int pend = pstart + np;
-
-                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
-
-                if(ncalc)
-                {
-                    for (int p = pstart, index = 0; p < pend; p++)
-                    {
-                        for (int m = 0; m < nm; m++)
-                        {
-                            for (int n = 0; n < nn; n++, index++)
-                            {
-                                B[threadnum][p*nm*nn + m*nn + n] = eribuffers[threadnum][index];
-                            }
-                        }
-                    }
-                }
-            }
-
-            // we now have a set of columns of B, although "condensed"
-            // we can do a DGEMM with J
-            // Access to J are only reads, so that is safe in parallel
-            C_DGEMM('T','T',nm*nn, naux, naux, 1.0, B[threadnum], nm*nn, J, naux, 0.0,
-                    A[threadnum], naux);
-
-
-            // write to disk or store in memory
-            if(N == M)
-            {
-                int iwrite = 1;
-                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                    Write_(A[threadnum] + (m0*nm)*naux, iwrite++, calcindex(m, mstart));
-            }
-            else
-            {
-                for (int m0 = 0, m = mstart; m < mend; m0++, m++)
-                    Write_(A[threadnum] + (m0*nn)*naux, nn, calcindex(m, nstart));
-            }
-        }
-    }
-
-    for(int i = 0; i < nthreads; i++)
-    {
-        delete [] A[i];
-        delete [] B[i];
-    }
-}
-
 
 DiskQTensor::~DiskQTensor()
 {
@@ -389,7 +288,7 @@ DiskQTensor::DiskQTensor(MemoryQTensor * memqt)
         for(int i = 0; i < inaux; i++)
         {
             memqt->ReadByQ(bufptr, 1, i);
-            WriteByQ_(bufptr, 1, i);
+            WriteByQ_(bufptr, 1, i, packed());
         }
     }
     else
@@ -404,14 +303,6 @@ DiskQTensor::DiskQTensor(MemoryQTensor * memqt)
         }
     }
 }
-
-
-void DiskQTensor::Finalize_(int nthreads)
-{
-    // Nothing to do?
-    fittingmetric_.reset();
-}
-
 
 
 } // close namespace panache

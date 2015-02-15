@@ -34,33 +34,14 @@ public:
 
 protected:
     virtual void Write_(double * data, int nij, int ijstart);
-    virtual void WriteByQ_(double * data, int nij, int ijstart);
+    virtual void WriteByQ_(double * data, int nq, int qstart, bool ijpacked);
     virtual void Read_(double * data, int nij, int ijstart);
     virtual void ReadByQ_(double * data, int nq, int qstart);
     virtual void Init_(void);
-    virtual void Finalize_(int nthreads);
-
-    // Now in LocalQTensor class
-    //virtual void NoFinalize_(void);
-
-    virtual void GenDFQso_(const SharedFittingMetric fit,
-                           const SharedBasisSet primary,
-                           const SharedBasisSet auxiliary,
-                           int nthreads);
 
 private:
     std::unique_ptr<double[]> data_;
 
-    virtual void GenDFQso_Slow_(const SharedFittingMetric fit,
-                                const SharedBasisSet primary,
-                                const SharedBasisSet auxiliary,
-                                int nthreads);
-
-    // Postpone metric contraction
-    virtual void GenDFQso_Fast_(const SharedFittingMetric fit,
-                                const SharedBasisSet primary,
-                                const SharedBasisSet auxiliary,
-                                int nthreads);
 };
 
 } // close namespace panache

@@ -525,12 +525,24 @@ protected:
 
 
     /*!
-     * \brief Generate the base Qso tensor
-     * \param [in] storeflags How to store (disk, memory, packed, etc)
+     * \copydoc GenQTensors
+     *
+     * Implemented by derived classes
      */
-    virtual UniqueStoredQTensor GenQso(int storeflags) const = 0;
+    virtual void GenQTensors_(int qflags, int storeflags) const = 0;
 
-    ///@}
+
+    /*!
+     * \brief Perform MO transformation (helper function)
+     *
+     * Performs C(t) Q C with the result in dest. All must be allocated already.
+     * Source matrix is np * nso2, C matrix is n * nso_
+     */
+    static void Transform_(int nso, int nso2, int np, double * source,
+                           int nleft, double * left,
+                           int nright, double * right,
+                           double * dest, double * work);
+                           
 
 
     /*! \name Basis set and matrix dimensions */
@@ -541,7 +553,17 @@ protected:
 
     int nso_;    //!< Number of SO (rows of Cmo_, number of primary basis functions)
     int nso2_;   //!< Number of SO squared
+    int naux_;   //!< Number of auxiliary basis functions/cholesky vectors
+    int nsotri_; //!< Packed nso*nso symmetric matrix
 
+    ///@}
+
+    ///@{ \name Q Tensor Storage
+    UniqueStoredQTensor qso_;  //!< Qso matrix
+    UniqueStoredQTensor qmo_;  //!< Qmo matrix
+    UniqueStoredQTensor qoo_;  //!< Qoo matrix
+    UniqueStoredQTensor qov_;  //!< Qov matrix
+    UniqueStoredQTensor qvv_;  //!< Qvv matrix
     ///@}
 
 
@@ -553,10 +575,10 @@ protected:
 
     int nmo_;  //!< Number of MO (columns of Cmo_)
     int nmo2_; //!< Number of MO squared
+    int nmotri_; //!< Number of MO squared
     int nocc_; //!< Number of (non-frozen) occupied orbitals
     int nfroz_; //!< Number of frozen orbitals
     int nvir_; //!< Number of virtual orbitals
-    int nsotri_; //!< Packed nso*nso symmetric matrix
     ///@}
 
     int nthreads_;  //!< Number of threads to use
@@ -617,13 +639,6 @@ private:
 
 
 
-    ///@{ \name Q Tensor Storage
-    UniqueStoredQTensor qso_;  //!< Qso matrix
-    UniqueStoredQTensor qmo_;  //!< Qmo matrix
-    UniqueStoredQTensor qoo_;  //!< Qoo matrix
-    UniqueStoredQTensor qov_;  //!< Qov matrix
-    UniqueStoredQTensor qvv_;  //!< Qvv matrix
-    ///@}
 
 
     CumulativeTime timer_genqtensors_;   //!< Total time spent in GenQTensors()

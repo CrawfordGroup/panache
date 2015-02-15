@@ -10,6 +10,7 @@
 #include "panache/Molecule.h"
 #include "panache/BasisSet.h"
 #include "panache/Exception.h"
+#include "panache/Lapack.h"
 #include "panache/Output.h"
 
 // for reordering
@@ -35,12 +36,13 @@ ThreeIndexTensor::ThreeIndexTensor(SharedBasisSet primary,
     while(directory_.size() > 1 && directory_.back() == '/')
         directory_ = directory_.substr(0, directory_.size()-1);
 
-    nmo_ = 0;
-    nmo2_ = 0;
+    nmo_ = nmo2_ = nmotri_ = 0;
     nocc_ = nfroz_ = nvir_ = 0;
+
     nso_ = primary_->nbf();
     nso2_ = nso_*nso_;
     nsotri_ = (nso_*(nso_+1))/2;
+    naux_ = 0; // must be set by derived classes
 
     SetNThread(nthreads);
 }
@@ -73,6 +75,7 @@ void ThreeIndexTensor::SetCMatrix(double * cmo, int nmo, bool cmo_is_trans)
 
     nmo_ = nmo;
     nmo2_ = nmo*nmo;
+    nmotri_ = (nmo*(nmo+1))/2;
 
     Cmo_ = std::unique_ptr<double[]>(new double[nmo_*nso_]);
 
@@ -117,7 +120,6 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     // remove packed setting
     storeflags &= ~QSTORAGE_PACKED;
 
-
     if( (!Cmo_ || nocc_ == 0) && 
         ((qflags & QGEN_QMO) || 
          (qflags & QGEN_QOO) || 
@@ -126,160 +128,67 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
         throw RuntimeError("Set the c-matrix and occupations first!");
 
 
-    // is qso finalized
-    bool qsofinal = false;
-
-
-    // only do this stuff the first time!
-    if(!qso_ || !qso_->filled())
+    if(bsorder_ != BSORDER_PSI4)
     {
-        int qsoflags = storeflags;
-
-        // remove keep flag if Qso is not wanted
-        // this is so it isn't stored with the wrong ordering,
-        // etc
-        if(!(qflags & QGEN_QSO))
-          qsoflags &= ~QSTORAGE_KEEPDISK;
-
-        // Turn on fastdf under some circumstances
-        if(!(qflags & QGEN_QSO) && !(qflags & QGEN_QMO))
-          qsoflags |= QSTORAGE_FASTDF;
-
-        qso_ = GenQso(qsoflags); // calls the virtual function
-
-        // Renormalize CMat if necessary
-        if(bsorder_ != BSORDER_PSI4)
-        {
-            // a unique_ptr
-            auto cnorm = reorder::GetCNorm(bsorder_);
-
-            // if it actually needs renormalization
-            // unique ptr will be null if it doesn't
-            if(cnorm)
-                RenormCMat(cnorm);
-        }
-
-        // Decide how we want to proceed with respect to finalization (ie applying J, etc)
-        //
-        // If we want Qso, then apply it to Qso and not the transformed tensors
-        // 
-        // If not, only finalize the transformed tensors
-        if(qflags & QGEN_QSO)
-        {
-            qso_->Finalize(nthreads_);
-            qsofinal = true;
-        }
-
-
-        // Decide how we want to proceed with respect to basis function ordering
-        // If reordering is necessary, and Qso is not requested, we can just reorder
-        //     the C matrix
-        // If reordering is necessary, and Qso is needed, reorder Qso itself and
-        //     don't reorder the C matrix
-        if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
-        {
-            ReorderQso();
-        }
-        else if(bsorder_ != BSORDER_PSI4)
-        {
-            // reorder the Cmat
-            auto ord = reorder::GetOrdering(bsorder_);
+        // reorder the Cmat
+        auto ord = reorder::GetOrdering(bsorder_);
     
-            // only need to reorder the rows
-            //std::cout << "BEFORE REORDERING:\n";
-            //for(int i = 0; i < nmo_*nso_; i++)
-            //    std::cout << Cmo_[i] << "\n";
-            ReorderMatRows(Cmo_, ord, nmo_);
-            //std::cout << "AFTER REORDERING:\n";
-            //for(int i = 0; i < nmo_*nso_; i++)
-            //    std::cout << Cmo_[i] << "\n";
-        }
-
-        // now we can split the c matrix
-        // Whether we need the cmatrix or not has been checked above ^_^
-        if(Cmo_)
-            SplitCMat();
+        // only need to reorder the rows
+        //std::cout << "BEFORE REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
+        ReorderMatRows(Cmo_, ord, nmo_);
+        //std::cout << "AFTER REORDERING:\n";
+        //for(int i = 0; i < nmo_*nso_; i++)
+        //    std::cout << Cmo_[i] << "\n";
     }
-    else
+
+    // now we can split the c matrix
+    // Whether we need the cmatrix or not has been checked above ^_^
+    if(Cmo_)
+        SplitCMat();
+
+    if(qflags & QGEN_QSO)
     {
-        // qso already existed and therefore must have been finalized
-        qsofinal = true;
+        qso_ = StoredQTensorFactory(storeflags | QSTORAGE_PACKED, "qso", directory_);
+        if(qmo_->filled())
+            qflags &= ~QGEN_QMO; // remove from list
     }
-
-    std::vector<StoredQTensor::TransformMat> lefts;
-    std::vector<StoredQTensor::TransformMat> rights;
-    std::vector<StoredQTensor *> qouts;
-
-    int naux = qso_->naux();
-
-    // The checks for filled are because they may exist on disk, etc
     if(qflags & QGEN_QMO)
     {
-        // generate Qmo
-        qmo_ = StoredQTensorFactory(naux, nmo_, nmo_, storeflags | QSTORAGE_PACKED, "qmo", directory_);
-        if(!qmo_->filled())
-        {
-            qouts.push_back(qmo_.get());
-            lefts.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
-            rights.push_back(StoredQTensor::TransformMat(Cmo_.get(), nmo_));
-        }
+        qmo_ = StoredQTensorFactory(storeflags | QSTORAGE_PACKED, "qmo", directory_);
+        if(qmo_->filled())
+            qflags &= ~QGEN_QMO; // remove from list
     }
     if(qflags & QGEN_QOO)
     {
-        // generate Qoo
-        qoo_ = StoredQTensorFactory(naux, nocc_, nocc_, storeflags | QSTORAGE_PACKED, "qoo", directory_);
-        if(!qoo_->filled())
-        {
-            qouts.push_back(qoo_.get());
-            lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
-            rights.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
-        }
+        qoo_ = StoredQTensorFactory(storeflags | QSTORAGE_PACKED, "qoo", directory_);
+        if(qoo_->filled())
+            qflags &= ~QGEN_QOO; // remove from list
     }
     if(qflags & QGEN_QOV)
     {
-        // generate Qov
-        qov_ = StoredQTensorFactory(naux, nocc_, nvir_, storeflags, "qov", directory_);
-        if(!qov_->filled())
-        {
-            qouts.push_back(qov_.get());
-            lefts.push_back(StoredQTensor::TransformMat(Cmo_occ_.get(), nocc_));
-            rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
-        }
+        qov_ = StoredQTensorFactory(storeflags, "qov", directory_);
+        if(qov_->filled())
+            qflags &= ~QGEN_QOV; // remove from list
     }
     if(qflags & QGEN_QVV)
     {
         // generate Qvv
-        qvv_ = StoredQTensorFactory(naux, nvir_, nvir_, storeflags | QSTORAGE_PACKED, "qvv", directory_);
-        if(!qvv_->filled())
-        {
-            qouts.push_back(qvv_.get());
-            lefts.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
-            rights.push_back(StoredQTensor::TransformMat(Cmo_vir_.get(), nvir_));
-        }
+        qvv_ = StoredQTensorFactory(storeflags | QSTORAGE_PACKED, "qvv", directory_);
+        if(qvv_->filled())
+            qflags &= ~QGEN_QVV; // remove from list
     }
 
+    // call derived class GenQTensors_
+    GenQTensors_(qflags, storeflags); 
 
-    if(lefts.size() > 0)
-        qso_->Transform(lefts, rights, qouts, nthreads_);
-
-    // Erase Qso if not requested
-    if(!(qflags & QGEN_QSO))
+    // if Qso is requested, we have to reorder it!
+    if(qflags & QGEN_QSO && bsorder_ != BSORDER_PSI4)
     {
-        qso_->NoFinalize();
-        //qso_.reset();
+        ReorderQso();
     }
 
-    // Finalize the transformed matrices if needed
-    if(!qsofinal)
-    {
-        for(auto & it : qouts)
-            it->Finalize(nthreads_);
-    }
-    else
-    {
-        for(auto & it : qouts)
-            it->NoFinalize();
-    }
 
 #ifdef PANACHE_TIMING
     tim.Stop();
@@ -291,38 +200,21 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
 void ThreeIndexTensor::ReorderQso(void)
 {
-    std::vector<StoredQTensor::TransformMat> leftright;
-    std::vector<StoredQTensor *> qouts;
-
     auto ord = reorder::GetOrdering(bsorder_);
 
-    int nso2 = nso_*nso_;
-
     // First, generate an identity matrix
-    std::unique_ptr<double[]> tmat(new double[nso2]);
+    std::unique_ptr<double[]> tmat(new double[nso2_]);
     double * tmatp = tmat.get();
 
-    std::fill(tmatp, tmatp + nso2, 0.0);
-    for(int i = 0; i < nso2; i += (nso_+1))
+    std::fill(tmatp, tmatp + nso2_, 0.0);
+    for(int i = 0; i < nso2_; i += (nso_+1))
         tmat[i] = 1.0;
 
     // Make into a transformation matrix
     ReorderMatRows(tmat, ord, nso_);
 
-    // Create an empty qso object
-    // Then transform qso
-    leftright.push_back(StoredQTensor::TransformMat(tmatp, nso_));
-    auto newqso = StoredQTensorFactory(qso_->naux(),
-                                       qso_->ndim1(),
-                                       qso_->ndim2(),
-                                       qso_->storeflags(), "qso2", directory_); 
-    qouts.push_back(newqso.get());
-    qso_->Transform(leftright, leftright, qouts, nthreads_);
-
-    // overwrite the old qso_
-    std::swap(qso_, newqso);
-
-    // newqso (formerly qso_) will be deleted in its destructor 
+    // transform
+    qso_->Transform(nso_, tmatp, nso_, tmatp, nthreads_);
 }
 
 
@@ -629,9 +521,6 @@ void ThreeIndexTensor::SetNOcc(int nocc, int nfroz)
     nfroz_ = nfroz;
     nvir_ = nmo_ - nocc - nfroz;
 
-    // Delay this, since whether or not it is reordered depends
-    // on some logic in GenQTensors
-    //SplitCMat();
 }
 
 
@@ -744,6 +633,28 @@ ThreeIndexTensor::IteratedQTensorByIJ ThreeIndexTensor::IterateByIJ(int tensorfl
     return iqt;
 }
 
+
+void ThreeIndexTensor::Transform_(int nso, int nso2, int np, double * source,
+                                  int nleft, double * left,
+                                  int nright, double * right,
+                                  double * dest, double * work)
+{
+    for(int i = 0; i < np; i++)
+    {
+        C_DGEMM('T', 'N', nleft, nso, nso, 
+                         1.0, left, nleft,
+                         source + i*nso2, nso,
+                         0.0, work + i*nleft*nso, nso);
+    }
+    for(int i = 0; i < np; i++)
+    {
+
+        C_DGEMM('N', 'N', nleft, nright, nso, 
+                         1.0, work + i*nleft*nso, nso,
+                         right, nright,
+                         0.0, dest + i*nleft*nright, nright);
+    }
+}
 
 } // close namespace panache
 
