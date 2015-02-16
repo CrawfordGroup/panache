@@ -8,6 +8,17 @@ None known
 ---------------------------
 Enhancements/Optimizations
 ---------------------------
+- 'rewrite' branch:
+  This is probably a better way of doing things, Unfortunately, I don't have much
+  time to work on it. It compiles and runs, but answers are still incorrect.
+  Needs work and checking in the StoredQTensor classes, and cholesky needs
+  to be redone.
+
+  Also, StoredQTensor needs a Commit() function (ie when using cyclops, Write() will
+  write to a temporary buffer, and Commit() will distribute it.
+
+  Good luck!
+
 - In density fitting, the transformation with C matrices
   can be done before the contraction with the metric. In doing
   so, the contraction with the metric is much faster, in particular
