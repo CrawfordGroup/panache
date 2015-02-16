@@ -65,6 +65,20 @@ void DFTensor::GenQTensors_(int qflags, int storeflags) const
     // Since main options can only be set in the constructor, there is no danger
     // of changing options after construction. Therefore, calculations must
     // be equivalent, except for storage options and qflags
+    //
+
+    // initialize the storage
+    // since we know the sizes
+    if(qflags & QGEN_QSO)
+        qso_->Init(naux_, nso_, nso_);
+    if(qflags & QGEN_QMO)
+        qmo_->Init(naux_, nmo_, nmo_);
+    if(qflags & QGEN_QOO)
+        qoo_->Init(naux_, nocc_, nocc_);
+    if(qflags & QGEN_QOV)
+        qov_->Init(naux_, nocc_, nvir_);
+    if(qflags & QGEN_QVV)
+        qvv_->Init(naux_, nvir_, nvir_);
 
     // we only use the fitting metric here. No need to keep it around for longer than
     // is necessary
@@ -82,6 +96,7 @@ void DFTensor::GenQTensors_(int qflags, int storeflags) const
     else
         throw RuntimeError("Unknown fitting metric decomposition!");
 
+    double * Jptr = fittingmetric->get_metric();
 
     // Now we have the metric. Build the three-index tensors 
 
@@ -119,24 +134,26 @@ void DFTensor::GenQTensors_(int qflags, int storeflags) const
         double * mybuff2 = buff2[threadnum];
         double * mybuffwork = buffwork[threadnum];
         const double * myeribuffer = eribuffers[threadnum];
+        SharedTwoBodyAOInt myeri = eris[threadnum];
 
-        int np = auxiliary_->shell(P).nfunction();
-        int pstart = auxiliary_->shell(P).function_index();
-        int pend = pstart + np;
+        const int np = auxiliary_->shell(P).nfunction();
+        const int pstart = auxiliary_->shell(P).function_index();
+        const int pend = pstart + np;
 
         for (int M = 0; M < nprimshell; M++)
         {
-            int nm = primary_->shell(M).nfunction();
-            int mstart = primary_->shell(M).function_index();
-            int mend = mstart + nm;
+            const int nm = primary_->shell(M).nfunction();
+            const int mstart = primary_->shell(M).function_index();
+            const int mend = mstart + nm;
 
             for (int N = 0; N <= M; N++)
             {
-                int nn = primary_->shell(N).nfunction();
-                int nstart = primary_->shell(N).function_index();
-                int nend = nstart + nn;
+                const int nn = primary_->shell(N).nfunction();
+                const int nstart = primary_->shell(N).function_index();
+                const int nend = nstart + nn;
+                const int nmn = nm * nn;       
 
-                int ncalc = eris[threadnum]->compute_shell(P,0,M,N);
+                int ncalc = myeri->compute_shell(P,0,M,N);
 
                 // keep in mind that we are storing this packed
                 // but waiting until after the transformations to pack it
@@ -144,16 +161,16 @@ void DFTensor::GenQTensors_(int qflags, int storeflags) const
                 {
                     for (int p = pstart, p0 = 0; p < pend; p++, p0++)
                     {
-                        const int pp0 = p0*nm*nn;
-                    
                         for (int m = mstart, m0 = 0; m < mend; m++, m0++)
                         {
                             const int mm = m*nn;
                             const int mm0 = m0*nn;
 
-                            // todo can maybe be a bit more efficient
+                            //! \todo todo can maybe be a bit more efficient
                             for (int n = nstart, n0 = 0; n < nend; n++, n0++)
-                                mybuff[pp0 + mm + n] = mybuff[pp0 + n*nm + m] = myeribuffer[pp0 + mm0 + n0];
+                                mybuff[p0*nso2_ + m*nso_ + n] 
+                                                  = mybuff[p0*nso2_ + n*nso_ + m] 
+                                                  = myeribuffer[p0*nm*nn + mm0 + n0];
                         }
                     }
                 }
@@ -169,29 +186,53 @@ void DFTensor::GenQTensors_(int qflags, int storeflags) const
         if(qflags & QGEN_QMO)
         {
             Transform_(nso_, nso2_, np, mybuff, nmo_, Cmo_.get(), nmo_, Cmo_.get(), mybuff2, mybuffwork);
-            qmo_->WriteByQ(mybuff, np, pstart, false);
+            qmo_->WriteByQ(mybuff2, np, pstart, false);
         }
         if(qflags & QGEN_QOO)
         {
             Transform_(nso_, nso2_, np, mybuff, nocc_, Cmo_occ_.get(), nocc_, Cmo_occ_.get(), mybuff2, mybuffwork);
-            qoo_->WriteByQ(mybuff, np, pstart, false);
+            qoo_->WriteByQ(mybuff2, np, pstart, false);
         }
         if(qflags & QGEN_QOV)
         {
             Transform_(nso_, nso2_, np, mybuff, nocc_, Cmo_occ_.get(), nvir_, Cmo_vir_.get(), mybuff2, mybuffwork);
-            qov_->WriteByQ(mybuff, np, pstart, false);
+            qov_->WriteByQ(mybuff2, np, pstart, false);
         }
         if(qflags & QGEN_QVV)
         {
             Transform_(nso_, nso2_, np, mybuff, nvir_, Cmo_vir_.get(), nvir_, Cmo_vir_.get(), mybuff2, mybuffwork);
-            qvv_->WriteByQ(mybuff, np, pstart, false);
+            qvv_->WriteByQ(mybuff2, np, pstart, false);
         }
     }
 
+    // contract with the metric
+    if(qflags & QGEN_QSO)
+    {
+        qso_->ContractQ(naux_, Jptr, nthreads_);
+        qso_->markfilled();
+    }
+    if(qflags & QGEN_QMO)
+    {
+        qmo_->ContractQ(naux_, Jptr, nthreads_);
+        qmo_->markfilled();
+    }
+    if(qflags & QGEN_QOO)
+    {
+        qoo_->ContractQ(naux_, Jptr, nthreads_);
+        qoo_->markfilled();
+    }
+    if(qflags & QGEN_QOV)
+    {
+        qov_->ContractQ(naux_, Jptr, nthreads_);
+        qov_->markfilled();
+    }
+    if(qflags & QGEN_QVV)
+    {
+        qvv_->ContractQ(naux_, Jptr, nthreads_);
+        qvv_->markfilled();
+    }
+
     // done!
-    // apply metric
-
-
     for(int i = 0; i < nthreads_; i++)
     {
         delete [] buff[i];

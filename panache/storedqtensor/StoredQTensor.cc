@@ -150,7 +150,7 @@ int StoredQTensor::Write(double * data, int nij, int ijstart)
     if(nij < 0)
         throw RuntimeError("Write() passed with negative nij!");
 
-    if(ijstart + nij >= ndim12())
+    if(ijstart + nij > ndim12())
         throw RuntimeError("Write() will attempt to write past end!");
 
     Write_(data, nij, ijstart);
@@ -165,7 +165,7 @@ int StoredQTensor::WriteByQ(double * data, int nq, int qstart, bool ijpacked)
     if(nq < 0)
         throw RuntimeError("WriteByQ() passed with negative nq!");
 
-    if(qstart + nq >= naux_)
+    if(qstart + nq > naux_)
         throw RuntimeError("WriteByQ() will attempt to write past end!");
 
     WriteByQ_(data, nq, qstart, ijpacked);
@@ -193,6 +193,11 @@ void StoredQTensor::Transform(int nleft, double * left,
                               int nthreads)
 {
     Transform_(nleft, left, nright, right, nthreads);
+}
+
+void StoredQTensor::ContractQ(int n, double * mat, int nthreads)
+{
+    ContractQ_(n, mat, nthreads);
 }
 
 } // close namespace panache

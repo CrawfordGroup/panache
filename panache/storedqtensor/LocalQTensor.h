@@ -51,9 +51,11 @@ public:
 
 protected:
 
-    void Transform_(int nleft, double * left,
-                    int nright, double * right,
-                    int nthreads);
+    virtual void Transform_(int nleft, double * left,
+                            int nright, double * right,
+                            int nthreads);
+
+    virtual void ContractQ_(int n, double * mat, int nthreads);
 
     std::string directory_; //!< Directory where to store files if necessary
     std::string filename_;

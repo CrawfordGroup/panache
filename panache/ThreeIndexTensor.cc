@@ -151,8 +151,8 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
     if(qflags & QGEN_QSO)
     {
         qso_ = StoredQTensorFactory(storeflags | QSTORAGE_PACKED, "qso", directory_);
-        if(qmo_->filled())
-            qflags &= ~QGEN_QMO; // remove from list
+        if(qso_->filled())
+            qflags &= ~QGEN_QSO; // remove from list
     }
     if(qflags & QGEN_QMO)
     {
@@ -200,6 +200,10 @@ void ThreeIndexTensor::GenQTensors(int qflags, int storeflags)
 
 void ThreeIndexTensor::ReorderQso(void)
 {
+
+    // todo No need for right transformation matrix...
+
+
     auto ord = reorder::GetOrdering(bsorder_);
 
     // First, generate an identity matrix

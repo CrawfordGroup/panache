@@ -32,6 +32,7 @@ StoredQTensorFactory(int storeflags, const std::string & name, const std::string
         return UniqueStoredQTensor(new MemoryQTensor(storeflags, name, directory));
 }
 
+/*
 UniqueStoredQTensor 
 StoredQTensorFactory(int naux, int ndim1, int ndim2,
                      int storeflags, const std::string & name,
@@ -47,5 +48,6 @@ StoredQTensorFactory(int naux, int ndim1, int ndim2,
 
     return ptr;
 }
+*/
 
 } // close namespace panache

@@ -248,5 +248,42 @@ void LocalQTensor::Transform_(int nleft, double * left,
         delete [] qp;
 }
 
+void LocalQTensor::ContractQ_(int n, double * mat, int nthreads)
+{
+    //! \todo could be done in batches
+    const int indim12 = ndim12();
+    const int inaux = naux();
+
+    double * work = new double[inaux * nthreads]; 
+    double * work2 = new double[inaux * nthreads]; 
+
+    #ifdef _OPENMP
+        #pragma omp parallel for num_threads(nthreads)
+    #endif
+    for(int ij = 0; ij < indim12; ij++)
+    {
+        #ifdef _OPENMP
+            const int threadnum = omp_get_thread_num();
+        #else
+            const int threadnum = 0;
+        #endif
+
+        double * mywork = work + threadnum*inaux;
+        double * mywork2 = work2 + threadnum*inaux;
+
+        // get the data
+        Read(mywork, 1, ij); 
+
+        // multiply (n x naux  with naux x 1)
+        C_DGEMM('N', 'N', n, 1, inaux, 1.0, mat, inaux, mywork, 1, 0.0, mywork2, 1);
+
+        // store the data
+        Write(mywork2, 1, ij); 
+    }
+
+    delete [] work;
+    delete [] work2;
+}
+
 } // close namespace panache
 

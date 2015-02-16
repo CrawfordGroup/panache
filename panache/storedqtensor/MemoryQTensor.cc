@@ -47,12 +47,26 @@ void MemoryQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
     // hope you know index math
     ///////////////////////////
 
-    //! \todo Know exactly where inaux, etc, are used
-    const int indim12 = ndim12();
-    int inaux = naux();
+    //! \todo This can be made more efficient in places
+    //
+    // We can stride within the for loop. Ie
+    //
+    // for(int q = 0; q < nq; q++)
+    //      qq = q*naux;
+    //
+    // Can be replaced with
+    //
+    // for(int q = 0, qoff = 0; q < nq; q++, qoff += naux)
+    //
+    // Replacing a multiplication with an addition
+    //
+
 
     if(ijpacked == packed())
     {
+        const int inaux = naux();
+        const int indim12 = ndim12();
+
         if(byq())
         {
             std::copy(data,
@@ -61,8 +75,6 @@ void MemoryQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
         }
         else
         {
-            const int inaux = naux();
-    
             for(int q = 0, qoff = 0; q < nq; q++, qoff += indim12)
                 for(int ij = 0, ijoff = 0; ij < indim12; ij++, ijoff += inaux)
                     data_[ijoff+qstart+q] = data[qoff+ij];
@@ -70,36 +82,42 @@ void MemoryQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
     }
     else if(ijpacked)
     {
-        const int indim1 = ndim1();
-        const int indim2 = ndim2();
-
         // ijpacked, but not packed()
-        // unpack ij
+        // therefore, unpack ij
         if(byq())
         {
+            const int indim1 = ndim1();
+            const int indim2 = ndim2();
+            const int indim12 = ndim12();
+
             for(int q0 = 0, q = qstart; q0 < nq; q0++)
             {
                 const int qq = q*indim12;
-                const int qq0 = q0*indim12;
+                const int qq0 = q0*(indim1*(indim1+1))>>1;
 
                 for(int i = 0; i < indim1; i++)
                 {
                     const int ii = i*indim2;
+                    const int ii12 = (i*(i+1))>>1;
 
                     for(int j = 0; j <= i; j++)
                       data_[qq + ii + j] = data_[qq + j*indim1 + i] 
-                                         = data[qq0 + (i*(i+1)<<1) + j];
+                                         = data[qq0 + ii12 + j];
                 }
             }
         }
         else // not stored by q
         {
-            const int indim12_tmp = (indim1*(indim1+1))/2;
+            const int inaux = naux();
+            const int indim1 = ndim1();
+            const int indim2 = ndim2();
+            const int indim12_tmp = (indim1*(indim1+1))>>1;
 
             for(int i = 0; i < indim1; i++)
             {
                 const int ii = i*indim2*inaux;
                 const int iia = i*inaux;
+                const int ii12 = (i*(i+1))>>1;
 
                 for(int j = 0; j <= i; j++)
                 {
@@ -108,20 +126,20 @@ void MemoryQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
 
                     for(int q0 = 0, q = qstart; q0 < nq; q0++)
                         data_[ii + jja + q] = data_[jj + iia + q] 
-                                            = data[q0*indim12_tmp + (i*(i+1)<<1) + j];
+                                            = data[q0*indim12_tmp + ii12 + j];
                 }
             }
         }
     }
     else // not ijpacked, but packed()
     {
-        const int indim1 = ndim1();
-        const int indim2 = ndim2();
-
-        // ijpacked, but not packed()
-        // unpack ij
+        // therefore pack ij
         if(byq())
         {
+            const int indim1 = ndim1();
+            const int indim2 = ndim2();
+            const int indim12 = ndim12();
+
             for(int q0 = 0, q = qstart; q0 < nq; q0++)
             {
                 const int qq = q*indim12;
@@ -130,19 +148,23 @@ void MemoryQTensor::WriteByQ_(double * data, int nq, int qstart, bool ijpacked)
                 for(int i = 0; i < indim1; i++)
                 {
                     //const int ii = i*indim2;
-                    const int i12 = (i*(i+1))/2;
+                    const int i12 = (i*(i+1))>>1;
 
-                    //! \todo could be replaced with std::copy
+                    //! \todo could be replaced with std::copy?
                     for(int j = 0; j <= i; j++)
-                      data_[qq + i12 + j] = data[qq0 + i*indim2 + j];
+                        data_[qq + i12 + j] = data[qq0 + i*indim2 + j];
                 }
             }
         }
         else // not stored by q
         {
+            const int inaux = naux();
+            const int indim1 = ndim1();
+            const int indim2 = ndim2();
+
             for(int i = 0; i < indim1; i++)
             {
-                const int i12 = (i*(i+2))/2;
+                const int i12 = (i*(i+1))>>1;
 
                 for(int j = 0; j <= i; j++)
                 {

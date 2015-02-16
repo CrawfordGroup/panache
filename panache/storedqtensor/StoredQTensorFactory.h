@@ -28,8 +28,8 @@ class StoredQTensor;
  * \param [in] directory Directory for disk storage (if needed)
  * \return Pointer to a an object derived from StoredQTensor
  */
-UniqueStoredQTensor StoredQTensorFactory(int naux, int ndim1, int ndim2, int storeflags,
-        const std::string & name, const std::string & directory);
+//UniqueStoredQTensor StoredQTensorFactory(int naux, int ndim1, int ndim2, int storeflags,
+//        const std::string & name, const std::string & directory);
 
 
 /*!

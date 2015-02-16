@@ -117,6 +117,12 @@ public:
      * \brief Transform this three-index tensor with the given left/right matrices)
      */
     void Transform(int nleft, double * left, int nright, double * right, int nthreads);
+
+
+    /*!
+     * \brief Contract along the q axis with a matrix (ie the metric)
+     */
+    void ContractQ(int n, double * mat, int nthreads);
   
 
     /// Get the timer for generation of this tensor
@@ -152,6 +158,9 @@ public:
 
     /// Get whether or not this tensor is filled in
     bool filled(void) const;
+
+    /// Mark this tensor object as filled in
+    void markfilled(void);
 
     /*!
      *  \brief Calculate the combined orbital index given a pair of orbitals.
@@ -195,11 +204,13 @@ protected:
     /// To be implemented by derived classes
     virtual void Transform_(int nleft, double * left, int nright, double * right, int nthreads) = 0;
 
+    /// \copydoc ContractQ()
+    /// To be implemented by derived classes
+    virtual void ContractQ_(int n, double * mat, int nthreads) = 0;
+
     /// Get the total size of the stored tensor
     int storesize(void) const;
 
-    /// Mark this tensor object as filled in
-    void markfilled(void);
 
 private:
     std::string name_;
