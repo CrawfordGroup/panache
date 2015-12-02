@@ -1,0 +1,174 @@
+\providecommand*\mcitethebibliography{\thebibliography}
+\csname @ifundefined\endcsname{endmcitethebibliography}
+  {\let\endmcitethebibliography\endthebibliography}{}
+\begin{mcitethebibliography}{19}
+\providecommand*\natexlab[1]{#1}
+\providecommand*\mciteSetBstSublistMode[1]{}
+\providecommand*\mciteSetBstMaxWidthForm[2]{}
+\providecommand*\mciteBstWouldAddEndPuncttrue
+  {\def\EndOfBibitem{\unskip.}}
+\providecommand*\mciteBstWouldAddEndPunctfalse
+  {\let\EndOfBibitem\relax}
+\providecommand*\mciteSetBstMidEndSepPunct[3]{}
+\providecommand*\mciteSetBstSublistLabelBeginEnd[3]{}
+\providecommand*\EndOfBibitem{}
+\mciteSetBstSublistMode{f}
+\mciteSetBstMaxWidthForm{subitem}{(\alph{mcitesubitemcount})}
+\mciteSetBstSublistLabelBeginEnd
+  {\mcitemaxwidthsubitemform\space}
+  {\relax}
+  {\relax}
+
+\bibitem[Frisch et~al.()Frisch, Trucks, Schlegel, Scuseria, Robb, Cheeseman,
+  Scalmani, Barone, Mennucci, Petersson, Nakatsuji, Caricato, Li, Hratchian,
+  Izmaylov, Bloino, Zheng, Sonnenberg, Hada, Ehara, Toyota, Fukuda, Hasegawa,
+  Ishida, Nakajima, Honda, Kitao, Nakai, Vreven, Montgomery, Peralta, Ogliaro,
+  Bearpark, Heyd, Brothers, Kudin, Staroverov, Kobayashi, Normand,
+  Raghavachari, Rendell, Burant, Iyengar, Tomasi, Cossi, Rega, Millam, Klene,
+  Knox, Cross, Bakken, Adamo, Jaramillo, Gomperts, Stratmann, Yazyev, Austin,
+  Cammi, Pomelli, Ochterski, Martin, Morokuma, Zakrzewski, Voth, Salvador,
+  Dannenberg, Dapprich, Daniels, Farkas, Foresman, Ortiz, Cioslowski, and
+  Fox]{Gaussian09}
+Frisch,~M.~J. et~al.  Gaussian 09, Revision A.02. Gaussian, Inc., Wallingford
+  CT, 2009\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Turney et~al.(2012)Turney, Simmonett, Parrish, Hohenstein,
+  Evangelista, Fermann, Mintz, Burns, Wilke, Abrams, Russ, Leininger, Janssen,
+  Seidl, Allen, Schaefer, King, Valeev, Sherrill, and Crawford]{Turney:2012a}
+Turney,~J.~M. et~al.  \emph{Wiley Interdisciplinary Reviews: Computational
+  Molecular Science} \textbf{2012}, \emph{2}, 556--565\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Werner et~al.(2003)Werner, Manby, and Knowles]{Werner:2003a}
+Werner,~H.-J.; Manby,~F.~R.; Knowles,~P.~J. \emph{J. Chem. Phys.}
+  \textbf{2003}, \emph{118}, 8149--8160\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Dunlap et~al.()Dunlap, Connolly, and Sabin]{Dunlap:1977a}
+Dunlap,~B.~I.; Connolly,~J. W.~D.; Sabin,~J.~R. \emph{Int. J. Quantum Chem.}
+  \relax
+\mciteBstWouldAddEndPunctfalse
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Dunlap et~al.(1979)Dunlap, Connolly, and Sabin]{Dunlap:1979a}
+Dunlap,~B.~I.; Connolly,~J. W.~D.; Sabin,~J.~R. \emph{J. Chem. Phys.}
+  \textbf{1979}, \emph{71}, 4993--4999\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Whitten(1973)]{Whitten:1973a}
+Whitten,~J.~L. \emph{The Journal of Chemical Physics} \textbf{1973}, \emph{58},
+  4496--4501\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[R{\o}eggen and Johansen(2008)R{\o}eggen, and Johansen]{Roeggen:2008a}
+R{\o}eggen,~I.; Johansen,~T. \emph{J. Chem. Phys.} \textbf{2008}, \emph{128},
+  194107\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Beebe and Linderberg()Beebe, and Linderberg]{Beebe:1977a}
+Beebe,~N. H.~F.; Linderberg,~J. \emph{Int. J. Quantum Chem.} \relax
+\mciteBstWouldAddEndPunctfalse
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[CMa()]{CMake}
+{h}ttp://www.cmake.org\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Solomonik et~al.(2012)Solomonik, Matthews, Hammond, and
+  Demmel]{Solomonik:2012a}
+Solomonik,~E.; Matthews,~D.; Hammond,~J.; Demmel,~J. \emph{Cyclops Tensor
+  Framework: reducing communication and eliminating load imbalance in massively
+  parallel contractions}; 2012\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Valeev and Fermann()Valeev, and Fermann]{LibintLink}
+Valeev,~E.~F.; Fermann,~J.~T.
+  {h}ttp://www.files.chem.vt.edu/chem-dept/valeev/software.html\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Valeev and Fermann(2013)Valeev, and Fermann]{Libint1}
+Valeev,~E.~F.; Fermann,~J.~T. A library for the evaluation of molecular
+  integrals of many-body operators over Gaussian functions.
+  http://libint.valeyev.net/, 2013\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Valeev(2014)]{Libint2}
+Valeev,~E.~F. A library for the evaluation of molecular integrals of many-body
+  operators over Gaussian functions. http://libint.valeyev.net/, 2014\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Flocke and Lotrich(2008)Flocke, and Lotrich]{Flocke:2008a}
+Flocke,~N.; Lotrich,~V. \emph{J. Comp. Chem.} \textbf{2008}, \emph{29},
+  2722--2736\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Gordon and Schmidt()Gordon, and Schmidt]{Gamessbook}
+Gordon,~M.~S.; Schmidt,~M.~W. \emph{Theory and Applications of Computational
+  Chemistry, the first forty years}\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Schmidt et~al.(1993)Schmidt, Baldridge, Boatz, Elbert, Gordon, Jensen,
+  Koseki, Matsunaga, Nguyen, Su, Windus, Dupuis, and Montgomery]{Schmidt:1993a}
+Schmidt,~M.~W.; Baldridge,~K.~K.; Boatz,~J.~A.; Elbert,~S.~T.; Gordon,~M.~S.;
+  Jensen,~J.~H.; Koseki,~S.; Matsunaga,~N.; Nguyen,~K.~A.; Su,~S.;
+  Windus,~T.~L.; Dupuis,~M.; Montgomery,~J.~A. \emph{J. Comp. Chem.}
+  \textbf{1993}, \emph{14}, 1347--1363\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Dal()]{DaltonLink}
+Dalton, a molecular electronic structure program, Release Dalton2015.X (2015),
+  see http://daltonprogram.org\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Aidas et~al.(2015)Aidas, Angeli, Bak, Bakken, Bast, Boman,
+  Christiansen, Cimiraglia, Coriani, Dahle, Dalskov, Ekstr\"{o}m, Enevoldsen,
+  Eriksen, Ettenhuber, Fern\'{a}ndez, Ferrighi, Fliegl, Frediani, Hald,
+  Halkier, H\"{a}ttig, Heiberg, Helgaker, Hennum, Hettema, Hjerten\ae{}s,
+  H\o{}st, H\o{}yvik, Iozzi, Jans\'{i}k, Jensen, Jonsson, J\o{}rgensen,
+  Kauczor, Kirpekar, Kj\ae{}rgaard, Klopper, Knecht, Kobayashi, Koch, Kongsted,
+  Krapp, Kristensen, Ligabue, Lutn\ae{}s, Melo, Mikkelsen, Myhre, Neiss,
+  Nielsen, Norman, Olsen, Olsen, Osted, Packer, Pawlowski, Pedersen, Provasi,
+  Reine, Rinkevicius, Ruden, Ruud, Rybkin, Sa\l{}ek, Samson, de~Mer\'{a}s,
+  Saue, Sauer, Schimmelpfennig, Sneskov, Steindal, Sylvester-Hvid, Taylor,
+  Teale, Tellgren, Tew, Thorvaldsen, Th\o{}gersen, Vahtras, Watson, Wilson,
+  Ziolkowski, and \AA{}gren]{Dalton}
+Aidas,~K. et~al.  \emph{WIREs Comput.~Mol.~Sci.} \textbf{2015}, \emph{4},
+  269--284\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\end{mcitethebibliography}

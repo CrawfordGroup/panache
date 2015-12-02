@@ -2,3 +2,8 @@ build*
 install*
 docs
 *.swp
+*.aux
+*.log
+*.blg
+acs-panache.bib
+
