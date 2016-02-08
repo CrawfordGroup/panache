@@ -87,31 +87,24 @@ University of Georgia, Athens, Georgia 30602, U.S.A.} \\
 \end{center}
 
 The calculation of electron repulsion integrals (ERIs) over nucleus-centered
-Gaussian-type functions is often among the most computationally
-intensive components of quantum chemical models.
-
-The memory required to store these integrals --- ca.\ ${\cal O}(N^4)$,
-where $N$ is the number of basis functions --- is often beyond the capacity of
-the computing hardware, thus necessitating either retrieval from slow,
-disk-based storage or ``on-the-fly'' recalculation.
-
-A number of approximate ERI methods attempt to overcome this bottleneck by
-decomposing the full integral matrix into products of tensors of reduced rank
-[e.g., ${\cal O}(N^3)$], which either fit in memory or, at the very least,
-significantly reduce the quantity of data to be transferred from external
-storage.  However, the robust implementation of these methods requires
-considerable software infrastructure, such as the ability to compute ERIs with
-varying basis sets on different centers and out-of-core, integral-direct
-decomposition algorithms, among others.
-
-In this work, two of the most widely-used ERI approximations ---
-density-fitting and Cholesky decomposition --- have been implemented in a C++
-library called the ``Parallel Numerical Approximations in Chemistry Engine''
-or \panache. The library is designed to be modular and portable, and to
-support interfaces in multiple programming languages.
-
-An general overview of the library, its
-features, and its capabilities is discussed, along with general theory.
+Gaussian-type functions is often among the most computationally intensive
+tasks of quantum chemical models.  The memory required to store these
+integrals --- ca.\ ${\cal O}(N^4)$, where $N$ is the number of basis functions
+--- is often beyond the capacity of the computing hardware, thus necessitating
+either repeated retrieval from slow, disk-based storage or ``on-the-fly''
+recalculation.  A number of approximate ERI methods attempt to overcome this
+bottleneck by decomposing the full integral matrix into products of tensors of
+reduced rank [e.g., ${\cal O}(N^3)$], which either fit in memory or, at the
+very least, significantly reduce the quantity of data to be transferred from
+external storage.  However, the robust implementation of these methods
+requires considerable software infrastructure, such as the ability to compute
+ERIs with varying basis sets on different centers and out-of-core,
+integral-direct decomposition algorithms, among others.  In this work, two of
+the most widely-used ERI approximations --- density-fitting and Cholesky
+decomposition --- have been implemented in a C++ library called the ``Parallel
+Numerical Approximations in Chemistry Engine'' or \panache. The library is
+designed to be modular and portable, and to support interfaces in multiple
+programming languages.
 
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,7 +114,7 @@ features, and its capabilities is discussed, along with general theory.
 \label{sec:intro} 
 
 Among the most computationally expensive and time-consuming steps in many
-quantum chemical models is the generation and manipulation of four-center
+quantum chemical methods is the generation and manipulation of four-center
 two-electron repulsion integrals (ERIs),
 \begin{equation}
 (\mu \nu | \rho \sigma) = \int \int \chi_\mu(\vec{r}_1) \chi_\nu(\vec{r}_1)
@@ -129,41 +122,46 @@ two-electron repulsion integrals (ERIs),
 d\vec{r}_1 d\vec{r}_2,
 \end{equation}
 where $\vec{r}_1$ and $\vec{r}_2$ are the spatial coordinates of electrons one
-and two, respectively, and the $\chi_\mu$ are typically nucleus-centered
+and two, respectively, and the $\chi_\mu$ are (typically) nucleus-centered
 contracted Gaussian-type orbitals.  The calculation and storage of such ERIs
 scales poorly [formally as ${\cal O}(N^4)$ with respect to the number of basis
 functions, $N$], thus requiring either retrieval of the integrals from disk
 (which is often very slow) or their on-demand recomputation (which can be
-inefficient, depending on the application).
-
-Alternatively, the ERI matrix may be viewed as a four-index tensor, and, as
-such it may be decomposed into a product of three-index tensors, {\em viz.},
+inefficient, depending on the application).  Alternatively, the ERI matrix,
+which is a four-index tensor, may be decomposed into a product of three-index
+tensors, {\em viz.},
 \begin{equation}
 (\mu \nu | \rho \sigma) = \sum_{Q} B_{\mu \nu}^Q B_{\rho \sigma}^Q,
 \end{equation}
-where the specific definition of the tensor, $B$, and the associated auxiliary
-index, $Q$, depends on the choice of decomposition method, and the resulting
-efficiency of the implementation depends strongly on the dimension of the
-latter.  Such reductions obviously reduce the storage requirements as compared
-to the full-rank ERIs, as the smaller tensors may either be retained
-completely in memory or retrieved from external disk much more efficiently.
 
-In addition, the expense required in the manipulation and transformation of
-the integrals [for example, from the atomic orbital (AO) to molecular orbital
-(MO) basis] is also improved.
+where the specific definition of the tensor, $B$, and the associated auxiliary
+index, $Q$, depends on the choice of decomposition method. If the resulting
+implementation yields a small enough dimension of $Q$, such decompositions can
+significantly reduce the storage requirements as compared to the full-rank
+ERIs, as the smaller tensors may either be retained completely in memory or
+retrieved from external disk much more efficiently.  This reduction, in turn,
+can substantially increase the speed of a number of key algorithmic steps in
+electronic structure methods.  For example, the transformation of the
+integrals from the atomic orbital (AO) to the molecular orbital (MO) basis
+nominally scales as ${\cal O}(N^5)$, but this is reduced to ${\cal O}(N^3 Q)$
+
+, the evaluation of the energy in second-order many-body perturbation theory, or the calculation of the coupled
+cluster ground- or excited-state wave functions, among others.
+
+  is also improved, a fact exploited in a number of
+reduced-scaling many-body methods, such as...
 
 Furthermore, the mathematical expressions involving the four-index tensors can
 often be rewritten in terms of their lower-rank counterparts, potentially
 reducing the scaling of expressions in, for example, second-order perturbation
-theory or coupled cluster theory calculations.\cite{Werner:2003a} [Need lots more
-references here.]
+theory or coupled cluster theory calculations.\cite{Werner:2003a} [Need lots
+more references here.]
 
 
-Two of the most
-popular techniques to approximate these tensors are density fitting (also referred to
-as ``resolution of the identity'') and Cholesky decomposition [need original
-references here], and these have been implemented in a number of program packages.
-[PSI4, Turbomole, Molcas, Molpro and others]
+Two of the most popular techniques to approximate these tensors are density
+fitting (also referred to as ``resolution of the identity'') and Cholesky
+decomposition [need original references here], and these have been implemented
+in a number of program packages.  [PSI4, Turbomole, Molcas, Molpro and others]
 
 
 
